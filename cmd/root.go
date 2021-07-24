@@ -39,7 +39,7 @@ AWS SSO SCIM API (https://docs.aws.amazon.com/singlesignon/latest/developerguide
 `,
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
-	// Run: func(cmd *cobra.Command, args []string) { },
+	Run: func(cmd *cobra.Command, args []string) {},
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
