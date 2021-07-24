@@ -19,13 +19,13 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// gwsGroupsCmd represents the Google Workspace Groups command
-var gwsGroupsCmd = &cobra.Command{
+// awsGroupsCmd represents the AWS SSO SCIM Groups command
+var awsGroupsCmd = &cobra.Command{
 	Use:   "groups",
-	Short: "Google Workspace Groups commands",
-	Long:  `available commands to validate Google Worspace Directory Groups API.`,
+	Short: "AWS SSO SCIM Groups commands",
+	Long:  `available commands to validate AWS SSO SCIM Groups API.`,
 }
 
 func init() {
-	gwsCmd.AddCommand(gwsGroupsCmd)
+	awsCmd.AddCommand(awsGroupsCmd)
 }

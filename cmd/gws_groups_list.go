@@ -27,7 +27,7 @@ import (
 var query []string
 
 // gwsGroupListCmd represents the Google Workspace Groups command
-var gwsGroupListCmd = &cobra.Command{
+var gwsGroupsListCmd = &cobra.Command{
 	Use:   "list",
 	Short: "list Groups",
 	Long:  `This command is used to list the groups from Google Workspace Directory Servive`,
@@ -37,9 +37,9 @@ var gwsGroupListCmd = &cobra.Command{
 }
 
 func init() {
-	gwsGroupCmd.AddCommand(gwsGroupListCmd)
+	gwsGroupsCmd.AddCommand(gwsGroupsListCmd)
 
-	gwsGroupListCmd.Flags().StringSliceVarP(&query, "query", "q", []string{""}, "Google Workspace Groups query parameter, example: 'name:Admin* email:admin*', see: https://developers.google.com/admin-sdk/directory/v1/guides/search-groups")
+	gwsGroupsListCmd.Flags().StringSliceVarP(&query, "query", "q", []string{""}, "Google Workspace Groups query parameter, example: 'name:Admin* email:admin*', see: https://developers.google.com/admin-sdk/directory/v1/guides/search-groups")
 }
 
 func exec() {
