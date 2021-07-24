@@ -13,6 +13,9 @@ type Config struct {
 
 	ServiceAccountFile string `mapstructure:"service_account_file"`
 	UserEmail          string `mapstructure:"user_email"`
+
+	SCIMEndpoint    string `mapstructure:"scim_endpoint"`
+	SCIMAccessToken string `mapstructure:"scim_access_token"`
 }
 
 const (

@@ -26,7 +26,6 @@ import (
 	"github.com/spf13/viper"
 )
 
-var cfgFile string
 var cfg *config.Config
 
 // rootCmd represents the base command when called without any subcommands
@@ -53,37 +52,19 @@ func init() {
 
 	cobra.OnInitialize(initConfig)
 
-	// Here you will define your flags and configuration settings.
-	// Cobra supports persistent flags, which, if defined here,
-	// will be global for your application.
-
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.aws-sso-gws-sync.yaml)")
-
 	rootCmd.PersistentFlags().BoolVarP(&cfg.Debug, "debug", "d", config.DefaultDebug, "enable log debug level")
-
-	rootCmd.PersistentFlags().StringVarP(&cfg.ServiceAccountFile, "service-account-file", "s", config.DefaultServiceAccountFile, "path to Google Workspace service account file")
-	rootCmd.PersistentFlags().StringVarP(&cfg.UserEmail, "user-email", "u", "", "Google Workspace user email with allowed access to the Google Workspace Service Account")
-
 	rootCmd.PersistentFlags().StringVarP(&cfg.LogFormat, "log-format", "f", config.DefaultLogFormat, "set the log format")
 	rootCmd.PersistentFlags().StringVarP(&cfg.LogLevel, "log-level", "l", config.DefaultLogLevel, "set the log level")
 
+	rootCmd.PersistentFlags().StringVarP(&cfg.ServiceAccountFile, "gws-service-account-file", "s", config.DefaultServiceAccountFile, "path to Google Workspace service account file")
+	rootCmd.PersistentFlags().StringVarP(&cfg.UserEmail, "gws-user-email", "u", "", "Google Workspace user email with allowed access to the Google Workspace Service Account")
+
+	rootCmd.PersistentFlags().StringVarP(&cfg.SCIMAccessToken, "aws-scim-access-token", "t", "", "AWS SSO SCIM API Access Token")
+	rootCmd.PersistentFlags().StringVarP(&cfg.SCIMEndpoint, "aws-scim-endpoint", "e", "", "AWS SSO SCIM API Endpoint")
 }
 
 // initConfig reads in config file and ENV variables if set.
 func initConfig() {
-	if cfgFile != "" {
-		// Use config file from the flag.
-		viper.SetConfigFile(cfgFile)
-	} else {
-		// Find home directory.
-		home, err := os.UserHomeDir()
-		cobra.CheckErr(err)
-
-		// Search config in home directory with name ".aws-sso-gws-sync" (without extension).
-		viper.AddConfigPath(home)
-		viper.SetConfigType("yaml")
-		viper.SetConfigName(".aws-sso-gws-sync")
-	}
 
 	// AWS SSO GWS Sync (asgs)
 	viper.SetEnvPrefix("asgs")
@@ -92,8 +73,10 @@ func initConfig() {
 	envVars := []string{
 		"log_format",
 		"log_level",
-		"service_account_file",
-		"user_email",
+		"gws_service_account_file",
+		"gws_user_email",
+		"aws_scim_access_token",
+		"aws_scim_endpoint",
 	}
 
 	for _, e := range envVars {
