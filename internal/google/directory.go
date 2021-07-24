@@ -8,19 +8,21 @@ import (
 	"google.golang.org/api/option"
 )
 
-type ClientService interface {
+// DirectoryService is a facade of Google Directory API client.
+type DirectoryService interface {
+	ListUsers([]string) ([]*admin.User, error)
 	ListGroups([]string) ([]*admin.Group, error)
 }
 
-type Client struct {
-	ctx     context.Context
-	service *admin.Service
+type directory struct {
+	ctx context.Context
+	svc *admin.Service
 }
 
-// NewClient create a Google Directory API client.
+// NewDirectoryService create a Google Directory API client.
 // References:
 // - https://developers.google.com/admin-sdk/directory/v1/guides/delegation?utm_source=pocket_mylist#go
-func NewClient(ctx context.Context, AdminEmail string, ServiceAccount []byte) (*Client, error) {
+func NewDirectoryService(ctx context.Context, UserEmail string, ServiceAccount []byte) (DirectoryService, error) {
 
 	config, err := google.JWTConfigFromJSON(
 		ServiceAccount,
@@ -31,35 +33,35 @@ func NewClient(ctx context.Context, AdminEmail string, ServiceAccount []byte) (*
 		return nil, err
 	}
 
-	config.Subject = AdminEmail
+	config.Subject = UserEmail
 
 	ts := config.TokenSource(ctx)
 
-	srv, err := admin.NewService(ctx, option.WithTokenSource(ts))
+	svc, err := admin.NewService(ctx, option.WithTokenSource(ts))
 	if err != nil {
 		return nil, err
 	}
 
-	return &Client{
-		ctx:     ctx,
-		service: srv,
+	return &directory{
+		ctx: ctx,
+		svc: svc,
 	}, nil
 }
 
 // ListUsers list all users in a Google Directory filtered by query.
-func (c *Client) ListUsers(query []string) ([]*admin.User, error) {
+func (d *directory) ListUsers(query []string) ([]*admin.User, error) {
 	u := make([]*admin.User, 0)
 	var err error
 
 	if len(query) > 0 {
 		for _, q := range query {
-			err = c.service.Users.List().Query(q).Customer("my_customer").Pages(c.ctx, func(users *admin.Users) error {
+			err = d.svc.Users.List().Query(q).Customer("my_customer").Pages(d.ctx, func(users *admin.Users) error {
 				u = append(u, users.Users...)
 				return nil
 			})
 		}
 	} else {
-		err = c.service.Users.List().Customer("my_customer").Pages(c.ctx, func(users *admin.Users) error {
+		err = d.svc.Users.List().Customer("my_customer").Pages(d.ctx, func(users *admin.Users) error {
 			u = append(u, users.Users...)
 			return nil
 		})
@@ -68,19 +70,19 @@ func (c *Client) ListUsers(query []string) ([]*admin.User, error) {
 }
 
 // ListGroups list all groups in a Google Directory filtered by query.
-func (c *Client) ListGroups(query []string) ([]*admin.Group, error) {
+func (d *directory) ListGroups(query []string) ([]*admin.Group, error) {
 	g := make([]*admin.Group, 0)
 	var err error
 
 	if len(query) > 0 {
 		for _, q := range query {
-			err = c.service.Groups.List().Customer("my_customer").Query(q).Pages(c.ctx, func(groups *admin.Groups) error {
+			err = d.svc.Groups.List().Customer("my_customer").Query(q).Pages(d.ctx, func(groups *admin.Groups) error {
 				g = append(g, groups.Groups...)
 				return nil
 			})
 		}
 	} else {
-		err = c.service.Groups.List().Customer("my_customer").Pages(c.ctx, func(groups *admin.Groups) error {
+		err = d.svc.Groups.List().Customer("my_customer").Pages(d.ctx, func(groups *admin.Groups) error {
 			g = append(g, groups.Groups...)
 			return nil
 		})
