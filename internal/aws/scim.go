@@ -18,7 +18,7 @@ type SCIMService interface {
 
 type scim struct {
 	ctx         *context.Context
-	HTTPClient  *http.Client
+	httpClient  *http.Client
 	endpointURL *url.URL
 	bearerToken string
 }
@@ -27,7 +27,7 @@ func NewSCIMService(ctx *context.Context, http *http.Client, endpoint *url.URL, 
 
 	return &scim{
 		ctx:         ctx,
-		HTTPClient:  http,
+		httpClient:  http,
 		endpointURL: endpoint,
 		bearerToken: token,
 	}, nil
@@ -46,7 +46,7 @@ func (s *scim) sendRequest(req *http.Request, body interface{}) (resp *http.Resp
 	req.Header.Set("User-Agent", "aws-sso-gws-sync/1.0")
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", s.bearerToken))
 
-	resp, err = s.HTTPClient.Do(req)
+	resp, err = s.httpClient.Do(req)
 	if err != nil {
 		return
 	}
