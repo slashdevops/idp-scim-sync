@@ -16,6 +16,7 @@ limitations under the License.
 package cmd
 
 import (
+	"github.com/slashdevops/aws-sso-gws-sync/internal/config"
 	"github.com/spf13/cobra"
 )
 
@@ -27,4 +28,10 @@ var gwsCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(gwsCmd)
+
+	gwsCmd.PersistentFlags().StringVarP(&cfg.ServiceAccountFile, "gws-service-account-file", "s", config.DefaultServiceAccountFile, "path to Google Workspace service account file")
+	gwsCmd.MarkPersistentFlagRequired("gws-service-account-file")
+
+	gwsCmd.PersistentFlags().StringVarP(&cfg.UserEmail, "gws-user-email", "u", "", "Google Workspace user email with allowed access to the Google Workspace Service Account")
+	gwsCmd.MarkPersistentFlagRequired("gws-user-email")
 }

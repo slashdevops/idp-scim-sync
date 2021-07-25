@@ -26,9 +26,11 @@ import (
 var cfg *config.Config
 
 var rootCmd = &cobra.Command{
-	Use:   "aws-sso-gws-sync",
-	Short: "Sync your Google Workspace Groups and Users to AWS Single Sing-On",
-	Long: `Keep your AWS Single Sign-On (SSO) users synchronized with your Google Workspace Groups
+	Use:   "ssocli",
+	Short: "Check your Google Workspace Groups/Users and AWS Single Sing-On Groups/Users",
+	Long: `This is a Commad Line Interfaced (cli) to help you validate and checks your source and target Single Sing-On endpoints.
+
+Keep your AWS Single Sign-On (SSO) users synchronized with your Google Workspace Groups
 Sync your Google Workspace Groups and Users to AWS Single Sing-On using
 AWS SSO SCIM API (https://docs.aws.amazon.com/singlesignon/latest/developerguide/what-is-scim.html).`,
 	Run: func(cmd *cobra.Command, args []string) {},
@@ -46,13 +48,6 @@ func init() {
 	rootCmd.PersistentFlags().BoolVarP(&cfg.Debug, "debug", "d", config.DefaultDebug, "enable log debug level")
 	rootCmd.PersistentFlags().StringVarP(&cfg.LogFormat, "log-format", "f", config.DefaultLogFormat, "set the log format")
 	rootCmd.PersistentFlags().StringVarP(&cfg.LogLevel, "log-level", "l", config.DefaultLogLevel, "set the log level")
-
-	rootCmd.PersistentFlags().StringVarP(&cfg.ServiceAccountFile, "gws-service-account-file", "s", config.DefaultServiceAccountFile, "path to Google Workspace service account file")
-	rootCmd.PersistentFlags().StringVarP(&cfg.UserEmail, "gws-user-email", "u", "", "Google Workspace user email with allowed access to the Google Workspace Service Account")
-	//rootCmd.MarkPersistentFlagRequired("gws-user-email")
-
-	rootCmd.PersistentFlags().StringVarP(&cfg.SCIMAccessToken, "aws-scim-access-token", "t", "", "AWS SSO SCIM API Access Token")
-	rootCmd.PersistentFlags().StringVarP(&cfg.SCIMEndpoint, "aws-scim-endpoint", "e", "", "AWS SSO SCIM API Endpoint")
 }
 
 // initConfig reads in config file and ENV variables if set.

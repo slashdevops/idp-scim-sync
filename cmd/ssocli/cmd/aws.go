@@ -29,4 +29,10 @@ var awsCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(awsCmd)
+
+	awsCmd.PersistentFlags().StringVarP(&cfg.SCIMAccessToken, "aws-scim-access-token", "t", "", "AWS SSO SCIM API Access Token")
+	awsCmd.MarkPersistentFlagRequired("aws-scim-access-token")
+
+	awsCmd.PersistentFlags().StringVarP(&cfg.SCIMEndpoint, "aws-scim-endpoint", "e", "", "AWS SSO SCIM API Endpoint")
+	awsCmd.MarkPersistentFlagRequired("aws-scim-endpoint")
 }
