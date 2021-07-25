@@ -25,8 +25,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var outFormat string
-
 var awsServiceConfigCmd = &cobra.Command{
 	Use:   "config",
 	Short: "return Service Provider config",

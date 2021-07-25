@@ -11,8 +11,8 @@ import (
 )
 
 type SCIMService interface {
-	ListUsers(filter []string) ([]*User, error)
-	ListGroups(filter []string) ([]*Group, error)
+	ListUsers(filter string) (*UsersResponse, error)
+	ListGroups(filter string) (*GroupsResponse, error)
 	ServiceProviderConfig() (*ServiceProviderConfig, error)
 }
 
@@ -69,9 +69,10 @@ func (s *scim) sendRequest(req *http.Request, body interface{}) (resp *http.Resp
 	return
 }
 
-func (s *scim) ListUsers(filter []string) ([]*User, error) {
+func (s *scim) ListUsers(filter string) (*UsersResponse, error) {
 
 	s.endpointURL.Path = path.Join(s.endpointURL.Path, "/Users")
+	var uResponse UsersResponse
 
 	req, err := http.NewRequest(http.MethodGet, s.endpointURL.String(), nil)
 	if err != nil {
@@ -84,18 +85,23 @@ func (s *scim) ListUsers(filter []string) ([]*User, error) {
 	}
 	defer resp.Body.Close()
 
-	var users UsersResponse
-
-	if err = json.NewDecoder(resp.Body).Decode(&users); err == nil {
+	if err = json.NewDecoder(resp.Body).Decode(&uResponse); err == nil {
 		return nil, fmt.Errorf("error decoding response, error: %s", err)
 	}
 
-	return users.Resources, nil
+	return &uResponse, nil
 }
 
-func (s *scim) ListGroups(filter []string) ([]*Group, error) {
+func (s *scim) ListGroups(filter string) (*GroupsResponse, error) {
 
 	s.endpointURL.Path = path.Join(s.endpointURL.Path, "/Groups")
+	var gResponse GroupsResponse
+
+	if filter != "" {
+		q := s.endpointURL.Query()
+		q.Add("filter", filter)
+		s.endpointURL.RawQuery = q.Encode()
+	}
 
 	req, err := http.NewRequest(http.MethodGet, s.endpointURL.String(), nil)
 	if err != nil {
@@ -108,13 +114,12 @@ func (s *scim) ListGroups(filter []string) ([]*Group, error) {
 	}
 	defer resp.Body.Close()
 
-	var groups GroupsResponse
 	d := json.NewDecoder(resp.Body)
-	if err := d.Decode(&groups); err != nil {
+	if err := d.Decode(&gResponse); err != nil {
 		return nil, fmt.Errorf("error decoding response, error: %s", err)
 	}
 
-	return groups.Resources, nil
+	return &gResponse, nil
 }
 
 func (s *scim) ServiceProviderConfig() (*ServiceProviderConfig, error) {

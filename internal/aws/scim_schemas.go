@@ -102,6 +102,22 @@ type GroupsResponse struct {
 	Resources []*Group `json:"Resources,omitempty"`
 }
 
+func (c *GroupsResponse) ToJSON() string {
+	out, err := json.Marshal(c)
+	if err != nil {
+		log.Panic(err)
+	}
+	return string(out)
+}
+
+func (c *GroupsResponse) ToYAML() string {
+	out, err := yaml.Marshal(c)
+	if err != nil {
+		log.Panic(err)
+	}
+	return string(out)
+}
+
 type UsersResponse struct {
 	GeneralResponse
 	Resources []*User `json:"Resources,omitempty"`

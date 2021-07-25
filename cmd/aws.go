@@ -19,6 +19,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var outFormat string
+
 var awsCmd = &cobra.Command{
 	Use:   "aws",
 	Short: "AWS SSO SCIM commands",
