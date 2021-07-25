@@ -31,10 +31,7 @@ var rootCmd = &cobra.Command{
 	Short: "Sync your Google Workspace Groups and Users to AWS Single Sing-On",
 	Long: `Keep your AWS Single Sign-On (SSO) users synchronized with your Google Workspace Groups
 Sync your Google Workspace Groups and Users to AWS Single Sing-On using
-AWS SSO SCIM API (https://docs.aws.amazon.com/singlesignon/latest/developerguide/what-is-scim.html).
-`,
-	// Uncomment the following line if your bare application
-	// has an action associated with it:
+AWS SSO SCIM API (https://docs.aws.amazon.com/singlesignon/latest/developerguide/what-is-scim.html).`,
 	Run: func(cmd *cobra.Command, args []string) {},
 }
 

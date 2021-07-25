@@ -32,17 +32,17 @@ var gwsGroupsListCmd = &cobra.Command{
 	Short: "list Groups",
 	Long:  `This command is used to list the groups from Google Workspace Directory Servive`,
 	Run: func(cmd *cobra.Command, args []string) {
-		exec()
+		execGWSGroupsList()
 	},
 }
 
 func init() {
 	gwsGroupsCmd.AddCommand(gwsGroupsListCmd)
 
-	gwsGroupsListCmd.Flags().StringSliceVarP(&query, "query", "q", []string{""}, "Google Workspace Groups query parameter, example: 'name:Admin* email:admin*', see: https://developers.google.com/admin-sdk/directory/v1/guides/search-groups")
+	gwsGroupsListCmd.Flags().StringSliceVarP(&query, "query", "q", []string{""}, "Google Workspace Groups query parameter, example: --query 'name:Admin* email:admin*' --query 'name:Power* email:power*', see: https://developers.google.com/admin-sdk/directory/v1/guides/search-groups")
 }
 
-func exec() {
+func execGWSGroupsList() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
