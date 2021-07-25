@@ -6,7 +6,8 @@ import (
 )
 
 type Config struct {
-	Debug bool
+	IsLambda bool
+	Debug    bool
 
 	LogLevel  string `mapstructure:"log_level"`
 	LogFormat string `mapstructure:"log_format"`

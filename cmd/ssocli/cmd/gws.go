@@ -61,6 +61,7 @@ func init() {
 	rootCmd.AddCommand(gwsCmd)
 
 	gwsCmd.AddCommand(gwsGroupsCmd)
+
 	gwsCmd.PersistentFlags().StringVarP(&cfg.ServiceAccountFile, "gws-service-account-file", "s", config.DefaultServiceAccountFile, "path to Google Workspace service account file")
 	gwsCmd.MarkPersistentFlagRequired("gws-service-account-file")
 

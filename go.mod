@@ -4,7 +4,10 @@ go 1.16
 
 require (
 	cloud.google.com/go v0.88.0 // indirect
+	github.com/aws/aws-lambda-go v1.25.0 // indirect
+	github.com/aws/aws-sdk-go v1.40.7 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
+	github.com/pkg/errors v0.9.1 // indirect
 	github.com/sirupsen/logrus v1.8.1
 	github.com/spf13/cobra v1.2.1
 	github.com/spf13/viper v1.8.1
