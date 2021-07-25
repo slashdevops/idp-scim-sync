@@ -26,24 +26,25 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var filter []string
+var outFormat string
 
-var awsGroupsListCmd = &cobra.Command{
-	Use:   "list",
-	Short: "return available groups",
-	Long:  `list available groups in AWS SSO`,
+var awsServiceConfigCmd = &cobra.Command{
+	Use:   "config",
+	Short: "return Service Provider config",
+	Long:  `return AWS SSO SCIM provider config.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		execAWSGroupsList()
+		execAWSServiceConfig()
 	},
 }
 
 func init() {
-	awsGroupsCmd.AddCommand(awsGroupsListCmd)
+	awsServiceCmd.AddCommand(awsServiceConfigCmd)
 
-	awsGroupsListCmd.Flags().StringSliceVarP(&filter, "filter", "q", []string{""}, "AWS SSO SCIM API Filter, example: --filter 'displayName eq \"Group Bar\" and id eq 12324' --filter 'displayName eq \"Group Foo\"' see: https://docs.aws.amazon.com/singlesignon/latest/developerguide/listgroups.html#examples-filter-listgroups")
+	awsServiceConfigCmd.Flags().StringVar(&outFormat, "output-format", "json", "output format (json|yaml)")
+
 }
 
-func execAWSGroupsList() {
+func execAWSServiceConfig() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
@@ -67,13 +68,17 @@ func execAWSGroupsList() {
 		log.Fatalf("Error creating SCIM service: ", err.Error())
 	}
 
-	awsGroups, err := awsSCIMService.ListGroups(filter)
+	awsServiceConfig, err := awsSCIMService.ServiceProviderConfig()
 	if err != nil {
-		log.Fatalf("Error listing groups, error: %s", err.Error())
+		log.Fatalf("Error getting service provider config, error: %s", err.Error())
 	}
-	log.Infof("%d groups found", len(awsGroups))
 
-	for _, g := range awsGroups {
-		log.Infof("Name: %s - ID: %s", g.DisplayName, g.ID)
+	switch outFormat {
+	case "json":
+		log.Printf("%s", awsServiceConfig.ToJSON())
+	case "yaml":
+		log.Printf("%s", awsServiceConfig.ToYAML())
+	default:
+		log.Fatalf("Unknown output format: %s", outFormat)
 	}
 }

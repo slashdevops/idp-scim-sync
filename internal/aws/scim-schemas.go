@@ -1,5 +1,12 @@
 package aws
 
+import (
+	"encoding/json"
+	"log"
+
+	"gopkg.in/yaml.v3"
+)
+
 type Meta struct {
 	ResourceType string `json:"resourceType,omitempty"`
 	Created      string `json:"created,omitempty"`
@@ -34,37 +41,53 @@ type User struct {
 }
 
 type ServiceProviderConfig struct {
-	Schemas               []string `json:"schemas,omitempty"`
-	DocumentationURI      string   `json:"documentationUri,omitempty"`
+	Schemas               []string `json:"schemas"`
+	DocumentationURI      string   `json:"documentationUri"`
 	AuthenticationSchemes []struct {
-		Type             string `json:"type,omitempty"`
-		Name             string `json:"name,omitempty"`
-		Description      string `json:"description,omitempty"`
-		SpecURI          string `json:"specURI,omitempty"`
-		DocumentationURI string `json:"documentationUri,omitempty"`
-		Primary          bool   `json:"primary,omitempty"`
-	} `json:"authenticationSchemes,omitempty"`
+		Type             string `json:"type"`
+		Name             string `json:"name"`
+		Description      string `json:"description"`
+		SpecURI          string `json:"specURI"`
+		DocumentationURI string `json:"documentationUri"`
+		Primary          bool   `json:"primary"`
+	} `json:"authenticationSchemes"`
 	Patch struct {
-		Supported bool `json:"supported,omitempty"`
-	} `json:"patch,omitempty"`
+		Supported bool `json:"supported"`
+	} `json:"patch"`
 	Bulk struct {
-		Supported      bool `json:"supported,omitempty"`
-		MaxOperations  int  `json:"maxOperations,omitempty"`
-		MaxPayloadSize int  `json:"maxPayloadSize,omitempty"`
-	} `json:"bulk,omitempty"`
+		Supported      bool `json:"supported"`
+		MaxOperations  int  `json:"maxOperations"`
+		MaxPayloadSize int  `json:"maxPayloadSize"`
+	} `json:"bulk"`
 	Filter struct {
-		Supported  bool `json:"supported,omitempty"`
-		MaxResults int  `json:"maxResults,omitempty"`
-	} `json:"filter,omitempty"`
+		Supported  bool `json:"supported"`
+		MaxResults int  `json:"maxResults"`
+	} `json:"filter"`
 	ChangePassword struct {
-		Supported bool `json:"supported,omitempty"`
-	} `json:"changePassword,omitempty"`
+		Supported bool `json:"supported"`
+	} `json:"changePassword"`
 	Sort struct {
-		Supported bool `json:"supported,omitempty"`
-	} `json:"sort,omitempty"`
+		Supported bool `json:"supported"`
+	} `json:"sort"`
 	Etag struct {
-		Supported bool `json:"supported,omitempty"`
-	} `json:"etag,omitempty"`
+		Supported bool `json:"supported"`
+	} `json:"etag"`
+}
+
+func (c *ServiceProviderConfig) ToJSON() string {
+	out, err := json.Marshal(c)
+	if err != nil {
+		log.Panic(err)
+	}
+	return string(out)
+}
+
+func (c *ServiceProviderConfig) ToYAML() string {
+	out, err := yaml.Marshal(c)
+	if err != nil {
+		log.Panic(err)
+	}
+	return string(out)
 }
 
 type GeneralResponse struct {

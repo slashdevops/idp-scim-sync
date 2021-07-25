@@ -19,7 +19,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// gwsGroupsCmd represents the Google Workspace Groups command
 var gwsGroupsCmd = &cobra.Command{
 	Use:   "groups",
 	Short: "Google Workspace Groups commands",

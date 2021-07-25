@@ -19,12 +19,12 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var awsGroupsCmd = &cobra.Command{
-	Use:   "groups",
-	Short: "AWS SSO SCIM Groups commands",
-	Long:  `available commands to validate AWS SSO SCIM Groups API.`,
+var awsServiceCmd = &cobra.Command{
+	Use:   "service",
+	Short: "AWS SSO SCIM Service commands",
+	Long:  `available commands to validate AWS SSO SCIM Service API.`,
 }
 
 func init() {
-	awsCmd.AddCommand(awsGroupsCmd)
+	awsCmd.AddCommand(awsServiceCmd)
 }

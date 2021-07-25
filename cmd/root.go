@@ -25,7 +25,6 @@ import (
 
 var cfg *config.Config
 
-// rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "aws-sso-gws-sync",
 	Short: "Sync your Google Workspace Groups and Users to AWS Single Sing-On",
@@ -35,8 +34,6 @@ AWS SSO SCIM API (https://docs.aws.amazon.com/singlesignon/latest/developerguide
 	Run: func(cmd *cobra.Command, args []string) {},
 }
 
-// Execute adds all child commands to the root command and sets flags appropriately.
-// This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
 	cobra.CheckErr(rootCmd.Execute())
 }

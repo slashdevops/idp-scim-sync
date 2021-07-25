@@ -19,7 +19,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// gwsCmd represents the gws command
 var gwsCmd = &cobra.Command{
 	Use:   "gws",
 	Short: "Google Workspace commands",

@@ -26,7 +26,6 @@ import (
 
 var query []string
 
-// gwsGroupListCmd represents the Google Workspace Groups command
 var gwsGroupsListCmd = &cobra.Command{
 	Use:   "list",
 	Short: "list Groups",

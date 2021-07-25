@@ -13,6 +13,7 @@ import (
 type SCIMService interface {
 	ListUsers(filter []string) ([]*User, error)
 	ListGroups(filter []string) ([]*Group, error)
+	ServiceProviderConfig() (*ServiceProviderConfig, error)
 }
 
 type scim struct {
@@ -112,4 +113,37 @@ func (s *scim) ListGroups(filter []string) ([]*Group, error) {
 	}
 
 	return groups.Resources, nil
+}
+
+func (s *scim) ServiceProviderConfig() (*ServiceProviderConfig, error) {
+
+	s.endpointURL.Path = path.Join(s.endpointURL.Path, "/ServiceProviderConfig")
+
+	req, err := http.NewRequest(http.MethodGet, s.endpointURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := s.sendRequest(req, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusBadRequest {
+		bodyBytes, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return nil, err
+		}
+
+		return nil, fmt.Errorf("unknown error, response body: %s status code: %d", string(bodyBytes), resp.StatusCode)
+	}
+
+	var config ServiceProviderConfig
+	d := json.NewDecoder(resp.Body)
+	if err := d.Decode(&config); err != nil {
+		return nil, fmt.Errorf("error decoding response, error: %s", err)
+	}
+
+	return &config, nil
 }
