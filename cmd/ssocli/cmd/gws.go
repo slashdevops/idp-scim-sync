@@ -16,22 +16,82 @@ limitations under the License.
 package cmd
 
 import (
+	"context"
+	"io/ioutil"
+
 	"github.com/slashdevops/aws-sso-gws-sync/internal/config"
+	"github.com/slashdevops/aws-sso-gws-sync/internal/google"
 	"github.com/spf13/cobra"
+
+	log "github.com/sirupsen/logrus"
 )
 
-var gwsCmd = &cobra.Command{
-	Use:   "gws",
-	Short: "Google Workspace commands",
-	Long:  `available commands to validate Google Worspace Directory API.`,
-}
+var (
+	query []string
+)
+
+// command gws
+var (
+	// base gws command
+	gwsCmd = &cobra.Command{
+		Use:   "gws",
+		Short: "Google Workspace commands",
+		Long:  `available commands to validate Google Worspace Directory API.`,
+	}
+
+	// groups command
+	gwsGroupsCmd = &cobra.Command{
+		Use:   "groups",
+		Short: "Google Workspace Groups commands",
+		Long:  `available commands to validate Google Worspace Directory Groups API.`,
+	}
+
+	// groups list command
+	gwsGroupsListCmd = &cobra.Command{
+		Use:   "list",
+		Short: "list Groups",
+		Long:  `This command is used to list the groups from Google Workspace Directory Servive`,
+		Run: func(cmd *cobra.Command, args []string) {
+			execGWSGroupsList()
+		},
+	}
+)
 
 func init() {
 	rootCmd.AddCommand(gwsCmd)
 
+	gwsCmd.AddCommand(gwsGroupsCmd)
 	gwsCmd.PersistentFlags().StringVarP(&cfg.ServiceAccountFile, "gws-service-account-file", "s", config.DefaultServiceAccountFile, "path to Google Workspace service account file")
 	gwsCmd.MarkPersistentFlagRequired("gws-service-account-file")
 
 	gwsCmd.PersistentFlags().StringVarP(&cfg.UserEmail, "gws-user-email", "u", "", "Google Workspace user email with allowed access to the Google Workspace Service Account")
 	gwsCmd.MarkPersistentFlagRequired("gws-user-email")
+
+	gwsGroupsCmd.AddCommand(gwsGroupsListCmd)
+	gwsGroupsListCmd.Flags().StringSliceVarP(&query, "query", "q", []string{""}, "Google Workspace Groups query parameter, example: --query 'name:Admin* email:admin*' --query 'name:Power* email:power*', see: https://developers.google.com/admin-sdk/directory/v1/guides/search-groups")
+}
+
+func execGWSGroupsList() {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	gCreds, err := ioutil.ReadFile(cfg.ServiceAccountFile)
+	if err != nil {
+		log.Fatalf("Error reading the credentials", err)
+	}
+
+	gDirService, err := google.NewDirectoryService(ctx, cfg.UserEmail, gCreds)
+	if err != nil {
+		log.Fatalf("Error connecting to google", err)
+	}
+
+	gGroups, err := gDirService.ListGroups(query)
+	if err != nil {
+		log.Fatalf("Error listing groups", err)
+	}
+	log.Infof("%d groups found", len(gGroups))
+
+	for _, g := range gGroups {
+		log.Infof("Name: %s - Email: %s", g.Name, g.Email)
+	}
 }

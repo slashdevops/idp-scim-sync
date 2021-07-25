@@ -33,8 +33,8 @@ const (
 )
 
 // New returns a new Config
-func NewConfig() *Config {
-	return &Config{
+func NewConfig() Config {
+	return Config{
 		Debug:              DefaultDebug,
 		LogLevel:           DefaultLogLevel,
 		LogFormat:          DefaultLogFormat,

@@ -20,30 +20,32 @@ import (
 	"github.com/spf13/cobra"
 
 	log "github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
 )
 
-var cfg *config.Config
+var cfg config.Config
 
-var rootCmd = &cobra.Command{
-	Use:   "ssocli",
-	Short: "Check your Google Workspace Groups/Users and AWS Single Sing-On Groups/Users",
-	Long: `This is a Commad Line Interfaced (cli) to help you validate and checks your source and target Single Sing-On endpoints.
+// commands root
+var (
+	rootCmd = &cobra.Command{
+		Use:   "ssocli",
+		Short: "Check your Google Workspace Groups/Users and AWS Single Sing-On Groups/Users",
+		Long: `This is a Commad Line Interfaced (cli) to help you validate and checks your source and target Single Sing-On endpoints.
 
 Keep your AWS Single Sign-On (SSO) users synchronized with your Google Workspace Groups
 Sync your Google Workspace Groups and Users to AWS Single Sing-On using
 AWS SSO SCIM API (https://docs.aws.amazon.com/singlesignon/latest/developerguide/what-is-scim.html).`,
-	Run: func(cmd *cobra.Command, args []string) {},
-}
+		//Run: func(cmd *cobra.Command, args []string) {},
+	}
+)
 
 func Execute() {
 	cobra.CheckErr(rootCmd.Execute())
 }
 
 func init() {
-	cfg = config.NewConfig()
-
 	cobra.OnInitialize(initConfig)
+
+	cfg = config.NewConfig()
 
 	rootCmd.PersistentFlags().BoolVarP(&cfg.Debug, "debug", "d", config.DefaultDebug, "enable log debug level")
 	rootCmd.PersistentFlags().StringVarP(&cfg.LogFormat, "log-format", "f", config.DefaultLogFormat, "set the log format")
@@ -52,25 +54,6 @@ func init() {
 
 // initConfig reads in config file and ENV variables if set.
 func initConfig() {
-
-	// AWS SSO GWS Sync (asgs)
-	viper.SetEnvPrefix("asgs")
-	viper.AutomaticEnv()
-
-	envVars := []string{
-		"log_format",
-		"log_level",
-		"gws_service_account_file",
-		"gws_user_email",
-		"aws_scim_access_token",
-		"aws_scim_endpoint",
-	}
-
-	for _, e := range envVars {
-		if err := viper.BindEnv(e); err != nil {
-			log.Fatalf("Cannot bind environment variable", err)
-		}
-	}
 
 	switch cfg.LogFormat {
 	case "json":
