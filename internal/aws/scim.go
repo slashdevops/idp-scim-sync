@@ -23,12 +23,17 @@ type scim struct {
 	bearerToken string
 }
 
-func NewSCIMService(ctx *context.Context, http *http.Client, endpoint *url.URL, token string) (SCIMService, error) {
+func NewSCIMService(ctx *context.Context, http *http.Client, endpoint string, token string) (SCIMService, error) {
+
+	scimURL, err := url.Parse(endpoint)
+	if err != nil {
+		return nil, err
+	}
 
 	return &scim{
 		ctx:         ctx,
 		httpClient:  http,
-		endpointURL: endpoint,
+		endpointURL: scimURL,
 		bearerToken: token,
 	}, nil
 }
@@ -51,6 +56,16 @@ func (s *scim) sendRequest(req *http.Request, body interface{}) (resp *http.Resp
 		return
 	}
 
+	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusBadRequest {
+		bodyBytes, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return nil, err
+		}
+		defer resp.Body.Close()
+
+		return nil, fmt.Errorf("unknown error, response body: %s status code: %d", string(bodyBytes), resp.StatusCode)
+	}
+
 	return
 }
 
@@ -68,10 +83,6 @@ func (s *scim) ListUsers(filter []string) ([]*User, error) {
 		return nil, err
 	}
 	defer resp.Body.Close()
-
-	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusBadRequest {
-		return nil, fmt.Errorf("unknown error, response body: %s status code: %d", resp.Body, resp.StatusCode)
-	}
 
 	var users UsersResponse
 
@@ -96,15 +107,6 @@ func (s *scim) ListGroups(filter []string) ([]*Group, error) {
 		return nil, err
 	}
 	defer resp.Body.Close()
-
-	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusBadRequest {
-		bodyBytes, err := io.ReadAll(resp.Body)
-		if err != nil {
-			return nil, err
-		}
-
-		return nil, fmt.Errorf("unknown error, response body: %s status code: %d", string(bodyBytes), resp.StatusCode)
-	}
 
 	var groups GroupsResponse
 	d := json.NewDecoder(resp.Body)

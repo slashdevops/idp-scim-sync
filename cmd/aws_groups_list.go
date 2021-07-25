@@ -18,7 +18,6 @@ package cmd
 import (
 	"context"
 	"net/http"
-	"net/url"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -57,12 +56,7 @@ func execAWSGroupsList() {
 		Timeout:   time.Second * 10,
 	}
 
-	scimURL, err := url.Parse(cfg.SCIMEndpoint)
-	if err != nil {
-		log.Fatalf("Error parsing SCIM endpoint URL: ", err.Error())
-	}
-
-	awsSCIMService, err := aws.NewSCIMService(&ctx, httpClient, scimURL, cfg.SCIMAccessToken)
+	awsSCIMService, err := aws.NewSCIMService(&ctx, httpClient, cfg.SCIMEndpoint, cfg.SCIMAccessToken)
 	if err != nil {
 		log.Fatalf("Error creating SCIM service: ", err.Error())
 	}
