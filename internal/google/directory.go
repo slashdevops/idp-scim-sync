@@ -14,7 +14,7 @@ type DirectoryService interface {
 	ListGroups([]string) ([]*admin.Group, error)
 }
 
-type directory struct {
+type directoryService struct {
 	ctx context.Context
 	svc *admin.Service
 }
@@ -42,14 +42,14 @@ func NewDirectoryService(ctx context.Context, UserEmail string, ServiceAccount [
 		return nil, err
 	}
 
-	return &directory{
+	return &directoryService{
 		ctx: ctx,
 		svc: svc,
 	}, nil
 }
 
 // ListUsers list all users in a Google Directory filtered by query.
-func (d *directory) ListUsers(query []string) ([]*admin.User, error) {
+func (d *directoryService) ListUsers(query []string) ([]*admin.User, error) {
 	u := make([]*admin.User, 0)
 	var err error
 
@@ -70,7 +70,7 @@ func (d *directory) ListUsers(query []string) ([]*admin.User, error) {
 }
 
 // ListGroups list all groups in a Google Directory filtered by query.
-func (d *directory) ListGroups(query []string) ([]*admin.Group, error) {
+func (d *directoryService) ListGroups(query []string) ([]*admin.Group, error) {
 	g := make([]*admin.Group, 0)
 	var err error
 
