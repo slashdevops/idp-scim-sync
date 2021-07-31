@@ -78,24 +78,24 @@ func execGWSGroupsList() {
 
 	gCreds, err := ioutil.ReadFile(cfg.ServiceAccountFile)
 	if err != nil {
-		log.Fatalf("Error reading the credentials", err)
+		log.Fatalf("Error reading the credentials: %s", err)
 	}
 
 	gScope := "admin.AdminDirectoryGroupReadonlyScope, admin.AdminDirectoryGroupMemberReadonlyScope, admin.AdminDirectoryUserReadonlyScope"
 
 	gService, err := google.NewService(ctx, cfg.UserEmail, gCreds, gScope)
 	if err != nil {
-		log.Fatalf("Error connecting to google", err)
+		log.Fatalf("Error creating service: %s", err)
 	}
 
 	gDirService, err := google.NewDirectoryService(ctx, gService)
 	if err != nil {
-		log.Fatalf("Error connecting to google", err)
+		log.Fatalf("Error creating directory service: %s", err)
 	}
 
 	gGroups, err := gDirService.ListGroups(query)
 	if err != nil {
-		log.Fatalf("Error listing groups", err)
+		log.Fatalf("Error listing groups: %s", err)
 	}
 	log.Infof("%d groups found", len(gGroups))
 
