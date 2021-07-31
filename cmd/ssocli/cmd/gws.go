@@ -81,7 +81,14 @@ func execGWSGroupsList() {
 		log.Fatalf("Error reading the credentials", err)
 	}
 
-	gDirService, err := google.NewDirectoryService(ctx, cfg.UserEmail, gCreds)
+	gScope := "admin.AdminDirectoryGroupReadonlyScope, admin.AdminDirectoryGroupMemberReadonlyScope, admin.AdminDirectoryUserReadonlyScope"
+
+	gService, err := google.NewService(ctx, cfg.UserEmail, gCreds, gScope)
+	if err != nil {
+		log.Fatalf("Error connecting to google", err)
+	}
+
+	gDirService, err := google.NewDirectoryService(ctx, gService)
 	if err != nil {
 		log.Fatalf("Error connecting to google", err)
 	}

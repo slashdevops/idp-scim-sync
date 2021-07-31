@@ -19,16 +19,14 @@ type directoryService struct {
 	svc *admin.Service
 }
 
-// NewDirectoryService create a Google Directory API client.
+// NewService create a Google Directory Service.
 // References:
-// - https://developers.google.com/admin-sdk/directory/v1/guides/delegation?utm_source=pocket_mylist#go
-func NewDirectoryService(ctx context.Context, UserEmail string, ServiceAccount []byte) (DirectoryService, error) {
+// - https://pkg.go.dev/google.golang.org/api/admin/directory/v1
+// Examples of scope:
+// - admin.AdminDirectoryGroupReadonlyScope, admin.AdminDirectoryGroupMemberReadonlyScope, admin.AdminDirectoryUserReadonlyScope
+func NewService(ctx context.Context, UserEmail string, ServiceAccount []byte, scope ...string) (*admin.Service, error) {
 
-	config, err := google.JWTConfigFromJSON(
-		ServiceAccount,
-		admin.AdminDirectoryGroupReadonlyScope,
-		admin.AdminDirectoryGroupMemberReadonlyScope,
-		admin.AdminDirectoryUserReadonlyScope)
+	config, err := google.JWTConfigFromJSON(ServiceAccount, scope...)
 	if err != nil {
 		return nil, err
 	}
@@ -42,6 +40,13 @@ func NewDirectoryService(ctx context.Context, UserEmail string, ServiceAccount [
 		return nil, err
 	}
 
+	return svc, nil
+}
+
+// NewDirectoryService create a Google Directory API client.
+// References:
+// - https://developers.google.com/admin-sdk/directory/v1/guides/delegation?utm_source=pocket_mylist#go
+func NewDirectoryService(ctx context.Context, svc *admin.Service) (DirectoryService, error) {
 	return &directoryService{
 		ctx: ctx,
 		svc: svc,

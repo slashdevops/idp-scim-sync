@@ -4,14 +4,13 @@ go 1.16
 
 require (
 	cloud.google.com/go v0.88.0 // indirect
-	github.com/aws/aws-lambda-go v1.25.0 // indirect
-	github.com/aws/aws-sdk-go v1.40.7 // indirect
+	github.com/aws/aws-lambda-go v1.25.0
+	github.com/aws/aws-sdk-go v1.40.7
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
-	github.com/pkg/errors v0.9.1 // indirect
+	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.8.1
 	github.com/spf13/cobra v1.2.1
 	github.com/spf13/viper v1.8.1
-	github.com/stretchr/objx v0.3.0 // indirect
 	github.com/stretchr/testify v1.7.0
 	golang.org/x/net v0.0.0-20210716203947-853a461950ff // indirect
 	golang.org/x/oauth2 v0.0.0-20210628180205-a41e5a781914
