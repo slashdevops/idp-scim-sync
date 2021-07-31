@@ -15,7 +15,7 @@ var (
 )
 
 type ProviderService interface {
-	GetGoups(*context.Context, []string) (*GroupResult, error)
+	GetGroups(*context.Context, []string) (*GroupResult, error)
 	GetUsers(*context.Context, []string) (*UserResult, error)
 	GetGroupsMembers(*context.Context, *GroupResult) (*MemberResult, error)
 	GetUsersFromGroupsMembers(*context.Context, []string, *MemberResult) (*UserResult, error)
@@ -84,7 +84,7 @@ func (ss *syncService) SyncGroupsAndTheirMembers() error {
 	ss.mu.Lock()
 	defer ss.mu.Unlock()
 
-	pGroups, err := ss.prov.GetGoups(ss.ctx, ss.provGroupsFilter)
+	pGroups, err := ss.prov.GetGroups(ss.ctx, ss.provGroupsFilter)
 	if err != nil {
 		return err
 	}
@@ -122,7 +122,7 @@ func (ss *syncService) SyncGroupsAndUsers() error {
 	ss.mu.Lock()
 	defer ss.mu.Unlock()
 
-	pGroups, err := ss.prov.GetGoups(ss.ctx, ss.provGroupsFilter)
+	pGroups, err := ss.prov.GetGroups(ss.ctx, ss.provGroupsFilter)
 	if err != nil {
 		return err
 	}

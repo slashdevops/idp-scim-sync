@@ -46,11 +46,10 @@ References:
 - https://seesparkbox.com/foundry/semantic_commit_messages
 - http://karma-runner.github.io/1.0/dev/git-commit-msg.html
 
-
 ## Development
 
 ### Mocks
 
 ```bash
-mockgen -package=mocks_google -destination=internal/mocks_google/mocks_directory.go -source=internal/mocks/google_mocks.go
+mockgen -package=sync -destination=internal/sync/service_mocks.go -source=internal/sync/service.go ProviderService,SCIMService
 ```
