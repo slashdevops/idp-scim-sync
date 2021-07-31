@@ -33,6 +33,10 @@ func (m *mockSCIMService) GetGroups(*context.Context, []string) (*GroupResult, e
 	return &GroupResult{}, nil
 }
 
+func (m *mockSCIMService) GetUsers(*context.Context, []string) (*UserResult, error) {
+	return &UserResult{}, nil
+}
+
 func (m *mockSCIMService) CreateOrUpdateGroups(*context.Context, *GroupResult) error {
 	return nil
 }

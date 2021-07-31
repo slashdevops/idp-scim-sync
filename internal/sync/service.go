@@ -23,6 +23,7 @@ type ProviderService interface {
 
 type SCIMService interface {
 	GetGroups(*context.Context, []string) (*GroupResult, error)
+	GetUsers(*context.Context, []string) (*UserResult, error)
 	CreateOrUpdateGroups(*context.Context, *GroupResult) error
 	CreateOrUpdateUsers(*context.Context, *UserResult) error
 	DeleteGroups(*context.Context, *GroupResult) error
@@ -58,23 +59,24 @@ type syncService struct {
 	scim             SCIMService
 }
 
-func NewSyncService(ctx *context.Context, p ProviderService, s SCIMService, opts ...SyncServiceOption) (SyncService, error) {
+// NewSyncService creates a new sync service.
+func NewSyncService(ctx *context.Context, prov ProviderService, scim SCIMService, opts ...SyncServiceOption) (SyncService, error) {
 
 	if ctx == nil {
 		return nil, ErrNilContext
 	}
-	if p == nil {
+	if prov == nil {
 		return nil, ErrProviderServiceNil
 	}
-	if s == nil {
+	if scim == nil {
 		return nil, ErrSCIMServiceNil
 	}
 
 	return &syncService{
 		ctx:  ctx,
 		mu:   &sync.Mutex{},
-		prov: p,
-		scim: s,
+		prov: prov,
+		scim: scim,
 	}, nil
 }
 
