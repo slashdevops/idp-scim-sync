@@ -44,33 +44,8 @@ func Test_syncService_SyncGroupsAndUsers(t *testing.T) {
 		mockProviderService := NewMockProviderService(mockCtrl)
 		mockSCIMService := NewMockSCIMService(mockCtrl)
 
-		// urFilter := "name=aaa*"
-		// grFilter := "name=aaa*"
-		grResult := &GroupResult{
-			Total:    10,
-			Items:    1,
-			NextItem: 2,
-			Resources: []*Group{
-				{
-					Name:  "group1",
-					Email: "group1@gmail.com",
-				},
-			},
-		}
-		urResult := &UserResult{
-			Total:    10,
-			Items:    1,
-			NextItem: 2,
-			Resources: []*User{
-				{
-					Name:  "user1",
-					Email: "user1@gmail.com",
-				},
-			},
-		}
-
-		mockProviderService.EXPECT().GetGroups(&ctx, gomock.Any()).Return(grResult, nil)
-		mockProviderService.EXPECT().GetUsers(&ctx, gomock.Any()).Return(urResult, nil)
+		mockProviderService.EXPECT().GetGroups(&ctx, gomock.Any()).Return(nil, nil)
+		mockProviderService.EXPECT().GetUsers(&ctx, gomock.Any()).Return(nil, nil)
 		mockSCIMService.EXPECT().CreateOrUpdateGroups(&ctx, gomock.Any()).Return(nil)
 		mockSCIMService.EXPECT().CreateOrUpdateUsers(&ctx, gomock.Any()).Return(nil)
 		mockSCIMService.EXPECT().DeleteGroups(&ctx, gomock.Any()).Return(nil)
