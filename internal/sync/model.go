@@ -1,37 +1,42 @@
 package sync
 
 type Group struct {
-	Name  string
-	Email string
+	ID          string
+	ExternalId  string
+	Name        string
+	Email       string
+	Description string
 }
 
 type User struct {
-	Name  string
-	Email string
+	ID         string
+	ExternalId string
+	Name       struct {
+		FamilyName string
+		GivenName  string
+	}
+	DisplayName string
+	Active      bool
+	Email       string
 }
 
 type Member struct {
-	Name  string
-	Email string
+	ID         string
+	ExternalId string
+	Email      string
 }
 
-type GroupResult struct {
-	Total     int
+type GroupsResult struct {
 	Items     int
-	NextItem  int
 	Resources []*Group
 }
 
-type UserResult struct {
-	Total     int
+type UsersResult struct {
 	Items     int
-	NextItem  int
 	Resources []*User
 }
 
-type MemberResult struct {
-	Total     int
+type MembersResult struct {
 	Items     int
-	NextItem  int
 	Resources []*Member
 }

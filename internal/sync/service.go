@@ -10,35 +10,19 @@ import (
 
 var (
 	ErrNilContext         = errors.New("context cannot be nil")
-	ErrProviderServiceNil = errors.New("provider service cannot be nil")
+	ErrProviderServiceNil = errors.New("identity provider service cannot be nil")
 	ErrSCIMServiceNil     = errors.New("SCIM service cannot be nil")
 )
 
-type ProviderService interface {
-	GetGroups(*context.Context, []string) (*GroupResult, error)
-	GetUsers(*context.Context, []string) (*UserResult, error)
-	GetGroupsMembers(*context.Context, *GroupResult) (*MemberResult, error)
-	GetUsersFromGroupsMembers(*context.Context, []string, *MemberResult) (*UserResult, error)
-}
-
-type SCIMService interface {
-	GetGroups(*context.Context, []string) (*GroupResult, error)
-	GetUsers(*context.Context, []string) (*UserResult, error)
-	CreateOrUpdateGroups(*context.Context, *GroupResult) error
-	CreateOrUpdateUsers(*context.Context, *UserResult) error
-	DeleteGroups(*context.Context, *GroupResult) error
-	DeleteUsers(*context.Context, *UserResult) error
-}
-
 type SyncServiceOption func(*syncService)
 
-func WithProviderGroupsFilter(filter []string) SyncServiceOption {
+func WithIdentityProviderGroupsFilter(filter []string) SyncServiceOption {
 	return func(ss *syncService) {
 		ss.provGroupsFilter = filter
 	}
 }
 
-func WithProviderUsersFilter(filter []string) SyncServiceOption {
+func WithIdentityProviderUsersFilter(filter []string) SyncServiceOption {
 	return func(ss *syncService) {
 		ss.provUsersFilter = filter
 	}
@@ -50,17 +34,17 @@ type SyncService interface {
 }
 
 type syncService struct {
-	ctx              *context.Context
+	ctx              context.Context
 	config           config.Config
 	mu               *sync.Mutex
-	prov             ProviderService
+	prov             IdentityProviderService
 	provGroupsFilter []string
 	provUsersFilter  []string
 	scim             SCIMService
 }
 
 // NewSyncService creates a new sync service.
-func NewSyncService(ctx *context.Context, prov ProviderService, scim SCIMService, opts ...SyncServiceOption) (SyncService, error) {
+func NewSyncService(ctx context.Context, prov IdentityProviderService, scim SCIMService, opts ...SyncServiceOption) (SyncService, error) {
 
 	if ctx == nil {
 		return nil, ErrNilContext
@@ -84,34 +68,45 @@ func (ss *syncService) SyncGroupsAndTheirMembers() error {
 	ss.mu.Lock()
 	defer ss.mu.Unlock()
 
-	pGroups, err := ss.prov.GetGroups(ss.ctx, ss.provGroupsFilter)
+	pGroupsResult, err := ss.prov.GetGroups(ss.ctx, ss.provGroupsFilter)
 	if err != nil {
 		return err
 	}
 
-	pGroupsMembers, err := ss.prov.GetGroupsMembers(ss.ctx, pGroups)
-	if err != nil {
+	pUsers := make([]*User, 0)
+	for _, pGroup := range pGroupsResult.Resources {
+
+		pGroupMembers, err := ss.prov.GetGroupMembers(ss.ctx, pGroup.ExternalId)
+		if err != nil {
+			return err
+		}
+
+		pUsersFromMembers, err := ss.prov.GetUsersFromGroupMembers(ss.ctx, pGroupMembers)
+		if err != nil {
+			return err
+		}
+
+		pUsers = append(pUsers, pUsersFromMembers.Resources...)
+	}
+
+	pUsersResult := &UsersResult{
+		Items:     len(pUsers),
+		Resources: pUsers,
+	}
+
+	if err := ss.scim.CreateOrUpdateUsers(ss.ctx, pUsersResult); err != nil {
 		return err
 	}
 
-	pUsers, err := ss.prov.GetUsersFromGroupsMembers(ss.ctx, ss.provUsersFilter, pGroupsMembers)
-	if err != nil {
+	if err := ss.scim.CreateOrUpdateGroups(ss.ctx, pGroupsResult); err != nil {
 		return err
 	}
 
-	if err := ss.scim.CreateOrUpdateGroups(ss.ctx, pGroups); err != nil {
+	if err := ss.scim.DeleteUsers(ss.ctx, pUsersResult); err != nil {
 		return err
 	}
 
-	if err := ss.scim.CreateOrUpdateUsers(ss.ctx, pUsers); err != nil {
-		return err
-	}
-
-	if err := ss.scim.DeleteGroups(ss.ctx, pGroups); err != nil {
-		return err
-	}
-
-	if err := ss.scim.DeleteUsers(ss.ctx, pUsers); err != nil {
+	if err := ss.scim.DeleteGroups(ss.ctx, pGroupsResult); err != nil {
 		return err
 	}
 
