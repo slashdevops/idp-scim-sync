@@ -51,5 +51,5 @@ References:
 ### Mocks
 
 ```bash
-mockgen -package=sync -destination=internal/sync/service_mocks.go -source=internal/sync/service.go ProviderService,SCIMService
+mockgen -package=sync -destination=internal/sync/service_mocks.go -source=internal/sync/service.go IdentityProviderService,SCIMService
 ```

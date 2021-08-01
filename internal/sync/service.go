@@ -14,6 +14,22 @@ var (
 	ErrSCIMServiceNil     = errors.New("SCIM service cannot be nil")
 )
 
+type IdentityProviderService interface {
+	GetGroups(ctx context.Context, filter []string) (*GroupsResult, error)
+	GetUsers(ctx context.Context, filter []string) (*UsersResult, error)
+	GetGroupMembers(ctx context.Context, groupID string) (*MembersResult, error)
+	GetUsersFromGroupMembers(ctx context.Context, members *MembersResult) (*UsersResult, error)
+}
+
+type SCIMService interface {
+	GetGroups(ctx context.Context, filter []string) (*GroupsResult, error)
+	GetUsers(ctx context.Context, filter []string) (*UsersResult, error)
+	CreateOrUpdateGroups(ctx context.Context, gr *GroupsResult) error
+	CreateOrUpdateUsers(ctx context.Context, ur *UsersResult) error
+	DeleteGroups(ctx context.Context, gr *GroupsResult) error
+	DeleteUsers(ctx context.Context, ur *UsersResult) error
+}
+
 type SyncServiceOption func(*syncService)
 
 func WithIdentityProviderGroupsFilter(filter []string) SyncServiceOption {

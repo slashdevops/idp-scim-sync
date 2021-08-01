@@ -15,10 +15,10 @@ func Test_syncService_NewSyncService(t *testing.T) {
 		defer mockCtrl.Finish()
 
 		ctx := context.TODO()
-		mockProviderService := NewMockProviderService(mockCtrl)
+		mockProviderService := NewMockIdentityProviderService(mockCtrl)
 		mockSCIMService := NewMockSCIMService(mockCtrl)
 
-		svc, err := NewSyncService(&ctx, mockProviderService, mockSCIMService)
+		svc, err := NewSyncService(ctx, mockProviderService, mockSCIMService)
 
 		assert.NoError(t, err)
 		assert.NotNil(t, svc)
@@ -27,7 +27,7 @@ func Test_syncService_NewSyncService(t *testing.T) {
 	t.Run("New Service without parameters", func(t *testing.T) {
 		ctx := context.TODO()
 
-		svc, err := NewSyncService(&ctx, nil, nil)
+		svc, err := NewSyncService(ctx, nil, nil)
 
 		assert.Error(t, err)
 		assert.Nil(t, svc)
@@ -41,22 +41,21 @@ func Test_syncService_SyncGroupsAndUsers(t *testing.T) {
 		defer mockCtrl.Finish()
 
 		ctx := context.TODO()
-		mockProviderService := NewMockProviderService(mockCtrl)
+		mockProviderService := NewMockIdentityProviderService(mockCtrl)
 		mockSCIMService := NewMockSCIMService(mockCtrl)
 
-		mockProviderService.EXPECT().GetGroups(&ctx, gomock.Any()).Return(nil, nil)
-		mockProviderService.EXPECT().GetUsers(&ctx, gomock.Any()).Return(nil, nil)
-		mockSCIMService.EXPECT().CreateOrUpdateGroups(&ctx, gomock.Any()).Return(nil)
-		mockSCIMService.EXPECT().CreateOrUpdateUsers(&ctx, gomock.Any()).Return(nil)
-		mockSCIMService.EXPECT().DeleteGroups(&ctx, gomock.Any()).Return(nil)
-		mockSCIMService.EXPECT().DeleteUsers(&ctx, gomock.Any()).Return(nil)
+		mockProviderService.EXPECT().GetGroups(ctx, gomock.Any()).Return(nil, nil)
+		mockProviderService.EXPECT().GetUsers(ctx, gomock.Any()).Return(nil, nil)
+		mockSCIMService.EXPECT().CreateOrUpdateGroups(ctx, gomock.Any()).Return(nil)
+		mockSCIMService.EXPECT().CreateOrUpdateUsers(ctx, gomock.Any()).Return(nil)
+		mockSCIMService.EXPECT().DeleteGroups(ctx, gomock.Any()).Return(nil)
+		mockSCIMService.EXPECT().DeleteUsers(ctx, gomock.Any()).Return(nil)
 
-		svc, err := NewSyncService(&ctx, mockProviderService, mockSCIMService)
+		svc, err := NewSyncService(ctx, mockProviderService, mockSCIMService)
 		assert.NoError(t, err)
 
 		err = svc.SyncGroupsAndUsers()
 		assert.NoError(t, err)
-
 	})
 
 }
