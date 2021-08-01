@@ -22,6 +22,7 @@ type DirectoryService interface {
 	ListGroups(query []string) ([]*admin.Group, error)
 	ListGroupMembers(groupID string) ([]*admin.Member, error)
 	GetUser(userID string) (*admin.User, error)
+	GetGroup(groupID string) (*admin.Group, error)
 }
 
 type directoryService struct {
@@ -124,4 +125,11 @@ func (d *directoryService) GetUser(userID string) (*admin.User, error) {
 	u, err := d.svc.Users.Get(userID).Fields(usersRequiredFields).Context(d.ctx).Do()
 
 	return u, err
+}
+
+func (d *directoryService) GetGroup(groupID string) (*admin.Group, error) {
+
+	g, err := d.svc.Groups.Get(groupID).Fields(groupsRequiredFields).Context(d.ctx).Do()
+
+	return g, err
 }
