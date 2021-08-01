@@ -93,6 +93,7 @@ func Test_googleProvider_GetGroups(t *testing.T) {
 			wantErr: true,
 		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mockCtrl := gomock.NewController(t)
@@ -122,33 +123,73 @@ func Test_googleProvider_GetGroups(t *testing.T) {
 
 func Test_googleProvider_GetUsers(t *testing.T) {
 	type fields struct {
-		ds DirectoryService
+		ds *MockDirectoryService
 	}
+
 	type args struct {
 		ctx    context.Context
 		filter []string
 	}
+
 	tests := []struct {
 		name    string
-		fields  fields
+		prepare func(f *fields)
 		args    args
 		want    *sync.UsersResult
 		wantErr bool
 	}{
-		// TODO: Add test cases.
+		{
+			name: "Should return UsersResult and no error",
+			prepare: func(f *fields) {
+				googleUsers := make([]*admin.User, 0)
+				googleUsers = append(googleUsers, &admin.User{PrimaryEmail: "user1@mail.com", Id: "1", Name: &admin.UserName{GivenName: "user", FamilyName: "1"}, Suspended: false})
+				googleUsers = append(googleUsers, &admin.User{PrimaryEmail: "user2@mail.com", Id: "2", Name: &admin.UserName{GivenName: "user", FamilyName: "2"}, Suspended: true})
+
+				f.ds.EXPECT().ListUsers(gomock.Eq([]string{""})).Return(googleUsers, nil).Times(1)
+			},
+			args: args{ctx: context.TODO(), filter: []string{""}},
+			want: &sync.UsersResult{
+				Items: 2,
+				Resources: []*sync.User{
+					{Id: sync.Id{IdentityProvider: "1", SCIM: ""}, Name: sync.Name{GivenName: "user", FamilyName: "1"}, Email: "user1@mail.com", DisplayName: "user 1", Active: true},
+					{Id: sync.Id{IdentityProvider: "2", SCIM: ""}, Name: sync.Name{GivenName: "user", FamilyName: "2"}, Email: "user2@mail.com", DisplayName: "user 2", Active: false},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "Should return error",
+			prepare: func(f *fields) {
+				f.ds.EXPECT().ListUsers(gomock.Eq([]string{""})).Return(nil, ErrListingUsers).Times(1)
+			},
+			args:    args{ctx: context.TODO(), filter: []string{""}},
+			want:    nil,
+			wantErr: true,
+		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			g := &googleProvider{
-				ds: tt.fields.ds,
+			mockCtrl := gomock.NewController(t)
+			defer mockCtrl.Finish()
+
+			f := fields{ds: NewMockDirectoryService(mockCtrl)}
+
+			if tt.prepare != nil {
+				tt.prepare(&f)
 			}
+
+			g := &googleProvider{
+				ds: f.ds,
+			}
+
 			got, err := g.GetUsers(tt.args.ctx, tt.args.filter)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("googleProvider.GetUsers() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("googleProvider.GetUsers() = %v, want %v", got, tt.want)
+				t.Errorf("googleProvider.GetUsers() = %s, want %s", toJSON(got), toJSON(tt.want))
 			}
 		})
 	}
@@ -156,33 +197,73 @@ func Test_googleProvider_GetUsers(t *testing.T) {
 
 func Test_googleProvider_GetGroupMembers(t *testing.T) {
 	type fields struct {
-		ds DirectoryService
+		ds *MockDirectoryService
 	}
+
 	type args struct {
 		ctx context.Context
 		id  string
 	}
+
 	tests := []struct {
 		name    string
-		fields  fields
+		prepare func(f *fields)
 		args    args
 		want    *sync.MembersResult
 		wantErr bool
 	}{
-		// TODO: Add test cases.
+		{
+			name: "Should return MembersResult and no error",
+			prepare: func(f *fields) {
+				googleGroupMembers := make([]*admin.Member, 0)
+				googleGroupMembers = append(googleGroupMembers, &admin.Member{Email: "user1@mail.com", Id: "1"})
+				googleGroupMembers = append(googleGroupMembers, &admin.Member{Email: "user2@mail.com", Id: "2"})
+
+				f.ds.EXPECT().ListGroupMembers(gomock.Eq("")).Return(googleGroupMembers, nil).Times(1)
+			},
+			args: args{ctx: context.TODO(), id: ""},
+			want: &sync.MembersResult{
+				Items: 2,
+				Resources: []*sync.Member{
+					{Id: sync.Id{IdentityProvider: "1", SCIM: ""}, Email: "user1@mail.com"},
+					{Id: sync.Id{IdentityProvider: "2", SCIM: ""}, Email: "user2@mail.com"},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "Should return error",
+			prepare: func(f *fields) {
+				f.ds.EXPECT().ListGroupMembers(gomock.Eq("")).Return(nil, ErrListingGroupMembers).Times(1)
+			},
+			args:    args{ctx: context.TODO(), id: ""},
+			want:    nil,
+			wantErr: true,
+		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			g := &googleProvider{
-				ds: tt.fields.ds,
+			mockCtrl := gomock.NewController(t)
+			defer mockCtrl.Finish()
+
+			f := fields{ds: NewMockDirectoryService(mockCtrl)}
+
+			if tt.prepare != nil {
+				tt.prepare(&f)
 			}
+
+			g := &googleProvider{
+				ds: f.ds,
+			}
+
 			got, err := g.GetGroupMembers(tt.args.ctx, tt.args.id)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("googleProvider.GetGroupMembers() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("googleProvider.GetGroupMembers() = %v, want %v", got, tt.want)
+				t.Errorf("googleProvider.GetGroupMembers() = %s, want %s", toJSON(got), toJSON(tt.want))
 			}
 		})
 	}
@@ -190,33 +271,92 @@ func Test_googleProvider_GetGroupMembers(t *testing.T) {
 
 func Test_googleProvider_GetUsersFromGroupMembers(t *testing.T) {
 	type fields struct {
-		ds DirectoryService
+		ds *MockDirectoryService
 	}
+
 	type args struct {
 		ctx context.Context
 		mbr *sync.MembersResult
 	}
+
 	tests := []struct {
 		name    string
-		fields  fields
+		prepare func(f *fields)
 		args    args
 		want    *sync.UsersResult
 		wantErr bool
 	}{
-		// TODO: Add test cases.
+		{
+			name: "Should return UsersResult and no error",
+			prepare: func(f *fields) {
+				googleUser1 := &admin.User{PrimaryEmail: "user1@mail.com", Id: "1", Name: &admin.UserName{GivenName: "user", FamilyName: "1"}, Suspended: false}
+				googleUser2 := &admin.User{PrimaryEmail: "user2@mail.com", Id: "2", Name: &admin.UserName{GivenName: "user", FamilyName: "2"}, Suspended: true}
+
+				gomock.InOrder(
+					f.ds.EXPECT().GetUser(gomock.Eq("1")).Return(googleUser1, nil).Times(1),
+					f.ds.EXPECT().GetUser(gomock.Eq("2")).Return(googleUser2, nil).Times(1),
+				)
+			},
+			args: args{
+				ctx: context.TODO(),
+				mbr: &sync.MembersResult{
+					Items: 2,
+					Resources: []*sync.Member{
+						{Id: sync.Id{IdentityProvider: "1", SCIM: ""}, Email: "user1@mail.com"},
+						{Id: sync.Id{IdentityProvider: "2", SCIM: ""}, Email: "user2@mail.com"},
+					},
+				},
+			},
+			want: &sync.UsersResult{
+				Items: 2,
+				Resources: []*sync.User{
+					{Id: sync.Id{IdentityProvider: "1", SCIM: ""}, Name: sync.Name{GivenName: "user", FamilyName: "1"}, Email: "user1@mail.com", DisplayName: "user 1", Active: true},
+					{Id: sync.Id{IdentityProvider: "2", SCIM: ""}, Name: sync.Name{GivenName: "user", FamilyName: "2"}, Email: "user2@mail.com", DisplayName: "user 2", Active: false},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "Should return error",
+			prepare: func(f *fields) {
+				f.ds.EXPECT().GetUser(gomock.Eq("")).Return(nil, ErrGettingUser).Times(1)
+			},
+			args: args{
+				ctx: context.TODO(),
+				mbr: &sync.MembersResult{
+					Items: 0,
+					Resources: []*sync.Member{
+						{Id: sync.Id{IdentityProvider: "", SCIM: ""}, Email: "user1@mail.com"},
+					},
+				},
+			},
+			want:    nil,
+			wantErr: true,
+		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			g := &googleProvider{
-				ds: tt.fields.ds,
+			mockCtrl := gomock.NewController(t)
+			defer mockCtrl.Finish()
+
+			f := fields{ds: NewMockDirectoryService(mockCtrl)}
+
+			if tt.prepare != nil {
+				tt.prepare(&f)
 			}
+
+			g := &googleProvider{
+				ds: f.ds,
+			}
+
 			got, err := g.GetUsersFromGroupMembers(tt.args.ctx, tt.args.mbr)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("googleProvider.GetUsersFromGroupMembers() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("googleProvider.GetUsersFromGroupMembers() = %v, want %v", got, tt.want)
+				t.Errorf("googleProvider.GetUsersFromGroupMembers() = %s, want %s", toJSON(got), toJSON(tt.want))
 			}
 		})
 	}
