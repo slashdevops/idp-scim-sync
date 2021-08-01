@@ -50,6 +50,14 @@ References:
 
 ### Mocks
 
+Sync Service Mocks
+
 ```bash
 mockgen -package=sync -destination=internal/sync/service_mocks.go -source=internal/sync/service.go IdentityProviderService,SCIMService
+```
+
+Directory Service Service Mocks
+
+```bash
+mockgen -package=google -destination=internal/google/directory_mocks.go -source=internal/google/directory.go DirectoryService
 ```

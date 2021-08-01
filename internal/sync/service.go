@@ -12,6 +12,7 @@ var (
 	ErrNilContext         = errors.New("context cannot be nil")
 	ErrProviderServiceNil = errors.New("identity provider service cannot be nil")
 	ErrSCIMServiceNil     = errors.New("SCIM service cannot be nil")
+	ErrGettingGroups      = errors.New("error getting groups")
 )
 
 type IdentityProviderService interface {
@@ -86,7 +87,7 @@ func (ss *syncService) SyncGroupsAndTheirMembers() error {
 
 	pGroupsResult, err := ss.prov.GetGroups(ss.ctx, ss.provGroupsFilter)
 	if err != nil {
-		return err
+		return ErrGettingGroups
 	}
 
 	pUsers := make([]*User, 0)

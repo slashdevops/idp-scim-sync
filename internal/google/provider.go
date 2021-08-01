@@ -9,6 +9,7 @@ import (
 )
 
 var (
+	ErrDirectoryServiceNil = errors.New("directory service is nil")
 	ErrListingGroups       = errors.New("error listing groups")
 	ErrListingUsers        = errors.New("error listing users")
 	ErrListingGroupMembers = errors.New("error listing group members")
@@ -19,10 +20,14 @@ type googleProvider struct {
 	ds DirectoryService
 }
 
-func NewGoogleProvider(ds DirectoryService) sync.IdentityProviderService {
+func NewGoogleIdentityProvider(ds DirectoryService) (sync.IdentityProviderService, error) {
+	if ds == nil {
+		return nil, ErrDirectoryServiceNil
+	}
+
 	return &googleProvider{
 		ds: ds,
-	}
+	}, nil
 }
 
 func (g *googleProvider) GetGroups(ctx context.Context, filter []string) (*sync.GroupsResult, error) {

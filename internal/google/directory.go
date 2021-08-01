@@ -2,6 +2,7 @@ package google
 
 import (
 	"context"
+	"errors"
 
 	"golang.org/x/oauth2/google"
 	admin "google.golang.org/api/admin/directory/v1"
@@ -14,6 +15,11 @@ const (
 	groupsRequiredFields  googleapi.Field = "id,name,email"
 	membersRequiredFields googleapi.Field = "id,email"
 	usersRequiredFields   googleapi.Field = "id,name,primaryEmail,suspended"
+)
+
+var (
+	ErrInvalidServiceAccount    = errors.New("invalid service account")
+	ErrCreatingDirectoryService = errors.New("creating directory service")
 )
 
 // DirectoryService is a facade of Google Directory API client.
@@ -39,7 +45,7 @@ func NewService(ctx context.Context, UserEmail string, ServiceAccount []byte, sc
 
 	config, err := google.JWTConfigFromJSON(ServiceAccount, scope...)
 	if err != nil {
-		return nil, err
+		return nil, ErrInvalidServiceAccount
 	}
 
 	config.Subject = UserEmail
@@ -48,7 +54,7 @@ func NewService(ctx context.Context, UserEmail string, ServiceAccount []byte, sc
 
 	svc, err := admin.NewService(ctx, option.WithTokenSource(ts))
 	if err != nil {
-		return nil, err
+		return nil, ErrCreatingDirectoryService
 	}
 
 	return svc, nil
