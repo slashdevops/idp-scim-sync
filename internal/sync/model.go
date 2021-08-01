@@ -1,29 +1,32 @@
 package sync
 
+type Id struct {
+	IdentityProvider string
+	SCIM             string
+}
+
+type Name struct {
+	FamilyName string
+	GivenName  string
+}
+
 type Group struct {
-	ID          string
-	ExternalId  string
-	Name        string
-	Email       string
-	Description string
+	Id    Id
+	Name  string
+	Email string
 }
 
 type User struct {
-	ID         string
-	ExternalId string
-	Name       struct {
-		FamilyName string
-		GivenName  string
-	}
+	Id          Id
+	Name        Name
 	DisplayName string
 	Active      bool
 	Email       string
 }
 
 type Member struct {
-	ID         string
-	ExternalId string
-	Email      string
+	Id    Id
+	Email string
 }
 
 type GroupsResult struct {

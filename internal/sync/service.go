@@ -76,7 +76,7 @@ func (ss *syncService) SyncGroupsAndTheirMembers() error {
 	pUsers := make([]*User, 0)
 	for _, pGroup := range pGroupsResult.Resources {
 
-		pGroupMembers, err := ss.prov.GetGroupMembers(ss.ctx, pGroup.ExternalId)
+		pGroupMembers, err := ss.prov.GetGroupMembers(ss.ctx, pGroup.Id.IdentityProvider)
 		if err != nil {
 			return err
 		}
