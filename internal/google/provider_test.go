@@ -23,13 +23,11 @@ func toJSON(stc interface{}) []byte {
 }
 
 func TestNewGoogleIdentityProvider(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
 
 	t.Run("Should return IdentityServiceProvider and no error", func(t *testing.T) {
-		mockCtrl := gomock.NewController(t)
-		defer mockCtrl.Finish()
-
 		mockDS := NewMockDirectoryService(mockCtrl)
-
 		svc, err := NewGoogleIdentityProvider(mockDS)
 
 		assert.NoError(t, err)
@@ -37,9 +35,6 @@ func TestNewGoogleIdentityProvider(t *testing.T) {
 	})
 
 	t.Run("Should return an error if no DirectoryService is provided", func(t *testing.T) {
-		mockCtrl := gomock.NewController(t)
-		defer mockCtrl.Finish()
-
 		svc, err := NewGoogleIdentityProvider(nil)
 
 		assert.Error(t, err)
