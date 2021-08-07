@@ -1,4 +1,4 @@
-module github.com/slashdevops/aws-sso-gws-sync
+module github.com/slashdevops/idp-scim-sync
 
 go 1.16
 

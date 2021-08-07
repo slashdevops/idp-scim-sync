@@ -21,7 +21,7 @@ import (
 	"time"
 
 	log "github.com/sirupsen/logrus"
-	"github.com/slashdevops/aws-sso-gws-sync/internal/aws"
+	"github.com/slashdevops/idp-scim-sync/internal/aws"
 	"github.com/spf13/cobra"
 )
 

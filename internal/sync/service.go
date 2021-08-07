@@ -5,7 +5,7 @@ import (
 	"errors"
 	"sync"
 
-	"github.com/slashdevops/aws-sso-gws-sync/internal/config"
+	"github.com/slashdevops/idp-scim-sync/internal/config"
 )
 
 var (
@@ -14,22 +14,6 @@ var (
 	ErrSCIMServiceNil     = errors.New("SCIM service cannot be nil")
 	ErrGettingGroups      = errors.New("error getting groups")
 )
-
-type IdentityProviderService interface {
-	GetGroups(ctx context.Context, filter []string) (*GroupsResult, error)
-	GetUsers(ctx context.Context, filter []string) (*UsersResult, error)
-	GetGroupMembers(ctx context.Context, groupID string) (*MembersResult, error)
-	GetUsersFromGroupMembers(ctx context.Context, members *MembersResult) (*UsersResult, error)
-}
-
-type SCIMService interface {
-	GetGroups(ctx context.Context, filter []string) (*GroupsResult, error)
-	GetUsers(ctx context.Context, filter []string) (*UsersResult, error)
-	CreateOrUpdateGroups(ctx context.Context, gr *GroupsResult) error
-	CreateOrUpdateUsers(ctx context.Context, ur *UsersResult) error
-	DeleteGroups(ctx context.Context, gr *GroupsResult) error
-	DeleteUsers(ctx context.Context, ur *UsersResult) error
-}
 
 type SyncService interface {
 	SyncGroupsAndTheirMembers() error

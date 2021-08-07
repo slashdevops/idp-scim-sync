@@ -23,8 +23,8 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/secretsmanager"
 	"github.com/pkg/errors"
-	"github.com/slashdevops/aws-sso-gws-sync/internal/aws"
-	"github.com/slashdevops/aws-sso-gws-sync/internal/config"
+	"github.com/slashdevops/idp-scim-sync/internal/aws"
+	"github.com/slashdevops/idp-scim-sync/internal/config"
 	"github.com/spf13/cobra"
 
 	"github.com/spf13/viper"

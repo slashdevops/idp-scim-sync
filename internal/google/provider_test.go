@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	gomock "github.com/golang/mock/gomock"
-	"github.com/slashdevops/aws-sso-gws-sync/internal/sync"
+	"github.com/slashdevops/idp-scim-sync/internal/sync"
 	"github.com/stretchr/testify/assert"
 	admin "google.golang.org/api/admin/directory/v1"
 )

@@ -1,11 +1,11 @@
-# aws-sso-gws-sync
+# idp-scim-sync
 
-Sync your Google Workspace Groups and Users to AWS Single Sing-On
+Sync your Google Workspace Groups and Users to AWS Single Sing-On using SCIM protocol.
 
 ## Available Commands
 
 ### gws
 
 ```cmd
-ssocli gws groups list -u "user.email@google.com" -s "./credentials.json" -q "name:Admin*" -q "name:SuperAdmin*"
+idpscimcli gws groups list -u "user.email@google.com" -s "./credentials.json" -q "name:Admin*" -q "name:SuperAdmin*"
 ```

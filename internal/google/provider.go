@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/slashdevops/aws-sso-gws-sync/internal/sync"
+	"github.com/slashdevops/idp-scim-sync/internal/sync"
 )
 
 var (

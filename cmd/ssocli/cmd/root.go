@@ -16,7 +16,7 @@ limitations under the License.
 package cmd
 
 import (
-	"github.com/slashdevops/aws-sso-gws-sync/internal/config"
+	"github.com/slashdevops/idp-scim-sync/internal/config"
 	"github.com/spf13/cobra"
 
 	log "github.com/sirupsen/logrus"

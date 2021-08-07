@@ -48,7 +48,7 @@ func (s *scim) sendRequest(req *http.Request, body interface{}) (resp *http.Resp
 
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/json")
-	req.Header.Set("User-Agent", "aws-sso-gws-sync/1.0")
+	req.Header.Set("User-Agent", "idp-scim-sync/1.0")
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", s.bearerToken))
 
 	resp, err = s.httpClient.Do(req)
