@@ -4,8 +4,6 @@ import (
 	"context"
 	"errors"
 	"sync"
-
-	"github.com/slashdevops/idp-scim-sync/internal/config"
 )
 
 var (
@@ -22,7 +20,6 @@ type SyncService interface {
 
 type syncService struct {
 	ctx              context.Context
-	config           config.Config
 	mu               *sync.Mutex
 	prov             IdentityProviderService
 	provGroupsFilter []string
@@ -43,12 +40,20 @@ func NewSyncService(ctx context.Context, prov IdentityProviderService, scim SCIM
 		return nil, ErrSCIMServiceNil
 	}
 
-	return &syncService{
-		ctx:  ctx,
-		mu:   &sync.Mutex{},
-		prov: prov,
-		scim: scim,
-	}, nil
+	ss := &syncService{
+		ctx:              ctx,
+		mu:               &sync.Mutex{},
+		prov:             prov,
+		provGroupsFilter: []string{}, // fill in with the opts
+		provUsersFilter:  []string{}, // ill in with the opts
+		scim:             scim,
+	}
+
+	for _, opt := range opts {
+		opt(ss)
+	}
+
+	return ss, nil
 }
 
 func (ss *syncService) SyncGroupsAndTheirMembers() error {
