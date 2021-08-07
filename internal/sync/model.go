@@ -1,31 +1,26 @@
 package sync
 
-type Id struct {
-	IdentityProvider string
-	SCIM             string
-}
-
 type Name struct {
 	FamilyName string
 	GivenName  string
 }
 
-type Group struct {
-	Id    Id
-	Name  string
-	Email string
-}
-
 type User struct {
-	Id          Id
+	Id          string
 	Name        Name
 	DisplayName string
 	Active      bool
 	Email       string
 }
 
-type Member struct {
-	Id    Id
+type UsersResult struct {
+	Items     int
+	Resources []*User
+}
+
+type Group struct {
+	Id    string
+	Name  string
 	Email string
 }
 
@@ -34,12 +29,22 @@ type GroupsResult struct {
 	Resources []*Group
 }
 
-type UsersResult struct {
-	Items     int
-	Resources []*User
+type Member struct {
+	Id    string
+	Email string
 }
-
 type MembersResult struct {
 	Items     int
 	Resources []*Member
+}
+
+type GroupsMembers map[string][]*Member
+
+func (gms GroupsMembers) GetMembers(groupId string) []*Member {
+	return gms[groupId]
+}
+
+type GroupsMembersResult struct {
+	Items     int
+	Resources *GroupsMembers
 }

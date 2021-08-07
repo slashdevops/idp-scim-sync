@@ -40,7 +40,7 @@ func (g *googleProvider) GetGroups(ctx context.Context, filter []string) (*sync.
 
 	for _, grp := range googleGroups {
 		syncGroups = append(syncGroups, &sync.Group{
-			Id:    sync.Id{IdentityProvider: grp.Id},
+			Id:    grp.Id,
 			Name:  grp.Name,
 			Email: grp.Email,
 		})
@@ -64,7 +64,7 @@ func (g *googleProvider) GetUsers(ctx context.Context, filter []string) (*sync.U
 
 	for _, usr := range googleUsers {
 		syncUsers = append(syncUsers, &sync.User{
-			Id:          sync.Id{IdentityProvider: usr.Id},
+			Id:          usr.Id,
 			Name:        sync.Name{FamilyName: usr.Name.FamilyName, GivenName: usr.Name.GivenName},
 			DisplayName: fmt.Sprintf("%s %s", usr.Name.GivenName, usr.Name.FamilyName),
 			Active:      !usr.Suspended,
@@ -90,7 +90,7 @@ func (g *googleProvider) GetGroupMembers(ctx context.Context, id string) (*sync.
 
 	for _, member := range googleMembers {
 		syncMembers = append(syncMembers, &sync.Member{
-			Id:    sync.Id{IdentityProvider: member.Id},
+			Id:    member.Id,
 			Email: member.Email,
 		})
 	}
@@ -107,13 +107,13 @@ func (g *googleProvider) GetUsersFromGroupMembers(ctx context.Context, mbr *sync
 	syncUsers := make([]*sync.User, 0)
 
 	for _, member := range mbr.Resources {
-		u, err := g.ds.GetUser(member.Id.IdentityProvider)
+		u, err := g.ds.GetUser(member.Id)
 		if err != nil {
 			return nil, ErrGettingUser
 		}
 
 		syncUsers = append(syncUsers, &sync.User{
-			Id:          sync.Id{IdentityProvider: u.Id},
+			Id:          u.Id,
 			Name:        sync.Name{FamilyName: u.Name.FamilyName, GivenName: u.Name.GivenName},
 			DisplayName: fmt.Sprintf("%s %s", u.Name.GivenName, u.Name.FamilyName),
 			Active:      !u.Suspended,

@@ -72,8 +72,8 @@ func Test_googleProvider_GetGroups(t *testing.T) {
 			want: &sync.GroupsResult{
 				Items: 2,
 				Resources: []*sync.Group{
-					{Id: sync.Id{IdentityProvider: "1", SCIM: ""}, Name: "group1", Email: "group1@mail.com"},
-					{Id: sync.Id{IdentityProvider: "2", SCIM: ""}, Name: "group2", Email: "group2@mail.com"},
+					{Id: "1", Name: "group1", Email: "group1@mail.com"},
+					{Id: "2", Name: "group2", Email: "group2@mail.com"},
 				},
 			},
 			wantErr: false,
@@ -146,8 +146,8 @@ func Test_googleProvider_GetUsers(t *testing.T) {
 			want: &sync.UsersResult{
 				Items: 2,
 				Resources: []*sync.User{
-					{Id: sync.Id{IdentityProvider: "1", SCIM: ""}, Name: sync.Name{GivenName: "user", FamilyName: "1"}, Email: "user1@mail.com", DisplayName: "user 1", Active: true},
-					{Id: sync.Id{IdentityProvider: "2", SCIM: ""}, Name: sync.Name{GivenName: "user", FamilyName: "2"}, Email: "user2@mail.com", DisplayName: "user 2", Active: false},
+					{Id: "1", Name: sync.Name{GivenName: "user", FamilyName: "1"}, Email: "user1@mail.com", DisplayName: "user 1", Active: true},
+					{Id: "2", Name: sync.Name{GivenName: "user", FamilyName: "2"}, Email: "user2@mail.com", DisplayName: "user 2", Active: false},
 				},
 			},
 			wantErr: false,
@@ -220,8 +220,8 @@ func Test_googleProvider_GetGroupMembers(t *testing.T) {
 			want: &sync.MembersResult{
 				Items: 2,
 				Resources: []*sync.Member{
-					{Id: sync.Id{IdentityProvider: "1", SCIM: ""}, Email: "user1@mail.com"},
-					{Id: sync.Id{IdentityProvider: "2", SCIM: ""}, Email: "user2@mail.com"},
+					{Id: "1", Email: "user1@mail.com"},
+					{Id: "2", Email: "user2@mail.com"},
 				},
 			},
 			wantErr: false,
@@ -297,16 +297,16 @@ func Test_googleProvider_GetUsersFromGroupMembers(t *testing.T) {
 				mbr: &sync.MembersResult{
 					Items: 2,
 					Resources: []*sync.Member{
-						{Id: sync.Id{IdentityProvider: "1", SCIM: ""}, Email: "user1@mail.com"},
-						{Id: sync.Id{IdentityProvider: "2", SCIM: ""}, Email: "user2@mail.com"},
+						{Id: "1", Email: "user1@mail.com"},
+						{Id: "2", Email: "user2@mail.com"},
 					},
 				},
 			},
 			want: &sync.UsersResult{
 				Items: 2,
 				Resources: []*sync.User{
-					{Id: sync.Id{IdentityProvider: "1", SCIM: ""}, Name: sync.Name{GivenName: "user", FamilyName: "1"}, Email: "user1@mail.com", DisplayName: "user 1", Active: true},
-					{Id: sync.Id{IdentityProvider: "2", SCIM: ""}, Name: sync.Name{GivenName: "user", FamilyName: "2"}, Email: "user2@mail.com", DisplayName: "user 2", Active: false},
+					{Id: "1", Name: sync.Name{GivenName: "user", FamilyName: "1"}, Email: "user1@mail.com", DisplayName: "user 1", Active: true},
+					{Id: "2", Name: sync.Name{GivenName: "user", FamilyName: "2"}, Email: "user2@mail.com", DisplayName: "user 2", Active: false},
 				},
 			},
 			wantErr: false,
@@ -321,7 +321,7 @@ func Test_googleProvider_GetUsersFromGroupMembers(t *testing.T) {
 				mbr: &sync.MembersResult{
 					Items: 0,
 					Resources: []*sync.Member{
-						{Id: sync.Id{IdentityProvider: "", SCIM: ""}, Email: "user1@mail.com"},
+						{Id: "", Email: "user1@mail.com"},
 					},
 				},
 			},

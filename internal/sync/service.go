@@ -25,10 +25,11 @@ type syncService struct {
 	provGroupsFilter []string
 	provUsersFilter  []string
 	scim             SCIMService
+	repo             SyncRepository
 }
 
 // NewSyncService creates a new sync service.
-func NewSyncService(ctx context.Context, prov IdentityProviderService, scim SCIMService, opts ...SyncServiceOption) (SyncService, error) {
+func NewSyncService(ctx context.Context, prov IdentityProviderService, scim SCIMService, repo SyncRepository, opts ...SyncServiceOption) (SyncService, error) {
 
 	if ctx == nil {
 		return nil, ErrNilContext
@@ -45,8 +46,9 @@ func NewSyncService(ctx context.Context, prov IdentityProviderService, scim SCIM
 		mu:               &sync.Mutex{},
 		prov:             prov,
 		provGroupsFilter: []string{}, // fill in with the opts
-		provUsersFilter:  []string{}, // ill in with the opts
+		provUsersFilter:  []string{}, // fill in with the opts
 		scim:             scim,
+		repo:             repo,
 	}
 
 	for _, opt := range opts {
@@ -60,20 +62,25 @@ func (ss *syncService) SyncGroupsAndTheirMembers() error {
 	ss.mu.Lock()
 	defer ss.mu.Unlock()
 
+	// retrive data from provider
 	pGroupsResult, err := ss.prov.GetGroups(ss.ctx, ss.provGroupsFilter)
 	if err != nil {
 		return ErrGettingGroups
 	}
 
 	pUsers := make([]*User, 0)
+	var pGroupsMembers GroupsMembers
+
 	for _, pGroup := range pGroupsResult.Resources {
 
-		pGroupMembers, err := ss.prov.GetGroupMembers(ss.ctx, pGroup.Id.IdentityProvider)
+		pMembers, err := ss.prov.GetGroupMembers(ss.ctx, pGroup.Id)
 		if err != nil {
 			return err
 		}
 
-		pUsersFromMembers, err := ss.prov.GetUsersFromGroupMembers(ss.ctx, pGroupMembers)
+		pGroupsMembers[pGroup.Id] = pMembers.Resources
+
+		pUsersFromMembers, err := ss.prov.GetUsersFromGroupMembers(ss.ctx, pMembers)
 		if err != nil {
 			return err
 		}
@@ -86,6 +93,25 @@ func (ss *syncService) SyncGroupsAndTheirMembers() error {
 		Resources: pUsers,
 	}
 
+	pGroupsMembersResult := &GroupsMembersResult{
+		Items:     len(pGroupsMembers),
+		Resources: &pGroupsMembers,
+	}
+
+	// store data to repository
+	if err = ss.repo.StoreGroups(pGroupsResult); err != nil {
+		return err
+	}
+
+	if err = ss.repo.StoreGroupsMembers(pGroupsMembersResult); err != nil {
+		return err
+	}
+
+	if err = ss.repo.StoreUsers(pUsersResult); err != nil {
+		return err
+	}
+
+	// sync data to SCIM
 	if err := ss.scim.CreateOrUpdateUsers(ss.ctx, pUsersResult); err != nil {
 		return err
 	}

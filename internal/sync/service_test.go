@@ -17,8 +17,9 @@ func Test_syncService_NewSyncService(t *testing.T) {
 		ctx := context.TODO()
 		mockProviderService := NewMockIdentityProviderService(mockCtrl)
 		mockSCIMService := NewMockSCIMService(mockCtrl)
+		mockRepository := NewMockSyncRepository(mockCtrl)
 
-		svc, err := NewSyncService(ctx, mockProviderService, mockSCIMService)
+		svc, err := NewSyncService(ctx, mockProviderService, mockSCIMService, mockRepository)
 
 		assert.NoError(t, err)
 		assert.NotNil(t, svc)
@@ -27,7 +28,7 @@ func Test_syncService_NewSyncService(t *testing.T) {
 	t.Run("New Service without parameters", func(t *testing.T) {
 		ctx := context.TODO()
 
-		svc, err := NewSyncService(ctx, nil, nil)
+		svc, err := NewSyncService(ctx, nil, nil, nil)
 
 		assert.Error(t, err)
 		assert.Nil(t, svc)
@@ -43,6 +44,7 @@ func Test_syncService_SyncGroupsAndUsers(t *testing.T) {
 		ctx := context.TODO()
 		mockProviderService := NewMockIdentityProviderService(mockCtrl)
 		mockSCIMService := NewMockSCIMService(mockCtrl)
+		mockRepository := NewMockSyncRepository(mockCtrl)
 
 		mockProviderService.EXPECT().GetGroups(ctx, gomock.Any()).Return(nil, nil)
 		mockProviderService.EXPECT().GetUsers(ctx, gomock.Any()).Return(nil, nil)
@@ -51,7 +53,7 @@ func Test_syncService_SyncGroupsAndUsers(t *testing.T) {
 		mockSCIMService.EXPECT().DeleteGroups(ctx, gomock.Any()).Return(nil)
 		mockSCIMService.EXPECT().DeleteUsers(ctx, gomock.Any()).Return(nil)
 
-		svc, err := NewSyncService(ctx, mockProviderService, mockSCIMService)
+		svc, err := NewSyncService(ctx, mockProviderService, mockSCIMService, mockRepository)
 		assert.NoError(t, err)
 
 		err = svc.SyncGroupsAndUsers()

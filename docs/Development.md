@@ -62,6 +62,12 @@ Identity Provider Service Mocks
 mockgen -package=sync -destination=internal/sync/identity_provider_service_mocks.go -source=internal/sync/identity_provider_service.go
 ```
 
+Repository Mocks
+
+```bash
+mockgen -package=sync -destination=internal/sync/repository_mocks.go -source=internal/sync/repository.go
+```
+
 Directory Service Service Mocks
 
 ```bash
