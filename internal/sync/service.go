@@ -11,6 +11,7 @@ var (
 	ErrProviderServiceNil = errors.New("identity provider service cannot be nil")
 	ErrSCIMServiceNil     = errors.New("SCIM service cannot be nil")
 	ErrGettingGroups      = errors.New("error getting groups")
+	ErrRepositoryNil      = errors.New("repository cannot be nil")
 )
 
 type SyncService interface {
@@ -39,6 +40,9 @@ func NewSyncService(ctx context.Context, prov IdentityProviderService, scim SCIM
 	}
 	if scim == nil {
 		return nil, ErrSCIMServiceNil
+	}
+	if repo == nil {
+		return nil, ErrRepositoryNil
 	}
 
 	ss := &syncService{
