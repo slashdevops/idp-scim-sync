@@ -66,6 +66,12 @@ func (ss *syncService) SyncGroupsAndTheirMembers() error {
 	ss.mu.Lock()
 	defer ss.mu.Unlock()
 
+	// Check if is the first time we are syncing
+	state, err := ss.repo.GetState()
+	if err != nil {
+		return err
+	}
+
 	// retrive data from provider
 	pGroupsResult, err := ss.prov.GetGroups(ss.ctx, ss.provGroupsFilter)
 	if err != nil {
@@ -102,32 +108,62 @@ func (ss *syncService) SyncGroupsAndTheirMembers() error {
 		Resources: &pGroupsMembers,
 	}
 
-	// store data to repository
-	sStoreGroupsResult, err := ss.repo.StoreGroups(pGroupsResult)
-	if err != nil {
-		return err
-	}
+	// First time we are syncing
+	if state.Checksum == "" {
 
-	sStoreGroupsMembersResult, err := ss.repo.StoreGroupsMembers(pGroupsMembersResult)
-	if err != nil {
-		return err
-	}
+		// Create the sync state
+		// store data to repository
+		sStoreGroupsResult, err := ss.repo.StoreGroups(pGroupsResult)
+		if err != nil {
+			return err
+		}
 
-	sStoreUsersResult, err := ss.repo.StoreUsers(pUsersResult)
-	if err != nil {
-		return err
-	}
+		sStoreGroupsMembersResult, err := ss.repo.StoreGroupsMembers(pGroupsMembersResult)
+		if err != nil {
+			return err
+		}
 
-	state, err := CreateSyncState(&sStoreGroupsResult, &sStoreGroupsMembersResult, &sStoreUsersResult)
-	if err != nil {
-		return err
-	}
+		sStoreUsersResult, err := ss.repo.StoreUsers(pUsersResult)
+		if err != nil {
+			return err
+		}
 
-	sStoreStateResult, err := ss.repo.StoreState(&state)
-	if err != nil {
-		return err
+		// reusing the state variable
+		state, err = CreateSyncState(&sStoreGroupsResult, &sStoreGroupsMembersResult, &sStoreUsersResult)
+		if err != nil {
+			return err
+		}
+
+		sStoreStateResult, err := ss.repo.StoreState(&state)
+		if err != nil {
+			return err
+		}
+
+		// TODO: decide what to do with the result
+		_ = sStoreStateResult
+
+	} else {
+		sGroupsResults, err := ss.repo.GetGroups(state.Groups.Place)
+		if err != nil {
+			return err
+		}
+
+		sUsersResult, err := ss.repo.GetUsers(state.Users.Place)
+		if err != nil {
+			return err
+		}
+
+		sGroupsMembersResult, err := ss.repo.GetGroupsMembers(state.GroupsMembers.Place)
+		if err != nil {
+			return err
+		}
+
+		// now here we have the google fresh data and the last sync data state
+		// we need to compare the data and decide what to do
+		_ = sGroupsResults
+		_ = sUsersResult
+		_ = sGroupsMembersResult
 	}
-	_ = sStoreStateResult
 
 	// sync data to SCIM
 	if err := ss.scim.CreateOrUpdateUsers(ss.ctx, pUsersResult); err != nil {

@@ -31,3 +31,19 @@ func (dr *diskRepository) StoreGroupsMembers(gr *s.GroupsMembersResult) (s.Store
 func (dr *diskRepository) StoreState(state *s.SyncState) (s.StoreStateResult, error) {
 	return s.StoreStateResult{}, nil
 }
+
+func (dr *diskRepository) GetState() (s.SyncState, error) {
+	return s.SyncState{}, nil
+}
+
+func (dr *diskRepository) GetGroups(place string) (*s.GroupsResult, error) {
+	return &s.GroupsResult{}, nil
+}
+
+func (dr *diskRepository) GetUsers(place string) (*s.UsersResult, error) {
+	return &s.UsersResult{}, nil
+}
+
+func (dr *diskRepository) GetGroupsMembers(place string) (*s.GroupsMembersResult, error) {
+	return &s.GroupsMembersResult{}, nil
+}

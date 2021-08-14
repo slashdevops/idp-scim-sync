@@ -33,6 +33,66 @@ func (m *MockSyncRepository) EXPECT() *MockSyncRepositoryMockRecorder {
 	return m.recorder
 }
 
+// GetGroups mocks base method.
+func (m *MockSyncRepository) GetGroups(place string) (*GroupsResult, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetGroups", place)
+	ret0, _ := ret[0].(*GroupsResult)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetGroups indicates an expected call of GetGroups.
+func (mr *MockSyncRepositoryMockRecorder) GetGroups(place interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetGroups", reflect.TypeOf((*MockSyncRepository)(nil).GetGroups), place)
+}
+
+// GetGroupsMembers mocks base method.
+func (m *MockSyncRepository) GetGroupsMembers(place string) (*GroupsMembersResult, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetGroupsMembers", place)
+	ret0, _ := ret[0].(*GroupsMembersResult)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetGroupsMembers indicates an expected call of GetGroupsMembers.
+func (mr *MockSyncRepositoryMockRecorder) GetGroupsMembers(place interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetGroupsMembers", reflect.TypeOf((*MockSyncRepository)(nil).GetGroupsMembers), place)
+}
+
+// GetState mocks base method.
+func (m *MockSyncRepository) GetState() (SyncState, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetState")
+	ret0, _ := ret[0].(SyncState)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetState indicates an expected call of GetState.
+func (mr *MockSyncRepositoryMockRecorder) GetState() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetState", reflect.TypeOf((*MockSyncRepository)(nil).GetState))
+}
+
+// GetUsers mocks base method.
+func (m *MockSyncRepository) GetUsers(place string) (*UsersResult, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetUsers", place)
+	ret0, _ := ret[0].(*UsersResult)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetUsers indicates an expected call of GetUsers.
+func (mr *MockSyncRepositoryMockRecorder) GetUsers(place interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUsers", reflect.TypeOf((*MockSyncRepository)(nil).GetUsers), place)
+}
+
 // StoreGroups mocks base method.
 func (m *MockSyncRepository) StoreGroups(gr *GroupsResult) (StoreGroupsResult, error) {
 	m.ctrl.T.Helper()

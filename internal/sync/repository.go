@@ -5,20 +5,8 @@ type SyncRepository interface {
 	StoreUsers(ur *UsersResult) (StoreUsersResult, error)
 	StoreGroupsMembers(gr *GroupsMembersResult) (StoreGroupsMembersResult, error)
 	StoreState(state *SyncState) (StoreStateResult, error)
-}
-
-type StoreGroupsResult struct {
-	Place string
-}
-
-type StoreUsersResult struct {
-	Place string
-}
-
-type StoreGroupsMembersResult struct {
-	Place string
-}
-
-type StoreStateResult struct {
-	Place string
+	GetState() (SyncState, error)
+	GetGroups(place string) (*GroupsResult, error)
+	GetUsers(place string) (*UsersResult, error)
+	GetGroupsMembers(place string) (*GroupsMembersResult, error)
 }

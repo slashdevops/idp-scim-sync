@@ -50,6 +50,25 @@ type GroupsMembersResult struct {
 }
 
 type SyncState struct {
-	Version  string `json:"version"`
-	Checksum string `json:"checksum"`
+	Version       string `json:"version"`
+	Checksum      string `json:"checksum"`
+	Groups        StoreGroupsResult
+	Users         StoreUsersResult
+	GroupsMembers StoreGroupsMembersResult
+}
+
+type StoreGroupsResult struct {
+	Place string
+}
+
+type StoreUsersResult struct {
+	Place string
+}
+
+type StoreGroupsMembersResult struct {
+	Place string
+}
+
+type StoreStateResult struct {
+	Place string
 }
