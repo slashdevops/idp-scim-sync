@@ -103,17 +103,31 @@ func (ss *syncService) SyncGroupsAndTheirMembers() error {
 	}
 
 	// store data to repository
-	if err = ss.repo.StoreGroups(pGroupsResult); err != nil {
+	sStoreGroupsResult, err := ss.repo.StoreGroups(pGroupsResult)
+	if err != nil {
 		return err
 	}
 
-	if err = ss.repo.StoreGroupsMembers(pGroupsMembersResult); err != nil {
+	sStoreGroupsMembersResult, err := ss.repo.StoreGroupsMembers(pGroupsMembersResult)
+	if err != nil {
 		return err
 	}
 
-	if err = ss.repo.StoreUsers(pUsersResult); err != nil {
+	sStoreUsersResult, err := ss.repo.StoreUsers(pUsersResult)
+	if err != nil {
 		return err
 	}
+
+	state, err := CreateSyncState(&sStoreGroupsResult, &sStoreGroupsMembersResult, &sStoreUsersResult)
+	if err != nil {
+		return err
+	}
+
+	sStoreStateResult, err := ss.repo.StoreState(&state)
+	if err != nil {
+		return err
+	}
+	_ = sStoreStateResult
 
 	// sync data to SCIM
 	if err := ss.scim.CreateOrUpdateUsers(ss.ctx, pUsersResult); err != nil {
@@ -166,4 +180,11 @@ func (ss *syncService) SyncGroupsAndUsers() error {
 	}
 
 	return nil
+}
+
+func CreateSyncState(sgr *StoreGroupsResult, sgmr *StoreGroupsMembersResult, sur *StoreUsersResult) (SyncState, error) {
+	return SyncState{
+		Version:  "1.0.0",
+		Checksum: "TBD",
+	}, nil
 }

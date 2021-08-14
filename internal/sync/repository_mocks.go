@@ -34,11 +34,12 @@ func (m *MockSyncRepository) EXPECT() *MockSyncRepositoryMockRecorder {
 }
 
 // StoreGroups mocks base method.
-func (m *MockSyncRepository) StoreGroups(gr *GroupsResult) error {
+func (m *MockSyncRepository) StoreGroups(gr *GroupsResult) (StoreGroupsResult, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "StoreGroups", gr)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret0, _ := ret[0].(StoreGroupsResult)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // StoreGroups indicates an expected call of StoreGroups.
@@ -48,11 +49,12 @@ func (mr *MockSyncRepositoryMockRecorder) StoreGroups(gr interface{}) *gomock.Ca
 }
 
 // StoreGroupsMembers mocks base method.
-func (m *MockSyncRepository) StoreGroupsMembers(gr *GroupsMembersResult) error {
+func (m *MockSyncRepository) StoreGroupsMembers(gr *GroupsMembersResult) (StoreGroupsMembersResult, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "StoreGroupsMembers", gr)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret0, _ := ret[0].(StoreGroupsMembersResult)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // StoreGroupsMembers indicates an expected call of StoreGroupsMembers.
@@ -61,12 +63,28 @@ func (mr *MockSyncRepositoryMockRecorder) StoreGroupsMembers(gr interface{}) *go
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "StoreGroupsMembers", reflect.TypeOf((*MockSyncRepository)(nil).StoreGroupsMembers), gr)
 }
 
+// StoreState mocks base method.
+func (m *MockSyncRepository) StoreState(state *SyncState) (StoreStateResult, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "StoreState", state)
+	ret0, _ := ret[0].(StoreStateResult)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// StoreState indicates an expected call of StoreState.
+func (mr *MockSyncRepositoryMockRecorder) StoreState(state interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "StoreState", reflect.TypeOf((*MockSyncRepository)(nil).StoreState), state)
+}
+
 // StoreUsers mocks base method.
-func (m *MockSyncRepository) StoreUsers(ur *UsersResult) error {
+func (m *MockSyncRepository) StoreUsers(ur *UsersResult) (StoreUsersResult, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "StoreUsers", ur)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret0, _ := ret[0].(StoreUsersResult)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // StoreUsers indicates an expected call of StoreUsers.
