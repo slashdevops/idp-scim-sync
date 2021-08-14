@@ -46,7 +46,7 @@ func (g *googleProvider) GetGroups(ctx context.Context, filter []string) (*sync.
 		})
 	}
 
-	//TODO: Check groups are not repeated
+	//TODO: Check groups are not repeated thanks to the filter
 
 	syncResult := &sync.GroupsResult{
 		Items:     len(googleGroups),
@@ -73,6 +73,8 @@ func (g *googleProvider) GetUsers(ctx context.Context, filter []string) (*sync.U
 			Email:       usr.PrimaryEmail,
 		})
 	}
+
+	//TODO: Check users are not repeated thanks to the filter
 
 	uResult := &sync.UsersResult{
 		Items:     len(googleUsers),
