@@ -46,6 +46,8 @@ func (g *googleProvider) GetGroups(ctx context.Context, filter []string) (*sync.
 		})
 	}
 
+	//TODO: Check groups are not repeated
+
 	syncResult := &sync.GroupsResult{
 		Items:     len(googleGroups),
 		Resources: syncGroups,

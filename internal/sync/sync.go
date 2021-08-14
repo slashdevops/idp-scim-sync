@@ -129,7 +129,7 @@ func (ss *syncService) SyncGroupsAndTheirMembers() error {
 		}
 
 		// reusing the state variable
-		state, err = CreateSyncState(&sStoreGroupsResult, &sStoreGroupsMembersResult, &sStoreUsersResult)
+		state, err = createSyncState(&sStoreGroupsResult, &sStoreGroupsMembersResult, &sStoreUsersResult)
 		if err != nil {
 			return err
 		}
@@ -216,11 +216,4 @@ func (ss *syncService) SyncGroupsAndUsers() error {
 	}
 
 	return nil
-}
-
-func CreateSyncState(sgr *StoreGroupsResult, sgmr *StoreGroupsMembersResult, sur *StoreUsersResult) (SyncState, error) {
-	return SyncState{
-		Version:  "1.0.0",
-		Checksum: "TBD",
-	}, nil
 }
