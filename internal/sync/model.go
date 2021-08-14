@@ -1,41 +1,41 @@
 package sync
 
 type Name struct {
-	FamilyName string
-	GivenName  string
+	FamilyName string `json:"familyName"`
+	GivenName  string `json:"givenName"`
 }
 
 type User struct {
-	Id          string
-	Name        Name
-	DisplayName string
-	Active      bool
-	Email       string
+	Id          string `json:"id"`
+	Name        Name   `json:"name"`
+	DisplayName string `json:"displayName"`
+	Active      bool   `json:"active"`
+	Email       string `json:"email"`
 }
 
 type UsersResult struct {
-	Items     int
-	Resources []*User
+	Items     int     `json:"items"`
+	Resources []*User `json:"resources"`
 }
 
 type Group struct {
-	Id    string
-	Name  string
-	Email string
+	Id    string `json:"id"`
+	Name  string `json:"name"`
+	Email string `json:"email"`
 }
 
 type GroupsResult struct {
-	Items     int
-	Resources []*Group
+	Items     int      `json:"items"`
+	Resources []*Group `json:"resources"`
 }
 
 type Member struct {
-	Id    string
-	Email string
+	Id    string `json:"id"`
+	Email string `json:"email"`
 }
 type MembersResult struct {
-	Items     int
-	Resources []*Member
+	Items     int       `json:"items"`
+	Resources []*Member `json:"resources"`
 }
 
 type GroupsMembers map[string][]*Member
@@ -45,6 +45,11 @@ func (gms GroupsMembers) GetMembers(groupId string) []*Member {
 }
 
 type GroupsMembersResult struct {
-	Items     int
-	Resources *GroupsMembers
+	Items     int            `json:"items"`
+	Resources *GroupsMembers `json:"resources"`
+}
+
+type SyncState struct {
+	Version  string `json:"version"`
+	Checksum string `json:"checksum"`
 }

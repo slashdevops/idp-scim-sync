@@ -21,7 +21,7 @@ type SyncService interface {
 
 type syncService struct {
 	ctx              context.Context
-	mu               *sync.Mutex
+	mu               *sync.RWMutex
 	prov             IdentityProviderService
 	provGroupsFilter []string
 	provUsersFilter  []string
@@ -47,7 +47,7 @@ func NewSyncService(ctx context.Context, prov IdentityProviderService, scim SCIM
 
 	ss := &syncService{
 		ctx:              ctx,
-		mu:               &sync.Mutex{},
+		mu:               &sync.RWMutex{},
 		prov:             prov,
 		provGroupsFilter: []string{}, // fill in with the opts
 		provUsersFilter:  []string{}, // fill in with the opts
