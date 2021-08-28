@@ -112,7 +112,7 @@ func execAWSServiceConfig() {
 
 	awsSCIMService, err := aws.NewSCIMService(&ctx, httpClient, cfg.SCIMEndpoint, cfg.SCIMAccessToken)
 	if err != nil {
-		log.Fatalf("Error creating SCIM service: ", err.Error())
+		log.Fatalf("Error creating SCIM service: %s", err.Error())
 	}
 
 	awsServiceConfig, err := awsSCIMService.ServiceProviderConfig()
@@ -146,7 +146,7 @@ func execAWSGroupsList() {
 
 	awsSCIMService, err := aws.NewSCIMService(&ctx, httpClient, cfg.SCIMEndpoint, cfg.SCIMAccessToken)
 	if err != nil {
-		log.Fatalf("Error creating SCIM service: ", err.Error())
+		log.Fatalf("Error creating SCIM service: %s", err.Error())
 	}
 
 	awsGroupsResponse, err := awsSCIMService.ListGroups(filter)
