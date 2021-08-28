@@ -24,7 +24,6 @@ type scim struct {
 }
 
 func NewSCIMService(ctx *context.Context, http *http.Client, endpoint string, token string) (SCIMService, error) {
-
 	scimURL, err := url.Parse(endpoint)
 	if err != nil {
 		return nil, err
@@ -43,7 +42,6 @@ func (s *scim) EndpointURL() *url.URL {
 }
 
 func (s *scim) sendRequest(req *http.Request, body interface{}) (resp *http.Response, err error) {
-
 	req = req.WithContext(*s.ctx)
 
 	req.Header.Set("Content-Type", "application/json")
@@ -70,7 +68,6 @@ func (s *scim) sendRequest(req *http.Request, body interface{}) (resp *http.Resp
 }
 
 func (s *scim) ListUsers(filter string) (*UsersResponse, error) {
-
 	s.endpointURL.Path = path.Join(s.endpointURL.Path, "/Users")
 	var uResponse UsersResponse
 
@@ -93,7 +90,6 @@ func (s *scim) ListUsers(filter string) (*UsersResponse, error) {
 }
 
 func (s *scim) ListGroups(filter string) (*GroupsResponse, error) {
-
 	s.endpointURL.Path = path.Join(s.endpointURL.Path, "/Groups")
 	var gResponse GroupsResponse
 
@@ -123,7 +119,6 @@ func (s *scim) ListGroups(filter string) (*GroupsResponse, error) {
 }
 
 func (s *scim) ServiceProviderConfig() (*ServiceProviderConfig, error) {
-
 	s.endpointURL.Path = path.Join(s.endpointURL.Path, "/ServiceProviderConfig")
 
 	req, err := http.NewRequest(http.MethodGet, s.endpointURL.String(), nil)

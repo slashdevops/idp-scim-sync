@@ -4,6 +4,11 @@ import (
 	"context"
 	"errors"
 	"sync"
+
+	"github.com/slashdevops/idp-scim-sync/internal/model"
+	"github.com/slashdevops/idp-scim-sync/internal/provider"
+	"github.com/slashdevops/idp-scim-sync/internal/repository"
+	"github.com/slashdevops/idp-scim-sync/internal/scim"
 )
 
 var (
@@ -22,15 +27,15 @@ type SyncService interface {
 type syncService struct {
 	ctx              context.Context
 	mu               *sync.RWMutex
-	prov             IdentityProviderService
+	prov             provider.IdentityProviderService
 	provGroupsFilter []string
 	provUsersFilter  []string
-	scim             SCIMService
-	repo             SyncRepository
+	scim             scim.SCIMService
+	repo             repository.SyncRepository
 }
 
 // NewSyncService creates a new sync service.
-func NewSyncService(ctx context.Context, prov IdentityProviderService, scim SCIMService, repo SyncRepository, opts ...SyncServiceOption) (SyncService, error) {
+func NewSyncService(ctx context.Context, prov provider.IdentityProviderService, scim scim.SCIMService, repo repository.SyncRepository, opts ...SyncServiceOption) (SyncService, error) {
 	if ctx == nil {
 		return nil, ErrNilContext
 	}
@@ -77,8 +82,8 @@ func (ss *syncService) SyncGroupsAndTheirMembers() error {
 		return ErrGettingGroups
 	}
 
-	pUsers := make([]*User, 0)
-	var pGroupsMembers GroupsMembers
+	pUsers := make([]*model.User, 0)
+	var pGroupsMembers model.GroupsMembers
 
 	for _, pGroup := range pGroupsResult.Resources {
 
@@ -97,12 +102,12 @@ func (ss *syncService) SyncGroupsAndTheirMembers() error {
 		pUsers = append(pUsers, pUsersFromMembers.Resources...)
 	}
 
-	pUsersResult := &UsersResult{
+	pUsersResult := &model.UsersResult{
 		Items:     len(pUsers),
 		Resources: pUsers,
 	}
 
-	pGroupsMembersResult := &GroupsMembersResult{
+	pGroupsMembersResult := &model.GroupsMembersResult{
 		Items:     len(pGroupsMembers),
 		Resources: &pGroupsMembers,
 	}

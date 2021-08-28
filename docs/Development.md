@@ -53,23 +53,23 @@ References:
 SCIM Service Mocks
 
 ```bash
-mockgen -package=sync -destination=internal/sync/scim_service_mocks.go -source=internal/sync/scim_service.go
+mockgen -package=mocks -destination=internal/mocks/scim_mocks.go -source=internal/scim/scim.go
 ```
 
 Identity Provider Service Mocks
 
 ```bash
-mockgen -package=sync -destination=internal/sync/identity_provider_service_mocks.go -source=internal/sync/identity_provider_service.go
+mockgen -package=mocks -destination=internal/mocks/provider_mocks.go -source=internal/provider/provider.go
 ```
 
 Repository Mocks
 
 ```bash
-mockgen -package=sync -destination=internal/sync/repository_mocks.go -source=internal/sync/repository.go
+mockgen -package=mocks -destination=internal/mocks/repository_mocks.go -source=internal/repository/repository.go
 ```
 
-Directory Service Service Mocks
+Directory Service Mocks
 
 ```bash
-mockgen -package=google -destination=internal/google/directory_mocks.go -source=internal/google/directory.go DirectoryService
+mockgen -package=mocks -destination=internal/mocks/directory_mocks.go -source=internal/google/directory.go DirectoryService
 ```

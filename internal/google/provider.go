@@ -5,7 +5,8 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/slashdevops/idp-scim-sync/internal/core"
+	"github.com/slashdevops/idp-scim-sync/internal/model"
+	"github.com/slashdevops/idp-scim-sync/internal/provider"
 )
 
 var (
@@ -20,7 +21,7 @@ type googleProvider struct {
 	ds DirectoryService
 }
 
-func NewGoogleIdentityProvider(ds DirectoryService) (core.IdentityProviderService, error) {
+func NewGoogleIdentityProvider(ds DirectoryService) (provider.IdentityProviderService, error) {
 	if ds == nil {
 		return nil, ErrDirectoryServiceNil
 	}
@@ -30,8 +31,8 @@ func NewGoogleIdentityProvider(ds DirectoryService) (core.IdentityProviderServic
 	}, nil
 }
 
-func (g *googleProvider) GetGroups(ctx context.Context, filter []string) (*core.GroupsResult, error) {
-	syncGroups := make([]*core.Group, 0)
+func (g *googleProvider) GetGroups(ctx context.Context, filter []string) (*model.GroupsResult, error) {
+	syncGroups := make([]*model.Group, 0)
 
 	googleGroups, err := g.ds.ListGroups(filter)
 	if err != nil {
@@ -39,7 +40,7 @@ func (g *googleProvider) GetGroups(ctx context.Context, filter []string) (*core.
 	}
 
 	for _, grp := range googleGroups {
-		syncGroups = append(syncGroups, &core.Group{
+		syncGroups = append(syncGroups, &model.Group{
 			ID:    grp.Id,
 			Name:  grp.Name,
 			Email: grp.Email,
@@ -48,7 +49,7 @@ func (g *googleProvider) GetGroups(ctx context.Context, filter []string) (*core.
 
 	// TODO: Check groups are not repeated thanks to the filter
 
-	syncResult := &core.GroupsResult{
+	syncResult := &model.GroupsResult{
 		Items:     len(googleGroups),
 		Resources: syncGroups,
 	}
@@ -56,8 +57,8 @@ func (g *googleProvider) GetGroups(ctx context.Context, filter []string) (*core.
 	return syncResult, nil
 }
 
-func (g *googleProvider) GetUsers(ctx context.Context, filter []string) (*core.UsersResult, error) {
-	syncUsers := make([]*core.User, 0)
+func (g *googleProvider) GetUsers(ctx context.Context, filter []string) (*model.UsersResult, error) {
+	syncUsers := make([]*model.User, 0)
 
 	googleUsers, err := g.ds.ListUsers(filter)
 	if err != nil {
@@ -65,9 +66,9 @@ func (g *googleProvider) GetUsers(ctx context.Context, filter []string) (*core.U
 	}
 
 	for _, usr := range googleUsers {
-		syncUsers = append(syncUsers, &core.User{
+		syncUsers = append(syncUsers, &model.User{
 			ID:          usr.Id,
-			Name:        core.Name{FamilyName: usr.Name.FamilyName, GivenName: usr.Name.GivenName},
+			Name:        model.Name{FamilyName: usr.Name.FamilyName, GivenName: usr.Name.GivenName},
 			DisplayName: fmt.Sprintf("%s %s", usr.Name.GivenName, usr.Name.FamilyName),
 			Active:      !usr.Suspended,
 			Email:       usr.PrimaryEmail,
@@ -76,7 +77,7 @@ func (g *googleProvider) GetUsers(ctx context.Context, filter []string) (*core.U
 
 	// TODO: Check users are not repeated thanks to the filter
 
-	uResult := &core.UsersResult{
+	uResult := &model.UsersResult{
 		Items:     len(googleUsers),
 		Resources: syncUsers,
 	}
@@ -84,8 +85,8 @@ func (g *googleProvider) GetUsers(ctx context.Context, filter []string) (*core.U
 	return uResult, nil
 }
 
-func (g *googleProvider) GetGroupMembers(ctx context.Context, id string) (*core.MembersResult, error) {
-	syncMembers := make([]*core.Member, 0)
+func (g *googleProvider) GetGroupMembers(ctx context.Context, id string) (*model.MembersResult, error) {
+	syncMembers := make([]*model.Member, 0)
 
 	googleMembers, err := g.ds.ListGroupMembers(id)
 	if err != nil {
@@ -93,13 +94,13 @@ func (g *googleProvider) GetGroupMembers(ctx context.Context, id string) (*core.
 	}
 
 	for _, member := range googleMembers {
-		syncMembers = append(syncMembers, &core.Member{
+		syncMembers = append(syncMembers, &model.Member{
 			ID:    member.Id,
 			Email: member.Email,
 		})
 	}
 
-	syncMembersResult := &core.MembersResult{
+	syncMembersResult := &model.MembersResult{
 		Items:     len(googleMembers),
 		Resources: syncMembers,
 	}
@@ -107,8 +108,8 @@ func (g *googleProvider) GetGroupMembers(ctx context.Context, id string) (*core.
 	return syncMembersResult, nil
 }
 
-func (g *googleProvider) GetUsersFromGroupMembers(ctx context.Context, mbr *core.MembersResult) (*core.UsersResult, error) {
-	syncUsers := make([]*core.User, 0)
+func (g *googleProvider) GetUsersFromGroupMembers(ctx context.Context, mbr *model.MembersResult) (*model.UsersResult, error) {
+	syncUsers := make([]*model.User, 0)
 
 	for _, member := range mbr.Resources {
 		u, err := g.ds.GetUser(member.ID)
@@ -116,16 +117,16 @@ func (g *googleProvider) GetUsersFromGroupMembers(ctx context.Context, mbr *core
 			return nil, ErrGettingUser
 		}
 
-		syncUsers = append(syncUsers, &core.User{
+		syncUsers = append(syncUsers, &model.User{
 			ID:          u.Id,
-			Name:        core.Name{FamilyName: u.Name.FamilyName, GivenName: u.Name.GivenName},
+			Name:        model.Name{FamilyName: u.Name.FamilyName, GivenName: u.Name.GivenName},
 			DisplayName: fmt.Sprintf("%s %s", u.Name.GivenName, u.Name.FamilyName),
 			Active:      !u.Suspended,
 			Email:       u.PrimaryEmail,
 		})
 	}
 
-	syncUsersResult := &core.UsersResult{
+	syncUsersResult := &model.UsersResult{
 		Items:     len(syncUsers),
 		Resources: syncUsers,
 	}

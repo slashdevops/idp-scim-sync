@@ -4,125 +4,126 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/slashdevops/idp-scim-sync/internal/model"
 	"github.com/slashdevops/idp-scim-sync/internal/utils"
 )
 
 func Test_groupsDifferences(t *testing.T) {
 	type args struct {
-		idp   *GroupsResult
-		state *GroupsResult
+		idp   *model.GroupsResult
+		state *model.GroupsResult
 	}
 	tests := []struct {
 		name       string
 		args       args
-		wantCreate *GroupsResult
-		wantUpdate *GroupsResult
-		wantEqual  *GroupsResult
-		wantDelete *GroupsResult
+		wantCreate *model.GroupsResult
+		wantUpdate *model.GroupsResult
+		wantEqual  *model.GroupsResult
+		wantDelete *model.GroupsResult
 	}{
 		{
 			name: "empty",
 			args: args{
-				idp: &GroupsResult{
+				idp: &model.GroupsResult{
 					Items:     0,
-					Resources: []*Group{},
+					Resources: []*model.Group{},
 				},
-				state: &GroupsResult{
+				state: &model.GroupsResult{
 					Items:     0,
-					Resources: []*Group{},
+					Resources: []*model.Group{},
 				},
 			},
-			wantCreate: &GroupsResult{
+			wantCreate: &model.GroupsResult{
 				Items:     0,
-				Resources: []*Group{},
+				Resources: []*model.Group{},
 			},
-			wantUpdate: &GroupsResult{
+			wantUpdate: &model.GroupsResult{
 				Items:     0,
-				Resources: []*Group{},
+				Resources: []*model.Group{},
 			},
-			wantEqual: &GroupsResult{
+			wantEqual: &model.GroupsResult{
 				Items:     0,
-				Resources: []*Group{},
+				Resources: []*model.Group{},
 			},
-			wantDelete: &GroupsResult{
+			wantDelete: &model.GroupsResult{
 				Items:     0,
-				Resources: []*Group{},
+				Resources: []*model.Group{},
 			},
 		},
 		{
 			name: "equals",
 			args: args{
-				idp: &GroupsResult{
+				idp: &model.GroupsResult{
 					Items: 2,
-					Resources: []*Group{
+					Resources: []*model.Group{
 						{ID: "1", Name: "name1", Email: "1@mail.com"},
 						{ID: "2", Name: "name2", Email: "2@mail.com"},
 					},
 				},
-				state: &GroupsResult{
+				state: &model.GroupsResult{
 					Items: 2,
-					Resources: []*Group{
+					Resources: []*model.Group{
 						{ID: "1", Name: "name1", Email: "1@mail.com"},
 						{ID: "2", Name: "name2", Email: "2@mail.com"},
 					},
 				},
 			},
-			wantCreate: &GroupsResult{
+			wantCreate: &model.GroupsResult{
 				Items:     0,
-				Resources: []*Group{},
+				Resources: []*model.Group{},
 			},
-			wantUpdate: &GroupsResult{
+			wantUpdate: &model.GroupsResult{
 				Items:     0,
-				Resources: []*Group{},
+				Resources: []*model.Group{},
 			},
-			wantEqual: &GroupsResult{
+			wantEqual: &model.GroupsResult{
 				Items: 2,
-				Resources: []*Group{
+				Resources: []*model.Group{
 					{ID: "1", Name: "name1", Email: "1@mail.com"},
 					{ID: "2", Name: "name2", Email: "2@mail.com"},
 				},
 			},
-			wantDelete: &GroupsResult{
+			wantDelete: &model.GroupsResult{
 				Items:     0,
-				Resources: []*Group{},
+				Resources: []*model.Group{},
 			},
 		},
 		{
 			name: "1 equals, 1 update, 1 create, 1 delete",
 			args: args{
-				idp: &GroupsResult{
+				idp: &model.GroupsResult{
 					Items: 2,
-					Resources: []*Group{
+					Resources: []*model.Group{
 						{ID: "1", Name: "name1", Email: "1@mail.com"},
 						{ID: "2", Name: "name2", Email: "2@mail.com"},
 					},
 				},
-				state: &GroupsResult{
+				state: &model.GroupsResult{
 					Items: 2,
-					Resources: []*Group{
+					Resources: []*model.Group{
 						{ID: "1", Name: "newname1", Email: "1@mail.com"},
 						{ID: "2", Name: "name2", Email: "2@mail.com"},
 					},
 				},
 			},
-			wantCreate: &GroupsResult{
+			wantCreate: &model.GroupsResult{
 				Items:     0,
-				Resources: []*Group{},
+				Resources: []*model.Group{},
 			},
-			wantUpdate: &GroupsResult{
+			wantUpdate: &model.GroupsResult{
 				Items:     0,
-				Resources: []*Group{},
+				Resources: []*model.Group{},
 			},
-			wantEqual: &GroupsResult{
+			wantEqual: &model.GroupsResult{
 				Items: 2,
-				Resources: []*Group{
+				Resources: []*model.Group{
 					{ID: "1", Name: "name1", Email: "1@mail.com"},
 					{ID: "2", Name: "name2", Email: "2@mail.com"},
 				},
 			},
-			wantDelete: &GroupsResult{
+			wantDelete: &model.GroupsResult{
 				Items:     0,
-				Resources: []*Group{},
+				Resources: []*model.Group{},
 			},
 		},
 	}

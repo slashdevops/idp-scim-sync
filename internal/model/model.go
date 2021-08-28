@@ -1,4 +1,4 @@
-package core
+package model
 
 type Name struct {
 	FamilyName string `json:"familyName"`
@@ -22,6 +22,30 @@ type Group struct {
 	ID    string `json:"id"`
 	Name  string `json:"name"`
 	Email string `json:"email"`
+}
+
+type SyncState struct {
+	Version       string `json:"version"`
+	Checksum      string `json:"checksum"`
+	Groups        StoreGroupsResult
+	Users         StoreUsersResult
+	GroupsMembers StoreGroupsMembersResult
+}
+
+type StoreGroupsResult struct {
+	Place string
+}
+
+type StoreUsersResult struct {
+	Place string
+}
+
+type StoreGroupsMembersResult struct {
+	Place string
+}
+
+type StoreStateResult struct {
+	Place string
 }
 
 type GroupsResult struct {
@@ -48,28 +72,4 @@ func (gms GroupsMembers) GetMembers(groupID string) []*Member {
 type GroupsMembersResult struct {
 	Items     int            `json:"items"`
 	Resources *GroupsMembers `json:"resources"`
-}
-
-type SyncState struct {
-	Version       string `json:"version"`
-	Checksum      string `json:"checksum"`
-	Groups        StoreGroupsResult
-	Users         StoreUsersResult
-	GroupsMembers StoreGroupsMembersResult
-}
-
-type StoreGroupsResult struct {
-	Place string
-}
-
-type StoreUsersResult struct {
-	Place string
-}
-
-type StoreGroupsMembersResult struct {
-	Place string
-}
-
-type StoreStateResult struct {
-	Place string
 }

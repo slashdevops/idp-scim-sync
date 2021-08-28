@@ -1,7 +1,9 @@
 package core
 
-func createSyncState(sgr *StoreGroupsResult, sgmr *StoreGroupsMembersResult, sur *StoreUsersResult) (SyncState, error) {
-	return SyncState{
+import "github.com/slashdevops/idp-scim-sync/internal/model"
+
+func createSyncState(sgr *model.StoreGroupsResult, sgmr *model.StoreGroupsMembersResult, sur *model.StoreUsersResult) (model.SyncState, error) {
+	return model.SyncState{
 		Version:  "1.0.0",
 		Checksum: "TBD",
 	}, nil
@@ -15,14 +17,14 @@ func createSyncState(sgr *StoreGroupsResult, sgmr *StoreGroupsMembersResult, sur
 // update: groups that exist in "idp" and in "state" but attributes changed in idp
 // equal: groups that exist in both "idp" and "state" and their attributes are equal
 // delete: groups that exist in "state" but not in "idp"
-func groupsDifferences(idp, state *GroupsResult) (create *GroupsResult, update *GroupsResult, equal *GroupsResult, delete *GroupsResult) {
-	idpGroups := make(map[string]*Group)
+func groupsDifferences(idp, state *model.GroupsResult) (create *model.GroupsResult, update *model.GroupsResult, equal *model.GroupsResult, delete *model.GroupsResult) {
+	idpGroups := make(map[string]*model.Group)
 	stateGroups := make(map[string]struct{})
 
-	toCreate := make([]*Group, 0)
-	toUpdate := make([]*Group, 0)
-	toEqual := make([]*Group, 0)
-	toDelete := make([]*Group, 0)
+	toCreate := make([]*model.Group, 0)
+	toUpdate := make([]*model.Group, 0)
+	toEqual := make([]*model.Group, 0)
+	toDelete := make([]*model.Group, 0)
 
 	for _, gr := range idp.Resources {
 		idpGroups[gr.Name] = gr
@@ -53,22 +55,22 @@ func groupsDifferences(idp, state *GroupsResult) (create *GroupsResult, update *
 		}
 	}
 
-	create = &GroupsResult{
+	create = &model.GroupsResult{
 		Items:     len(toCreate),
 		Resources: toCreate,
 	}
 
-	update = &GroupsResult{
+	update = &model.GroupsResult{
 		Items:     len(toUpdate),
 		Resources: toUpdate,
 	}
 
-	equal = &GroupsResult{
+	equal = &model.GroupsResult{
 		Items:     len(toEqual),
 		Resources: toEqual,
 	}
 
-	delete = &GroupsResult{
+	delete = &model.GroupsResult{
 		Items:     len(toDelete),
 		Resources: toDelete,
 	}
@@ -83,14 +85,14 @@ func groupsDifferences(idp, state *GroupsResult) (create *GroupsResult, update *
 // update: users that exist in "idp" and in "state" but attributes changed in idp
 // equal: users that exist in both "idp" and "state" and their attributes are equal
 // delete: users that exist in "state" but not in "idp"
-func usersDifferences(idp, state *UsersResult) (create *UsersResult, update *UsersResult, equal *UsersResult, delete *UsersResult) {
-	idpUsers := make(map[string]*User)
+func usersDifferences(idp, state *model.UsersResult) (create *model.UsersResult, update *model.UsersResult, equal *model.UsersResult, delete *model.UsersResult) {
+	idpUsers := make(map[string]*model.User)
 	stateUsers := make(map[string]struct{})
 
-	toCreate := make([]*User, 0)
-	toUpdate := make([]*User, 0)
-	toEqual := make([]*User, 0)
-	toDelete := make([]*User, 0)
+	toCreate := make([]*model.User, 0)
+	toUpdate := make([]*model.User, 0)
+	toEqual := make([]*model.User, 0)
+	toDelete := make([]*model.User, 0)
 
 	for _, usr := range idp.Resources {
 		idpUsers[usr.Email] = usr
@@ -123,22 +125,22 @@ func usersDifferences(idp, state *UsersResult) (create *UsersResult, update *Use
 		}
 	}
 
-	create = &UsersResult{
+	create = &model.UsersResult{
 		Items:     len(toCreate),
 		Resources: toCreate,
 	}
 
-	update = &UsersResult{
+	update = &model.UsersResult{
 		Items:     len(toUpdate),
 		Resources: toUpdate,
 	}
 
-	equal = &UsersResult{
+	equal = &model.UsersResult{
 		Items:     len(toEqual),
 		Resources: toEqual,
 	}
 
-	delete = &UsersResult{
+	delete = &model.UsersResult{
 		Items:     len(toDelete),
 		Resources: toDelete,
 	}
@@ -152,13 +154,13 @@ func usersDifferences(idp, state *UsersResult) (create *UsersResult, update *Use
 // create: users that exist in "state" but not in "idp"
 // equal: users that exist in both "idp" and "state" and their attributes are equal
 // delete: users that exist in "state" but not in "idp"
-func groupsMembersDifferences(idp, state *GroupsMembersResult) (create *GroupsMembersResult, equal *GroupsMembersResult, delete *GroupsMembersResult) {
+func groupsMembersDifferences(idp, state *model.GroupsMembersResult) (create *model.GroupsMembersResult, equal *model.GroupsMembersResult, delete *model.GroupsMembersResult) {
 	idpMembers := make(map[string]map[string]struct{})
 	stateMembers := make(map[string]map[string]struct{})
 
-	toCreate := make(GroupsMembers)
-	toEqual := make(GroupsMembers)
-	toDelete := make(GroupsMembers)
+	toCreate := make(model.GroupsMembers)
+	toEqual := make(model.GroupsMembers)
+	toDelete := make(model.GroupsMembers)
 
 	for grpName, mbrs := range *idp.Resources {
 		idpMembers[grpName] = make(map[string]struct{})
@@ -192,17 +194,17 @@ func groupsMembersDifferences(idp, state *GroupsMembersResult) (create *GroupsMe
 		}
 	}
 
-	create = &GroupsMembersResult{
+	create = &model.GroupsMembersResult{
 		Items:     len(toCreate),
 		Resources: &toCreate,
 	}
 
-	equal = &GroupsMembersResult{
+	equal = &model.GroupsMembersResult{
 		Items:     len(toEqual),
 		Resources: &toEqual,
 	}
 
-	delete = &GroupsMembersResult{
+	delete = &model.GroupsMembersResult{
 		Items:     len(toDelete),
 		Resources: &toDelete,
 	}

@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	gomock "github.com/golang/mock/gomock"
+	"github.com/slashdevops/idp-scim-sync/internal/mocks"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -14,9 +15,9 @@ func Test_syncService_NewSyncService(t *testing.T) {
 		defer mockCtrl.Finish()
 
 		ctx := context.TODO()
-		mockProviderService := NewMockIdentityProviderService(mockCtrl)
-		mockSCIMService := NewMockSCIMService(mockCtrl)
-		mockRepository := NewMockSyncRepository(mockCtrl)
+		mockProviderService := mocks.NewMockIdentityProviderService(mockCtrl)
+		mockSCIMService := mocks.NewMockSCIMService(mockCtrl)
+		mockRepository := mocks.NewMockSyncRepository(mockCtrl)
 
 		svc, err := NewSyncService(ctx, mockProviderService, mockSCIMService, mockRepository)
 
@@ -40,9 +41,9 @@ func Test_syncService_SyncGroupsAndUsers(t *testing.T) {
 		defer mockCtrl.Finish()
 
 		ctx := context.TODO()
-		mockProviderService := NewMockIdentityProviderService(mockCtrl)
-		mockSCIMService := NewMockSCIMService(mockCtrl)
-		mockRepository := NewMockSyncRepository(mockCtrl)
+		mockProviderService := mocks.NewMockIdentityProviderService(mockCtrl)
+		mockSCIMService := mocks.NewMockSCIMService(mockCtrl)
+		mockRepository := mocks.NewMockSyncRepository(mockCtrl)
 
 		mockProviderService.EXPECT().GetGroups(ctx, gomock.Any()).Return(nil, nil)
 		mockProviderService.EXPECT().GetUsers(ctx, gomock.Any()).Return(nil, nil)

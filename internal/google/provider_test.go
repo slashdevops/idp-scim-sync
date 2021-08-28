@@ -6,7 +6,8 @@ import (
 	"testing"
 
 	gomock "github.com/golang/mock/gomock"
-	"github.com/slashdevops/idp-scim-sync/internal/core"
+	"github.com/slashdevops/idp-scim-sync/internal/mocks"
+	"github.com/slashdevops/idp-scim-sync/internal/model"
 	"github.com/slashdevops/idp-scim-sync/internal/utils"
 	"github.com/stretchr/testify/assert"
 	admin "google.golang.org/api/admin/directory/v1"
@@ -17,7 +18,7 @@ func TestNewGoogleIdentityProvider(t *testing.T) {
 	defer mockCtrl.Finish()
 
 	t.Run("Should return IdentityServiceProvider and no error", func(t *testing.T) {
-		mockDS := NewMockDirectoryService(mockCtrl)
+		mockDS := mocks.NewMockDirectoryService(mockCtrl)
 		svc, err := NewGoogleIdentityProvider(mockDS)
 
 		assert.NoError(t, err)
@@ -34,7 +35,7 @@ func TestNewGoogleIdentityProvider(t *testing.T) {
 
 func Test_googleProvider_GetGroups(t *testing.T) {
 	type fields struct {
-		ds *MockDirectoryService
+		ds *mocks.MockDirectoryService
 	}
 
 	type args struct {
@@ -46,7 +47,7 @@ func Test_googleProvider_GetGroups(t *testing.T) {
 		name    string
 		prepare func(f *fields)
 		args    args
-		want    *core.GroupsResult
+		want    *model.GroupsResult
 		wantErr bool
 	}{
 		{
@@ -59,9 +60,9 @@ func Test_googleProvider_GetGroups(t *testing.T) {
 				f.ds.EXPECT().ListGroups(gomock.Eq([]string{""})).Return(googleGroups, nil).Times(1)
 			},
 			args: args{ctx: context.TODO(), filter: []string{""}},
-			want: &core.GroupsResult{
+			want: &model.GroupsResult{
 				Items: 2,
-				Resources: []*core.Group{
+				Resources: []*model.Group{
 					{ID: "1", Name: "group1", Email: "group1@mail.com"},
 					{ID: "2", Name: "group2", Email: "group2@mail.com"},
 				},
@@ -84,7 +85,7 @@ func Test_googleProvider_GetGroups(t *testing.T) {
 			mockCtrl := gomock.NewController(t)
 			defer mockCtrl.Finish()
 
-			f := fields{ds: NewMockDirectoryService(mockCtrl)}
+			f := fields{ds: mocks.NewMockDirectoryService(mockCtrl)}
 
 			if tt.prepare != nil {
 				tt.prepare(&f)
@@ -108,7 +109,7 @@ func Test_googleProvider_GetGroups(t *testing.T) {
 
 func Test_googleProvider_GetUsers(t *testing.T) {
 	type fields struct {
-		ds *MockDirectoryService
+		ds *mocks.MockDirectoryService
 	}
 
 	type args struct {
@@ -120,7 +121,7 @@ func Test_googleProvider_GetUsers(t *testing.T) {
 		name    string
 		prepare func(f *fields)
 		args    args
-		want    *core.UsersResult
+		want    *model.UsersResult
 		wantErr bool
 	}{
 		{
@@ -133,11 +134,11 @@ func Test_googleProvider_GetUsers(t *testing.T) {
 				f.ds.EXPECT().ListUsers(gomock.Eq([]string{""})).Return(googleUsers, nil).Times(1)
 			},
 			args: args{ctx: context.TODO(), filter: []string{""}},
-			want: &core.UsersResult{
+			want: &model.UsersResult{
 				Items: 2,
-				Resources: []*core.User{
-					{ID: "1", Name: core.Name{GivenName: "user", FamilyName: "1"}, Email: "user1@mail.com", DisplayName: "user 1", Active: true},
-					{ID: "2", Name: core.Name{GivenName: "user", FamilyName: "2"}, Email: "user2@mail.com", DisplayName: "user 2", Active: false},
+				Resources: []*model.User{
+					{ID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user1@mail.com", DisplayName: "user 1", Active: true},
+					{ID: "2", Name: model.Name{GivenName: "user", FamilyName: "2"}, Email: "user2@mail.com", DisplayName: "user 2", Active: false},
 				},
 			},
 			wantErr: false,
@@ -158,7 +159,7 @@ func Test_googleProvider_GetUsers(t *testing.T) {
 			mockCtrl := gomock.NewController(t)
 			defer mockCtrl.Finish()
 
-			f := fields{ds: NewMockDirectoryService(mockCtrl)}
+			f := fields{ds: mocks.NewMockDirectoryService(mockCtrl)}
 
 			if tt.prepare != nil {
 				tt.prepare(&f)
@@ -182,7 +183,7 @@ func Test_googleProvider_GetUsers(t *testing.T) {
 
 func Test_googleProvider_GetGroupMembers(t *testing.T) {
 	type fields struct {
-		ds *MockDirectoryService
+		ds *mocks.MockDirectoryService
 	}
 
 	type args struct {
@@ -194,7 +195,7 @@ func Test_googleProvider_GetGroupMembers(t *testing.T) {
 		name    string
 		prepare func(f *fields)
 		args    args
-		want    *core.MembersResult
+		want    *model.MembersResult
 		wantErr bool
 	}{
 		{
@@ -207,9 +208,9 @@ func Test_googleProvider_GetGroupMembers(t *testing.T) {
 				f.ds.EXPECT().ListGroupMembers(gomock.Eq("")).Return(googleGroupMembers, nil).Times(1)
 			},
 			args: args{ctx: context.TODO(), id: ""},
-			want: &core.MembersResult{
+			want: &model.MembersResult{
 				Items: 2,
-				Resources: []*core.Member{
+				Resources: []*model.Member{
 					{ID: "1", Email: "user1@mail.com"},
 					{ID: "2", Email: "user2@mail.com"},
 				},
@@ -232,7 +233,7 @@ func Test_googleProvider_GetGroupMembers(t *testing.T) {
 			mockCtrl := gomock.NewController(t)
 			defer mockCtrl.Finish()
 
-			f := fields{ds: NewMockDirectoryService(mockCtrl)}
+			f := fields{ds: mocks.NewMockDirectoryService(mockCtrl)}
 
 			if tt.prepare != nil {
 				tt.prepare(&f)
@@ -256,19 +257,19 @@ func Test_googleProvider_GetGroupMembers(t *testing.T) {
 
 func Test_googleProvider_GetUsersFromGroupMembers(t *testing.T) {
 	type fields struct {
-		ds *MockDirectoryService
+		ds *mocks.MockDirectoryService
 	}
 
 	type args struct {
 		ctx context.Context
-		mbr *core.MembersResult
+		mbr *model.MembersResult
 	}
 
 	tests := []struct {
 		name    string
 		prepare func(f *fields)
 		args    args
-		want    *core.UsersResult
+		want    *model.UsersResult
 		wantErr bool
 	}{
 		{
@@ -284,19 +285,19 @@ func Test_googleProvider_GetUsersFromGroupMembers(t *testing.T) {
 			},
 			args: args{
 				ctx: context.TODO(),
-				mbr: &core.MembersResult{
+				mbr: &model.MembersResult{
 					Items: 2,
-					Resources: []*core.Member{
+					Resources: []*model.Member{
 						{ID: "1", Email: "user1@mail.com"},
 						{ID: "2", Email: "user2@mail.com"},
 					},
 				},
 			},
-			want: &core.UsersResult{
+			want: &model.UsersResult{
 				Items: 2,
-				Resources: []*core.User{
-					{ID: "1", Name: core.Name{GivenName: "user", FamilyName: "1"}, Email: "user1@mail.com", DisplayName: "user 1", Active: true},
-					{ID: "2", Name: core.Name{GivenName: "user", FamilyName: "2"}, Email: "user2@mail.com", DisplayName: "user 2", Active: false},
+				Resources: []*model.User{
+					{ID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user1@mail.com", DisplayName: "user 1", Active: true},
+					{ID: "2", Name: model.Name{GivenName: "user", FamilyName: "2"}, Email: "user2@mail.com", DisplayName: "user 2", Active: false},
 				},
 			},
 			wantErr: false,
@@ -308,9 +309,9 @@ func Test_googleProvider_GetUsersFromGroupMembers(t *testing.T) {
 			},
 			args: args{
 				ctx: context.TODO(),
-				mbr: &core.MembersResult{
+				mbr: &model.MembersResult{
 					Items: 0,
-					Resources: []*core.Member{
+					Resources: []*model.Member{
 						{ID: "", Email: "user1@mail.com"},
 					},
 				},
@@ -325,7 +326,7 @@ func Test_googleProvider_GetUsersFromGroupMembers(t *testing.T) {
 			mockCtrl := gomock.NewController(t)
 			defer mockCtrl.Finish()
 
-			f := fields{ds: NewMockDirectoryService(mockCtrl)}
+			f := fields{ds: mocks.NewMockDirectoryService(mockCtrl)}
 
 			if tt.prepare != nil {
 				tt.prepare(&f)
