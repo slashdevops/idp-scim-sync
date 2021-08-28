@@ -23,8 +23,8 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/secretsmanager"
 	"github.com/pkg/errors"
-	"github.com/slashdevops/idp-scim-sync/internal/aws"
 	"github.com/slashdevops/idp-scim-sync/internal/config"
+	"github.com/slashdevops/idp-scim-sync/internal/scim/aws"
 	"github.com/spf13/cobra"
 
 	"github.com/spf13/viper"
@@ -83,7 +83,6 @@ func init() {
 
 // initConfig reads in config file and ENV variables if set.
 func initConfig() {
-
 	viper.AutomaticEnv() // read in environment variables that match
 
 	// If a config file is found, read it in.

@@ -20,15 +20,13 @@ import (
 	"io/ioutil"
 
 	"github.com/slashdevops/idp-scim-sync/internal/config"
-	"github.com/slashdevops/idp-scim-sync/internal/google"
+	"github.com/slashdevops/idp-scim-sync/internal/provider/google"
 	"github.com/spf13/cobra"
 
 	log "github.com/sirupsen/logrus"
 )
 
-var (
-	query []string
-)
+var query []string
 
 // command gws
 var (
