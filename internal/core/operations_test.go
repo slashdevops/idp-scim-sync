@@ -101,7 +101,7 @@ func Test_groupsDifferences(t *testing.T) {
 				state: &model.GroupsResult{
 					Items: 2,
 					Resources: []*model.Group{
-						{ID: "1", Name: "newname1", Email: "1@mail.com"},
+						{ID: "1", Name: "name1", Email: "1@mail.com"},
 						{ID: "2", Name: "name2", Email: "2@mail.com"},
 					},
 				},

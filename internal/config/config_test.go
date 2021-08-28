@@ -41,11 +41,14 @@ func TestConfig_toJSON(t *testing.T) {
 			name:   "default",
 			fields: fields{Debug: false, LogLevel: "info", LogFormat: "text", ServiceAccountFile: "default"},
 			want: []byte(`{
+  "IsLambda": false,
   "Debug": false,
   "LogLevel": "info",
   "LogFormat": "text",
   "ServiceAccountFile": "default",
-  "UserEmail": ""
+  "UserEmail": "",
+  "SCIMEndpoint": "",
+  "SCIMAccessToken": ""
 }`),
 		},
 	}
