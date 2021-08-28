@@ -1,4 +1,4 @@
-package sync
+package core
 
 import (
 	"context"
@@ -9,7 +9,6 @@ import (
 )
 
 func Test_syncService_NewSyncService(t *testing.T) {
-
 	t.Run("New Service with parameters", func(t *testing.T) {
 		mockCtrl := gomock.NewController(t)
 		defer mockCtrl.Finish()
@@ -36,7 +35,6 @@ func Test_syncService_NewSyncService(t *testing.T) {
 }
 
 func Test_syncService_SyncGroupsAndUsers(t *testing.T) {
-
 	t.Run("Sync Groups and Users", func(t *testing.T) {
 		mockCtrl := gomock.NewController(t)
 		defer mockCtrl.Finish()
@@ -59,5 +57,4 @@ func Test_syncService_SyncGroupsAndUsers(t *testing.T) {
 		err = svc.SyncGroupsAndUsers()
 		assert.NoError(t, err)
 	})
-
 }

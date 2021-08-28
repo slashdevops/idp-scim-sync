@@ -1,4 +1,4 @@
-package sync
+package core
 
 type SyncRepository interface {
 	StoreGroups(gr *GroupsResult) (StoreGroupsResult, error)

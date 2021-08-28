@@ -1,4 +1,4 @@
-package sync
+package core
 
 import (
 	"context"
@@ -31,7 +31,6 @@ type syncService struct {
 
 // NewSyncService creates a new sync service.
 func NewSyncService(ctx context.Context, prov IdentityProviderService, scim SCIMService, repo SyncRepository, opts ...SyncServiceOption) (SyncService, error) {
-
 	if ctx == nil {
 		return nil, ErrNilContext
 	}
@@ -83,12 +82,12 @@ func (ss *syncService) SyncGroupsAndTheirMembers() error {
 
 	for _, pGroup := range pGroupsResult.Resources {
 
-		pMembers, err := ss.prov.GetGroupMembers(ss.ctx, pGroup.Id)
+		pMembers, err := ss.prov.GetGroupMembers(ss.ctx, pGroup.ID)
 		if err != nil {
 			return err
 		}
 
-		pGroupsMembers[pGroup.Id] = pMembers.Resources
+		pGroupsMembers[pGroup.ID] = pMembers.Resources
 
 		pUsersFromMembers, err := ss.prov.GetUsersFromGroupMembers(ss.ctx, pMembers)
 		if err != nil {

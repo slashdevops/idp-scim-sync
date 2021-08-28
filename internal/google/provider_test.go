@@ -2,25 +2,15 @@ package google
 
 import (
 	"context"
-	"encoding/json"
-	"log"
 	"reflect"
 	"testing"
 
 	gomock "github.com/golang/mock/gomock"
-	"github.com/slashdevops/idp-scim-sync/internal/sync"
+	"github.com/slashdevops/idp-scim-sync/internal/core"
+	"github.com/slashdevops/idp-scim-sync/internal/utils"
 	"github.com/stretchr/testify/assert"
 	admin "google.golang.org/api/admin/directory/v1"
 )
-
-// toJSON return a json pretty of the stc
-func toJSON(stc interface{}) []byte {
-	JSON, err := json.MarshalIndent(stc, "", "  ")
-	if err != nil {
-		log.Fatalf(err.Error())
-	}
-	return JSON
-}
 
 func TestNewGoogleIdentityProvider(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
@@ -56,7 +46,7 @@ func Test_googleProvider_GetGroups(t *testing.T) {
 		name    string
 		prepare func(f *fields)
 		args    args
-		want    *sync.GroupsResult
+		want    *core.GroupsResult
 		wantErr bool
 	}{
 		{
@@ -69,11 +59,11 @@ func Test_googleProvider_GetGroups(t *testing.T) {
 				f.ds.EXPECT().ListGroups(gomock.Eq([]string{""})).Return(googleGroups, nil).Times(1)
 			},
 			args: args{ctx: context.TODO(), filter: []string{""}},
-			want: &sync.GroupsResult{
+			want: &core.GroupsResult{
 				Items: 2,
-				Resources: []*sync.Group{
-					{Id: "1", Name: "group1", Email: "group1@mail.com"},
-					{Id: "2", Name: "group2", Email: "group2@mail.com"},
+				Resources: []*core.Group{
+					{ID: "1", Name: "group1", Email: "group1@mail.com"},
+					{ID: "2", Name: "group2", Email: "group2@mail.com"},
 				},
 			},
 			wantErr: false,
@@ -110,7 +100,7 @@ func Test_googleProvider_GetGroups(t *testing.T) {
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("googleProvider.GetGroups() = %s, want %s", toJSON(got), toJSON(tt.want))
+				t.Errorf("googleProvider.GetGroups() = %s, want %s", utils.ToJSON(got), utils.ToJSON(tt.want))
 			}
 		})
 	}
@@ -130,7 +120,7 @@ func Test_googleProvider_GetUsers(t *testing.T) {
 		name    string
 		prepare func(f *fields)
 		args    args
-		want    *sync.UsersResult
+		want    *core.UsersResult
 		wantErr bool
 	}{
 		{
@@ -143,11 +133,11 @@ func Test_googleProvider_GetUsers(t *testing.T) {
 				f.ds.EXPECT().ListUsers(gomock.Eq([]string{""})).Return(googleUsers, nil).Times(1)
 			},
 			args: args{ctx: context.TODO(), filter: []string{""}},
-			want: &sync.UsersResult{
+			want: &core.UsersResult{
 				Items: 2,
-				Resources: []*sync.User{
-					{Id: "1", Name: sync.Name{GivenName: "user", FamilyName: "1"}, Email: "user1@mail.com", DisplayName: "user 1", Active: true},
-					{Id: "2", Name: sync.Name{GivenName: "user", FamilyName: "2"}, Email: "user2@mail.com", DisplayName: "user 2", Active: false},
+				Resources: []*core.User{
+					{ID: "1", Name: core.Name{GivenName: "user", FamilyName: "1"}, Email: "user1@mail.com", DisplayName: "user 1", Active: true},
+					{ID: "2", Name: core.Name{GivenName: "user", FamilyName: "2"}, Email: "user2@mail.com", DisplayName: "user 2", Active: false},
 				},
 			},
 			wantErr: false,
@@ -184,7 +174,7 @@ func Test_googleProvider_GetUsers(t *testing.T) {
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("googleProvider.GetUsers() = %s, want %s", toJSON(got), toJSON(tt.want))
+				t.Errorf("googleProvider.GetUsers() = %s, want %s", utils.ToJSON(got), utils.ToJSON(tt.want))
 			}
 		})
 	}
@@ -204,7 +194,7 @@ func Test_googleProvider_GetGroupMembers(t *testing.T) {
 		name    string
 		prepare func(f *fields)
 		args    args
-		want    *sync.MembersResult
+		want    *core.MembersResult
 		wantErr bool
 	}{
 		{
@@ -217,11 +207,11 @@ func Test_googleProvider_GetGroupMembers(t *testing.T) {
 				f.ds.EXPECT().ListGroupMembers(gomock.Eq("")).Return(googleGroupMembers, nil).Times(1)
 			},
 			args: args{ctx: context.TODO(), id: ""},
-			want: &sync.MembersResult{
+			want: &core.MembersResult{
 				Items: 2,
-				Resources: []*sync.Member{
-					{Id: "1", Email: "user1@mail.com"},
-					{Id: "2", Email: "user2@mail.com"},
+				Resources: []*core.Member{
+					{ID: "1", Email: "user1@mail.com"},
+					{ID: "2", Email: "user2@mail.com"},
 				},
 			},
 			wantErr: false,
@@ -258,7 +248,7 @@ func Test_googleProvider_GetGroupMembers(t *testing.T) {
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("googleProvider.GetGroupMembers() = %s, want %s", toJSON(got), toJSON(tt.want))
+				t.Errorf("googleProvider.GetGroupMembers() = %s, want %s", utils.ToJSON(got), utils.ToJSON(tt.want))
 			}
 		})
 	}
@@ -271,14 +261,14 @@ func Test_googleProvider_GetUsersFromGroupMembers(t *testing.T) {
 
 	type args struct {
 		ctx context.Context
-		mbr *sync.MembersResult
+		mbr *core.MembersResult
 	}
 
 	tests := []struct {
 		name    string
 		prepare func(f *fields)
 		args    args
-		want    *sync.UsersResult
+		want    *core.UsersResult
 		wantErr bool
 	}{
 		{
@@ -294,19 +284,19 @@ func Test_googleProvider_GetUsersFromGroupMembers(t *testing.T) {
 			},
 			args: args{
 				ctx: context.TODO(),
-				mbr: &sync.MembersResult{
+				mbr: &core.MembersResult{
 					Items: 2,
-					Resources: []*sync.Member{
-						{Id: "1", Email: "user1@mail.com"},
-						{Id: "2", Email: "user2@mail.com"},
+					Resources: []*core.Member{
+						{ID: "1", Email: "user1@mail.com"},
+						{ID: "2", Email: "user2@mail.com"},
 					},
 				},
 			},
-			want: &sync.UsersResult{
+			want: &core.UsersResult{
 				Items: 2,
-				Resources: []*sync.User{
-					{Id: "1", Name: sync.Name{GivenName: "user", FamilyName: "1"}, Email: "user1@mail.com", DisplayName: "user 1", Active: true},
-					{Id: "2", Name: sync.Name{GivenName: "user", FamilyName: "2"}, Email: "user2@mail.com", DisplayName: "user 2", Active: false},
+				Resources: []*core.User{
+					{ID: "1", Name: core.Name{GivenName: "user", FamilyName: "1"}, Email: "user1@mail.com", DisplayName: "user 1", Active: true},
+					{ID: "2", Name: core.Name{GivenName: "user", FamilyName: "2"}, Email: "user2@mail.com", DisplayName: "user 2", Active: false},
 				},
 			},
 			wantErr: false,
@@ -318,10 +308,10 @@ func Test_googleProvider_GetUsersFromGroupMembers(t *testing.T) {
 			},
 			args: args{
 				ctx: context.TODO(),
-				mbr: &sync.MembersResult{
+				mbr: &core.MembersResult{
 					Items: 0,
-					Resources: []*sync.Member{
-						{Id: "", Email: "user1@mail.com"},
+					Resources: []*core.Member{
+						{ID: "", Email: "user1@mail.com"},
 					},
 				},
 			},
@@ -351,7 +341,7 @@ func Test_googleProvider_GetUsersFromGroupMembers(t *testing.T) {
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("googleProvider.GetUsersFromGroupMembers() = %s, want %s", toJSON(got), toJSON(tt.want))
+				t.Errorf("googleProvider.GetUsersFromGroupMembers() = %s, want %s", utils.ToJSON(got), utils.ToJSON(tt.want))
 			}
 		})
 	}

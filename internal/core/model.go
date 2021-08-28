@@ -1,4 +1,4 @@
-package sync
+package core
 
 type Name struct {
 	FamilyName string `json:"familyName"`
@@ -6,7 +6,7 @@ type Name struct {
 }
 
 type User struct {
-	Id          string `json:"id"`
+	ID          string `json:"id"`
 	Name        Name   `json:"name"`
 	DisplayName string `json:"displayName"`
 	Active      bool   `json:"active"`
@@ -19,7 +19,7 @@ type UsersResult struct {
 }
 
 type Group struct {
-	Id    string `json:"id"`
+	ID    string `json:"id"`
 	Name  string `json:"name"`
 	Email string `json:"email"`
 }
@@ -30,9 +30,10 @@ type GroupsResult struct {
 }
 
 type Member struct {
-	Id    string `json:"id"`
+	ID    string `json:"id"`
 	Email string `json:"email"`
 }
+
 type MembersResult struct {
 	Items     int       `json:"items"`
 	Resources []*Member `json:"resources"`
@@ -40,8 +41,8 @@ type MembersResult struct {
 
 type GroupsMembers map[string][]*Member
 
-func (gms GroupsMembers) GetMembers(groupId string) []*Member {
-	return gms[groupId]
+func (gms GroupsMembers) GetMembers(groupID string) []*Member {
+	return gms[groupID]
 }
 
 type GroupsMembersResult struct {

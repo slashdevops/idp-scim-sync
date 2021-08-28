@@ -1,4 +1,4 @@
-package sync
+package core
 
 func createSyncState(sgr *StoreGroupsResult, sgmr *StoreGroupsMembersResult, sur *StoreUsersResult) (SyncState, error) {
 	return SyncState{
@@ -16,7 +16,6 @@ func createSyncState(sgr *StoreGroupsResult, sgmr *StoreGroupsMembersResult, sur
 // equal: groups that exist in both "idp" and "state" and their attributes are equal
 // delete: groups that exist in "state" but not in "idp"
 func groupsDifferences(idp, state *GroupsResult) (create *GroupsResult, update *GroupsResult, equal *GroupsResult, delete *GroupsResult) {
-
 	idpGroups := make(map[string]*Group)
 	stateGroups := make(map[string]struct{})
 
@@ -36,15 +35,13 @@ func groupsDifferences(idp, state *GroupsResult) (create *GroupsResult, update *
 	// new groups and what equal to them
 	for _, gr := range state.Resources {
 		if _, ok := idpGroups[gr.Name]; !ok {
-
 			// Check if the group email changed
 			// Id changed happen when the group delete and create again with the same name and email I guest
-			if gr.Email != idpGroups[gr.Name].Email || gr.Id != idpGroups[gr.Name].Id {
+			if gr.Email != idpGroups[gr.Name].Email || gr.ID != idpGroups[gr.Name].ID {
 				toUpdate = append(toUpdate, gr)
 			} else {
 				toCreate = append(toCreate, gr)
 			}
-
 		} else {
 			toEqual = append(toEqual, gr)
 		}
@@ -87,7 +84,6 @@ func groupsDifferences(idp, state *GroupsResult) (create *GroupsResult, update *
 // equal: users that exist in both "idp" and "state" and their attributes are equal
 // delete: users that exist in "state" but not in "idp"
 func usersDifferences(idp, state *UsersResult) (create *UsersResult, update *UsersResult, equal *UsersResult, delete *UsersResult) {
-
 	idpUsers := make(map[string]*User)
 	stateUsers := make(map[string]struct{})
 
@@ -107,17 +103,15 @@ func usersDifferences(idp, state *UsersResult) (create *UsersResult, update *Use
 	// new users and what equal to them
 	for _, usr := range state.Resources {
 		if _, ok := idpUsers[usr.Email]; !ok {
-
 			// Check if the user fields changed
 			if usr.Name.FamilyName != idpUsers[usr.Email].Name.FamilyName ||
 				usr.Name.GivenName != idpUsers[usr.Email].Name.GivenName ||
 				usr.Active != idpUsers[usr.Email].Active ||
-				usr.Id != idpUsers[usr.Email].Id {
+				usr.ID != idpUsers[usr.Email].ID {
 				toUpdate = append(toUpdate, usr)
 			} else {
 				toCreate = append(toCreate, usr)
 			}
-
 		} else {
 			toEqual = append(toEqual, usr)
 		}
@@ -159,7 +153,6 @@ func usersDifferences(idp, state *UsersResult) (create *UsersResult, update *Use
 // equal: users that exist in both "idp" and "state" and their attributes are equal
 // delete: users that exist in "state" but not in "idp"
 func groupsMembersDifferences(idp, state *GroupsMembersResult) (create *GroupsMembersResult, equal *GroupsMembersResult, delete *GroupsMembersResult) {
-
 	idpMembers := make(map[string]map[string]struct{})
 	stateMembers := make(map[string]map[string]struct{})
 

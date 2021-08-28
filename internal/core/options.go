@@ -1,4 +1,4 @@
-package sync
+package core
 
 type SyncServiceOption func(*syncService)
 
