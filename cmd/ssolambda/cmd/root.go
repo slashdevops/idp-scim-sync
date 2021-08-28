@@ -24,7 +24,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/secretsmanager"
 	"github.com/pkg/errors"
 	"github.com/slashdevops/idp-scim-sync/internal/config"
-	"github.com/slashdevops/idp-scim-sync/internal/scim/aws"
+	"github.com/slashdevops/idp-scim-sync/pkg/aws"
 	"github.com/spf13/cobra"
 
 	"github.com/spf13/viper"

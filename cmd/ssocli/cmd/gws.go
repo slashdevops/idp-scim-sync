@@ -20,7 +20,7 @@ import (
 	"io/ioutil"
 
 	"github.com/slashdevops/idp-scim-sync/internal/config"
-	"github.com/slashdevops/idp-scim-sync/internal/provider/google"
+	"github.com/slashdevops/idp-scim-sync/pkg/google"
 	"github.com/spf13/cobra"
 
 	log "github.com/sirupsen/logrus"
