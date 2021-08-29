@@ -5,19 +5,15 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Launch test function",
+      "name": "Launch test core function",
       "type": "go",
       "request": "launch",
       "mode": "test",
-      "program": "${workspaceFolder}",
-      "args": []
-    },
-    {
-      "name": "Launch Package",
-      "type": "go",
-      "request": "launch",
-      "mode": "auto",
-      "program": "${fileDirname}"
+      "program": "${workspaceFolder}/internal/core",
+      "debugAdapter": "dlv-dap",
+      "showLog": true,
+      "logOutput": "dap",
+      "trace": "verbose"
     }
   ]
 }
