@@ -1,6 +1,8 @@
 package core
 
-import "github.com/slashdevops/idp-scim-sync/internal/model"
+import (
+	"github.com/slashdevops/idp-scim-sync/internal/model"
+)
 
 func createSyncState(sgr *model.StoreGroupsResult, sgmr *model.StoreGroupsMembersResult, sur *model.StoreUsersResult) (model.SyncState, error) {
 	return model.SyncState{
@@ -19,7 +21,7 @@ func createSyncState(sgr *model.StoreGroupsResult, sgmr *model.StoreGroupsMember
 // delete: groups that exist in "state" but not in "idp"
 func groupsDifferences(idp, state *model.GroupsResult) (create *model.GroupsResult, update *model.GroupsResult, equal *model.GroupsResult, delete *model.GroupsResult) {
 	idpGroups := make(map[string]*model.Group)
-	stateGroups := make(map[string]struct{})
+	stateGroups := make(map[string]*model.Group)
 
 	toCreate := make([]*model.Group, 0)
 	toUpdate := make([]*model.Group, 0)
@@ -31,26 +33,26 @@ func groupsDifferences(idp, state *model.GroupsResult) (create *model.GroupsResu
 	}
 
 	for _, gr := range state.Resources {
-		stateGroups[gr.Name] = struct{}{}
+		stateGroups[gr.Name] = gr
 	}
 
 	// new groups and what equal to them
-	for _, gr := range state.Resources {
-		if _, ok := idpGroups[gr.Name]; !ok {
-			// Check if the group email changed
+	for _, gr := range idp.Resources {
+		if _, ok := stateGroups[gr.Name]; !ok {
+			toCreate = append(toCreate, gr)
+		} else {
+			// Check if the group email or ID changed
 			// Id changed happen when the group delete and create again with the same name and email I guest
-			if gr.Email != idpGroups[gr.Name].Email || gr.ID != idpGroups[gr.Name].ID {
+			if gr.Email != stateGroups[gr.Name].Email || gr.ID != stateGroups[gr.Name].ID {
 				toUpdate = append(toUpdate, gr)
 			} else {
-				toCreate = append(toCreate, gr)
+				toEqual = append(toEqual, gr)
 			}
-		} else {
-			toEqual = append(toEqual, gr)
 		}
 	}
 
-	for _, gr := range idp.Resources {
-		if _, ok := stateGroups[gr.Name]; !ok {
+	for _, gr := range state.Resources {
+		if _, ok := idpGroups[gr.Name]; !ok {
 			toDelete = append(toDelete, gr)
 		}
 	}

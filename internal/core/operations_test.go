@@ -51,7 +51,7 @@ func Test_groupsDifferences(t *testing.T) {
 			},
 		},
 		{
-			name: "equals",
+			name: "2 equals",
 			args: args{
 				idp: &model.GroupsResult{
 					Items: 2,
@@ -89,13 +89,13 @@ func Test_groupsDifferences(t *testing.T) {
 			},
 		},
 		{
-			name: "1 equals, 1 update, 1 create, 1 delete",
+			name: "1 equals, 1 update",
 			args: args{
 				idp: &model.GroupsResult{
 					Items: 2,
 					Resources: []*model.Group{
 						{ID: "1", Name: "name1", Email: "1@mail.com"},
-						{ID: "2", Name: "name2", Email: "2@mail.com"},
+						{ID: "2", Name: "name2", Email: "22@mail.com"},
 					},
 				},
 				state: &model.GroupsResult{
@@ -111,15 +111,138 @@ func Test_groupsDifferences(t *testing.T) {
 				Resources: []*model.Group{},
 			},
 			wantUpdate: &model.GroupsResult{
+				Items: 1,
+				Resources: []*model.Group{
+					{ID: "2", Name: "name2", Email: "22@mail.com"},
+				},
+			},
+			wantEqual: &model.GroupsResult{
+				Items: 1,
+				Resources: []*model.Group{
+					{ID: "1", Name: "name1", Email: "1@mail.com"},
+				},
+			},
+			wantDelete: &model.GroupsResult{
 				Items:     0,
 				Resources: []*model.Group{},
 			},
+		},
+		{
+			name: "1 equals, 1 update, 1 delete",
+			args: args{
+				idp: &model.GroupsResult{
+					Items: 2,
+					Resources: []*model.Group{
+						{ID: "1", Name: "name1", Email: "1@mail.com"},
+						{ID: "2", Name: "name2", Email: "22@mail.com"},
+					},
+				},
+				state: &model.GroupsResult{
+					Items: 3,
+					Resources: []*model.Group{
+						{ID: "1", Name: "name1", Email: "1@mail.com"},
+						{ID: "2", Name: "name2", Email: "2@mail.com"},
+						{ID: "3", Name: "name3", Email: "3@mail.com"},
+					},
+				},
+			},
+			wantCreate: &model.GroupsResult{
+				Items:     0,
+				Resources: []*model.Group{},
+			},
+			wantUpdate: &model.GroupsResult{
+				Items: 1,
+				Resources: []*model.Group{
+					{ID: "2", Name: "name2", Email: "22@mail.com"},
+				},
+			},
 			wantEqual: &model.GroupsResult{
-				Items: 2,
+				Items: 1,
 				Resources: []*model.Group{
 					{ID: "1", Name: "name1", Email: "1@mail.com"},
-					{ID: "2", Name: "name2", Email: "2@mail.com"},
 				},
+			},
+			wantDelete: &model.GroupsResult{
+				Items: 1,
+				Resources: []*model.Group{
+					{ID: "3", Name: "name3", Email: "3@mail.com"},
+				},
+			},
+		},
+		{
+			name: "1 equals, 1 update, 1 delete, 1 create",
+			args: args{
+				idp: &model.GroupsResult{
+					Items: 4,
+					Resources: []*model.Group{
+						{ID: "1", Name: "name1", Email: "1@mail.com"},
+						{ID: "2", Name: "name2", Email: "22@mail.com"},
+						{ID: "4", Name: "name4", Email: "4@mail.com"},
+					},
+				},
+				state: &model.GroupsResult{
+					Items: 3,
+					Resources: []*model.Group{
+						{ID: "1", Name: "name1", Email: "1@mail.com"},
+						{ID: "2", Name: "name2", Email: "2@mail.com"},
+						{ID: "3", Name: "name3", Email: "3@mail.com"},
+					},
+				},
+			},
+			wantCreate: &model.GroupsResult{
+				Items: 1,
+				Resources: []*model.Group{
+					{ID: "4", Name: "name4", Email: "4@mail.com"},
+				},
+			},
+			wantUpdate: &model.GroupsResult{
+				Items: 1,
+				Resources: []*model.Group{
+					{ID: "2", Name: "name2", Email: "22@mail.com"},
+				},
+			},
+			wantEqual: &model.GroupsResult{
+				Items: 1,
+				Resources: []*model.Group{
+					{ID: "1", Name: "name1", Email: "1@mail.com"},
+				},
+			},
+			wantDelete: &model.GroupsResult{
+				Items: 1,
+				Resources: []*model.Group{
+					{ID: "3", Name: "name3", Email: "3@mail.com"},
+				},
+			},
+		},
+		{
+			name: "1 update, change the ID",
+			args: args{
+				idp: &model.GroupsResult{
+					Items: 1,
+					Resources: []*model.Group{
+						{ID: "11", Name: "name1", Email: "1@mail.com"},
+					},
+				},
+				state: &model.GroupsResult{
+					Items: 1,
+					Resources: []*model.Group{
+						{ID: "1", Name: "name1", Email: "1@mail.com"},
+					},
+				},
+			},
+			wantCreate: &model.GroupsResult{
+				Items:     0,
+				Resources: []*model.Group{},
+			},
+			wantUpdate: &model.GroupsResult{
+				Items: 1,
+				Resources: []*model.Group{
+					{ID: "11", Name: "name1", Email: "1@mail.com"},
+				},
+			},
+			wantEqual: &model.GroupsResult{
+				Items:     0,
+				Resources: []*model.Group{},
 			},
 			wantDelete: &model.GroupsResult{
 				Items:     0,
