@@ -6,7 +6,6 @@ import (
 	"sync"
 
 	"github.com/slashdevops/idp-scim-sync/internal/model"
-	"github.com/slashdevops/idp-scim-sync/internal/provider"
 )
 
 var (
@@ -15,12 +14,13 @@ var (
 	ErrSCIMServiceNil     = errors.New("SCIM service cannot be nil")
 	ErrGettingGroups      = errors.New("error getting groups")
 	ErrRepositoryNil      = errors.New("repository cannot be nil")
+	ErrGettingState       = errors.New("error getting state")
 )
 
 type SyncService struct {
 	ctx              context.Context
 	mu               *sync.RWMutex
-	prov             provider.IdentityProviderService
+	prov             IdentityProviderService
 	provGroupsFilter []string
 	provUsersFilter  []string
 	scim             SCIMService
@@ -28,7 +28,7 @@ type SyncService struct {
 }
 
 // NewSyncService creates a new sync service.
-func NewSyncService(ctx context.Context, prov provider.IdentityProviderService, scim SCIMService, repo SyncRepository, opts ...SyncServiceOption) (*SyncService, error) {
+func NewSyncService(ctx context.Context, prov IdentityProviderService, scim SCIMService, repo SyncRepository, opts ...SyncServiceOption) (*SyncService, error) {
 	if ctx == nil {
 		return nil, ErrNilContext
 	}
@@ -66,7 +66,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 	// Check if is the first time we are syncing
 	state, err := ss.repo.GetState()
 	if err != nil {
-		return err
+		return ErrGettingState
 	}
 
 	// retrive data from provider
