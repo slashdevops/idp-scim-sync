@@ -7,8 +7,6 @@ import (
 
 	"github.com/slashdevops/idp-scim-sync/internal/model"
 	"github.com/slashdevops/idp-scim-sync/internal/provider"
-	"github.com/slashdevops/idp-scim-sync/internal/repository"
-	"github.com/slashdevops/idp-scim-sync/internal/scim"
 )
 
 var (
@@ -19,23 +17,18 @@ var (
 	ErrRepositoryNil      = errors.New("repository cannot be nil")
 )
 
-type SyncService interface {
-	SyncGroupsAndTheirMembers() error
-	SyncGroupsAndUsers() error
-}
-
-type syncService struct {
+type SyncService struct {
 	ctx              context.Context
 	mu               *sync.RWMutex
 	prov             provider.IdentityProviderService
 	provGroupsFilter []string
 	provUsersFilter  []string
-	scim             scim.SCIMService
-	repo             repository.SyncRepository
+	scim             SCIMService
+	repo             SyncRepository
 }
 
 // NewSyncService creates a new sync service.
-func NewSyncService(ctx context.Context, prov provider.IdentityProviderService, scim scim.SCIMService, repo repository.SyncRepository, opts ...SyncServiceOption) (SyncService, error) {
+func NewSyncService(ctx context.Context, prov provider.IdentityProviderService, scim SCIMService, repo SyncRepository, opts ...SyncServiceOption) (*SyncService, error) {
 	if ctx == nil {
 		return nil, ErrNilContext
 	}
@@ -49,7 +42,7 @@ func NewSyncService(ctx context.Context, prov provider.IdentityProviderService, 
 		return nil, ErrRepositoryNil
 	}
 
-	ss := &syncService{
+	ss := &SyncService{
 		ctx:              ctx,
 		mu:               &sync.RWMutex{},
 		prov:             prov,
@@ -66,7 +59,7 @@ func NewSyncService(ctx context.Context, prov provider.IdentityProviderService, 
 	return ss, nil
 }
 
-func (ss *syncService) SyncGroupsAndTheirMembers() error {
+func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 	ss.mu.Lock()
 	defer ss.mu.Unlock()
 
@@ -189,7 +182,7 @@ func (ss *syncService) SyncGroupsAndTheirMembers() error {
 	return nil
 }
 
-func (ss *syncService) SyncGroupsAndUsers() error {
+func (ss *SyncService) SyncGroupsAndUsers() error {
 	ss.mu.Lock()
 	defer ss.mu.Unlock()
 

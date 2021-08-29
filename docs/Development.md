@@ -42,9 +42,9 @@ More Examples:
 
 References:
 
-- https://www.conventionalcommits.org/
-- https://seesparkbox.com/foundry/semantic_commit_messages
-- http://karma-runner.github.io/1.0/dev/git-commit-msg.html
+- [https://www.conventionalcommits.org/](https://www.conventionalcommits.org/)
+- [https://seesparkbox.com/foundry/semantic_commit_messages](https://seesparkbox.com/foundry/semantic_commit_messages)
+- [http://karma-runner.github.io/1.0/dev/git-commit-msg.html](http://karma-runner.github.io/1.0/dev/git-commit-msg.html)
 
 ## Development
 
@@ -73,3 +73,8 @@ Directory Service Mocks
 ```bash
 mockgen -package=mocks -destination=internal/mocks/directory_mocks.go -source=internal/google/directory.go DirectoryService
 ```
+
+## Practices
+
+- [Accept interfaces, return structs](https://bryanftan.medium.com/accept-interfaces-return-structs-in-go-d4cab29a301b)
+- [Always use interfaces](https://medium.com/@bryanftan/always-use-interfaces-in-go-d8f9f8f8f9c0)
