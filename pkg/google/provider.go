@@ -5,8 +5,8 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/slashdevops/idp-scim-sync/internal/core"
 	"github.com/slashdevops/idp-scim-sync/internal/model"
-	"github.com/slashdevops/idp-scim-sync/internal/provider"
 )
 
 var (
@@ -21,7 +21,7 @@ type googleProvider struct {
 	ds DirectoryService
 }
 
-func NewGoogleIdentityProvider(ds DirectoryService) (provider.IdentityProviderService, error) {
+func NewGoogleIdentityProvider(ds DirectoryService) (core.IdentityProviderService, error) {
 	if ds == nil {
 		return nil, ErrDirectoryServiceNil
 	}
