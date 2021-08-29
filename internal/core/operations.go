@@ -152,63 +152,53 @@ func usersDifferences(idp, state *model.UsersResult) (create *model.UsersResult,
 
 // groupsMembersDifferences returns the differences between the members in the
 // Users Email as the key.
-// return 4 objest of GroupsMembersResult
+// return 3 objest of GroupsMembersResult
 // create: users that exist in "state" but not in "idp"
 // equal: users that exist in both "idp" and "state" and their attributes are equal
 // delete: users that exist in "state" but not in "idp"
 func groupsMembersDifferences(idp, state *model.GroupsMembersResult) (create *model.GroupsMembersResult, equal *model.GroupsMembersResult, delete *model.GroupsMembersResult) {
-	idpMembers := make(map[string]map[string]struct{})
-	stateMembers := make(map[string]map[string]struct{})
+	idpMembers := make(map[string]*model.GroupMembers)
+	stateMembers := make(map[string]*model.GroupMembers)
 
-	toCreate := make(model.GroupsMembers)
-	toEqual := make(model.GroupsMembers)
-	toDelete := make(model.GroupsMembers)
+	toCreate := make([]*model.GroupMembers, 0)
+	toEqual := make([]*model.GroupMembers, 0)
+	toDelete := make([]*model.GroupMembers, 0)
 
-	for grpName, mbrs := range *idp.Resources {
-		idpMembers[grpName] = make(map[string]struct{})
-		for _, mbr := range mbrs {
-			idpMembers[grpName][mbr.Email] = struct{}{}
+	for _, grpMbrs := range idp.Resources {
+		idpMembers[grpMbrs.ID] = grpMbrs
+	}
+
+	for _, grpMbrs := range state.Resources {
+		stateMembers[grpMbrs.ID] = grpMbrs
+	}
+
+	for _, grpMbrs := range idp.Resources {
+		if _, ok := stateMembers[grpMbrs.ID]; !ok {
+			toCreate = append(toCreate, grpMbrs)
+		} else {
+			toEqual = append(toEqual, grpMbrs)
 		}
 	}
 
-	for grpName, mbrs := range *state.Resources {
-		stateMembers[grpName] = make(map[string]struct{})
-		for _, mbr := range mbrs {
-			stateMembers[grpName][mbr.Email] = struct{}{}
-		}
-	}
-
-	for grpName, mbrs := range *state.Resources {
-		for _, mbr := range mbrs {
-			if _, ok := idpMembers[grpName][mbr.Email]; !ok {
-				toDelete[grpName] = append(toDelete[grpName], mbr)
-			} else {
-				toEqual[grpName] = append(toEqual[grpName], mbr)
-			}
-		}
-	}
-
-	for grpName, mbrs := range *idp.Resources {
-		for _, mbr := range mbrs {
-			if _, ok := stateMembers[grpName][mbr.Email]; !ok {
-				toCreate[grpName] = append(toCreate[grpName], mbr)
-			}
+	for _, grpMbrs := range state.Resources {
+		if _, ok := idpMembers[grpMbrs.ID]; !ok {
+			toDelete = append(toDelete, grpMbrs)
 		}
 	}
 
 	create = &model.GroupsMembersResult{
 		Items:     len(toCreate),
-		Resources: &toCreate,
+		Resources: toCreate,
 	}
 
 	equal = &model.GroupsMembersResult{
 		Items:     len(toEqual),
-		Resources: &toEqual,
+		Resources: toEqual,
 	}
 
 	delete = &model.GroupsMembersResult{
 		Items:     len(toDelete),
-		Resources: &toDelete,
+		Resources: toDelete,
 	}
 
 	return

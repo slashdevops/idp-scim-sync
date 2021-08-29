@@ -76,7 +76,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 	}
 
 	pUsers := make([]*model.User, 0)
-	var pGroupsMembers model.GroupsMembers
+	pGroupsMembers := make([]*model.GroupMembers, 0)
 
 	for _, pGroup := range pGroupsResult.Resources {
 
@@ -85,7 +85,13 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 			return err
 		}
 
-		pGroupsMembers[pGroup.ID] = pMembers.Resources
+		pGroupMembers := &model.GroupMembers{
+			ID:        pGroup.ID,
+			Email:     pGroup.Email,
+			Items:     len(pMembers.Resources),
+			Resources: pMembers.Resources,
+		}
+		pGroupsMembers = append(pGroupsMembers, pGroupMembers)
 
 		pUsersFromMembers, err := ss.prov.GetUsersFromGroupMembers(ss.ctx, pMembers)
 		if err != nil {
@@ -102,7 +108,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 
 	pGroupsMembersResult := &model.GroupsMembersResult{
 		Items:     len(pGroupsMembers),
-		Resources: &pGroupsMembers,
+		Resources: pGroupsMembers,
 	}
 
 	// First time we are syncing

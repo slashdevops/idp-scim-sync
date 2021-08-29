@@ -494,3 +494,125 @@ func Test_usersDifferences(t *testing.T) {
 		})
 	}
 }
+
+func Test_groupsMembersDifferences(t *testing.T) {
+	type args struct {
+		idp   *model.GroupsMembersResult
+		state *model.GroupsMembersResult
+	}
+	tests := []struct {
+		name       string
+		args       args
+		wantCreate *model.GroupsMembersResult
+		wantEqual  *model.GroupsMembersResult
+		wantDelete *model.GroupsMembersResult
+	}{
+		{
+			name: "empty",
+			args: args{
+				idp: &model.GroupsMembersResult{
+					Items:     0,
+					Resources: []*model.GroupMembers{},
+				},
+				state: &model.GroupsMembersResult{
+					Items:     0,
+					Resources: []*model.GroupMembers{},
+				},
+			},
+			wantCreate: &model.GroupsMembersResult{
+				Items:     0,
+				Resources: []*model.GroupMembers{},
+			},
+			wantEqual: &model.GroupsMembersResult{
+				Items:     0,
+				Resources: []*model.GroupMembers{},
+			},
+			wantDelete: &model.GroupsMembersResult{
+				Items:     0,
+				Resources: []*model.GroupMembers{},
+			},
+		},
+		{
+			name: "2 equals",
+			args: args{
+				idp: &model.GroupsMembersResult{
+					Items: 2,
+					Resources: []*model.GroupMembers{
+						{ID: "1", Email: "group1", Items: 1, Resources: []*model.Member{{ID: "1", Email: "1@mail.com"}}},
+						{ID: "2", Email: "group2", Items: 1, Resources: []*model.Member{{ID: "1", Email: "1@mail.com"}}},
+					},
+				},
+				state: &model.GroupsMembersResult{
+					Items: 2,
+					Resources: []*model.GroupMembers{
+						{ID: "1", Email: "group1", Items: 1, Resources: []*model.Member{{ID: "1", Email: "1@mail.com"}}},
+						{ID: "2", Email: "group2", Items: 1, Resources: []*model.Member{{ID: "1", Email: "1@mail.com"}}},
+					},
+				},
+			},
+			wantCreate: &model.GroupsMembersResult{
+				Items:     0,
+				Resources: []*model.GroupMembers{},
+			},
+			wantEqual: &model.GroupsMembersResult{
+				Items: 2,
+				Resources: []*model.GroupMembers{
+					{ID: "1", Email: "group1", Items: 1, Resources: []*model.Member{{ID: "1", Email: "1@mail.com"}}},
+					{ID: "2", Email: "group2", Items: 1, Resources: []*model.Member{{ID: "1", Email: "1@mail.com"}}},
+				},
+			},
+			wantDelete: &model.GroupsMembersResult{
+				Items:     0,
+				Resources: []*model.GroupMembers{},
+			},
+		},
+		{
+			name: "1 equal, 1 delete",
+			args: args{
+				idp: &model.GroupsMembersResult{
+					Items: 1,
+					Resources: []*model.GroupMembers{
+						{ID: "1", Email: "group1", Items: 1, Resources: []*model.Member{{ID: "1", Email: "1@mail.com"}}},
+					},
+				},
+				state: &model.GroupsMembersResult{
+					Items: 2,
+					Resources: []*model.GroupMembers{
+						{ID: "1", Email: "group1", Items: 1, Resources: []*model.Member{{ID: "1", Email: "1@mail.com"}}},
+						{ID: "2", Email: "group2", Items: 1, Resources: []*model.Member{{ID: "1", Email: "1@mail.com"}}},
+					},
+				},
+			},
+			wantCreate: &model.GroupsMembersResult{
+				Items:     0,
+				Resources: []*model.GroupMembers{},
+			},
+			wantEqual: &model.GroupsMembersResult{
+				Items: 1,
+				Resources: []*model.GroupMembers{
+					{ID: "1", Email: "group1", Items: 1, Resources: []*model.Member{{ID: "1", Email: "1@mail.com"}}},
+				},
+			},
+			wantDelete: &model.GroupsMembersResult{
+				Items: 1,
+				Resources: []*model.GroupMembers{
+					{ID: "2", Email: "group2", Items: 1, Resources: []*model.Member{{ID: "1", Email: "1@mail.com"}}},
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotCreate, gotEqual, gotDelete := groupsMembersDifferences(tt.args.idp, tt.args.state)
+			if !reflect.DeepEqual(gotCreate, tt.wantCreate) {
+				t.Errorf("groupsMembersDifferences() gotCreate = %s, want %s", utils.ToJSON(gotCreate), utils.ToJSON(tt.wantCreate))
+			}
+			if !reflect.DeepEqual(gotEqual, tt.wantEqual) {
+				t.Errorf("groupsMembersDifferences() gotEqual = %s, want %s", utils.ToJSON(gotEqual), utils.ToJSON(tt.wantEqual))
+			}
+			if !reflect.DeepEqual(gotDelete, tt.wantDelete) {
+				t.Errorf("groupsMembersDifferences() gotDelete = %s, want %s", utils.ToJSON(gotDelete), utils.ToJSON(tt.wantDelete))
+			}
+		})
+	}
+}

@@ -63,13 +63,20 @@ type MembersResult struct {
 	Resources []*Member `json:"resources"`
 }
 
-type GroupsMembers map[string][]*Member
+// type GroupsMembers map[string][]*Member
 
-func (gms GroupsMembers) GetMembers(groupID string) []*Member {
-	return gms[groupID]
+// func (gms GroupsMembers) GetMembers(groupID string) []*Member {
+// 	return gms[groupID]
+// }
+
+type GroupMembers struct {
+	ID        string    `json:"id"`
+	Email     string    `json:"email"`
+	Items     int       `json:"items"`
+	Resources []*Member `json:"resources"`
 }
 
 type GroupsMembersResult struct {
-	Items     int            `json:"items"`
-	Resources *GroupsMembers `json:"resources"`
+	Items     int             `json:"items"`
+	Resources []*GroupMembers `json:"resources"`
 }
