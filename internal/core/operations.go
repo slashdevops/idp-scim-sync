@@ -89,7 +89,7 @@ func groupsDifferences(idp, state *model.GroupsResult) (create *model.GroupsResu
 // delete: users that exist in "state" but not in "idp"
 func usersDifferences(idp, state *model.UsersResult) (create *model.UsersResult, update *model.UsersResult, equal *model.UsersResult, delete *model.UsersResult) {
 	idpUsers := make(map[string]*model.User)
-	stateUsers := make(map[string]struct{})
+	stateUsers := make(map[string]*model.User)
 
 	toCreate := make([]*model.User, 0)
 	toUpdate := make([]*model.User, 0)
@@ -101,28 +101,28 @@ func usersDifferences(idp, state *model.UsersResult) (create *model.UsersResult,
 	}
 
 	for _, usr := range state.Resources {
-		stateUsers[usr.Email] = struct{}{}
+		stateUsers[usr.Email] = usr
 	}
 
 	// new users and what equal to them
-	for _, usr := range state.Resources {
-		if _, ok := idpUsers[usr.Email]; !ok {
+	for _, usr := range idp.Resources {
+		if _, ok := stateUsers[usr.Email]; !ok {
+			toCreate = append(toCreate, usr)
+		} else {
 			// Check if the user fields changed
-			if usr.Name.FamilyName != idpUsers[usr.Email].Name.FamilyName ||
-				usr.Name.GivenName != idpUsers[usr.Email].Name.GivenName ||
-				usr.Active != idpUsers[usr.Email].Active ||
-				usr.ID != idpUsers[usr.Email].ID {
+			if usr.Name.FamilyName != stateUsers[usr.Email].Name.FamilyName ||
+				usr.Name.GivenName != stateUsers[usr.Email].Name.GivenName ||
+				usr.Active != stateUsers[usr.Email].Active ||
+				usr.ID != stateUsers[usr.Email].ID {
 				toUpdate = append(toUpdate, usr)
 			} else {
-				toCreate = append(toCreate, usr)
+				toEqual = append(toEqual, usr)
 			}
-		} else {
-			toEqual = append(toEqual, usr)
 		}
 	}
 
-	for _, usr := range idp.Resources {
-		if _, ok := stateUsers[usr.Email]; !ok {
+	for _, usr := range state.Resources {
+		if _, ok := idpUsers[usr.Email]; !ok {
 			toDelete = append(toDelete, usr)
 		}
 	}
