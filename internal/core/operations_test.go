@@ -495,123 +495,129 @@ func Test_usersDifferences(t *testing.T) {
 	}
 }
 
-func Test_groupsMembersDifferences(t *testing.T) {
+func Test_groupsUsersDifferences(t *testing.T) {
 	type args struct {
-		idp   *model.GroupsMembersResult
-		state *model.GroupsMembersResult
+		idp   *model.GroupsUsersResult
+		state *model.GroupsUsersResult
 	}
 	tests := []struct {
 		name       string
 		args       args
-		wantCreate *model.GroupsMembersResult
-		wantEqual  *model.GroupsMembersResult
-		wantDelete *model.GroupsMembersResult
+		wantCreate *model.GroupsUsersResult
+		wantEqual  *model.GroupsUsersResult
+		wantDelete *model.GroupsUsersResult
 	}{
 		{
 			name: "empty",
 			args: args{
-				idp: &model.GroupsMembersResult{
+				idp: &model.GroupsUsersResult{
 					Items:     0,
-					Resources: []*model.GroupMembers{},
+					Resources: []*model.GroupUsers{},
 				},
-				state: &model.GroupsMembersResult{
+				state: &model.GroupsUsersResult{
 					Items:     0,
-					Resources: []*model.GroupMembers{},
+					Resources: []*model.GroupUsers{},
 				},
 			},
-			wantCreate: &model.GroupsMembersResult{
+			wantCreate: &model.GroupsUsersResult{
 				Items:     0,
-				Resources: []*model.GroupMembers{},
+				Resources: []*model.GroupUsers{},
 			},
-			wantEqual: &model.GroupsMembersResult{
+			wantEqual: &model.GroupsUsersResult{
 				Items:     0,
-				Resources: []*model.GroupMembers{},
+				Resources: []*model.GroupUsers{},
 			},
-			wantDelete: &model.GroupsMembersResult{
+			wantDelete: &model.GroupsUsersResult{
 				Items:     0,
-				Resources: []*model.GroupMembers{},
+				Resources: []*model.GroupUsers{},
 			},
 		},
 		{
 			name: "2 equals",
 			args: args{
-				idp: &model.GroupsMembersResult{
+				idp: &model.GroupsUsersResult{
 					Items: 2,
-					Resources: []*model.GroupMembers{
-						{ID: "1", Email: "group1", Items: 1, Resources: []*model.Member{{ID: "1", Email: "1@mail.com"}}},
-						{ID: "2", Email: "group2", Items: 1, Resources: []*model.Member{{ID: "1", Email: "1@mail.com"}}},
+					Resources: []*model.GroupUsers{
+						{
+							Items: 2,
+							Group: model.Group{ID: "1", Name: "group 1", Email: "g.1@mail.com"},
+							Resources: []*model.User{
+								{ID: "1", Name: model.Name{FamilyName: "user", GivenName: "1"}, Email: "u.1@mail.com"},
+								{ID: "2", Name: model.Name{FamilyName: "user", GivenName: "2"}, Email: "u.2@mail.com"},
+							},
+						},
+						{
+							Items: 1,
+							Group: model.Group{ID: "2", Name: "group 2", Email: "g.2@mail.com"},
+							Resources: []*model.User{
+								{ID: "1", Name: model.Name{FamilyName: "user", GivenName: "1"}, Email: "u.1@mail.com"},
+							},
+						},
 					},
 				},
-				state: &model.GroupsMembersResult{
+				state: &model.GroupsUsersResult{
 					Items: 2,
-					Resources: []*model.GroupMembers{
-						{ID: "1", Email: "group1", Items: 1, Resources: []*model.Member{{ID: "1", Email: "1@mail.com"}}},
-						{ID: "2", Email: "group2", Items: 1, Resources: []*model.Member{{ID: "1", Email: "1@mail.com"}}},
+					Resources: []*model.GroupUsers{
+						{
+							Items: 2,
+							Group: model.Group{ID: "1", Name: "group 1", Email: "g.1@mail.com"},
+							Resources: []*model.User{
+								{ID: "1", Name: model.Name{FamilyName: "user", GivenName: "1"}, Email: "u.1@mail.com"},
+								{ID: "2", Name: model.Name{FamilyName: "user", GivenName: "2"}, Email: "u.2@mail.com"},
+							},
+						},
+						{
+							Items: 1,
+							Group: model.Group{ID: "2", Name: "group 2", Email: "g.2@mail.com"},
+							Resources: []*model.User{
+								{ID: "1", Name: model.Name{FamilyName: "user", GivenName: "1"}, Email: "u.1@mail.com"},
+							},
+						},
 					},
 				},
 			},
-			wantCreate: &model.GroupsMembersResult{
+			wantCreate: &model.GroupsUsersResult{
 				Items:     0,
-				Resources: []*model.GroupMembers{},
+				Resources: []*model.GroupUsers{},
 			},
-			wantEqual: &model.GroupsMembersResult{
+			wantEqual: &model.GroupsUsersResult{
 				Items: 2,
-				Resources: []*model.GroupMembers{
-					{ID: "1", Email: "group1", Items: 1, Resources: []*model.Member{{ID: "1", Email: "1@mail.com"}}},
-					{ID: "2", Email: "group2", Items: 1, Resources: []*model.Member{{ID: "1", Email: "1@mail.com"}}},
-				},
-			},
-			wantDelete: &model.GroupsMembersResult{
-				Items:     0,
-				Resources: []*model.GroupMembers{},
-			},
-		},
-		{
-			name: "1 equal, 1 delete",
-			args: args{
-				idp: &model.GroupsMembersResult{
-					Items: 1,
-					Resources: []*model.GroupMembers{
-						{ID: "1", Email: "group1", Items: 1, Resources: []*model.Member{{ID: "1", Email: "1@mail.com"}}},
+				Resources: []*model.GroupUsers{
+					{
+						Items: 2,
+						Group: model.Group{ID: "1", Name: "group 1", Email: "g.1@mail.com"},
+						Resources: []*model.User{
+							{ID: "1", Name: model.Name{FamilyName: "user", GivenName: "1"}, Email: "u.1@mail.com"},
+							{ID: "2", Name: model.Name{FamilyName: "user", GivenName: "2"}, Email: "u.2@mail.com"},
+						},
 					},
-				},
-				state: &model.GroupsMembersResult{
-					Items: 2,
-					Resources: []*model.GroupMembers{
-						{ID: "1", Email: "group1", Items: 1, Resources: []*model.Member{{ID: "1", Email: "1@mail.com"}}},
-						{ID: "2", Email: "group2", Items: 1, Resources: []*model.Member{{ID: "1", Email: "1@mail.com"}}},
+					{
+						Items: 1,
+						Group: model.Group{ID: "2", Name: "group 2", Email: "g.2@mail.com"},
+						Resources: []*model.User{
+							{ID: "1", Name: model.Name{FamilyName: "user", GivenName: "1"}, Email: "u.1@mail.com"},
+						},
 					},
 				},
 			},
-			wantCreate: &model.GroupsMembersResult{
+			wantDelete: &model.GroupsUsersResult{
 				Items:     0,
-				Resources: []*model.GroupMembers{},
-			},
-			wantEqual: &model.GroupsMembersResult{
-				Items: 1,
-				Resources: []*model.GroupMembers{
-					{ID: "1", Email: "group1", Items: 1, Resources: []*model.Member{{ID: "1", Email: "1@mail.com"}}},
-				},
-			},
-			wantDelete: &model.GroupsMembersResult{
-				Items: 1,
-				Resources: []*model.GroupMembers{
-					{ID: "2", Email: "group2", Items: 1, Resources: []*model.Member{{ID: "1", Email: "1@mail.com"}}},
-				},
+				Resources: []*model.GroupUsers{},
 			},
 		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotCreate, gotEqual, gotDelete := groupsMembersDifferences(tt.args.idp, tt.args.state)
+			gotCreate, gotEqual, gotDelete := groupsUsersDifferences(tt.args.idp, tt.args.state)
 			if !reflect.DeepEqual(gotCreate, tt.wantCreate) {
-				t.Errorf("groupsMembersDifferences() gotCreate = %s, want %s", utils.ToJSON(gotCreate), utils.ToJSON(tt.wantCreate))
+				t.Errorf("groupsUsersDifferences() gotCreate = %s, want %s", utils.ToJSON(gotCreate), utils.ToJSON(tt.wantCreate))
 			}
 			if !reflect.DeepEqual(gotEqual, tt.wantEqual) {
-				t.Errorf("groupsMembersDifferences() gotEqual = %s, want %s", utils.ToJSON(gotEqual), utils.ToJSON(tt.wantEqual))
+				t.Errorf("groupsUsersDifferences() gotEqual = %s, want %s", utils.ToJSON(gotEqual), utils.ToJSON(tt.wantEqual))
 			}
 			if !reflect.DeepEqual(gotDelete, tt.wantDelete) {
-				t.Errorf("groupsMembersDifferences() gotDelete = %s, want %s", utils.ToJSON(gotDelete), utils.ToJSON(tt.wantDelete))
+				t.Errorf("groupsUsersDifferences() gotDelete = %s, want %s", utils.ToJSON(gotDelete), utils.ToJSON(tt.wantDelete))
 			}
 		})
 	}

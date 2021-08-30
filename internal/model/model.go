@@ -44,6 +44,10 @@ type StoreGroupsMembersResult struct {
 	Place string
 }
 
+type StoreGroupsUsersResult struct {
+	Place string
+}
+
 type StoreStateResult struct {
 	Place string
 }
@@ -70,13 +74,23 @@ type MembersResult struct {
 // }
 
 type GroupMembers struct {
-	ID        string    `json:"id"`
-	Email     string    `json:"email"`
 	Items     int       `json:"items"`
+	Group     Group     `json:"group"`
 	Resources []*Member `json:"resources"`
 }
 
 type GroupsMembersResult struct {
 	Items     int             `json:"items"`
 	Resources []*GroupMembers `json:"resources"`
+}
+
+type GroupUsers struct {
+	Items     int     `json:"items"`
+	Group     Group   `json:"group"`
+	Resources []*User `json:"resources"`
+}
+
+type GroupsUsersResult struct {
+	Items     int           `json:"items"`
+	Resources []*GroupUsers `json:"resources"`
 }

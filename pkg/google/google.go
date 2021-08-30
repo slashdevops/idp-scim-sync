@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/slashdevops/idp-scim-sync/internal/core"
 	"github.com/slashdevops/idp-scim-sync/internal/model"
 )
 
@@ -17,21 +16,23 @@ var (
 	ErrGettingUser         = errors.New("error getting user")
 )
 
-type googleProvider struct {
+// This implement core.IdentityProviderService
+
+type GoogleProvider struct {
 	ds DirectoryService
 }
 
-func NewGoogleIdentityProvider(ds DirectoryService) (core.IdentityProviderService, error) {
+func NewGoogleIdentityProvider(ds DirectoryService) (*GoogleProvider, error) {
 	if ds == nil {
 		return nil, ErrDirectoryServiceNil
 	}
 
-	return &googleProvider{
+	return &GoogleProvider{
 		ds: ds,
 	}, nil
 }
 
-func (g *googleProvider) GetGroups(ctx context.Context, filter []string) (*model.GroupsResult, error) {
+func (g *GoogleProvider) GetGroups(ctx context.Context, filter []string) (*model.GroupsResult, error) {
 	syncGroups := make([]*model.Group, 0)
 
 	googleGroups, err := g.ds.ListGroups(filter)
@@ -57,7 +58,7 @@ func (g *googleProvider) GetGroups(ctx context.Context, filter []string) (*model
 	return syncResult, nil
 }
 
-func (g *googleProvider) GetUsers(ctx context.Context, filter []string) (*model.UsersResult, error) {
+func (g *GoogleProvider) GetUsers(ctx context.Context, filter []string) (*model.UsersResult, error) {
 	syncUsers := make([]*model.User, 0)
 
 	googleUsers, err := g.ds.ListUsers(filter)
@@ -85,7 +86,7 @@ func (g *googleProvider) GetUsers(ctx context.Context, filter []string) (*model.
 	return uResult, nil
 }
 
-func (g *googleProvider) GetGroupMembers(ctx context.Context, id string) (*model.MembersResult, error) {
+func (g *GoogleProvider) GetGroupMembers(ctx context.Context, id string) (*model.MembersResult, error) {
 	syncMembers := make([]*model.Member, 0)
 
 	googleMembers, err := g.ds.ListGroupMembers(id)
@@ -108,7 +109,7 @@ func (g *googleProvider) GetGroupMembers(ctx context.Context, id string) (*model
 	return syncMembersResult, nil
 }
 
-func (g *googleProvider) GetUsersFromGroupMembers(ctx context.Context, mbr *model.MembersResult) (*model.UsersResult, error) {
+func (g *GoogleProvider) GetUsersFromGroupMembers(ctx context.Context, mbr *model.MembersResult) (*model.UsersResult, error) {
 	syncUsers := make([]*model.User, 0)
 
 	for _, member := range mbr.Resources {
@@ -132,4 +133,47 @@ func (g *googleProvider) GetUsersFromGroupMembers(ctx context.Context, mbr *mode
 	}
 
 	return syncUsersResult, nil
+}
+
+func (g *GoogleProvider) GetUsersAndGroupsUsers(ctx context.Context, groups *model.GroupsResult) (*model.UsersResult, *model.GroupsUsersResult, error) {
+	pUsers := make([]*model.User, 0)
+	pGroupsUsers := make([]*model.GroupUsers, 0)
+
+	for _, pGroup := range groups.Resources {
+
+		pMembers, err := g.GetGroupMembers(ctx, pGroup.ID)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		pUsersFromMembers, err := g.GetUsersFromGroupMembers(ctx, pMembers)
+		if err != nil {
+			return nil, nil, err
+		}
+		pUsers = append(pUsers, pUsersFromMembers.Resources...)
+
+		pGroupUsers := &model.GroupUsers{
+			Items: len(pMembers.Resources),
+			Group: model.Group{
+				ID:    pGroup.ID,
+				Name:  pGroup.Name,
+				Email: pGroup.Email,
+			},
+			Resources: pUsers,
+		}
+
+		pGroupsUsers = append(pGroupsUsers, pGroupUsers)
+	}
+
+	usersResult := &model.UsersResult{
+		Items:     len(pUsers),
+		Resources: pUsers,
+	}
+
+	groupsUsersResult := &model.GroupsUsersResult{
+		Items:     len(pGroupsUsers),
+		Resources: pGroupsUsers,
+	}
+
+	return usersResult, groupsUsersResult, nil
 }

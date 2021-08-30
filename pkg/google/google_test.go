@@ -33,7 +33,7 @@ func TestNewGoogleIdentityProvider(t *testing.T) {
 	})
 }
 
-func Test_googleProvider_GetGroups(t *testing.T) {
+func Test_GoogleProvider_GetGroups(t *testing.T) {
 	type fields struct {
 		ds *mocks.MockDirectoryService
 	}
@@ -91,23 +91,23 @@ func Test_googleProvider_GetGroups(t *testing.T) {
 				tt.prepare(&f)
 			}
 
-			g := &googleProvider{
+			g := &GoogleProvider{
 				ds: f.ds,
 			}
 
 			got, err := g.GetGroups(tt.args.ctx, tt.args.filter)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("googleProvider.GetGroups() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("GoogleProvider.GetGroups() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("googleProvider.GetGroups() = %s, want %s", utils.ToJSON(got), utils.ToJSON(tt.want))
+				t.Errorf("GoogleProvider.GetGroups() = %s, want %s", utils.ToJSON(got), utils.ToJSON(tt.want))
 			}
 		})
 	}
 }
 
-func Test_googleProvider_GetUsers(t *testing.T) {
+func Test_GoogleProvider_GetUsers(t *testing.T) {
 	type fields struct {
 		ds *mocks.MockDirectoryService
 	}
@@ -165,23 +165,23 @@ func Test_googleProvider_GetUsers(t *testing.T) {
 				tt.prepare(&f)
 			}
 
-			g := &googleProvider{
+			g := &GoogleProvider{
 				ds: f.ds,
 			}
 
 			got, err := g.GetUsers(tt.args.ctx, tt.args.filter)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("googleProvider.GetUsers() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("GoogleProvider.GetUsers() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("googleProvider.GetUsers() = %s, want %s", utils.ToJSON(got), utils.ToJSON(tt.want))
+				t.Errorf("GoogleProvider.GetUsers() = %s, want %s", utils.ToJSON(got), utils.ToJSON(tt.want))
 			}
 		})
 	}
 }
 
-func Test_googleProvider_GetGroupMembers(t *testing.T) {
+func Test_GoogleProvider_GetGroupMembers(t *testing.T) {
 	type fields struct {
 		ds *mocks.MockDirectoryService
 	}
@@ -239,23 +239,23 @@ func Test_googleProvider_GetGroupMembers(t *testing.T) {
 				tt.prepare(&f)
 			}
 
-			g := &googleProvider{
+			g := &GoogleProvider{
 				ds: f.ds,
 			}
 
 			got, err := g.GetGroupMembers(tt.args.ctx, tt.args.id)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("googleProvider.GetGroupMembers() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("GoogleProvider.GetGroupMembers() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("googleProvider.GetGroupMembers() = %s, want %s", utils.ToJSON(got), utils.ToJSON(tt.want))
+				t.Errorf("GoogleProvider.GetGroupMembers() = %s, want %s", utils.ToJSON(got), utils.ToJSON(tt.want))
 			}
 		})
 	}
 }
 
-func Test_googleProvider_GetUsersFromGroupMembers(t *testing.T) {
+func Test_GoogleProvider_GetUsersFromGroupMembers(t *testing.T) {
 	type fields struct {
 		ds *mocks.MockDirectoryService
 	}
@@ -332,17 +332,17 @@ func Test_googleProvider_GetUsersFromGroupMembers(t *testing.T) {
 				tt.prepare(&f)
 			}
 
-			g := &googleProvider{
+			g := &GoogleProvider{
 				ds: f.ds,
 			}
 
 			got, err := g.GetUsersFromGroupMembers(tt.args.ctx, tt.args.mbr)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("googleProvider.GetUsersFromGroupMembers() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("GoogleProvider.GetUsersFromGroupMembers() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("googleProvider.GetUsersFromGroupMembers() = %s, want %s", utils.ToJSON(got), utils.ToJSON(tt.want))
+				t.Errorf("GoogleProvider.GetUsersFromGroupMembers() = %s, want %s", utils.ToJSON(got), utils.ToJSON(tt.want))
 			}
 		})
 	}

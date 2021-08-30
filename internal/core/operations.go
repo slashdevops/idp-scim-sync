@@ -4,7 +4,7 @@ import (
 	"github.com/slashdevops/idp-scim-sync/internal/model"
 )
 
-func createSyncState(sgr *model.StoreGroupsResult, sgmr *model.StoreGroupsMembersResult, sur *model.StoreUsersResult) (model.SyncState, error) {
+func createSyncState(sgr *model.StoreGroupsResult, sgmr *model.StoreGroupsUsersResult, sur *model.StoreUsersResult) (model.SyncState, error) {
 	return model.SyncState{
 		Version:  "1.0.0",
 		Checksum: "TBD",
@@ -150,53 +150,53 @@ func usersDifferences(idp, state *model.UsersResult) (create *model.UsersResult,
 	return
 }
 
-// groupsMembersDifferences returns the differences between the members in the
+// groupsUsersDifferences returns the differences between the users in the
 // Users Email as the key.
-// return 3 objest of GroupsMembersResult
+// return 3 objest of GroupsUsersResult
 // create: users that exist in "state" but not in "idp"
 // equal: users that exist in both "idp" and "state" and their attributes are equal
 // delete: users that exist in "state" but not in "idp"
-func groupsMembersDifferences(idp, state *model.GroupsMembersResult) (create *model.GroupsMembersResult, equal *model.GroupsMembersResult, delete *model.GroupsMembersResult) {
-	idpMembers := make(map[string]*model.GroupMembers)
-	stateMembers := make(map[string]*model.GroupMembers)
+func groupsUsersDifferences(idp, state *model.GroupsUsersResult) (create *model.GroupsUsersResult, equal *model.GroupsUsersResult, delete *model.GroupsUsersResult) {
+	idpUsers := make(map[string]map[string]*model.User)
+	stateUsers := make(map[string]map[string]*model.User)
 
-	toCreate := make([]*model.GroupMembers, 0)
-	toEqual := make([]*model.GroupMembers, 0)
-	toDelete := make([]*model.GroupMembers, 0)
+	toCreate := make([]*model.GroupUsers, 0)
+	toEqual := make([]*model.GroupUsers, 0)
+	toDelete := make([]*model.GroupUsers, 0)
 
-	for _, grpMbrs := range idp.Resources {
-		idpMembers[grpMbrs.ID] = grpMbrs
+	for i, grpUsrs := range idp.Resources {
+		idpUsers[grpUsrs.Group.ID][grpUsrs.Resources[i].ID] = grpUsrs.Resources[i]
 	}
 
-	for _, grpMbrs := range state.Resources {
-		stateMembers[grpMbrs.ID] = grpMbrs
+	for i, grpUsrs := range state.Resources {
+		stateUsers[grpUsrs.Group.ID][grpUsrs.Resources[i].ID] = grpUsrs.Resources[i]
 	}
 
-	for _, grpMbrs := range idp.Resources {
-		if _, ok := stateMembers[grpMbrs.ID]; !ok {
-			toCreate = append(toCreate, grpMbrs)
+	for _, grpUsrs := range idp.Resources {
+		if _, ok := stateUsers[grpUsrs.Group.ID]; !ok {
+			toCreate = append(toCreate, grpUsrs)
 		} else {
-			toEqual = append(toEqual, grpMbrs)
+			toEqual = append(toEqual, grpUsrs)
 		}
 	}
 
-	for _, grpMbrs := range state.Resources {
-		if _, ok := idpMembers[grpMbrs.ID]; !ok {
-			toDelete = append(toDelete, grpMbrs)
+	for _, grpUsrs := range state.Resources {
+		if _, ok := idpUsers[grpUsrs.Group.ID]; !ok {
+			toDelete = append(toDelete, grpUsrs)
 		}
 	}
 
-	create = &model.GroupsMembersResult{
+	create = &model.GroupsUsersResult{
 		Items:     len(toCreate),
 		Resources: toCreate,
 	}
 
-	equal = &model.GroupsMembersResult{
+	equal = &model.GroupsUsersResult{
 		Items:     len(toEqual),
 		Resources: toEqual,
 	}
 
-	delete = &model.GroupsMembersResult{
+	delete = &model.GroupsUsersResult{
 		Items:     len(toDelete),
 		Resources: toDelete,
 	}

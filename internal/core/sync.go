@@ -4,17 +4,16 @@ import (
 	"context"
 	"errors"
 	"sync"
-
-	"github.com/slashdevops/idp-scim-sync/internal/model"
 )
 
 var (
-	ErrNilContext         = errors.New("context cannot be nil")
-	ErrProviderServiceNil = errors.New("identity provider service cannot be nil")
-	ErrSCIMServiceNil     = errors.New("SCIM service cannot be nil")
-	ErrGettingGroups      = errors.New("error getting groups")
-	ErrRepositoryNil      = errors.New("repository cannot be nil")
-	ErrGettingState       = errors.New("error getting state")
+	ErrNilContext                    = errors.New("context cannot be nil")
+	ErrProviderServiceNil            = errors.New("identity provider service cannot be nil")
+	ErrSCIMServiceNil                = errors.New("SCIM service cannot be nil")
+	ErrGettingGroups                 = errors.New("error getting groups")
+	ErrRepositoryNil                 = errors.New("repository cannot be nil")
+	ErrGettingState                  = errors.New("error getting state")
+	ErrGettingGetUsersAndGroupsUsers = errors.New("error getting users and groups and their users")
 )
 
 type SyncService struct {
@@ -75,40 +74,9 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 		return ErrGettingGroups
 	}
 
-	pUsers := make([]*model.User, 0)
-	pGroupsMembers := make([]*model.GroupMembers, 0)
-
-	for _, pGroup := range pGroupsResult.Resources {
-
-		pMembers, err := ss.prov.GetGroupMembers(ss.ctx, pGroup.ID)
-		if err != nil {
-			return err
-		}
-
-		pGroupMembers := &model.GroupMembers{
-			ID:        pGroup.ID,
-			Email:     pGroup.Email,
-			Items:     len(pMembers.Resources),
-			Resources: pMembers.Resources,
-		}
-		pGroupsMembers = append(pGroupsMembers, pGroupMembers)
-
-		pUsersFromMembers, err := ss.prov.GetUsersFromGroupMembers(ss.ctx, pMembers)
-		if err != nil {
-			return err
-		}
-
-		pUsers = append(pUsers, pUsersFromMembers.Resources...)
-	}
-
-	pUsersResult := &model.UsersResult{
-		Items:     len(pUsers),
-		Resources: pUsers,
-	}
-
-	pGroupsMembersResult := &model.GroupsMembersResult{
-		Items:     len(pGroupsMembers),
-		Resources: pGroupsMembers,
+	pUsersResult, pGroupsUsersResult, err := ss.prov.GetUsersAndGroupsUsers(ss.ctx, pGroupsResult)
+	if err != nil {
+		return ErrGettingGetUsersAndGroupsUsers
 	}
 
 	// First time we are syncing
@@ -121,7 +89,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 			return err
 		}
 
-		sStoreGroupsMembersResult, err := ss.repo.StoreGroupsMembers(pGroupsMembersResult)
+		sStoreGroupsUsersResult, err := ss.repo.StoreGroupsUsers(pGroupsUsersResult)
 		if err != nil {
 			return err
 		}
@@ -132,7 +100,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 		}
 
 		// reusing the state variable
-		state, err = createSyncState(&sStoreGroupsResult, &sStoreGroupsMembersResult, &sStoreUsersResult)
+		state, err = createSyncState(&sStoreGroupsResult, &sStoreGroupsUsersResult, &sStoreUsersResult)
 		if err != nil {
 			return err
 		}
@@ -156,7 +124,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 			return err
 		}
 
-		sGroupsMembersResult, err := ss.repo.GetGroupsMembers(state.GroupsMembers.Place)
+		sGroupsUsersResult, err := ss.repo.GetGroupsUsers(state.GroupsMembers.Place)
 		if err != nil {
 			return err
 		}
@@ -166,7 +134,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 		// see differences between the two data sets
 		_, _, _, _ = groupsDifferences(pGroupsResult, sGroupsResults)
 		_, _, _, _ = usersDifferences(pUsersResult, sUsersResult)
-		_, _, _ = groupsMembersDifferences(pGroupsMembersResult, sGroupsMembersResult)
+		_, _, _ = groupsUsersDifferences(pGroupsUsersResult, sGroupsUsersResult)
 	}
 
 	// sync data to SCIM
