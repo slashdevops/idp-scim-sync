@@ -16,7 +16,7 @@ var (
 	ErrGettingUser         = errors.New("error getting user")
 )
 
-// This implement core.IdentityProviderService
+// This implement core.IdentityProviderService interface
 
 type GoogleProvider struct {
 	ds DirectoryService
@@ -32,6 +32,10 @@ func NewGoogleIdentityProvider(ds DirectoryService) (*GoogleProvider, error) {
 	}, nil
 }
 
+// GetGroups returns a list of groups from the Google Directory API.
+//
+// The filter parameter is a list of strings that can be used to filter the groups
+// according to the Google Directory API.
 func (g *GoogleProvider) GetGroups(ctx context.Context, filter []string) (*model.GroupsResult, error) {
 	syncGroups := make([]*model.Group, 0)
 
@@ -48,8 +52,6 @@ func (g *GoogleProvider) GetGroups(ctx context.Context, filter []string) (*model
 		})
 	}
 
-	// TODO: Check groups are not repeated thanks to the filter
-
 	syncResult := &model.GroupsResult{
 		Items:     len(googleGroups),
 		Resources: syncGroups,
@@ -58,6 +60,10 @@ func (g *GoogleProvider) GetGroups(ctx context.Context, filter []string) (*model
 	return syncResult, nil
 }
 
+// GetUsers returns a list of users from the Google Directory API.
+//
+// The filter parameter is a list of strings that can be used to filter the users
+// according to the Google Directory API.
 func (g *GoogleProvider) GetUsers(ctx context.Context, filter []string) (*model.UsersResult, error) {
 	syncUsers := make([]*model.User, 0)
 
@@ -75,8 +81,6 @@ func (g *GoogleProvider) GetUsers(ctx context.Context, filter []string) (*model.
 			Email:       usr.PrimaryEmail,
 		})
 	}
-
-	// TODO: Check users are not repeated thanks to the filter
 
 	uResult := &model.UsersResult{
 		Items:     len(googleUsers),

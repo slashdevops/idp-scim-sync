@@ -6,6 +6,7 @@ import (
 	"github.com/slashdevops/idp-scim-sync/internal/model"
 )
 
+// ScimService is the interface that needs to be implemented by the SCIM service.
 type SCIMService interface {
 	GetGroups(ctx context.Context, filter []string) (*model.GroupsResult, error)
 	GetUsers(ctx context.Context, filter []string) (*model.UsersResult, error)

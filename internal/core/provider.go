@@ -6,6 +6,8 @@ import (
 	"github.com/slashdevops/idp-scim-sync/internal/model"
 )
 
+// IdentityProviderService is the interface that needs to be implemented by the
+// Identity Provider service.
 type IdentityProviderService interface {
 	GetGroups(ctx context.Context, filter []string) (*model.GroupsResult, error)
 	GetUsers(ctx context.Context, filter []string) (*model.UsersResult, error)
