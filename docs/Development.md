@@ -68,6 +68,12 @@ Repository Mocks
 mockgen -package=mocks -destination=internal/mocks/repository_mocks.go -source=internal/core/repository.go
 ```
 
+SyncState Mocks
+
+```bash
+mockgen -package=mocks -destination=internal/mocks/state_mocks.go -source=internal/core/state.go
+```
+
 Directory Service Mocks
 
 ```bash

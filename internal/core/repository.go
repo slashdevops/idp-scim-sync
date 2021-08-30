@@ -8,7 +8,7 @@ type SyncRepository interface {
 	StoreGroupsUsers(gr *model.GroupsUsersResult) (model.StoreGroupsUsersResult, error)
 
 	StoreState(state *model.SyncState) (model.StoreStateResult, error)
-	GetState() (model.SyncState, error)
+	GetState(name string) (model.SyncState, error)
 	GetGroups(place string) (*model.GroupsResult, error)
 	GetUsers(place string) (*model.UsersResult, error)
 	GetGroupsUsers(place string) (*model.GroupsUsersResult, error)

@@ -65,18 +65,18 @@ func (mr *MockSyncRepositoryMockRecorder) GetGroupsUsers(place interface{}) *gom
 }
 
 // GetState mocks base method.
-func (m *MockSyncRepository) GetState() (model.SyncState, error) {
+func (m *MockSyncRepository) GetState(name string) (model.SyncState, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetState")
+	ret := m.ctrl.Call(m, "GetState", name)
 	ret0, _ := ret[0].(model.SyncState)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetState indicates an expected call of GetState.
-func (mr *MockSyncRepositoryMockRecorder) GetState() *gomock.Call {
+func (mr *MockSyncRepositoryMockRecorder) GetState(name interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetState", reflect.TypeOf((*MockSyncRepository)(nil).GetState))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetState", reflect.TypeOf((*MockSyncRepository)(nil).GetState), name)
 }
 
 // GetUsers mocks base method.

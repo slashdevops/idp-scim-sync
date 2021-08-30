@@ -12,6 +12,7 @@ var (
 	ErrSCIMServiceNil                = errors.New("SCIM service cannot be nil")
 	ErrGettingGroups                 = errors.New("error getting groups")
 	ErrRepositoryNil                 = errors.New("repository cannot be nil")
+	ErrSyncStateNil                  = errors.New("sync state cannot be nil")
 	ErrGettingState                  = errors.New("error getting state")
 	ErrGettingGetUsersAndGroupsUsers = errors.New("error getting users and groups and their users")
 )
@@ -19,15 +20,16 @@ var (
 type SyncService struct {
 	ctx              context.Context
 	mu               *sync.RWMutex
-	prov             IdentityProviderService
 	provGroupsFilter []string
 	provUsersFilter  []string
+	prov             IdentityProviderService
 	scim             SCIMService
 	repo             SyncRepository
+	state            SyncState
 }
 
 // NewSyncService creates a new sync service.
-func NewSyncService(ctx context.Context, prov IdentityProviderService, scim SCIMService, repo SyncRepository, opts ...SyncServiceOption) (*SyncService, error) {
+func NewSyncService(ctx context.Context, prov IdentityProviderService, scim SCIMService, repo SyncRepository, state SyncState, opts ...SyncServiceOption) (*SyncService, error) {
 	if ctx == nil {
 		return nil, ErrNilContext
 	}
@@ -40,6 +42,9 @@ func NewSyncService(ctx context.Context, prov IdentityProviderService, scim SCIM
 	if repo == nil {
 		return nil, ErrRepositoryNil
 	}
+	if state == nil {
+		return nil, ErrSyncStateNil
+	}
 
 	ss := &SyncService{
 		ctx:              ctx,
@@ -49,6 +54,7 @@ func NewSyncService(ctx context.Context, prov IdentityProviderService, scim SCIM
 		provUsersFilter:  []string{}, // fill in with the opts
 		scim:             scim,
 		repo:             repo,
+		state:            state,
 	}
 
 	for _, opt := range opts {
@@ -63,7 +69,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 	defer ss.mu.Unlock()
 
 	// Check if is the first time we are syncing
-	state, err := ss.repo.GetState()
+	state, err := ss.repo.GetState(ss.state.GetName())
 	if err != nil {
 		return ErrGettingState
 	}
