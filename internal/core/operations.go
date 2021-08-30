@@ -1,6 +1,8 @@
 package core
 
 import (
+	"log"
+
 	"github.com/slashdevops/idp-scim-sync/internal/model"
 )
 
@@ -157,42 +159,85 @@ func usersDifferences(idp, state *model.UsersResult) (create *model.UsersResult,
 // equal: users that exist in both "idp" and "state" and their attributes are equal
 // delete: users that exist in "state" but not in "idp"
 func groupsUsersDifferences(idp, state *model.GroupsUsersResult) (create *model.GroupsUsersResult, equal *model.GroupsUsersResult, delete *model.GroupsUsersResult) {
-	idpUsers := make(map[string]map[string]struct{})
-	stateUsers := make(map[string]map[string]struct{})
+	idpUsers := make(map[string]map[string]*model.User)
+	stateUsers := make(map[string]map[string]*model.User)
 
 	toCreate := make([]*model.GroupUsers, 0)
 	toEqual := make([]*model.GroupUsers, 0)
 	toDelete := make([]*model.GroupUsers, 0)
 
 	for _, grpUsrs := range idp.Resources {
-		idpUsers[grpUsrs.Group.ID] = make(map[string]struct{})
+		idpUsers[grpUsrs.Group.ID] = make(map[string]*model.User)
 		for _, usr := range grpUsrs.Resources {
-			idpUsers[grpUsrs.Group.ID][usr.ID] = struct{}{}
+			idpUsers[grpUsrs.Group.ID][usr.ID] = usr
 		}
 	}
 
 	for _, grpUsrs := range state.Resources {
-		stateUsers[grpUsrs.Group.ID] = make(map[string]struct{})
+		stateUsers[grpUsrs.Group.ID] = make(map[string]*model.User)
 		for _, usr := range grpUsrs.Resources {
-			stateUsers[grpUsrs.Group.ID][usr.ID] = struct{}{}
+			stateUsers[grpUsrs.Group.ID][usr.ID] = usr
 		}
 	}
+
+	// map[group.ID][]*model.User
+	toC := make(map[string][]*model.User)
+	toE := make(map[string][]*model.User)
+	toD := make(map[string][]*model.User)
 
 	for _, grpUsrs := range idp.Resources {
+		toC[grpUsrs.Group.ID] = make([]*model.User, 0)
+		toE[grpUsrs.Group.ID] = make([]*model.User, 0)
+
 		for _, usr := range grpUsrs.Resources {
 			if _, ok := stateUsers[grpUsrs.Group.ID][usr.ID]; !ok {
-				toCreate = append(toCreate, grpUsrs)
+				log.Printf("toC -> Group: %s, User: %s", grpUsrs.Group.ID, usr.ID)
+
+				toC[grpUsrs.Group.ID] = append(toC[grpUsrs.Group.ID], usr)
 			} else {
-				toEqual = append(toEqual, grpUsrs)
+				log.Printf("toE -> Group: %s, User: %s", grpUsrs.Group.ID, usr.ID)
+				toE[grpUsrs.Group.ID] = append(toE[grpUsrs.Group.ID], usr)
 			}
+		}
+
+		if len(toC[grpUsrs.Group.ID]) > 0 {
+			log.Printf("toCreate -> Group: %s", grpUsrs.Group.ID)
+			toCreate = append(toCreate, &model.GroupUsers{
+				Items:     len(toC[grpUsrs.Group.ID]),
+				Group:     grpUsrs.Group,
+				Resources: toC[grpUsrs.Group.ID],
+			})
+		}
+
+		if len(toE[grpUsrs.Group.ID]) > 0 {
+			log.Printf("toEqual -> Group: %s", grpUsrs.Group.ID)
+
+			toEqual = append(toEqual, &model.GroupUsers{
+				Items:     len(toE[grpUsrs.Group.ID]),
+				Group:     grpUsrs.Group,
+				Resources: toE[grpUsrs.Group.ID],
+			})
 		}
 	}
 
 	for _, grpUsrs := range state.Resources {
+		toD[grpUsrs.Group.ID] = make([]*model.User, 0)
+
 		for _, usr := range grpUsrs.Resources {
 			if _, ok := idpUsers[grpUsrs.Group.ID][usr.ID]; !ok {
-				toDelete = append(toDelete, grpUsrs)
+				log.Printf("toD -> Group: %s, User: %s", grpUsrs.Group.ID, usr.ID)
+				toD[grpUsrs.Group.ID] = append(toD[grpUsrs.Group.ID], usr)
 			}
+		}
+
+		if len(toD[grpUsrs.Group.ID]) > 0 {
+			log.Printf("toDelete -> Group: %s", grpUsrs.Group.ID)
+
+			toDelete = append(toDelete, &model.GroupUsers{
+				Items:     len(toD[grpUsrs.Group.ID]),
+				Group:     grpUsrs.Group,
+				Resources: toD[grpUsrs.Group.ID],
+			})
 		}
 	}
 
