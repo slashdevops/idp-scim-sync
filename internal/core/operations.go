@@ -20,7 +20,7 @@ func createSyncState(sgr *model.StoreGroupsResult, sgmr *model.StoreGroupsUsersR
 // equal: groups that exist in both "idp" and "state" and their attributes are equal
 // delete: groups that exist in "state" but not in "idp"
 func groupsDifferences(idp, state *model.GroupsResult) (create *model.GroupsResult, update *model.GroupsResult, equal *model.GroupsResult, delete *model.GroupsResult) {
-	idpGroups := make(map[string]*model.Group)
+	idpGroups := make(map[string]struct{})
 	stateGroups := make(map[string]*model.Group)
 
 	toCreate := make([]*model.Group, 0)
@@ -29,7 +29,7 @@ func groupsDifferences(idp, state *model.GroupsResult) (create *model.GroupsResu
 	toDelete := make([]*model.Group, 0)
 
 	for _, gr := range idp.Resources {
-		idpGroups[gr.Name] = gr
+		idpGroups[gr.Name] = struct{}{}
 	}
 
 	for _, gr := range state.Resources {
@@ -88,7 +88,7 @@ func groupsDifferences(idp, state *model.GroupsResult) (create *model.GroupsResu
 // equal: users that exist in both "idp" and "state" and their attributes are equal
 // delete: users that exist in "state" but not in "idp"
 func usersDifferences(idp, state *model.UsersResult) (create *model.UsersResult, update *model.UsersResult, equal *model.UsersResult, delete *model.UsersResult) {
-	idpUsers := make(map[string]*model.User)
+	idpUsers := make(map[string]struct{})
 	stateUsers := make(map[string]*model.User)
 
 	toCreate := make([]*model.User, 0)
@@ -97,7 +97,7 @@ func usersDifferences(idp, state *model.UsersResult) (create *model.UsersResult,
 	toDelete := make([]*model.User, 0)
 
 	for _, usr := range idp.Resources {
-		idpUsers[usr.Email] = usr
+		idpUsers[usr.Email] = struct{}{}
 	}
 
 	for _, usr := range state.Resources {
@@ -157,38 +157,42 @@ func usersDifferences(idp, state *model.UsersResult) (create *model.UsersResult,
 // equal: users that exist in both "idp" and "state" and their attributes are equal
 // delete: users that exist in "state" but not in "idp"
 func groupsUsersDifferences(idp, state *model.GroupsUsersResult) (create *model.GroupsUsersResult, equal *model.GroupsUsersResult, delete *model.GroupsUsersResult) {
-	idpUsers := make(map[string]map[string]*model.User)
-	stateUsers := make(map[string]map[string]*model.User)
+	idpUsers := make(map[string]map[string]struct{})
+	stateUsers := make(map[string]map[string]struct{})
 
 	toCreate := make([]*model.GroupUsers, 0)
 	toEqual := make([]*model.GroupUsers, 0)
 	toDelete := make([]*model.GroupUsers, 0)
 
 	for _, grpUsrs := range idp.Resources {
-		idpUsers[grpUsrs.Group.ID] = make(map[string]*model.User)
+		idpUsers[grpUsrs.Group.ID] = make(map[string]struct{})
 		for _, usr := range grpUsrs.Resources {
-			idpUsers[grpUsrs.Group.ID][usr.ID] = usr
+			idpUsers[grpUsrs.Group.ID][usr.ID] = struct{}{}
 		}
 	}
 
 	for _, grpUsrs := range state.Resources {
-		stateUsers[grpUsrs.Group.ID] = make(map[string]*model.User)
+		stateUsers[grpUsrs.Group.ID] = make(map[string]struct{})
 		for _, usr := range grpUsrs.Resources {
-			stateUsers[grpUsrs.Group.ID][usr.ID] = usr
+			stateUsers[grpUsrs.Group.ID][usr.ID] = struct{}{}
 		}
 	}
 
 	for _, grpUsrs := range idp.Resources {
-		if _, ok := stateUsers[grpUsrs.Group.ID]; !ok {
-			toCreate = append(toCreate, grpUsrs)
-		} else {
-			toEqual = append(toEqual, grpUsrs)
+		for _, usr := range grpUsrs.Resources {
+			if _, ok := stateUsers[grpUsrs.Group.ID][usr.ID]; !ok {
+				toCreate = append(toCreate, grpUsrs)
+			} else {
+				toEqual = append(toEqual, grpUsrs)
+			}
 		}
 	}
 
 	for _, grpUsrs := range state.Resources {
-		if _, ok := idpUsers[grpUsrs.Group.ID]; !ok {
-			toDelete = append(toDelete, grpUsrs)
+		for _, usr := range grpUsrs.Resources {
+			if _, ok := idpUsers[grpUsrs.Group.ID][usr.ID]; !ok {
+				toDelete = append(toDelete, grpUsrs)
+			}
 		}
 	}
 

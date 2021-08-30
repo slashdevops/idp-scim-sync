@@ -605,6 +605,94 @@ func Test_groupsUsersDifferences(t *testing.T) {
 				Resources: []*model.GroupUsers{},
 			},
 		},
+		{
+			name: "1 equals, 1 create, 1 delete",
+			args: args{
+				idp: &model.GroupsUsersResult{
+					Items: 2,
+					Resources: []*model.GroupUsers{
+						{
+							Items: 2,
+							Group: model.Group{ID: "1", Name: "group 1", Email: "g.1@mail.com"},
+							Resources: []*model.User{
+								{ID: "1", Name: model.Name{FamilyName: "user", GivenName: "1"}, Email: "u.1@mail.com"},
+								{ID: "2", Name: model.Name{FamilyName: "user", GivenName: "2"}, Email: "u.2@mail.com"},
+							},
+						},
+						{
+							Items: 1,
+							Group: model.Group{ID: "2", Name: "group 2", Email: "g.2@mail.com"},
+							Resources: []*model.User{
+								{ID: "1", Name: model.Name{FamilyName: "user", GivenName: "1"}, Email: "u.1@mail.com"},
+							},
+						},
+					},
+				},
+				state: &model.GroupsUsersResult{
+					Items: 2,
+					Resources: []*model.GroupUsers{
+						{
+							Items: 1,
+							Group: model.Group{ID: "1", Name: "group 1", Email: "g.1@mail.com"},
+							Resources: []*model.User{
+								{ID: "1", Name: model.Name{FamilyName: "user", GivenName: "1"}, Email: "u.1@mail.com"},
+							},
+						},
+						{
+							Items: 2,
+							Group: model.Group{ID: "2", Name: "group 2", Email: "g.2@mail.com"},
+							Resources: []*model.User{
+								{ID: "1", Name: model.Name{FamilyName: "user", GivenName: "1"}, Email: "u.1@mail.com"},
+								{ID: "3", Name: model.Name{FamilyName: "user", GivenName: "3"}, Email: "u.3@mail.com"},
+							},
+						},
+					},
+				},
+			},
+			wantCreate: &model.GroupsUsersResult{
+				Items: 1,
+				Resources: []*model.GroupUsers{
+					{
+						Items: 1,
+						Group: model.Group{ID: "1", Name: "group 1", Email: "g.1@mail.com"},
+						Resources: []*model.User{
+							{ID: "2", Name: model.Name{FamilyName: "user", GivenName: "2"}, Email: "u.2@mail.com"},
+						},
+					},
+				},
+			},
+			wantEqual: &model.GroupsUsersResult{
+				Items: 2,
+				Resources: []*model.GroupUsers{
+					{
+						Items: 1,
+						Group: model.Group{ID: "1", Name: "group 1", Email: "g.1@mail.com"},
+						Resources: []*model.User{
+							{ID: "1", Name: model.Name{FamilyName: "user", GivenName: "1"}, Email: "u.1@mail.com"},
+						},
+					},
+					{
+						Items: 1,
+						Group: model.Group{ID: "2", Name: "group 2", Email: "g.2@mail.com"},
+						Resources: []*model.User{
+							{ID: "1", Name: model.Name{FamilyName: "user", GivenName: "1"}, Email: "u.1@mail.com"},
+						},
+					},
+				},
+			},
+			wantDelete: &model.GroupsUsersResult{
+				Items: 1,
+				Resources: []*model.GroupUsers{
+					{
+						Items: 1,
+						Group: model.Group{ID: "2", Name: "group 2", Email: "g.2@mail.com"},
+						Resources: []*model.User{
+							{ID: "3", Name: model.Name{FamilyName: "user", GivenName: "3"}, Email: "u.3@mail.com"},
+						},
+					},
+				},
+			},
+		},
 	}
 
 	for _, tt := range tests {
