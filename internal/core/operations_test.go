@@ -8,7 +8,7 @@ import (
 	"github.com/slashdevops/idp-scim-sync/internal/utils"
 )
 
-func Test_groupsDifferences(t *testing.T) {
+func Test_groupsOperations(t *testing.T) {
 	type args struct {
 		idp   *model.GroupsResult
 		state *model.GroupsResult
@@ -252,24 +252,24 @@ func Test_groupsDifferences(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotCreate, gotUpdate, gotEqual, gotDelete := groupsDifferences(tt.args.idp, tt.args.state)
+			gotCreate, gotUpdate, gotEqual, gotDelete := groupsOperations(tt.args.idp, tt.args.state)
 			if !reflect.DeepEqual(gotCreate, tt.wantCreate) {
-				t.Errorf("groupsDifferences() gotCreate = %s, want %s", utils.ToJSON(gotCreate), utils.ToJSON(tt.wantCreate))
+				t.Errorf("groupsOperations() gotCreate = %s, want %s", utils.ToJSON(gotCreate), utils.ToJSON(tt.wantCreate))
 			}
 			if !reflect.DeepEqual(gotUpdate, tt.wantUpdate) {
-				t.Errorf("groupsDifferences() gotUpdate = %s, want %s", utils.ToJSON(gotUpdate), utils.ToJSON(tt.wantUpdate))
+				t.Errorf("groupsOperations() gotUpdate = %s, want %s", utils.ToJSON(gotUpdate), utils.ToJSON(tt.wantUpdate))
 			}
 			if !reflect.DeepEqual(gotEqual, tt.wantEqual) {
-				t.Errorf("groupsDifferences() gotEqual = %s, want %s", utils.ToJSON(gotEqual), utils.ToJSON(tt.wantEqual))
+				t.Errorf("groupsOperations() gotEqual = %s, want %s", utils.ToJSON(gotEqual), utils.ToJSON(tt.wantEqual))
 			}
 			if !reflect.DeepEqual(gotDelete, tt.wantDelete) {
-				t.Errorf("groupsDifferences() gotDelete = %s, want %s", utils.ToJSON(gotDelete), utils.ToJSON(tt.wantDelete))
+				t.Errorf("groupsOperations() gotDelete = %s, want %s", utils.ToJSON(gotDelete), utils.ToJSON(tt.wantDelete))
 			}
 		})
 	}
 }
 
-func Test_usersDifferences(t *testing.T) {
+func Test_usersOperations(t *testing.T) {
 	type args struct {
 		idp   *model.UsersResult
 		state *model.UsersResult
@@ -478,24 +478,24 @@ func Test_usersDifferences(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotCreate, gotUpdate, gotEqual, gotDelete := usersDifferences(tt.args.idp, tt.args.state)
+			gotCreate, gotUpdate, gotEqual, gotDelete := usersOperations(tt.args.idp, tt.args.state)
 			if !reflect.DeepEqual(gotCreate, tt.wantCreate) {
-				t.Errorf("usersDifferences() gotCreate = %s, want %s", utils.ToJSON(gotCreate), utils.ToJSON(tt.wantCreate))
+				t.Errorf("usersOperations() gotCreate = %s, want %s", utils.ToJSON(gotCreate), utils.ToJSON(tt.wantCreate))
 			}
 			if !reflect.DeepEqual(gotUpdate, tt.wantUpdate) {
-				t.Errorf("usersDifferences() gotUpdate = %s, want %s", utils.ToJSON(gotUpdate), utils.ToJSON(tt.wantUpdate))
+				t.Errorf("usersOperations() gotUpdate = %s, want %s", utils.ToJSON(gotUpdate), utils.ToJSON(tt.wantUpdate))
 			}
 			if !reflect.DeepEqual(gotEqual, tt.wantEqual) {
-				t.Errorf("usersDifferences() gotEqual = %s, want %s", utils.ToJSON(gotEqual), utils.ToJSON(tt.wantEqual))
+				t.Errorf("usersOperations() gotEqual = %s, want %s", utils.ToJSON(gotEqual), utils.ToJSON(tt.wantEqual))
 			}
 			if !reflect.DeepEqual(gotDelete, tt.wantDelete) {
-				t.Errorf("usersDifferences() gotDelete = %s, want %s", utils.ToJSON(gotDelete), utils.ToJSON(tt.wantDelete))
+				t.Errorf("usersOperations() gotDelete = %s, want %s", utils.ToJSON(gotDelete), utils.ToJSON(tt.wantDelete))
 			}
 		})
 	}
 }
 
-func Test_groupsUsersDifferences(t *testing.T) {
+func Test_groupsUsersOperations(t *testing.T) {
 	type args struct {
 		idp   *model.GroupsUsersResult
 		state *model.GroupsUsersResult
@@ -697,15 +697,15 @@ func Test_groupsUsersDifferences(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotCreate, gotEqual, gotDelete := groupsUsersDifferences(tt.args.idp, tt.args.state)
+			gotCreate, gotEqual, gotDelete := groupsUsersOperations(tt.args.idp, tt.args.state)
 			if !reflect.DeepEqual(gotCreate, tt.wantCreate) {
-				t.Errorf("groupsUsersDifferences() gotCreate = %s, want %s", utils.ToJSON(gotCreate), utils.ToJSON(tt.wantCreate))
+				t.Errorf("groupsUsersOperations() gotCreate = %s, want %s", utils.ToJSON(gotCreate), utils.ToJSON(tt.wantCreate))
 			}
 			if !reflect.DeepEqual(gotEqual, tt.wantEqual) {
-				t.Errorf("groupsUsersDifferences() gotEqual = %s, want %s", utils.ToJSON(gotEqual), utils.ToJSON(tt.wantEqual))
+				t.Errorf("groupsUsersOperations() gotEqual = %s, want %s", utils.ToJSON(gotEqual), utils.ToJSON(tt.wantEqual))
 			}
 			if !reflect.DeepEqual(gotDelete, tt.wantDelete) {
-				t.Errorf("groupsUsersDifferences() gotDelete = %s, want %s", utils.ToJSON(gotDelete), utils.ToJSON(tt.wantDelete))
+				t.Errorf("groupsUsersOperations() gotDelete = %s, want %s", utils.ToJSON(gotDelete), utils.ToJSON(tt.wantDelete))
 			}
 		})
 	}

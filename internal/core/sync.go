@@ -132,9 +132,9 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 		// now here we have the google fresh data and the last sync data state
 		// we need to compare the data and decide what to do
 		// see differences between the two data sets
-		_, _, _, _ = groupsDifferences(pGroupsResult, sGroupsResults)
-		_, _, _, _ = usersDifferences(pUsersResult, sUsersResult)
-		_, _, _ = groupsUsersDifferences(pGroupsUsersResult, sGroupsUsersResult)
+		_, _, _, _ = groupsOperations(pGroupsResult, sGroupsResults)
+		_, _, _, _ = usersOperations(pUsersResult, sUsersResult)
+		_, _, _ = groupsUsersOperations(pGroupsUsersResult, sGroupsUsersResult)
 	}
 
 	// sync data to SCIM

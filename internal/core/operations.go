@@ -1,8 +1,6 @@
 package core
 
 import (
-	"log"
-
 	"github.com/slashdevops/idp-scim-sync/internal/model"
 )
 
@@ -13,7 +11,7 @@ func createSyncState(sgr *model.StoreGroupsResult, sgmr *model.StoreGroupsUsersR
 	}, nil
 }
 
-// groupsDifferences returns the differences between the groups in the
+// groupsOperations returns the differences between the groups in the
 // this use the Groups Name as the key.
 // SCIM Groups cannot be updated.
 // return 4 objest of GroupsResult
@@ -21,7 +19,7 @@ func createSyncState(sgr *model.StoreGroupsResult, sgmr *model.StoreGroupsUsersR
 // update: groups that exist in "idp" and in "state" but attributes changed in idp
 // equal: groups that exist in both "idp" and "state" and their attributes are equal
 // delete: groups that exist in "state" but not in "idp"
-func groupsDifferences(idp, state *model.GroupsResult) (create *model.GroupsResult, update *model.GroupsResult, equal *model.GroupsResult, delete *model.GroupsResult) {
+func groupsOperations(idp, state *model.GroupsResult) (create *model.GroupsResult, update *model.GroupsResult, equal *model.GroupsResult, delete *model.GroupsResult) {
 	idpGroups := make(map[string]struct{})
 	stateGroups := make(map[string]*model.Group)
 
@@ -82,14 +80,14 @@ func groupsDifferences(idp, state *model.GroupsResult) (create *model.GroupsResu
 	return
 }
 
-// usersDifferences returns the differences between the users in the
+// usersOperations returns the differences between the users in the
 // Users Email as the key.
 // return 4 objest of UsersResult
 // create: users that exist in "state" but not in "idp"
 // update: users that exist in "idp" and in "state" but attributes changed in idp
 // equal: users that exist in both "idp" and "state" and their attributes are equal
 // delete: users that exist in "state" but not in "idp"
-func usersDifferences(idp, state *model.UsersResult) (create *model.UsersResult, update *model.UsersResult, equal *model.UsersResult, delete *model.UsersResult) {
+func usersOperations(idp, state *model.UsersResult) (create *model.UsersResult, update *model.UsersResult, equal *model.UsersResult, delete *model.UsersResult) {
 	idpUsers := make(map[string]struct{})
 	stateUsers := make(map[string]*model.User)
 
@@ -152,13 +150,13 @@ func usersDifferences(idp, state *model.UsersResult) (create *model.UsersResult,
 	return
 }
 
-// groupsUsersDifferences returns the differences between the users in the
+// groupsUsersOperations returns the differences between the users in the
 // Users Email as the key.
 // return 3 objest of GroupsUsersResult
 // create: users that exist in "state" but not in "idp"
 // equal: users that exist in both "idp" and "state" and their attributes are equal
 // delete: users that exist in "state" but not in "idp"
-func groupsUsersDifferences(idp, state *model.GroupsUsersResult) (create *model.GroupsUsersResult, equal *model.GroupsUsersResult, delete *model.GroupsUsersResult) {
+func groupsUsersOperations(idp, state *model.GroupsUsersResult) (create *model.GroupsUsersResult, equal *model.GroupsUsersResult, delete *model.GroupsUsersResult) {
 	idpUsers := make(map[string]map[string]*model.User)
 	stateUsers := make(map[string]map[string]*model.User)
 
@@ -191,17 +189,13 @@ func groupsUsersDifferences(idp, state *model.GroupsUsersResult) (create *model.
 
 		for _, usr := range grpUsrs.Resources {
 			if _, ok := stateUsers[grpUsrs.Group.ID][usr.ID]; !ok {
-				log.Printf("toC -> Group: %s, User: %s", grpUsrs.Group.ID, usr.ID)
-
 				toC[grpUsrs.Group.ID] = append(toC[grpUsrs.Group.ID], usr)
 			} else {
-				log.Printf("toE -> Group: %s, User: %s", grpUsrs.Group.ID, usr.ID)
 				toE[grpUsrs.Group.ID] = append(toE[grpUsrs.Group.ID], usr)
 			}
 		}
 
 		if len(toC[grpUsrs.Group.ID]) > 0 {
-			log.Printf("toCreate -> Group: %s", grpUsrs.Group.ID)
 			toCreate = append(toCreate, &model.GroupUsers{
 				Items:     len(toC[grpUsrs.Group.ID]),
 				Group:     grpUsrs.Group,
@@ -210,8 +204,6 @@ func groupsUsersDifferences(idp, state *model.GroupsUsersResult) (create *model.
 		}
 
 		if len(toE[grpUsrs.Group.ID]) > 0 {
-			log.Printf("toEqual -> Group: %s", grpUsrs.Group.ID)
-
 			toEqual = append(toEqual, &model.GroupUsers{
 				Items:     len(toE[grpUsrs.Group.ID]),
 				Group:     grpUsrs.Group,
@@ -225,14 +217,11 @@ func groupsUsersDifferences(idp, state *model.GroupsUsersResult) (create *model.
 
 		for _, usr := range grpUsrs.Resources {
 			if _, ok := idpUsers[grpUsrs.Group.ID][usr.ID]; !ok {
-				log.Printf("toD -> Group: %s, User: %s", grpUsrs.Group.ID, usr.ID)
 				toD[grpUsrs.Group.ID] = append(toD[grpUsrs.Group.ID], usr)
 			}
 		}
 
 		if len(toD[grpUsrs.Group.ID]) > 0 {
-			log.Printf("toDelete -> Group: %s", grpUsrs.Group.ID)
-
 			toDelete = append(toDelete, &model.GroupUsers{
 				Items:     len(toD[grpUsrs.Group.ID]),
 				Group:     grpUsrs.Group,
