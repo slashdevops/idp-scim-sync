@@ -164,12 +164,18 @@ func groupsUsersDifferences(idp, state *model.GroupsUsersResult) (create *model.
 	toEqual := make([]*model.GroupUsers, 0)
 	toDelete := make([]*model.GroupUsers, 0)
 
-	for i, grpUsrs := range idp.Resources {
-		idpUsers[grpUsrs.Group.ID][grpUsrs.Resources[i].ID] = grpUsrs.Resources[i]
+	for _, grpUsrs := range idp.Resources {
+		idpUsers[grpUsrs.Group.ID] = make(map[string]*model.User)
+		for _, usr := range grpUsrs.Resources {
+			idpUsers[grpUsrs.Group.ID][usr.ID] = usr
+		}
 	}
 
-	for i, grpUsrs := range state.Resources {
-		stateUsers[grpUsrs.Group.ID][grpUsrs.Resources[i].ID] = grpUsrs.Resources[i]
+	for _, grpUsrs := range state.Resources {
+		stateUsers[grpUsrs.Group.ID] = make(map[string]*model.User)
+		for _, usr := range grpUsrs.Resources {
+			stateUsers[grpUsrs.Group.ID][usr.ID] = usr
+		}
 	}
 
 	for _, grpUsrs := range idp.Resources {
