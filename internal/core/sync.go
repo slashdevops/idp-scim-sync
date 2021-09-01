@@ -98,7 +98,16 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 	// first time syncing, no state hashcode
 	if state.HashCode == "" {
 
-		// First time we are syncing
+		// Check SCIM side to see if there are any elelemnts to be
+		// reconciled.
+		sGroupsResult, err := ss.scim.GetGroups(ss.ctx, ss.provGroupsFilter)
+		if err != nil {
+			return err
+		}
+
+		if sGroupsResult.Items == 0 {
+			log.Info("No groups to reconciliate")
+		}
 
 		// Create the sync state
 		// store data to repository
