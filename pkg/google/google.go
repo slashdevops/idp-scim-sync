@@ -3,204 +3,126 @@ package google
 import (
 	"context"
 	"errors"
-	"fmt"
 
-	"github.com/slashdevops/idp-scim-sync/internal/hash"
-	"github.com/slashdevops/idp-scim-sync/internal/model"
+	"golang.org/x/oauth2/google"
+	admin "google.golang.org/api/admin/directory/v1"
+	"google.golang.org/api/googleapi"
+	"google.golang.org/api/option"
+)
+
+const (
+	// https://cloud.google.com/storage/docs/json_api
+	groupsRequiredFields  googleapi.Field = "id,name,email"
+	membersRequiredFields googleapi.Field = "id,email"
+	usersRequiredFields   googleapi.Field = "id,name,primaryEmail,suspended"
 )
 
 var (
-	ErrDirectoryServiceNil = errors.New("directory service is nil")
-	ErrListingGroups       = errors.New("error listing groups")
-	ErrListingUsers        = errors.New("error listing users")
-	ErrListingGroupMembers = errors.New("error listing group members")
-	ErrGettingUser         = errors.New("error getting user")
+	ErrInvalidServiceAccount    = errors.New("invalid service account")
+	ErrCreatingDirectoryService = errors.New("creating directory service")
 )
 
-// This implement core.IdentityProviderService interface
-
-type GoogleProvider struct {
-	ds DirectoryService
+type DirectoryService struct {
+	ctx context.Context
+	svc *admin.Service
 }
 
-func NewGoogleIdentityProvider(ds DirectoryService) (*GoogleProvider, error) {
-	if ds == nil {
-		return nil, ErrDirectoryServiceNil
+// NewService create a Google Directory Service.
+// References:
+// - https://pkg.go.dev/google.golang.org/api/admin/directory/v1
+// Examples of scope:
+// - admin.AdminDirectoryGroupReadonlyScope, admin.AdminDirectoryGroupMemberReadonlyScope, admin.AdminDirectoryUserReadonlyScope
+func NewService(ctx context.Context, UserEmail string, ServiceAccount []byte, scope ...string) (*admin.Service, error) {
+	config, err := google.JWTConfigFromJSON(ServiceAccount, scope...)
+	if err != nil {
+		return nil, ErrInvalidServiceAccount
 	}
 
-	return &GoogleProvider{
-		ds: ds,
+	config.Subject = UserEmail
+
+	ts := config.TokenSource(ctx)
+
+	svc, err := admin.NewService(ctx, option.WithTokenSource(ts))
+	if err != nil {
+		return nil, ErrCreatingDirectoryService
+	}
+
+	return svc, nil
+}
+
+// NewDirectoryService create a Google Directory API client.
+// References:
+// - https://developers.google.com/admin-sdk/directory/v1/guides/delegation?utm_source=pocket_mylist#go
+func NewDirectoryService(ctx context.Context, svc *admin.Service) (*DirectoryService, error) {
+	return &DirectoryService{
+		ctx: ctx,
+		svc: svc,
 	}, nil
 }
 
-// GetGroups returns a list of groups from the Google Directory API.
-//
-// The filter parameter is a list of strings that can be used to filter the groups
-// according to the Google Directory API.
-func (g *GoogleProvider) GetGroups(ctx context.Context, filter []string) (*model.GroupsResult, error) {
-	syncGroups := make([]*model.Group, 0)
+// ListUsers list all users in a Google Directory filtered by query.
+func (d *DirectoryService) ListUsers(query []string) ([]*admin.User, error) {
+	u := make([]*admin.User, 0)
+	var err error
 
-	googleGroups, err := g.ds.ListGroups(filter)
-	if err != nil {
-		return nil, ErrListingGroups
-	}
-
-	for _, grp := range googleGroups {
-
-		e := &model.Group{
-			ID:    grp.Id,
-			Name:  grp.Name,
-			Email: grp.Email,
+	if len(query) > 0 {
+		for _, q := range query {
+			err = d.svc.Users.List().Query(q).Customer("my_customer").Fields(usersRequiredFields).Pages(d.ctx, func(users *admin.Users) error {
+				u = append(u, users.Users...)
+				return nil
+			})
 		}
-		e.HashCode = hash.Sha256(e)
-
-		syncGroups = append(syncGroups, e)
+	} else {
+		err = d.svc.Users.List().Customer("my_customer").Fields(usersRequiredFields).Pages(d.ctx, func(users *admin.Users) error {
+			u = append(u, users.Users...)
+			return nil
+		})
 	}
-
-	syncResult := &model.GroupsResult{
-		Items:     len(googleGroups),
-		Resources: syncGroups,
-	}
-
-	syncResult.HashCode = hash.Sha256(syncResult)
-
-	return syncResult, nil
+	return u, err
 }
 
-// GetUsers returns a list of users from the Google Directory API.
-//
-// The filter parameter is a list of strings that can be used to filter the users
-// according to the Google Directory API.
-func (g *GoogleProvider) GetUsers(ctx context.Context, filter []string) (*model.UsersResult, error) {
-	syncUsers := make([]*model.User, 0)
+// ListGroups list all groups in a Google Directory filtered by query.
+// References:
+// - https://developers.google.com/admin-sdk/directory/reference/rest/v1/groups
+func (d *DirectoryService) ListGroups(query []string) ([]*admin.Group, error) {
+	g := make([]*admin.Group, 0)
+	var err error
 
-	googleUsers, err := g.ds.ListUsers(filter)
-	if err != nil {
-		return nil, ErrListingUsers
-	}
-
-	for _, usr := range googleUsers {
-
-		e := &model.User{
-			ID:          usr.Id,
-			Name:        model.Name{FamilyName: usr.Name.FamilyName, GivenName: usr.Name.GivenName},
-			DisplayName: fmt.Sprintf("%s %s", usr.Name.GivenName, usr.Name.FamilyName),
-			Active:      !usr.Suspended,
-			Email:       usr.PrimaryEmail,
+	if len(query) > 0 {
+		for _, q := range query {
+			err = d.svc.Groups.List().Customer("my_customer").Query(q).Fields(groupsRequiredFields).Pages(d.ctx, func(groups *admin.Groups) error {
+				g = append(g, groups.Groups...)
+				return nil
+			})
 		}
-		e.HashCode = hash.Sha256(e)
-
-		syncUsers = append(syncUsers, e)
+	} else {
+		err = d.svc.Groups.List().Customer("my_customer").Fields(groupsRequiredFields).Pages(d.ctx, func(groups *admin.Groups) error {
+			g = append(g, groups.Groups...)
+			return nil
+		})
 	}
-
-	uResult := &model.UsersResult{
-		Items:     len(googleUsers),
-		Resources: syncUsers,
-	}
-	uResult.HashCode = hash.Sha256(uResult)
-
-	return uResult, nil
+	return g, err
 }
 
-func (g *GoogleProvider) GetGroupMembers(ctx context.Context, id string) (*model.MembersResult, error) {
-	syncMembers := make([]*model.Member, 0)
+func (d *DirectoryService) ListGroupMembers(groupID string) ([]*admin.Member, error) {
+	m := make([]*admin.Member, 0)
 
-	googleMembers, err := g.ds.ListGroupMembers(id)
-	if err != nil {
-		return nil, ErrListingGroupMembers
-	}
+	err := d.svc.Members.List(groupID).Fields(membersRequiredFields).Pages(d.ctx, func(members *admin.Members) error {
+		m = append(m, members.Members...)
+		return nil
+	})
 
-	for _, member := range googleMembers {
-		e := &model.Member{
-			ID:    member.Id,
-			Email: member.Email,
-		}
-		e.HashCode = hash.Sha256(e)
-
-		syncMembers = append(syncMembers, e)
-	}
-
-	syncMembersResult := &model.MembersResult{
-		Items:     len(googleMembers),
-		Resources: syncMembers,
-	}
-	syncMembersResult.HashCode = hash.Sha256(syncMembersResult)
-
-	return syncMembersResult, nil
+	return m, err
 }
 
-func (g *GoogleProvider) GetUsersFromGroupMembers(ctx context.Context, mbr *model.MembersResult) (*model.UsersResult, error) {
-	syncUsers := make([]*model.User, 0)
+func (d *DirectoryService) GetUser(userID string) (*admin.User, error) {
+	u, err := d.svc.Users.Get(userID).Fields(usersRequiredFields).Context(d.ctx).Do()
 
-	for _, member := range mbr.Resources {
-		u, err := g.ds.GetUser(member.ID)
-		if err != nil {
-			return nil, ErrGettingUser
-		}
-
-		e := &model.User{
-			ID:          u.Id,
-			Name:        model.Name{FamilyName: u.Name.FamilyName, GivenName: u.Name.GivenName},
-			DisplayName: fmt.Sprintf("%s %s", u.Name.GivenName, u.Name.FamilyName),
-			Active:      !u.Suspended,
-			Email:       u.PrimaryEmail,
-		}
-		e.HashCode = hash.Sha256(e)
-
-		syncUsers = append(syncUsers, e)
-	}
-
-	syncUsersResult := &model.UsersResult{
-		Items:     len(syncUsers),
-		Resources: syncUsers,
-	}
-	syncUsersResult.HashCode = hash.Sha256(syncUsersResult)
-
-	return syncUsersResult, nil
+	return u, err
 }
 
-func (g *GoogleProvider) GetUsersAndGroupsUsers(ctx context.Context, groups *model.GroupsResult) (*model.UsersResult, *model.GroupsUsersResult, error) {
-	pUsers := make([]*model.User, 0)
-	pGroupsUsers := make([]*model.GroupUsers, 0)
+func (d *DirectoryService) GetGroup(groupID string) (*admin.Group, error) {
+	g, err := d.svc.Groups.Get(groupID).Fields(groupsRequiredFields).Context(d.ctx).Do()
 
-	for _, pGroup := range groups.Resources {
-
-		pMembers, err := g.GetGroupMembers(ctx, pGroup.ID)
-		if err != nil {
-			return nil, nil, err
-		}
-
-		pUsersFromMembers, err := g.GetUsersFromGroupMembers(ctx, pMembers)
-		if err != nil {
-			return nil, nil, err
-		}
-		pUsers = append(pUsers, pUsersFromMembers.Resources...)
-
-		pGroupUsers := &model.GroupUsers{
-			Items: len(pMembers.Resources),
-			Group: model.Group{
-				ID:    pGroup.ID,
-				Name:  pGroup.Name,
-				Email: pGroup.Email,
-			},
-			Resources: pUsers,
-		}
-		pGroupUsers.HashCode = hash.Sha256(pGroupUsers)
-
-		pGroupsUsers = append(pGroupsUsers, pGroupUsers)
-	}
-
-	usersResult := &model.UsersResult{
-		Items:     len(pUsers),
-		Resources: pUsers,
-	}
-	usersResult.HashCode = hash.Sha256(usersResult)
-
-	groupsUsersResult := &model.GroupsUsersResult{
-		Items:     len(pGroupsUsers),
-		Resources: pGroupsUsers,
-	}
-	groupsUsersResult.HashCode = hash.Sha256(groupsUsersResult)
-
-	return usersResult, groupsUsersResult, nil
+	return g, err
 }

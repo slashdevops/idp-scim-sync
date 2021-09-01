@@ -27,26 +27,6 @@ type Group struct {
 	HashCode string `json:"hashCode"`
 }
 
-type StoreGroupsResult struct {
-	Place string
-}
-
-type StoreUsersResult struct {
-	Place string
-}
-
-type StoreGroupsMembersResult struct {
-	Place string
-}
-
-type StoreGroupsUsersResult struct {
-	Place string
-}
-
-type StoreStateResult struct {
-	Place string
-}
-
 type GroupsResult struct {
 	Items     int      `json:"items"`
 	HashCode  string   `json:"hashCode"`
@@ -93,13 +73,4 @@ type GroupsUsersResult struct {
 	Items     int           `json:"items"`
 	Resources []*GroupUsers `json:"resources"`
 	HashCode  string        `json:"hashCode"`
-}
-
-type State struct {
-	Name          string `json:"name"`
-	Version       string `json:"version"`
-	HashCode      string `json:"hashCode"`
-	Groups        StoreGroupsResult
-	Users         StoreUsersResult
-	GroupsMembers StoreGroupsMembersResult
 }

@@ -1,15 +1,18 @@
 package core
 
-import "github.com/slashdevops/idp-scim-sync/internal/model"
+import (
+	"github.com/slashdevops/idp-scim-sync/internal/model"
+	"github.com/slashdevops/idp-scim-sync/internal/state"
+)
 
 type SyncRepository interface {
-	StoreGroups(gr *model.GroupsResult) (model.StoreGroupsResult, error)
-	StoreUsers(ur *model.UsersResult) (model.StoreUsersResult, error)
-	StoreGroupsUsers(gr *model.GroupsUsersResult) (model.StoreGroupsUsersResult, error)
+	StoreGroups(gr *model.GroupsResult) (state.StoreGroupsResult, error)
+	StoreUsers(ur *model.UsersResult) (state.StoreUsersResult, error)
+	StoreGroupsUsers(gr *model.GroupsUsersResult) (state.StoreGroupsUsersResult, error)
 
-	StoreState(state *model.State) (model.StoreStateResult, error)
-	GetState(name string) (model.State, error)
-	GetGroups(place string) (*model.GroupsResult, error)
-	GetUsers(place string) (*model.UsersResult, error)
-	GetGroupsUsers(place string) (*model.GroupsUsersResult, error)
+	StoreState(sgr *state.StoreGroupsResult, sur *state.StoreUsersResult, sgur *state.StoreGroupsUsersResult) (state.StoreStateResult, error)
+	GetState() (state.State, error)
+	GetGroups() (*model.GroupsResult, error)
+	GetUsers() (*model.UsersResult, error)
+	GetGroupsUsers() (*model.GroupsUsersResult, error)
 }

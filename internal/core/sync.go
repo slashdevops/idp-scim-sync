@@ -77,7 +77,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 	}
 
 	if pGroupsResult.Items == 0 {
-		log.Info("No groups to sync")
+		log.Warn("provider groups empty")
 		return nil
 	}
 
@@ -87,10 +87,10 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 	}
 
 	if pUsersResult.Items == 0 {
-		log.Info("No users to sync")
+		log.Warn("provider users empty")
 	}
 
-	state, err := ss.repo.GetState(ss.state.GetName())
+	state, err := ss.repo.GetState()
 	if err != nil {
 		return ErrGettingState
 	}
@@ -99,63 +99,83 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 	if state.HashCode == "" {
 
 		// Check SCIM side to see if there are any elelemnts to be
-		// reconciled.
-		sGroupsResult, err := ss.scim.GetGroups(ss.ctx, ss.provGroupsFilter)
+		// reconciled. I mean this is not clean
+		sGroupsResult, err := ss.scim.GetGroups(ss.ctx)
 		if err != nil {
 			return err
 		}
 
 		if sGroupsResult.Items == 0 {
-			log.Info("No groups to reconciliate")
+			log.Info("No SCIM groups to be reconciliate")
+		} else {
+			// reconciliate groups
+			gCreate, gUpdate, _, gDelete := groupsOperations(pGroupsResult, sGroupsResult)
+
+			if err := ss.scim.CreateGroups(ss.ctx, gCreate); err != nil {
+				return err
+			}
+
+			if err := ss.scim.UpdateGroups(ss.ctx, gUpdate); err != nil {
+				return err
+			}
+
+			if err := ss.scim.DeleteGroups(ss.ctx, gDelete); err != nil {
+				return err
+			}
 		}
 
-		// Create the sync state
-		// store data to repository
-		sStoreGroupsResult, err := ss.repo.StoreGroups(pGroupsResult)
+		// the groups here could be empty, but we need to check if users exist even if there are not groups
+		sUsersResult, sGroupsUsersResult, err := ss.scim.GetUsersAndGroupsUsers(ss.ctx, sGroupsResult)
 		if err != nil {
 			return err
 		}
 
-		sStoreGroupsUsersResult, err := ss.repo.StoreGroupsUsers(pGroupsUsersResult)
-		if err != nil {
-			return err
+		if sUsersResult.Items == 0 {
+			log.Info("No SCIM users to be reconciliate")
+		} else {
+
+			// reconciliate users
+			uCreate, uUpdate, _, uDelete := usersOperations(pUsersResult, sUsersResult)
+
+			if err := ss.scim.CreateUsers(ss.ctx, uCreate); err != nil {
+				return err
+			}
+
+			if err := ss.scim.UpdateUsers(ss.ctx, uUpdate); err != nil {
+				return err
+			}
+
+			if err := ss.scim.DeleteUsers(ss.ctx, uDelete); err != nil {
+				return err
+			}
 		}
 
-		sStoreUsersResult, err := ss.repo.StoreUsers(pUsersResult)
-		if err != nil {
-			return err
+		if sGroupsUsersResult.Items == 0 {
+			log.Info("No SCIM groups and members to be reconciliate")
+		} else {
+			// reconciliate groups-users --> groups members
+			ugCreate, _, ugDelete := groupsUsersOperations(pGroupsUsersResult, sGroupsUsersResult)
+
+			if err := ss.scim.CreateMembers(ss.ctx, ugCreate); err != nil {
+				return err
+			}
+
+			if err := ss.scim.DeleteMembers(ss.ctx, ugDelete); err != nil {
+				return err
+			}
 		}
-
-		_ = sStoreGroupsResult
-		_ = sStoreGroupsUsersResult
-		_ = sStoreUsersResult
-
-		// // reusing the state variable
-		// state, err = createSyncState(&sStoreGroupsResult, &sStoreGroupsUsersResult, &sStoreUsersResult)
-		// if err != nil {
-		// 	return err
-		// }
-
-		// sStoreStateResult, err := ss.repo.StoreState(&state)
-		// if err != nil {
-		// 	return err
-		// }
-
-		// // TODO: decide what to do with the result
-		// _ = sStoreStateResult
-
 	} else {
-		sGroupsResults, err := ss.repo.GetGroups(state.Groups.Place)
+		rGroupsResult, err := ss.repo.GetGroups()
 		if err != nil {
 			return err
 		}
 
-		sUsersResult, err := ss.repo.GetUsers(state.Users.Place)
+		rUsersResult, err := ss.repo.GetUsers()
 		if err != nil {
 			return err
 		}
 
-		sGroupsUsersResult, err := ss.repo.GetGroupsUsers(state.GroupsMembers.Place)
+		rGroupsUsersResult, err := ss.repo.GetGroupsUsers()
 		if err != nil {
 			return err
 		}
@@ -163,28 +183,68 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 		// now here we have the google fresh data and the last sync data state
 		// we need to compare the data and decide what to do
 		// see differences between the two data sets
-		_, _, _, _ = groupsOperations(pGroupsResult, sGroupsResults)
-		_, _, _, _ = usersOperations(pUsersResult, sUsersResult)
-		_, _, _ = groupsUsersOperations(pGroupsUsersResult, sGroupsUsersResult)
+		gCreate, gUpdate, _, gDelete := groupsOperations(pGroupsResult, rGroupsResult)
+
+		if err := ss.scim.CreateGroups(ss.ctx, gCreate); err != nil {
+			return err
+		}
+
+		if err := ss.scim.UpdateGroups(ss.ctx, gUpdate); err != nil {
+			return err
+		}
+
+		if err := ss.scim.DeleteGroups(ss.ctx, gDelete); err != nil {
+			return err
+		}
+
+		uCreate, uUpdate, _, uDelete := usersOperations(pUsersResult, rUsersResult)
+
+		if err := ss.scim.CreateUsers(ss.ctx, uCreate); err != nil {
+			return err
+		}
+
+		if err := ss.scim.UpdateUsers(ss.ctx, uUpdate); err != nil {
+			return err
+		}
+
+		if err := ss.scim.DeleteUsers(ss.ctx, uDelete); err != nil {
+			return err
+		}
+
+		ugCreate, _, ugDelete := groupsUsersOperations(pGroupsUsersResult, rGroupsUsersResult)
+
+		if err := ss.scim.CreateMembers(ss.ctx, ugCreate); err != nil {
+			return err
+		}
+
+		if err := ss.scim.DeleteMembers(ss.ctx, ugDelete); err != nil {
+			return err
+		}
 	}
 
-	// sync data to SCIM
-	if err := ss.scim.CreateOrUpdateUsers(ss.ctx, pUsersResult); err != nil {
+	// Create the sync state
+	// store data to repository
+	sStoreGroupsResult, err := ss.repo.StoreGroups(pGroupsResult)
+	if err != nil {
 		return err
 	}
 
-	if err := ss.scim.CreateOrUpdateGroups(ss.ctx, pGroupsResult); err != nil {
+	sGroupsUsersResult, err := ss.repo.StoreGroupsUsers(pGroupsUsersResult)
+	if err != nil {
 		return err
 	}
 
-	if err := ss.scim.DeleteUsers(ss.ctx, pUsersResult); err != nil {
+	sStoreUsersResult, err := ss.repo.StoreUsers(pUsersResult)
+	if err != nil {
 		return err
 	}
 
-	if err := ss.scim.DeleteGroups(ss.ctx, pGroupsResult); err != nil {
+	sStoreStateResult, err := ss.repo.StoreState(&sStoreGroupsResult, &sStoreUsersResult, &sGroupsUsersResult)
+	if err != nil {
 		return err
 	}
 
+	log.Infof("Sysced %s", sStoreStateResult.Location)
 	return nil
 }
 
@@ -199,14 +259,6 @@ func (ss *SyncService) SyncGroupsAndUsers() error {
 
 	pUsers, err := ss.prov.GetUsers(ss.ctx, ss.provUsersFilter)
 	if err != nil {
-		return err
-	}
-
-	if err := ss.scim.CreateOrUpdateGroups(ss.ctx, pGroups); err != nil {
-		return err
-	}
-
-	if err := ss.scim.CreateOrUpdateUsers(ss.ctx, pUsers); err != nil {
 		return err
 	}
 

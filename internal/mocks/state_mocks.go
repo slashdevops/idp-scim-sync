@@ -8,6 +8,7 @@ import (
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"
+	state "github.com/slashdevops/idp-scim-sync/internal/state"
 )
 
 // MockSyncState is a mock of SyncState interface.
@@ -33,6 +34,35 @@ func (m *MockSyncState) EXPECT() *MockSyncStateMockRecorder {
 	return m.recorder
 }
 
+// Build mocks base method.
+func (m *MockSyncState) Build(groups *state.StoreGroupsResult, groupsUsers *state.StoreGroupsUsersResult, users *state.StoreUsersResult) (*state.State, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Build", groups, groupsUsers, users)
+	ret0, _ := ret[0].(*state.State)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Build indicates an expected call of Build.
+func (mr *MockSyncStateMockRecorder) Build(groups, groupsUsers, users interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Build", reflect.TypeOf((*MockSyncState)(nil).Build), groups, groupsUsers, users)
+}
+
+// Empty mocks base method.
+func (m *MockSyncState) Empty() bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Empty")
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// Empty indicates an expected call of Empty.
+func (mr *MockSyncStateMockRecorder) Empty() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Empty", reflect.TypeOf((*MockSyncState)(nil).Empty))
+}
+
 // GetName mocks base method.
 func (m *MockSyncState) GetName() string {
 	m.ctrl.T.Helper()
@@ -45,18 +75,4 @@ func (m *MockSyncState) GetName() string {
 func (mr *MockSyncStateMockRecorder) GetName() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetName", reflect.TypeOf((*MockSyncState)(nil).GetName))
-}
-
-// IsEmpty mocks base method.
-func (m *MockSyncState) IsEmpty() bool {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "IsEmpty")
-	ret0, _ := ret[0].(bool)
-	return ret0
-}
-
-// IsEmpty indicates an expected call of IsEmpty.
-func (mr *MockSyncStateMockRecorder) IsEmpty() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsEmpty", reflect.TypeOf((*MockSyncState)(nil).IsEmpty))
 }

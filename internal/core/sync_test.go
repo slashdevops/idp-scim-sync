@@ -49,8 +49,6 @@ func Test_syncService_SyncGroupsAndUsers(t *testing.T) {
 
 		mockProviderService.EXPECT().GetGroups(ctx, gomock.Any()).Return(nil, nil)
 		mockProviderService.EXPECT().GetUsers(ctx, gomock.Any()).Return(nil, nil)
-		mockSCIMService.EXPECT().CreateOrUpdateGroups(ctx, gomock.Any()).Return(nil)
-		mockSCIMService.EXPECT().CreateOrUpdateUsers(ctx, gomock.Any()).Return(nil)
 		mockSCIMService.EXPECT().DeleteGroups(ctx, gomock.Any()).Return(nil)
 		mockSCIMService.EXPECT().DeleteUsers(ctx, gomock.Any()).Return(nil)
 
