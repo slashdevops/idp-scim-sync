@@ -15,6 +15,7 @@ type AWSSCIMProvider interface {
 	ListGroups(filter string) (*aws.GroupsResponse, error)
 }
 
+// implement core.SCIMService interface
 type SCIMProvider struct {
 	scim AWSSCIMProvider
 }
@@ -146,11 +147,23 @@ func (s *SCIMProvider) GetUsersAndGroupsUsers(ctx context.Context, groups *model
 	return usersResult, groupsUsersResult, nil
 }
 
-func (s *SCIMProvider) CreateOrUpdateGroups(ctx context.Context, gr *model.GroupsResult) error {
+func (s *SCIMProvider) CreateGroups(ctx context.Context, gr *model.GroupsResult) error {
 	return nil
 }
 
-func (s *SCIMProvider) CreateOrUpdateUsers(ctx context.Context, ur *model.UsersResult) error {
+func (s *SCIMProvider) CreateUsers(ctx context.Context, ur *model.UsersResult) error {
+	return nil
+}
+
+func (s *SCIMProvider) CreateMembers(ctx context.Context, ur *model.GroupsUsersResult) error {
+	return nil
+}
+
+func (s *SCIMProvider) UpdateGroups(ctx context.Context, gr *model.GroupsResult) error {
+	return nil
+}
+
+func (s *SCIMProvider) UpdateUsers(ctx context.Context, ur *model.UsersResult) error {
 	return nil
 }
 
@@ -159,5 +172,9 @@ func (s *SCIMProvider) DeleteGroups(ctx context.Context, gr *model.GroupsResult)
 }
 
 func (s *SCIMProvider) DeleteUsers(ctx context.Context, ur *model.UsersResult) error {
+	return nil
+}
+
+func (s *SCIMProvider) DeleteMembers(ctx context.Context, ur *model.GroupsUsersResult) error {
 	return nil
 }
