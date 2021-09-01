@@ -13,7 +13,6 @@ import (
 type AWSSCIMProvider interface {
 	ListUsers(filter string) (*aws.UsersResponse, error)
 	ListGroups(filter string) (*aws.GroupsResponse, error)
-	ServiceProviderConfig() (*aws.ServiceProviderConfig, error)
 }
 
 type SCIMProvider struct {
