@@ -11,17 +11,20 @@ type User struct {
 	DisplayName string `json:"displayName"`
 	Active      bool   `json:"active"`
 	Email       string `json:"email"`
+	HashCode    string `json:"hashCode"`
 }
 
 type UsersResult struct {
 	Items     int     `json:"items"`
 	Resources []*User `json:"resources"`
+	HashCode  string  `json:"hashCode"`
 }
 
 type Group struct {
-	ID    string `json:"id"`
-	Name  string `json:"name"`
-	Email string `json:"email"`
+	ID       string `json:"id"`
+	Name     string `json:"name"`
+	Email    string `json:"email"`
+	HashCode string `json:"hashCode"`
 }
 
 type StoreGroupsResult struct {
@@ -46,17 +49,20 @@ type StoreStateResult struct {
 
 type GroupsResult struct {
 	Items     int      `json:"items"`
+	HashCode  string   `json:"hashCode"`
 	Resources []*Group `json:"resources"`
 }
 
 type Member struct {
-	ID    string `json:"id"`
-	Email string `json:"email"`
+	ID       string `json:"id"`
+	Email    string `json:"email"`
+	HashCode string `json:"hashCode"`
 }
 
 type MembersResult struct {
 	Items     int       `json:"items"`
 	Resources []*Member `json:"resources"`
+	HashCode  string    `json:"hashCode"`
 }
 
 // type GroupsMembers map[string][]*Member
@@ -80,17 +86,19 @@ type GroupUsers struct {
 	Items     int     `json:"items"`
 	Group     Group   `json:"group"`
 	Resources []*User `json:"resources"`
+	HashCode  string  `json:"hashCode"`
 }
 
 type GroupsUsersResult struct {
 	Items     int           `json:"items"`
 	Resources []*GroupUsers `json:"resources"`
+	HashCode  string        `json:"hashCode"`
 }
 
 type State struct {
 	Name          string `json:"name"`
 	Version       string `json:"version"`
-	HashCode      string `json:"hashcode"`
+	HashCode      string `json:"hashCode"`
 	Groups        StoreGroupsResult
 	Users         StoreUsersResult
 	GroupsMembers StoreGroupsMembersResult

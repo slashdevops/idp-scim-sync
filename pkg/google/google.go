@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/slashdevops/idp-scim-sync/internal/hash"
 	"github.com/slashdevops/idp-scim-sync/internal/model"
 )
 
@@ -45,17 +46,23 @@ func (g *GoogleProvider) GetGroups(ctx context.Context, filter []string) (*model
 	}
 
 	for _, grp := range googleGroups {
-		syncGroups = append(syncGroups, &model.Group{
+
+		e := &model.Group{
 			ID:    grp.Id,
 			Name:  grp.Name,
 			Email: grp.Email,
-		})
+		}
+		e.HashCode = hash.Sha256(e)
+
+		syncGroups = append(syncGroups, e)
 	}
 
 	syncResult := &model.GroupsResult{
 		Items:     len(googleGroups),
 		Resources: syncGroups,
 	}
+
+	syncResult.HashCode = hash.Sha256(syncResult)
 
 	return syncResult, nil
 }
@@ -73,19 +80,24 @@ func (g *GoogleProvider) GetUsers(ctx context.Context, filter []string) (*model.
 	}
 
 	for _, usr := range googleUsers {
-		syncUsers = append(syncUsers, &model.User{
+
+		e := &model.User{
 			ID:          usr.Id,
 			Name:        model.Name{FamilyName: usr.Name.FamilyName, GivenName: usr.Name.GivenName},
 			DisplayName: fmt.Sprintf("%s %s", usr.Name.GivenName, usr.Name.FamilyName),
 			Active:      !usr.Suspended,
 			Email:       usr.PrimaryEmail,
-		})
+		}
+		e.HashCode = hash.Sha256(e)
+
+		syncUsers = append(syncUsers, e)
 	}
 
 	uResult := &model.UsersResult{
 		Items:     len(googleUsers),
 		Resources: syncUsers,
 	}
+	uResult.HashCode = hash.Sha256(uResult)
 
 	return uResult, nil
 }
@@ -99,16 +111,20 @@ func (g *GoogleProvider) GetGroupMembers(ctx context.Context, id string) (*model
 	}
 
 	for _, member := range googleMembers {
-		syncMembers = append(syncMembers, &model.Member{
+		e := &model.Member{
 			ID:    member.Id,
 			Email: member.Email,
-		})
+		}
+		e.HashCode = hash.Sha256(e)
+
+		syncMembers = append(syncMembers, e)
 	}
 
 	syncMembersResult := &model.MembersResult{
 		Items:     len(googleMembers),
 		Resources: syncMembers,
 	}
+	syncMembersResult.HashCode = hash.Sha256(syncMembersResult)
 
 	return syncMembersResult, nil
 }
@@ -122,19 +138,23 @@ func (g *GoogleProvider) GetUsersFromGroupMembers(ctx context.Context, mbr *mode
 			return nil, ErrGettingUser
 		}
 
-		syncUsers = append(syncUsers, &model.User{
+		e := &model.User{
 			ID:          u.Id,
 			Name:        model.Name{FamilyName: u.Name.FamilyName, GivenName: u.Name.GivenName},
 			DisplayName: fmt.Sprintf("%s %s", u.Name.GivenName, u.Name.FamilyName),
 			Active:      !u.Suspended,
 			Email:       u.PrimaryEmail,
-		})
+		}
+		e.HashCode = hash.Sha256(e)
+
+		syncUsers = append(syncUsers, e)
 	}
 
 	syncUsersResult := &model.UsersResult{
 		Items:     len(syncUsers),
 		Resources: syncUsers,
 	}
+	syncUsersResult.HashCode = hash.Sha256(syncUsersResult)
 
 	return syncUsersResult, nil
 }
@@ -165,6 +185,7 @@ func (g *GoogleProvider) GetUsersAndGroupsUsers(ctx context.Context, groups *mod
 			},
 			Resources: pUsers,
 		}
+		pGroupUsers.HashCode = hash.Sha256(pGroupUsers)
 
 		pGroupsUsers = append(pGroupsUsers, pGroupUsers)
 	}
@@ -173,11 +194,13 @@ func (g *GoogleProvider) GetUsersAndGroupsUsers(ctx context.Context, groups *mod
 		Items:     len(pUsers),
 		Resources: pUsers,
 	}
+	usersResult.HashCode = hash.Sha256(usersResult)
 
 	groupsUsersResult := &model.GroupsUsersResult{
 		Items:     len(pGroupsUsers),
 		Resources: pGroupsUsers,
 	}
+	groupsUsersResult.HashCode = hash.Sha256(groupsUsersResult)
 
 	return usersResult, groupsUsersResult, nil
 }

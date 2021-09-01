@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"sync"
+
+	log "github.com/sirupsen/logrus"
 )
 
 var (
@@ -68,16 +70,15 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 	ss.mu.Lock()
 	defer ss.mu.Unlock()
 
-	// Check if is the first time we are syncing
-	state, err := ss.repo.GetState(ss.state.GetName())
-	if err != nil {
-		return ErrGettingState
-	}
-
 	// retrive data from provider
 	pGroupsResult, err := ss.prov.GetGroups(ss.ctx, ss.provGroupsFilter)
 	if err != nil {
 		return ErrGettingGroups
+	}
+
+	if pGroupsResult.Items == 0 {
+		log.Info("No groups to sync")
+		return nil
 	}
 
 	pUsersResult, pGroupsUsersResult, err := ss.prov.GetUsersAndGroupsUsers(ss.ctx, pGroupsResult)
@@ -85,8 +86,19 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 		return ErrGettingGetUsersAndGroupsUsers
 	}
 
-	// First time we are syncing
+	if pUsersResult.Items == 0 {
+		log.Info("No users to sync")
+	}
+
+	state, err := ss.repo.GetState(ss.state.GetName())
+	if err != nil {
+		return ErrGettingState
+	}
+
+	// first time syncing, no state hashcode
 	if state.HashCode == "" {
+
+		// First time we are syncing
 
 		// Create the sync state
 		// store data to repository
