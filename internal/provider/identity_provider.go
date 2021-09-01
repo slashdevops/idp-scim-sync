@@ -26,20 +26,19 @@ type GoogleProviderService interface {
 	ListGroups(query []string) ([]*admin.Group, error)
 	ListGroupMembers(groupID string) ([]*admin.Member, error)
 	GetUser(userID string) (*admin.User, error)
-	GetGroup(groupID string) (*admin.Group, error)
 }
 
-type GoogleProvider struct {
-	ds GoogleProviderService
+type IdentityProvider struct {
+	ps GoogleProviderService
 }
 
-func NewGoogleIdentityProvider(ds GoogleProviderService) (*GoogleProvider, error) {
-	if ds == nil {
+func NewIdentityProvider(gps GoogleProviderService) (*IdentityProvider, error) {
+	if gps == nil {
 		return nil, ErrDirectoryServiceNil
 	}
 
-	return &GoogleProvider{
-		ds: ds,
+	return &IdentityProvider{
+		ps: gps,
 	}, nil
 }
 
@@ -47,10 +46,10 @@ func NewGoogleIdentityProvider(ds GoogleProviderService) (*GoogleProvider, error
 //
 // The filter parameter is a list of strings that can be used to filter the groups
 // according to the Google Directory API.
-func (g *GoogleProvider) GetGroups(ctx context.Context, filter []string) (*model.GroupsResult, error) {
+func (i *IdentityProvider) GetGroups(ctx context.Context, filter []string) (*model.GroupsResult, error) {
 	syncGroups := make([]*model.Group, 0)
 
-	googleGroups, err := g.ds.ListGroups(filter)
+	googleGroups, err := i.ps.ListGroups(filter)
 	if err != nil {
 		return nil, ErrListingGroups
 	}
@@ -81,10 +80,10 @@ func (g *GoogleProvider) GetGroups(ctx context.Context, filter []string) (*model
 //
 // The filter parameter is a list of strings that can be used to filter the users
 // according to the Google Directory API.
-func (g *GoogleProvider) GetUsers(ctx context.Context, filter []string) (*model.UsersResult, error) {
+func (i *IdentityProvider) GetUsers(ctx context.Context, filter []string) (*model.UsersResult, error) {
 	syncUsers := make([]*model.User, 0)
 
-	googleUsers, err := g.ds.ListUsers(filter)
+	googleUsers, err := i.ps.ListUsers(filter)
 	if err != nil {
 		return nil, ErrListingUsers
 	}
@@ -112,10 +111,10 @@ func (g *GoogleProvider) GetUsers(ctx context.Context, filter []string) (*model.
 	return uResult, nil
 }
 
-func (g *GoogleProvider) GetGroupMembers(ctx context.Context, id string) (*model.MembersResult, error) {
+func (i *IdentityProvider) GetGroupMembers(ctx context.Context, id string) (*model.MembersResult, error) {
 	syncMembers := make([]*model.Member, 0)
 
-	googleMembers, err := g.ds.ListGroupMembers(id)
+	googleMembers, err := i.ps.ListGroupMembers(id)
 	if err != nil {
 		return nil, ErrListingGroupMembers
 	}
@@ -139,11 +138,11 @@ func (g *GoogleProvider) GetGroupMembers(ctx context.Context, id string) (*model
 	return syncMembersResult, nil
 }
 
-func (g *GoogleProvider) GetUsersFromGroupMembers(ctx context.Context, mbr *model.MembersResult) (*model.UsersResult, error) {
+func (i *IdentityProvider) GetUsersFromGroupMembers(ctx context.Context, mbr *model.MembersResult) (*model.UsersResult, error) {
 	syncUsers := make([]*model.User, 0)
 
 	for _, member := range mbr.Resources {
-		u, err := g.ds.GetUser(member.ID)
+		u, err := i.ps.GetUser(member.ID)
 		if err != nil {
 			return nil, ErrGettingUser
 		}
@@ -169,18 +168,18 @@ func (g *GoogleProvider) GetUsersFromGroupMembers(ctx context.Context, mbr *mode
 	return syncUsersResult, nil
 }
 
-func (g *GoogleProvider) GetUsersAndGroupsUsers(ctx context.Context, groups *model.GroupsResult) (*model.UsersResult, *model.GroupsUsersResult, error) {
+func (i *IdentityProvider) GetUsersAndGroupsUsers(ctx context.Context, groups *model.GroupsResult) (*model.UsersResult, *model.GroupsUsersResult, error) {
 	pUsers := make([]*model.User, 0)
 	pGroupsUsers := make([]*model.GroupUsers, 0)
 
 	for _, pGroup := range groups.Resources {
 
-		pMembers, err := g.GetGroupMembers(ctx, pGroup.ID)
+		pMembers, err := i.GetGroupMembers(ctx, pGroup.ID)
 		if err != nil {
 			return nil, nil, err
 		}
 
-		pUsersFromMembers, err := g.GetUsersFromGroupMembers(ctx, pMembers)
+		pUsersFromMembers, err := i.GetUsersFromGroupMembers(ctx, pMembers)
 		if err != nil {
 			return nil, nil, err
 		}

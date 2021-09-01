@@ -19,15 +19,15 @@ func TestNewGoogleIdentityProvider(t *testing.T) {
 	defer mockCtrl.Finish()
 
 	t.Run("Should return IdentityServiceProvider and no error", func(t *testing.T) {
-		mockDS := mocks.NewMockDirectoryService(mockCtrl)
-		svc, err := NewGoogleIdentityProvider(mockDS)
+		mockDS := mocks.NewMockGoogleProviderService(mockCtrl)
+		svc, err := NewIdentityProvider(mockDS)
 
 		assert.NoError(t, err)
 		assert.NotNil(t, svc)
 	})
 
 	t.Run("Should return an error if no DirectoryService is provided", func(t *testing.T) {
-		svc, err := NewGoogleIdentityProvider(nil)
+		svc, err := NewIdentityProvider(nil)
 
 		assert.Error(t, err)
 		assert.Nil(t, svc)
@@ -36,7 +36,7 @@ func TestNewGoogleIdentityProvider(t *testing.T) {
 
 func Test_GoogleProvider_GetGroups(t *testing.T) {
 	type fields struct {
-		ds *mocks.MockDirectoryService
+		ds *mocks.MockGoogleProviderService
 	}
 
 	type args struct {
@@ -86,14 +86,14 @@ func Test_GoogleProvider_GetGroups(t *testing.T) {
 			mockCtrl := gomock.NewController(t)
 			defer mockCtrl.Finish()
 
-			f := fields{ds: mocks.NewMockDirectoryService(mockCtrl)}
+			f := fields{ds: mocks.NewMockGoogleProviderService(mockCtrl)}
 
 			if tt.prepare != nil {
 				tt.prepare(&f)
 			}
 
-			g := &GoogleProvider{
-				ds: f.ds,
+			g := &IdentityProvider{
+				ps: f.ds,
 			}
 
 			got, err := g.GetGroups(tt.args.ctx, tt.args.filter)
@@ -110,7 +110,7 @@ func Test_GoogleProvider_GetGroups(t *testing.T) {
 
 func Test_GoogleProvider_GetUsers(t *testing.T) {
 	type fields struct {
-		ds *mocks.MockDirectoryService
+		ds *mocks.MockGoogleProviderService
 	}
 
 	type args struct {
@@ -160,14 +160,14 @@ func Test_GoogleProvider_GetUsers(t *testing.T) {
 			mockCtrl := gomock.NewController(t)
 			defer mockCtrl.Finish()
 
-			f := fields{ds: mocks.NewMockDirectoryService(mockCtrl)}
+			f := fields{ds: mocks.NewMockGoogleProviderService(mockCtrl)}
 
 			if tt.prepare != nil {
 				tt.prepare(&f)
 			}
 
-			g := &GoogleProvider{
-				ds: f.ds,
+			g := &IdentityProvider{
+				ps: f.ds,
 			}
 
 			got, err := g.GetUsers(tt.args.ctx, tt.args.filter)
@@ -184,7 +184,7 @@ func Test_GoogleProvider_GetUsers(t *testing.T) {
 
 func Test_GoogleProvider_GetGroupMembers(t *testing.T) {
 	type fields struct {
-		ds *mocks.MockDirectoryService
+		ds *mocks.MockGoogleProviderService
 	}
 
 	type args struct {
@@ -234,14 +234,14 @@ func Test_GoogleProvider_GetGroupMembers(t *testing.T) {
 			mockCtrl := gomock.NewController(t)
 			defer mockCtrl.Finish()
 
-			f := fields{ds: mocks.NewMockDirectoryService(mockCtrl)}
+			f := fields{ds: mocks.NewMockGoogleProviderService(mockCtrl)}
 
 			if tt.prepare != nil {
 				tt.prepare(&f)
 			}
 
-			g := &GoogleProvider{
-				ds: f.ds,
+			g := &IdentityProvider{
+				ps: f.ds,
 			}
 
 			got, err := g.GetGroupMembers(tt.args.ctx, tt.args.id)
@@ -258,7 +258,7 @@ func Test_GoogleProvider_GetGroupMembers(t *testing.T) {
 
 func Test_GoogleProvider_GetUsersFromGroupMembers(t *testing.T) {
 	type fields struct {
-		ds *mocks.MockDirectoryService
+		ds *mocks.MockGoogleProviderService
 	}
 
 	type args struct {
@@ -327,14 +327,14 @@ func Test_GoogleProvider_GetUsersFromGroupMembers(t *testing.T) {
 			mockCtrl := gomock.NewController(t)
 			defer mockCtrl.Finish()
 
-			f := fields{ds: mocks.NewMockDirectoryService(mockCtrl)}
+			f := fields{ds: mocks.NewMockGoogleProviderService(mockCtrl)}
 
 			if tt.prepare != nil {
 				tt.prepare(&f)
 			}
 
-			g := &GoogleProvider{
-				ds: f.ds,
+			g := &IdentityProvider{
+				ps: f.ds,
 			}
 
 			got, err := g.GetUsersFromGroupMembers(tt.args.ctx, tt.args.mbr)

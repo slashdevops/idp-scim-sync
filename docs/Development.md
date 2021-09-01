@@ -77,7 +77,7 @@ mockgen -package=mocks -destination=internal/mocks/state_mocks.go -source=intern
 Directory Service Mocks
 
 ```bash
-mockgen -package=mocks -destination=internal/mocks/directory_mocks.go -source=internal/google/directory.go DirectoryService
+mockgen -package=mocks -destination=internal/mocks/identity_provider_mocks.go -source=internal/provider/identity_provider.go GoogleProviderService
 ```
 
 ## Practices
