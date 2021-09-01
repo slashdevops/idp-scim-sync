@@ -9,13 +9,20 @@ import (
 	"github.com/slashdevops/idp-scim-sync/pkg/aws"
 )
 
-// Implement SCIMProviderService Interface
-
-type SCIMProvider struct {
-	scim aws.AWSSCIMProvider
+// as consumer implement aws.aws AWSSCIMProvider methods
+type AWSSCIMProvider interface {
+	ListUsers(filter string) (*aws.UsersResponse, error)
+	ListGroups(filter string) (*aws.GroupsResponse, error)
+	ServiceProviderConfig() (*aws.ServiceProviderConfig, error)
 }
 
-func NewSCIMProvider(scim aws.AWSSCIMProvider) (*SCIMProvider, error) {
+type SCIMProvider struct {
+	scim AWSSCIMProvider
+}
+
+// Implement SCIMProviderService Interface
+
+func NewSCIMProvider(scim AWSSCIMProvider) (*SCIMProvider, error) {
 	return &SCIMProvider{scim: scim}, nil
 }
 
