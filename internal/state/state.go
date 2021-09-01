@@ -1,15 +1,15 @@
 package state
 
-type SyncState struct {
-	name string
+type State struct{}
+
+func NewSyncState(name string) *State {
+	return &State{}
 }
 
-func NewSyncState(name string) *SyncState {
-	return &SyncState{
-		name: name,
-	}
+func (s *State) GetName() string {
+	return ""
 }
 
-func (s *SyncState) GetName() string {
-	return s.name
+func (s *State) isEmpty() bool {
+	return true
 }

@@ -65,10 +65,10 @@ func (mr *MockSyncRepositoryMockRecorder) GetGroupsUsers(place interface{}) *gom
 }
 
 // GetState mocks base method.
-func (m *MockSyncRepository) GetState(name string) (model.SyncState, error) {
+func (m *MockSyncRepository) GetState(name string) (model.State, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetState", name)
-	ret0, _ := ret[0].(model.SyncState)
+	ret0, _ := ret[0].(model.State)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -125,7 +125,7 @@ func (mr *MockSyncRepositoryMockRecorder) StoreGroupsUsers(gr interface{}) *gomo
 }
 
 // StoreState mocks base method.
-func (m *MockSyncRepository) StoreState(state *model.SyncState) (model.StoreStateResult, error) {
+func (m *MockSyncRepository) StoreState(state *model.State) (model.StoreStateResult, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "StoreState", state)
 	ret0, _ := ret[0].(model.StoreStateResult)

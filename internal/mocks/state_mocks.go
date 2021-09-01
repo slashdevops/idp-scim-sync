@@ -46,3 +46,17 @@ func (mr *MockSyncStateMockRecorder) GetName() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetName", reflect.TypeOf((*MockSyncState)(nil).GetName))
 }
+
+// IsEmpty mocks base method.
+func (m *MockSyncState) IsEmpty() bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "IsEmpty")
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// IsEmpty indicates an expected call of IsEmpty.
+func (mr *MockSyncStateMockRecorder) IsEmpty() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsEmpty", reflect.TypeOf((*MockSyncState)(nil).IsEmpty))
+}

@@ -86,7 +86,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 	}
 
 	// First time we are syncing
-	if state.Checksum == "" {
+	if state.HashCode == "" {
 
 		// Create the sync state
 		// store data to repository
@@ -105,19 +105,23 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 			return err
 		}
 
-		// reusing the state variable
-		state, err = createSyncState(&sStoreGroupsResult, &sStoreGroupsUsersResult, &sStoreUsersResult)
-		if err != nil {
-			return err
-		}
+		_ = sStoreGroupsResult
+		_ = sStoreGroupsUsersResult
+		_ = sStoreUsersResult
 
-		sStoreStateResult, err := ss.repo.StoreState(&state)
-		if err != nil {
-			return err
-		}
+		// // reusing the state variable
+		// state, err = createSyncState(&sStoreGroupsResult, &sStoreGroupsUsersResult, &sStoreUsersResult)
+		// if err != nil {
+		// 	return err
+		// }
 
-		// TODO: decide what to do with the result
-		_ = sStoreStateResult
+		// sStoreStateResult, err := ss.repo.StoreState(&state)
+		// if err != nil {
+		// 	return err
+		// }
+
+		// // TODO: decide what to do with the result
+		// _ = sStoreStateResult
 
 	} else {
 		sGroupsResults, err := ss.repo.GetGroups(state.Groups.Place)

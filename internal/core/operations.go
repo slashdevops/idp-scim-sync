@@ -4,13 +4,6 @@ import (
 	"github.com/slashdevops/idp-scim-sync/internal/model"
 )
 
-func createSyncState(sgr *model.StoreGroupsResult, sgmr *model.StoreGroupsUsersResult, sur *model.StoreUsersResult) (model.SyncState, error) {
-	return model.SyncState{
-		Version:  "1.0.0",
-		Checksum: "TBD",
-	}, nil
-}
-
 // groupsOperations returns the differences between the groups in the
 // this use the Groups Name as the key.
 // SCIM Groups cannot be updated.

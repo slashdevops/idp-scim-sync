@@ -24,14 +24,6 @@ type Group struct {
 	Email string `json:"email"`
 }
 
-type SyncState struct {
-	Version       string `json:"version"`
-	Checksum      string `json:"checksum"`
-	Groups        StoreGroupsResult
-	Users         StoreUsersResult
-	GroupsMembers StoreGroupsMembersResult
-}
-
 type StoreGroupsResult struct {
 	Place string
 }
@@ -93,4 +85,13 @@ type GroupUsers struct {
 type GroupsUsersResult struct {
 	Items     int           `json:"items"`
 	Resources []*GroupUsers `json:"resources"`
+}
+
+type State struct {
+	Name          string `json:"name"`
+	Version       string `json:"version"`
+	HashCode      string `json:"hashcode"`
+	Groups        StoreGroupsResult
+	Users         StoreUsersResult
+	GroupsMembers StoreGroupsMembersResult
 }
