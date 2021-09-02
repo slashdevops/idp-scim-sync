@@ -50,37 +50,9 @@ References:
 
 ### Mocks
 
-Run this commands from the project root path
+These are generated using [gomock](https://github.com/golang/mock) project.
 
-SCIM Service Mocks
-
-```bash
-mockgen -package=mocks -destination=internal/mocks/core/scim_mocks.go -source=internal/core/scim.go
-```
-
-Identity Provider Service Mocks
-
-```bash
-mockgen -package=mocks -destination=internal/mocks/core/identity_provider_mocks.go -source=internal/core/identity_provider.go
-```
-
-Repository Mocks
-
-```bash
-mockgen -package=mocks -destination=internal/mocks/core/repository_mocks.go -source=internal/core/repository.go
-```
-
-SyncState Mocks
-
-```bash
-mockgen -package=mocks -destination=internal/mocks/core/state_mocks.go -source=internal/core/state.go
-```
-
-Directory Service Mocks
-
-```bash
-mockgen -package=mocks -destination=pkg/mocks/provider/identity_provider_mocks.go -source=internal/identity_provider/identity_provider.go GoogleProviderService
-```
+For better integration I use [go:generate](https://pkg.go.dev/cmd/go/internal/generate) to run `gomock` command inside files when mocks are needed
 
 ## Practices
 
