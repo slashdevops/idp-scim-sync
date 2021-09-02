@@ -5,7 +5,7 @@ import (
 	"github.com/slashdevops/idp-scim-sync/internal/state"
 )
 
-//go:generate mockgen -package=mocks -destination=../mocks/core/repository_mocks.go -source=repository.go
+//go:generate go run github.com/golang/mock/mockgen@v1.6.0 -package=mocks -destination=../mocks/core/repository_mocks.go -source=repository.go
 
 type SyncRepository interface {
 	StoreGroups(gr *model.GroupsResult) (state.StoreGroupsResult, error)
