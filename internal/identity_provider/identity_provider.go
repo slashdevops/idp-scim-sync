@@ -19,7 +19,7 @@ var (
 )
 
 // This implement core.IdentityProviderService interface
-// and as a consumer use GoogleProviderService for pkg.google implementation
+// and as a consumer use GoogleProviderService from pkg.google implementation
 
 type GoogleProviderService interface {
 	ListUsers(query []string) ([]*admin.User, error)
