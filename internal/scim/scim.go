@@ -9,7 +9,8 @@ import (
 	"github.com/slashdevops/idp-scim-sync/pkg/aws"
 )
 
-// as consumer implement aws.aws AWSSCIMProvider methods
+// This implement core.SCIMProvider interface
+// and as consumer define AWSSCIMProvider to use aws.aws methods
 type AWSSCIMProvider interface {
 	ListUsers(filter string) (*aws.UsersResponse, error)
 	ListGroups(filter string) (*aws.GroupsResponse, error)
