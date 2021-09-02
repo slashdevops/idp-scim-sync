@@ -50,34 +50,36 @@ References:
 
 ### Mocks
 
+Run this commands from the project root path
+
 SCIM Service Mocks
 
 ```bash
-mockgen -package=mocks -destination=internal/mocks/scim_mocks.go -source=internal/core/scim.go
+mockgen -package=mocks -destination=internal/mocks/core/scim_mocks.go -source=internal/core/scim.go
 ```
 
 Identity Provider Service Mocks
 
 ```bash
-mockgen -package=mocks -destination=internal/mocks/provider_mocks.go -source=internal/core/provider.go
+mockgen -package=mocks -destination=internal/mocks/core/identity_provider_mocks.go -source=internal/core/identity_provider.go
 ```
 
 Repository Mocks
 
 ```bash
-mockgen -package=mocks -destination=internal/mocks/repository_mocks.go -source=internal/core/repository.go
+mockgen -package=mocks -destination=internal/mocks/core/repository_mocks.go -source=internal/core/repository.go
 ```
 
 SyncState Mocks
 
 ```bash
-mockgen -package=mocks -destination=internal/mocks/state_mocks.go -source=internal/core/state.go
+mockgen -package=mocks -destination=internal/mocks/core/state_mocks.go -source=internal/core/state.go
 ```
 
 Directory Service Mocks
 
 ```bash
-mockgen -package=mocks -destination=internal/mocks/identity_provider_mocks.go -source=internal/provider/identity_provider.go GoogleProviderService
+mockgen -package=mocks -destination=pkg/mocks/provider/identity_provider_mocks.go -source=internal/identity_provider/identity_provider.go GoogleProviderService
 ```
 
 ## Practices

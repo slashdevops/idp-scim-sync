@@ -18,6 +18,8 @@ var (
 	ErrGettingUser         = errors.New("error getting user")
 )
 
+//go:generate mockgen -package=mocks -destination=../mocks/provider/identity_provider_mocks.go -source=identity_provider.go GoogleProviderService
+
 // This implement core.IdentityProviderService interface
 // and as a consumer define GoogleProviderService to use pkg.google methods
 
@@ -168,6 +170,7 @@ func (i *IdentityProvider) GetUsersFromGroupMembers(ctx context.Context, mbr *mo
 	return syncUsersResult, nil
 }
 
+// GetUsersAndGroupsUsers returns a model.UsersResult and model.GroupsUsersResult data structures with the users and groups
 func (i *IdentityProvider) GetUsersAndGroupsUsers(ctx context.Context, groups *model.GroupsResult) (*model.UsersResult, *model.GroupsUsersResult, error) {
 	pUsers := make([]*model.User, 0)
 	pGroupsUsers := make([]*model.GroupUsers, 0)

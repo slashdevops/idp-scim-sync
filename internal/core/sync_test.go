@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	gomock "github.com/golang/mock/gomock"
-	"github.com/slashdevops/idp-scim-sync/internal/mocks"
+	mocks "github.com/slashdevops/idp-scim-sync/internal/mocks/core"
 	"github.com/stretchr/testify/assert"
 )
 

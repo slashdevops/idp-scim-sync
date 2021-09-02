@@ -6,6 +6,8 @@ import (
 	"github.com/slashdevops/idp-scim-sync/internal/model"
 )
 
+//go:generate mockgen -package=mocks -destination=../mocks/core/identity_provider_mocks.go -source=identity_provider.go
+
 // IdentityProviderService is the interface that needs to be implemented by the
 // Identity Provider service.
 type IdentityProviderService interface {

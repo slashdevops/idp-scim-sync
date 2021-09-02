@@ -1,16 +1,16 @@
 package state
 
 type State struct {
-	Name          string `json:"name"`
-	SchemaVersion string `json:"version"`
-	HashCode      string `json:"hashCode"`
-	Resources     StateResources
+	Name          string         `json:"name"`
+	SchemaVersion string         `json:"version"`
+	HashCode      string         `json:"hashCode"`
+	Resources     StateResources `json:"resources"`
 }
 
 type StateResources struct {
-	StoreGroupsResult
-	StoreUsersResult
-	StoreGroupsUsersResult
+	StoreGroupsResult      *StoreGroupsResult      `json:"storeGroupsResult"`
+	StoreUsersResult       *StoreUsersResult       `json:"storeUsersResult"`
+	StoreGroupsUsersResult *StoreGroupsUsersResult `json:"storeGroupsUsersResult"`
 }
 
 type StoreGroupsResult struct {

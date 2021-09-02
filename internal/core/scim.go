@@ -6,6 +6,8 @@ import (
 	"github.com/slashdevops/idp-scim-sync/internal/model"
 )
 
+//go:generate mockgen -package=mocks -destination=../mocks/core/scim_mocks.go -source=scim.go
+
 // ScimService is the interface that needs to be implemented by the SCIM service.
 type SCIMService interface {
 	GetGroups(ctx context.Context) (*model.GroupsResult, error)
