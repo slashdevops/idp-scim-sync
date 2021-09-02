@@ -38,7 +38,7 @@ func (s *SCIMProvider) GetGroups(ctx context.Context) (*model.GroupsResult, erro
 			ID:   group.ID,
 			Name: group.DisplayName,
 		}
-		e.HashCode = hash.Sha256(e)
+		e.HashCode = hash.Get(e)
 
 		groups = append(groups, e)
 	}
@@ -47,7 +47,7 @@ func (s *SCIMProvider) GetGroups(ctx context.Context) (*model.GroupsResult, erro
 		Items:     len(groups),
 		Resources: groups,
 	}
-	groupsResult.HashCode = hash.Sha256(groupsResult)
+	groupsResult.HashCode = hash.Get(groupsResult)
 
 	return groupsResult, nil
 }
@@ -70,7 +70,7 @@ func (s *SCIMProvider) GetUsers(ctx context.Context) (*model.UsersResult, error)
 			Active:      user.Active,
 			Email:       user.Emails[0].Value,
 		}
-		e.HashCode = hash.Sha256(e)
+		e.HashCode = hash.Get(e)
 
 		users = append(users, e)
 	}
@@ -79,7 +79,7 @@ func (s *SCIMProvider) GetUsers(ctx context.Context) (*model.UsersResult, error)
 		Items:     len(users),
 		Resources: users,
 	}
-	usersResult.HashCode = hash.Sha256(usersResult)
+	usersResult.HashCode = hash.Get(usersResult)
 
 	return usersResult, nil
 }
@@ -93,7 +93,7 @@ func (s *SCIMProvider) GetUsersAndGroupsUsers(ctx context.Context, groups *model
 	if err != nil {
 		return nil, nil, err
 	}
-	usersResult.HashCode = hash.Sha256(usersResult)
+	usersResult.HashCode = hash.Get(usersResult)
 
 	groupsIDUsers := make(map[string][]*model.User)
 	groupsData := make(map[string]*model.Group)
@@ -118,7 +118,7 @@ func (s *SCIMProvider) GetUsersAndGroupsUsers(ctx context.Context, groups *model
 					ID:   grp.ID,
 					Name: grp.DisplayName,
 				}
-				e.HashCode = hash.Sha256(e)
+				e.HashCode = hash.Get(e)
 
 				groupsData[grp.ID] = e
 			}
@@ -133,7 +133,7 @@ func (s *SCIMProvider) GetUsersAndGroupsUsers(ctx context.Context, groups *model
 			Group:     *groupsData[groupID],
 			Resources: users,
 		}
-		e.HashCode = hash.Sha256(e)
+		e.HashCode = hash.Get(e)
 
 		groupsUsers = append(groupsUsers, e)
 	}
@@ -142,7 +142,7 @@ func (s *SCIMProvider) GetUsersAndGroupsUsers(ctx context.Context, groups *model
 		Items:     len(groupsUsers),
 		Resources: groupsUsers,
 	}
-	groupsUsersResult.HashCode = hash.Sha256(groupsUsersResult)
+	groupsUsersResult.HashCode = hash.Get(groupsUsersResult)
 
 	return usersResult, groupsUsersResult, nil
 }

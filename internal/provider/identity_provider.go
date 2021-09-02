@@ -61,7 +61,7 @@ func (i *IdentityProvider) GetGroups(ctx context.Context, filter []string) (*mod
 			Name:  grp.Name,
 			Email: grp.Email,
 		}
-		e.HashCode = hash.Sha256(e)
+		e.HashCode = hash.Get(e)
 
 		syncGroups = append(syncGroups, e)
 	}
@@ -71,7 +71,7 @@ func (i *IdentityProvider) GetGroups(ctx context.Context, filter []string) (*mod
 		Resources: syncGroups,
 	}
 
-	syncResult.HashCode = hash.Sha256(syncResult)
+	syncResult.HashCode = hash.Get(syncResult)
 
 	return syncResult, nil
 }
@@ -97,7 +97,7 @@ func (i *IdentityProvider) GetUsers(ctx context.Context, filter []string) (*mode
 			Active:      !usr.Suspended,
 			Email:       usr.PrimaryEmail,
 		}
-		e.HashCode = hash.Sha256(e)
+		e.HashCode = hash.Get(e)
 
 		syncUsers = append(syncUsers, e)
 	}
@@ -106,7 +106,7 @@ func (i *IdentityProvider) GetUsers(ctx context.Context, filter []string) (*mode
 		Items:     len(googleUsers),
 		Resources: syncUsers,
 	}
-	uResult.HashCode = hash.Sha256(uResult)
+	uResult.HashCode = hash.Get(uResult)
 
 	return uResult, nil
 }
@@ -124,7 +124,7 @@ func (i *IdentityProvider) GetGroupMembers(ctx context.Context, id string) (*mod
 			ID:    member.Id,
 			Email: member.Email,
 		}
-		e.HashCode = hash.Sha256(e)
+		e.HashCode = hash.Get(e)
 
 		syncMembers = append(syncMembers, e)
 	}
@@ -133,7 +133,7 @@ func (i *IdentityProvider) GetGroupMembers(ctx context.Context, id string) (*mod
 		Items:     len(googleMembers),
 		Resources: syncMembers,
 	}
-	syncMembersResult.HashCode = hash.Sha256(syncMembersResult)
+	syncMembersResult.HashCode = hash.Get(syncMembersResult)
 
 	return syncMembersResult, nil
 }
@@ -154,7 +154,7 @@ func (i *IdentityProvider) GetUsersFromGroupMembers(ctx context.Context, mbr *mo
 			Active:      !u.Suspended,
 			Email:       u.PrimaryEmail,
 		}
-		e.HashCode = hash.Sha256(e)
+		e.HashCode = hash.Get(e)
 
 		syncUsers = append(syncUsers, e)
 	}
@@ -163,7 +163,7 @@ func (i *IdentityProvider) GetUsersFromGroupMembers(ctx context.Context, mbr *mo
 		Items:     len(syncUsers),
 		Resources: syncUsers,
 	}
-	syncUsersResult.HashCode = hash.Sha256(syncUsersResult)
+	syncUsersResult.HashCode = hash.Get(syncUsersResult)
 
 	return syncUsersResult, nil
 }
@@ -194,7 +194,7 @@ func (i *IdentityProvider) GetUsersAndGroupsUsers(ctx context.Context, groups *m
 			},
 			Resources: pUsers,
 		}
-		pGroupUsers.HashCode = hash.Sha256(pGroupUsers)
+		pGroupUsers.HashCode = hash.Get(pGroupUsers)
 
 		pGroupsUsers = append(pGroupsUsers, pGroupUsers)
 	}
@@ -203,13 +203,13 @@ func (i *IdentityProvider) GetUsersAndGroupsUsers(ctx context.Context, groups *m
 		Items:     len(pUsers),
 		Resources: pUsers,
 	}
-	usersResult.HashCode = hash.Sha256(usersResult)
+	usersResult.HashCode = hash.Get(usersResult)
 
 	groupsUsersResult := &model.GroupsUsersResult{
 		Items:     len(pGroupsUsers),
 		Resources: pGroupsUsers,
 	}
-	groupsUsersResult.HashCode = hash.Sha256(groupsUsersResult)
+	groupsUsersResult.HashCode = hash.Get(groupsUsersResult)
 
 	return usersResult, groupsUsersResult, nil
 }
