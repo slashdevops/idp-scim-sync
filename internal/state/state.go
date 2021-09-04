@@ -5,12 +5,9 @@ import "encoding/json"
 type State struct {
 	Name          string         `json:"name"`
 	SchemaVersion string         `json:"version"`
+	LastSync      string         `json:"lastSync"`
 	HashCode      string         `json:"hashCode"`
 	Resources     StateResources `json:"resources"`
-}
-
-func (s *State) MarshalJSON() ([]byte, error) {
-	return json.Marshal(s)
 }
 
 type StateResources struct {
@@ -66,4 +63,8 @@ func (s *State) Empty() bool {
 
 func (s *State) Build(groups *StoreGroupsResult, groupsUsers *StoreGroupsUsersResult, users *StoreUsersResult) (*State, error) {
 	return &State{}, nil
+}
+
+func (s *State) MarshalJSON() ([]byte, error) {
+	return json.Marshal(*s)
 }

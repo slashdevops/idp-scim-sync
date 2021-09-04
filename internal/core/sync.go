@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"sync"
+	"time"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -70,14 +71,20 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 	ss.mu.Lock()
 	defer ss.mu.Unlock()
 
-	// retrive data from provider
+	state, err := ss.repo.GetState()
+	if err != nil {
+		return ErrGettingState
+	}
+
+	// retrive data from the identity provider
+	// always theses steps are necessary
 	pGroupsResult, err := ss.prov.GetGroups(ss.ctx, ss.provGroupsFilter)
 	if err != nil {
 		return ErrGettingGroups
 	}
 
 	if pGroupsResult.Items == 0 {
-		log.Warn("provider groups empty")
+		log.Warn("identity provider groups empty")
 		return nil
 	}
 
@@ -86,20 +93,23 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 		return ErrGettingGetUsersAndGroupsUsers
 	}
 
+	if pGroupsUsersResult.Items == 0 {
+		log.Warn("identity provider groups members empty")
+	}
+
 	if pUsersResult.Items == 0 {
-		log.Warn("provider users empty")
+		log.Warn("identity provider users empty")
 	}
 
-	state, err := ss.repo.GetState()
-	if err != nil {
-		return ErrGettingState
-	}
+	// first time syncing
+	if state.LastSync == "" {
 
-	// first time syncing, no state hashcode
-	if state.HashCode == "" {
+		log.Info("State without last sync time, first time syncing")
+		state.LastSync = time.Now().Format(time.RFC3339)
 
 		// Check SCIM side to see if there are any elelemnts to be
-		// reconciled. I mean this is not clean
+		// reconciled. I mean SCIM is not clean until the first sync
+		// and we need to reconcile the SCIM side with the identity provider side
 		sGroupsResult, err := ss.scim.GetGroups(ss.ctx)
 		if err != nil {
 			return err
@@ -108,19 +118,33 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 		if sGroupsResult.Items == 0 {
 			log.Info("No SCIM groups to be reconciliate")
 		} else {
-			// reconciliate groups
+			log.Warn("Reconciliating the SCIM data with the Identity Provider data until the first syncing")
+
+			// reconciliate elements
 			gCreate, gUpdate, _, gDelete := groupsOperations(pGroupsResult, sGroupsResult)
 
-			if err := ss.scim.CreateGroups(ss.ctx, gCreate); err != nil {
-				return err
+			if gCreate.Items == 0 {
+				log.Info("No groups to be created")
+			} else {
+				if err := ss.scim.CreateGroups(ss.ctx, gCreate); err != nil {
+					return err
+				}
 			}
 
-			if err := ss.scim.UpdateGroups(ss.ctx, gUpdate); err != nil {
-				return err
+			if gUpdate.Items == 0 {
+				log.Info("No groups to be updated")
+			} else {
+				if err := ss.scim.UpdateGroups(ss.ctx, gUpdate); err != nil {
+					return err
+				}
 			}
 
-			if err := ss.scim.DeleteGroups(ss.ctx, gDelete); err != nil {
-				return err
+			if gDelete.Items == 0 {
+				log.Info("No groups to be deleted")
+			} else {
+				if err := ss.scim.DeleteGroups(ss.ctx, gDelete); err != nil {
+					return err
+				}
 			}
 		}
 
@@ -137,16 +161,28 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 			// reconciliate users
 			uCreate, uUpdate, _, uDelete := usersOperations(pUsersResult, sUsersResult)
 
-			if err := ss.scim.CreateUsers(ss.ctx, uCreate); err != nil {
-				return err
+			if uCreate.Items == 0 {
+				log.Info("No users to be created")
+			} else {
+				if err := ss.scim.CreateUsers(ss.ctx, uCreate); err != nil {
+					return err
+				}
 			}
 
-			if err := ss.scim.UpdateUsers(ss.ctx, uUpdate); err != nil {
-				return err
+			if uUpdate.Items == 0 {
+				log.Info("No users to be updated")
+			} else {
+				if err := ss.scim.UpdateUsers(ss.ctx, uUpdate); err != nil {
+					return err
+				}
 			}
 
-			if err := ss.scim.DeleteUsers(ss.ctx, uDelete); err != nil {
-				return err
+			if uDelete.Items == 0 {
+				log.Info("No users to be deleted")
+			} else {
+				if err := ss.scim.DeleteUsers(ss.ctx, uDelete); err != nil {
+					return err
+				}
 			}
 		}
 
@@ -156,15 +192,25 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 			// reconciliate groups-users --> groups members
 			ugCreate, _, ugDelete := groupsUsersOperations(pGroupsUsersResult, sGroupsUsersResult)
 
-			if err := ss.scim.CreateMembers(ss.ctx, ugCreate); err != nil {
-				return err
+			if ugCreate.Items == 0 {
+				log.Info("No groups-users to be created")
+			} else {
+				if err := ss.scim.CreateMembers(ss.ctx, ugCreate); err != nil {
+					return err
+				}
 			}
 
-			if err := ss.scim.DeleteMembers(ss.ctx, ugDelete); err != nil {
-				return err
+			if ugDelete.Items == 0 {
+				log.Info("No groups-users to be deleted")
+			} else {
+				if err := ss.scim.DeleteMembers(ss.ctx, ugDelete); err != nil {
+					return err
+				}
 			}
 		}
-	} else {
+	} else { // This is not the first time syncing
+		log.Info("State with last sync time, not first time syncing")
+
 		rGroupsResult, err := ss.repo.GetGroups()
 		if err != nil {
 			return err
@@ -185,40 +231,72 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 		// see differences between the two data sets
 		gCreate, gUpdate, _, gDelete := groupsOperations(pGroupsResult, rGroupsResult)
 
-		if err := ss.scim.CreateGroups(ss.ctx, gCreate); err != nil {
-			return err
+		if gCreate.Items == 0 {
+			log.Info("No groups to be created")
+		} else {
+			if err := ss.scim.CreateGroups(ss.ctx, gCreate); err != nil {
+				return err
+			}
 		}
 
-		if err := ss.scim.UpdateGroups(ss.ctx, gUpdate); err != nil {
-			return err
+		if gUpdate.Items == 0 {
+			log.Info("No groups to be updated")
+		} else {
+			if err := ss.scim.UpdateGroups(ss.ctx, gUpdate); err != nil {
+				return err
+			}
 		}
 
-		if err := ss.scim.DeleteGroups(ss.ctx, gDelete); err != nil {
-			return err
+		if gDelete.Items == 0 {
+			log.Info("No groups to be deleted")
+		} else {
+			if err := ss.scim.DeleteGroups(ss.ctx, gDelete); err != nil {
+				return err
+			}
 		}
 
 		uCreate, uUpdate, _, uDelete := usersOperations(pUsersResult, rUsersResult)
 
-		if err := ss.scim.CreateUsers(ss.ctx, uCreate); err != nil {
-			return err
+		if uCreate.Items == 0 {
+			log.Info("No users to be created")
+		} else {
+			if err := ss.scim.CreateUsers(ss.ctx, uCreate); err != nil {
+				return err
+			}
 		}
 
-		if err := ss.scim.UpdateUsers(ss.ctx, uUpdate); err != nil {
-			return err
+		if uUpdate.Items == 0 {
+			log.Info("No users to be updated")
+		} else {
+			if err := ss.scim.UpdateUsers(ss.ctx, uUpdate); err != nil {
+				return err
+			}
 		}
 
-		if err := ss.scim.DeleteUsers(ss.ctx, uDelete); err != nil {
-			return err
+		if uDelete.Items == 0 {
+			log.Info("No users to be deleted")
+		} else {
+			if err := ss.scim.DeleteUsers(ss.ctx, uDelete); err != nil {
+				return err
+			}
 		}
 
 		ugCreate, _, ugDelete := groupsUsersOperations(pGroupsUsersResult, rGroupsUsersResult)
 
-		if err := ss.scim.CreateMembers(ss.ctx, ugCreate); err != nil {
-			return err
+		if ugCreate.Items == 0 {
+			log.Info("No groups-users to be created")
+		} else {
+			if err := ss.scim.CreateMembers(ss.ctx, ugCreate); err != nil {
+				return err
+			}
 		}
 
-		if err := ss.scim.DeleteMembers(ss.ctx, ugDelete); err != nil {
-			return err
+		if ugDelete.Items == 0 {
+			log.Info("No groups-users to be deleted")
+		} else {
+			if err := ss.scim.DeleteMembers(ss.ctx, ugDelete); err != nil {
+				return err
+			}
 		}
 	}
 
