@@ -34,6 +34,68 @@ func Test_syncService_NewSyncService(t *testing.T) {
 		assert.Error(t, err)
 		assert.Nil(t, svc)
 	})
+
+	t.Run("New Service without context, return specific error", func(t *testing.T) {
+		svc, err := NewSyncService(nil, nil, nil, nil, nil)
+
+		assert.Error(t, err)
+		assert.Nil(t, svc)
+		assert.Equal(t, err, ErrNilContext)
+	})
+
+	t.Run("New Service without IdentityProviderServoce, return specific error", func(t *testing.T) {
+		ctx := context.TODO()
+		svc, err := NewSyncService(ctx, nil, nil, nil, nil)
+
+		assert.Error(t, err)
+		assert.Nil(t, svc)
+		assert.Equal(t, err, ErrProviderServiceNil)
+	})
+
+	t.Run("New Service without SCIMServoce, return context specific error", func(t *testing.T) {
+		mockCtrl := gomock.NewController(t)
+		defer mockCtrl.Finish()
+
+		ctx := context.TODO()
+		mockProviderService := mocks.NewMockIdentityProviderService(mockCtrl)
+
+		svc, err := NewSyncService(ctx, mockProviderService, nil, nil, nil)
+
+		assert.Error(t, err)
+		assert.Nil(t, svc)
+		assert.Equal(t, err, ErrSCIMServiceNil)
+	})
+
+	t.Run("New Service without SyncRepository, return context specific error", func(t *testing.T) {
+		mockCtrl := gomock.NewController(t)
+		defer mockCtrl.Finish()
+
+		ctx := context.TODO()
+		mockProviderService := mocks.NewMockIdentityProviderService(mockCtrl)
+		mockSCIMService := mocks.NewMockSCIMService(mockCtrl)
+
+		svc, err := NewSyncService(ctx, mockProviderService, mockSCIMService, nil, nil)
+
+		assert.Error(t, err)
+		assert.Nil(t, svc)
+		assert.Equal(t, err, ErrRepositoryNil)
+	})
+
+	t.Run("New Service without SyncState, return context specific error", func(t *testing.T) {
+		mockCtrl := gomock.NewController(t)
+		defer mockCtrl.Finish()
+
+		ctx := context.TODO()
+		mockProviderService := mocks.NewMockIdentityProviderService(mockCtrl)
+		mockSCIMService := mocks.NewMockSCIMService(mockCtrl)
+		mockRepository := mocks.NewMockSyncRepository(mockCtrl)
+
+		svc, err := NewSyncService(ctx, mockProviderService, mockSCIMService, mockRepository, nil)
+
+		assert.Error(t, err)
+		assert.Nil(t, svc)
+		assert.Equal(t, err, ErrSyncStateNil)
+	})
 }
 
 func Test_syncService_SyncGroupsAndUsers(t *testing.T) {
