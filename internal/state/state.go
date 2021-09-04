@@ -1,10 +1,16 @@
 package state
 
+import "encoding/json"
+
 type State struct {
 	Name          string         `json:"name"`
 	SchemaVersion string         `json:"version"`
 	HashCode      string         `json:"hashCode"`
 	Resources     StateResources `json:"resources"`
+}
+
+func (s *State) MarshalJSON() ([]byte, error) {
+	return json.Marshal(s)
 }
 
 type StateResources struct {

@@ -1,5 +1,9 @@
 package model
 
+import (
+	"encoding/json"
+)
+
 type Name struct {
 	FamilyName string `json:"familyName"`
 	GivenName  string `json:"givenName"`
@@ -16,8 +20,15 @@ type User struct {
 
 type UsersResult struct {
 	Items     int     `json:"items"`
-	Resources []*User `json:"resources"`
 	HashCode  string  `json:"hashCode"`
+	Resources []*User `json:"resources"`
+}
+
+func (ur *UsersResult) MarshalJSON() ([]byte, error) {
+	if ur.Resources == nil {
+		ur.Resources = make([]*User, 0)
+	}
+	return json.Marshal(*ur)
 }
 
 type Group struct {
@@ -33,6 +44,13 @@ type GroupsResult struct {
 	Resources []*Group `json:"resources"`
 }
 
+func (gr *GroupsResult) MarshalJSON() ([]byte, error) {
+	if gr.Resources == nil {
+		gr.Resources = make([]*Group, 0)
+	}
+	return json.Marshal(*gr)
+}
+
 type Member struct {
 	ID       string `json:"id"`
 	Email    string `json:"email"`
@@ -41,15 +59,9 @@ type Member struct {
 
 type MembersResult struct {
 	Items     int       `json:"items"`
-	Resources []*Member `json:"resources"`
 	HashCode  string    `json:"hashCode"`
+	Resources []*Member `json:"resources"`
 }
-
-// type GroupsMembers map[string][]*Member
-
-// func (gms GroupsMembers) GetMembers(groupID string) []*Member {
-// 	return gms[groupID]
-// }
 
 type GroupMembers struct {
 	Items     int       `json:"items"`
@@ -59,18 +71,26 @@ type GroupMembers struct {
 
 type GroupsMembersResult struct {
 	Items     int             `json:"items"`
+	HashCode  string          `json:"hashCode"`
 	Resources []*GroupMembers `json:"resources"`
 }
 
 type GroupUsers struct {
 	Items     int     `json:"items"`
 	Group     Group   `json:"group"`
-	Resources []*User `json:"resources"`
 	HashCode  string  `json:"hashCode"`
+	Resources []*User `json:"resources"`
 }
 
 type GroupsUsersResult struct {
 	Items     int           `json:"items"`
-	Resources []*GroupUsers `json:"resources"`
 	HashCode  string        `json:"hashCode"`
+	Resources []*GroupUsers `json:"resources"`
+}
+
+func (gur *GroupsUsersResult) MarshalJSON() ([]byte, error) {
+	if gur.Resources == nil {
+		gur.Resources = make([]*GroupUsers, 0)
+	}
+	return json.Marshal(*gur)
 }
