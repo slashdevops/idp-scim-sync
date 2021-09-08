@@ -16,12 +16,13 @@ limitations under the License.
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"os"
 
 	"github.com/aws/aws-lambda-go/lambda"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/secretsmanager"
+	awsconf "github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/secretsmanager"
 	"github.com/pkg/errors"
 	"github.com/slashdevops/idp-scim-sync/internal/config"
 	"github.com/slashdevops/idp-scim-sync/pkg/aws"
@@ -114,31 +115,35 @@ func initConfig() {
 }
 
 func configLambda() {
-	s := session.Must(session.NewSession())
-	svc := secretsmanager.New(s)
+	awsconf, err := awsconf.LoadDefaultConfig(context.TODO())
+	if err != nil {
+		log.Fatalf(errors.Wrap(err, "cannot load aws config").Error())
+	}
+
+	svc := secretsmanager.NewFromConfig(awsconf)
 	secrets := aws.NewSecretsManagerService(svc)
 
-	unwrap, err := secrets.GetSecretValue("SSOLambdaGoogleUserEmail")
+	unwrap, err := secrets.GetSecretValue(context.TODO(), "SSOLambdaGoogleUserEmail")
 	if err != nil {
-		log.Fatalf(errors.Wrap(err, "cannot read config").Error())
+		log.Fatalf(errors.Wrap(err, "cannot get secretmanager value").Error())
 	}
 	cfg.UserEmail = unwrap
 
-	unwrap, err = secrets.GetSecretValue("SSOLambdaGoogleCredentialsFile")
+	unwrap, err = secrets.GetSecretValue(context.TODO(), "SSOLambdaGoogleCredentialsFile")
 	if err != nil {
-		log.Fatalf(errors.Wrap(err, "cannot read config").Error())
+		log.Fatalf(errors.Wrap(err, "cannot get secretmanager value").Error())
 	}
 	cfg.ServiceAccountFile = unwrap
 
-	unwrap, err = secrets.GetSecretValue("SCIMAccessToken")
+	unwrap, err = secrets.GetSecretValue(context.TODO(), "SCIMAccessToken")
 	if err != nil {
-		log.Fatalf(errors.Wrap(err, "cannot read config").Error())
+		log.Fatalf(errors.Wrap(err, "cannot get secretmanager value").Error())
 	}
 	cfg.SCIMAccessToken = unwrap
 
-	unwrap, err = secrets.GetSecretValue("SCIMEndpoint")
+	unwrap, err = secrets.GetSecretValue(context.TODO(), "SCIMEndpoint")
 	if err != nil {
-		log.Fatalf(errors.Wrap(err, "cannot read config").Error())
+		log.Fatalf(errors.Wrap(err, "cannot get secretmanager value").Error())
 	}
 	cfg.SCIMEndpoint = unwrap
 }
