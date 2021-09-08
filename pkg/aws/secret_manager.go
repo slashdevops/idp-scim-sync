@@ -1,29 +1,30 @@
 package aws
 
 import (
+	"context"
 	"encoding/base64"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/secretsmanager"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/secretsmanager"
 )
 
+// https://aws.github.io/aws-sdk-go-v2/docs/unit-testing/
 type SecretsManagerService interface {
-	GetSecretValue(secretKey string) (string, error)
+	GetSecretValue(ctx context.Context, params *secretsmanager.GetSecretValueInput, optFns ...func(*secretsmanager.Options)) (*secretsmanager.GetSecretValueOutput, error)
 }
 
-type secretsManager struct {
-	svc *secretsmanager.SecretsManager
+type SecretsManager struct {
+	svc SecretsManagerService
 }
 
-func NewSecretsManagerService(svc *secretsmanager.SecretsManager) SecretsManagerService {
-	return &secretsManager{
+func NewSecretsManagerService(svc SecretsManagerService) *SecretsManager {
+	return &SecretsManager{
 		svc: svc,
 	}
 }
 
-func (s *secretsManager) GetSecretValue(secretKey string) (string, error) {
-
-	r, err := s.svc.GetSecretValue(&secretsmanager.GetSecretValueInput{
+func (s *SecretsManager) GetSecretValue(ctx context.Context, secretKey string) (string, error) {
+	r, err := s.svc.GetSecretValue(ctx, &secretsmanager.GetSecretValueInput{
 		SecretId:     aws.String(secretKey),
 		VersionStage: aws.String("AWSCURRENT"),
 	})
