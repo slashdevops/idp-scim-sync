@@ -102,6 +102,10 @@ func execGWSGroupsList() {
 	log.Infof("%d groups found", len(gGroups))
 
 	for _, g := range gGroups {
-		log.Infof("Name: %s - Email: %s", g.Name, g.Email)
+		log.WithFields(log.Fields{
+			"Id":    g.Id,
+			"Name":  g.Name,
+			"Email": g.Email,
+		}).Info("List Group ->")
 	}
 }
