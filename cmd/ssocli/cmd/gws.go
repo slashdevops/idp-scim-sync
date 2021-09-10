@@ -28,8 +28,9 @@ import (
 )
 
 var (
-	query      []string
-	reqTimeout time.Duration
+	groupsQuery []string
+	usersQuery  []string
+	reqTimeout  time.Duration
 )
 
 // command gws
@@ -57,22 +58,45 @@ var (
 			execGWSGroupsList()
 		},
 	}
+
+	// users command
+	gwsUsersCmd = &cobra.Command{
+		Use:   "users",
+		Short: "Google Workspace Users commands",
+		Long:  `available commands to validate Google Worspace Directory Users API.`,
+	}
+
+	// user list command
+	gwsUsersListCmd = &cobra.Command{
+		Use:   "list",
+		Short: "list Users",
+		Long:  `This command is used to list the users from Google Workspace Directory Servive`,
+		Run: func(cmd *cobra.Command, args []string) {
+			execGWSUsersList()
+		},
+	}
 )
 
 func init() {
 	rootCmd.AddCommand(gwsCmd)
 
 	gwsCmd.AddCommand(gwsGroupsCmd)
+	gwsCmd.AddCommand(gwsUsersCmd)
 
 	gwsCmd.PersistentFlags().StringVarP(&cfg.ServiceAccountFile, "gws-service-account-file", "s", config.DefaultServiceAccountFile, "path to Google Workspace service account file")
 	gwsCmd.MarkPersistentFlagRequired("gws-service-account-file")
 
 	gwsCmd.PersistentFlags().StringVarP(&cfg.UserEmail, "gws-user-email", "u", "", "Google Workspace user email with allowed access to the Google Workspace Service Account")
 	gwsCmd.MarkPersistentFlagRequired("gws-user-email")
+	gwsCmd.PersistentFlags().DurationVarP(&reqTimeout, "timeout", "t", time.Second*10, "timeout for request")
 
+	// groups command
 	gwsGroupsCmd.AddCommand(gwsGroupsListCmd)
-	gwsGroupsListCmd.Flags().StringSliceVarP(&query, "query", "q", []string{""}, "Google Workspace Groups query parameter, example: --query 'name:Admin* email:admin*' --query 'name:Power* email:power*', see: https://developers.google.com/admin-sdk/directory/v1/guides/search-groups")
-	gwsGroupsListCmd.Flags().DurationVarP(&reqTimeout, "timeout", "t", time.Second*10, "timeout for request")
+	gwsGroupsListCmd.Flags().StringSliceVarP(&groupsQuery, "query", "q", []string{""}, "Google Workspace Groups query parameter, example: --query 'name:Admin* email:admin*' --query 'name:Power* email:power*', see: https://developers.google.com/admin-sdk/directory/v1/guides/search-groups")
+
+	// users command
+	gwsUsersCmd.AddCommand(gwsUsersListCmd)
+	gwsUsersListCmd.Flags().StringSliceVarP(&usersQuery, "query", "q", []string{""}, "Google Workspace Users query parameter, example: --query 'name:Admin* email:admin*' --query 'name:Power* email:power*', see: https://developers.google.com/admin-sdk/directory/v1/guides/search-users")
 }
 
 func getGWSDirectoryService(ctx context.Context) *google.DirectoryService {
@@ -106,7 +130,7 @@ func execGWSGroupsList() {
 
 	gDirService := getGWSDirectoryService(ctx)
 
-	gGroups, err := gDirService.ListGroups(query)
+	gGroups, err := gDirService.ListGroups(groupsQuery)
 	if err != nil {
 		log.Fatalf("Error listing groups: %s", err)
 	}
@@ -118,5 +142,27 @@ func execGWSGroupsList() {
 			"Name":  g.Name,
 			"Email": g.Email,
 		}).Info("List Group ->")
+	}
+}
+
+func execGWSUsersList() {
+	ctx, cancel := context.WithTimeout(context.Background(), reqTimeout)
+	defer cancel()
+
+	gDirService := getGWSDirectoryService(ctx)
+
+	gUsers, err := gDirService.ListUsers(usersQuery)
+	if err != nil {
+		log.Fatalf("Error listing users: %s", err)
+	}
+	log.Infof("%d users found", len(gUsers))
+
+	for _, u := range gUsers {
+		log.WithFields(log.Fields{
+			"Id":        u.Id,
+			"Name":      u.Name.FullName,
+			"Email":     u.PrimaryEmail,
+			"Suspended": u.Suspended,
+		}).Info("List User ->")
 	}
 }
