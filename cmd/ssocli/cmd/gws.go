@@ -70,7 +70,7 @@ func init() {
 	gwsGroupsListCmd.Flags().StringSliceVarP(&query, "query", "q", []string{""}, "Google Workspace Groups query parameter, example: --query 'name:Admin* email:admin*' --query 'name:Power* email:power*', see: https://developers.google.com/admin-sdk/directory/v1/guides/search-groups")
 }
 
-func execGWSGroupsList() {
+func getGWSDirectoryService() *google.DirectoryService {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
@@ -94,6 +94,12 @@ func execGWSGroupsList() {
 	if err != nil {
 		log.Fatalf("Error creating directory service: %s", err)
 	}
+
+	return gDirService
+}
+
+func execGWSGroupsList() {
+	gDirService := getGWSDirectoryService()
 
 	gGroups, err := gDirService.ListGroups(query)
 	if err != nil {
