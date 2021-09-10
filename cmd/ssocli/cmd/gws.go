@@ -18,6 +18,7 @@ package cmd
 import (
 	"context"
 	"io/ioutil"
+	"time"
 
 	"github.com/slashdevops/idp-scim-sync/internal/config"
 	"github.com/slashdevops/idp-scim-sync/pkg/google"
@@ -26,7 +27,10 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-var query []string
+var (
+	query      []string
+	reqTimeout time.Duration
+)
 
 // command gws
 var (
@@ -68,12 +72,10 @@ func init() {
 
 	gwsGroupsCmd.AddCommand(gwsGroupsListCmd)
 	gwsGroupsListCmd.Flags().StringSliceVarP(&query, "query", "q", []string{""}, "Google Workspace Groups query parameter, example: --query 'name:Admin* email:admin*' --query 'name:Power* email:power*', see: https://developers.google.com/admin-sdk/directory/v1/guides/search-groups")
+	gwsGroupsListCmd.Flags().DurationVarP(&reqTimeout, "timeout", "t", time.Second*10, "timeout for request")
 }
 
-func getGWSDirectoryService() *google.DirectoryService {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
+func getGWSDirectoryService(ctx context.Context) *google.DirectoryService {
 	gCreds, err := ioutil.ReadFile(cfg.ServiceAccountFile)
 	if err != nil {
 		log.Fatalf("Error reading the credentials: %s", err)
@@ -99,7 +101,10 @@ func getGWSDirectoryService() *google.DirectoryService {
 }
 
 func execGWSGroupsList() {
-	gDirService := getGWSDirectoryService()
+	ctx, cancel := context.WithTimeout(context.Background(), reqTimeout)
+	defer cancel()
+
+	gDirService := getGWSDirectoryService(ctx)
 
 	gGroups, err := gDirService.ListGroups(query)
 	if err != nil {
