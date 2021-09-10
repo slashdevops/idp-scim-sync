@@ -12,9 +12,9 @@ import (
 
 const (
 	// https://cloud.google.com/storage/docs/json_api
-	groupsRequiredFields  googleapi.Field = "id,name,email"
-	membersRequiredFields googleapi.Field = "id,email"
-	usersRequiredFields   googleapi.Field = "id,name,primaryEmail,suspended"
+	groupsRequiredFields  googleapi.Field = "groups(id,name,email)"
+	membersRequiredFields googleapi.Field = "members(id,email)"
+	usersRequiredFields   googleapi.Field = "users(id,name,primaryEmail,suspended)"
 )
 
 var (
@@ -39,7 +39,6 @@ func NewService(ctx context.Context, UserEmail string, ServiceAccount []byte, sc
 	}
 
 	config.Subject = UserEmail
-
 	ts := config.TokenSource(ctx)
 
 	svc, err := admin.NewService(ctx, option.WithTokenSource(ts))
@@ -61,19 +60,19 @@ func NewDirectoryService(ctx context.Context, svc *admin.Service) (*DirectorySer
 }
 
 // ListUsers list all users in a Google Directory filtered by query.
-func (d *DirectoryService) ListUsers(query []string) ([]*admin.User, error) {
+func (ds *DirectoryService) ListUsers(query []string) ([]*admin.User, error) {
 	u := make([]*admin.User, 0)
 	var err error
 
 	if len(query) > 0 {
 		for _, q := range query {
-			err = d.svc.Users.List().Query(q).Customer("my_customer").Fields(usersRequiredFields).Pages(d.ctx, func(users *admin.Users) error {
+			err = ds.svc.Users.List().Query(q).Customer("my_customer").Fields(usersRequiredFields).Pages(ds.ctx, func(users *admin.Users) error {
 				u = append(u, users.Users...)
 				return nil
 			})
 		}
 	} else {
-		err = d.svc.Users.List().Customer("my_customer").Fields(usersRequiredFields).Pages(d.ctx, func(users *admin.Users) error {
+		err = ds.svc.Users.List().Customer("my_customer").Fields(usersRequiredFields).Pages(ds.ctx, func(users *admin.Users) error {
 			u = append(u, users.Users...)
 			return nil
 		})
@@ -84,19 +83,19 @@ func (d *DirectoryService) ListUsers(query []string) ([]*admin.User, error) {
 // ListGroups list all groups in a Google Directory filtered by query.
 // References:
 // - https://developers.google.com/admin-sdk/directory/reference/rest/v1/groups
-func (d *DirectoryService) ListGroups(query []string) ([]*admin.Group, error) {
+func (ds *DirectoryService) ListGroups(query []string) ([]*admin.Group, error) {
 	g := make([]*admin.Group, 0)
 	var err error
 
 	if len(query) > 0 {
 		for _, q := range query {
-			err = d.svc.Groups.List().Customer("my_customer").Query(q).Fields(groupsRequiredFields).Pages(d.ctx, func(groups *admin.Groups) error {
+			err = ds.svc.Groups.List().Customer("my_customer").Query(q).Fields(groupsRequiredFields).Pages(ds.ctx, func(groups *admin.Groups) error {
 				g = append(g, groups.Groups...)
 				return nil
 			})
 		}
 	} else {
-		err = d.svc.Groups.List().Customer("my_customer").Fields(groupsRequiredFields).Pages(d.ctx, func(groups *admin.Groups) error {
+		err = ds.svc.Groups.List().Customer("my_customer").Fields(groupsRequiredFields).Pages(ds.ctx, func(groups *admin.Groups) error {
 			g = append(g, groups.Groups...)
 			return nil
 		})
@@ -104,10 +103,11 @@ func (d *DirectoryService) ListGroups(query []string) ([]*admin.Group, error) {
 	return g, err
 }
 
-func (d *DirectoryService) ListGroupMembers(groupID string) ([]*admin.Member, error) {
+// ListGroupMembers list all members in a Google Directory group filtered by query.
+func (ds *DirectoryService) ListGroupMembers(groupID string) ([]*admin.Member, error) {
 	m := make([]*admin.Member, 0)
 
-	err := d.svc.Members.List(groupID).Fields(membersRequiredFields).Pages(d.ctx, func(members *admin.Members) error {
+	err := ds.svc.Members.List(groupID).Fields(membersRequiredFields).Pages(ds.ctx, func(members *admin.Members) error {
 		m = append(m, members.Members...)
 		return nil
 	})
@@ -115,14 +115,16 @@ func (d *DirectoryService) ListGroupMembers(groupID string) ([]*admin.Member, er
 	return m, err
 }
 
-func (d *DirectoryService) GetUser(userID string) (*admin.User, error) {
-	u, err := d.svc.Users.Get(userID).Fields(usersRequiredFields).Context(d.ctx).Do()
+// GetUser get a user in a Google Directory filtered by query.
+func (ds *DirectoryService) GetUser(userID string) (*admin.User, error) {
+	u, err := ds.svc.Users.Get(userID).Fields(usersRequiredFields).Context(ds.ctx).Do()
 
 	return u, err
 }
 
-func (d *DirectoryService) GetGroup(groupID string) (*admin.Group, error) {
-	g, err := d.svc.Groups.Get(groupID).Fields(groupsRequiredFields).Context(d.ctx).Do()
+// GetGroups get a group in a Google Directory filtered by query.
+func (ds *DirectoryService) GetGroup(groupID string) (*admin.Group, error) {
+	g, err := ds.svc.Groups.Get(groupID).Fields(groupsRequiredFields).Context(ds.ctx).Do()
 
 	return g, err
 }

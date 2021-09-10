@@ -79,9 +79,13 @@ func execGWSGroupsList() {
 		log.Fatalf("Error reading the credentials: %s", err)
 	}
 
-	gScope := "admin.AdminDirectoryGroupReadonlyScope, admin.AdminDirectoryGroupMemberReadonlyScope, admin.AdminDirectoryUserReadonlyScope"
+	gScopes := []string{
+		"https://www.googleapis.com/auth/admin.directory.group.readonly",
+		"https://www.googleapis.com/auth/admin.directory.group.member.readonly",
+		"https://www.googleapis.com/auth/admin.directory.user.readonly",
+	}
 
-	gService, err := google.NewService(ctx, cfg.UserEmail, gCreds, gScope)
+	gService, err := google.NewService(ctx, cfg.UserEmail, gCreds, gScopes...)
 	if err != nil {
 		log.Fatalf("Error creating service: %s", err)
 	}
