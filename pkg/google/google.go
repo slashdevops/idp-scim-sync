@@ -31,7 +31,9 @@ type DirectoryService struct {
 // References:
 // - https://pkg.go.dev/google.golang.org/api/admin/directory/v1
 // Examples of scope:
-// - admin.AdminDirectoryGroupReadonlyScope, admin.AdminDirectoryGroupMemberReadonlyScope, admin.AdminDirectoryUserReadonlyScope
+// - "https://www.googleapis.com/auth/admin.directory.group.readonly"
+// - "https://www.googleapis.com/auth/admin.directory.group.member.readonly"
+// - "https://www.googleapis.com/auth/admin.directory.user.readonly"
 func NewService(ctx context.Context, UserEmail string, ServiceAccount []byte, scope ...string) (*admin.Service, error) {
 	config, err := google.JWTConfigFromJSON(ServiceAccount, scope...)
 	if err != nil {
