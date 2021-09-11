@@ -50,12 +50,11 @@ var (
 
 	// service config command
 	awsServiceConfigCmd = &cobra.Command{
-		Use:   "config",
-		Short: "return Service Provider config",
-		Long:  `return AWS SSO SCIM provider config.`,
-		Run: func(cmd *cobra.Command, args []string) {
-			execAWSServiceConfig()
-		},
+		Use:     "config",
+		Aliases: []string{"c"},
+		Short:   "return Service Provider config",
+		Long:    `return AWS SSO SCIM provider config.`,
+		RunE:    runAWSServiceConfig,
 	}
 
 	// groups command
@@ -67,12 +66,11 @@ var (
 
 	// groups list command
 	awsGroupsListCmd = &cobra.Command{
-		Use:   "list",
-		Short: "return available groups",
-		Long:  `list available groups in AWS SSO`,
-		Run: func(cmd *cobra.Command, args []string) {
-			execAWSGroupsList()
-		},
+		Use:     "list",
+		Aliases: []string{"l"},
+		Short:   "return available groups",
+		Long:    `list available groups in AWS SSO`,
+		RunE:    runAWSGroupsList,
 	}
 )
 
@@ -96,7 +94,7 @@ func init() {
 	awsGroupsListCmd.Flags().StringVar(&outFormat, "output-format", "json", "output format (json|yaml)")
 }
 
-func execAWSServiceConfig() {
+func runAWSServiceConfig(cmd *cobra.Command, args []string) error {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
@@ -112,12 +110,14 @@ func execAWSServiceConfig() {
 
 	awsSCIMService, err := aws.NewSCIMService(&ctx, httpClient, cfg.SCIMEndpoint, cfg.SCIMAccessToken)
 	if err != nil {
-		log.Fatalf("Error creating SCIM service: %s", err.Error())
+		log.Errorf("Error creating SCIM service: %s", err.Error())
+		return err
 	}
 
 	awsServiceConfig, err := awsSCIMService.ServiceProviderConfig()
 	if err != nil {
-		log.Fatalf("Error getting service provider config, error: %s", err.Error())
+		log.Errorf("Error getting service provider config, error: %s", err.Error())
+		return err
 	}
 
 	switch outFormat {
@@ -128,9 +128,11 @@ func execAWSServiceConfig() {
 	default:
 		log.Fatalf("Unknown output format: %s", outFormat)
 	}
+
+	return nil
 }
 
-func execAWSGroupsList() {
+func runAWSGroupsList(cmd *cobra.Command, args []string) error {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
@@ -146,12 +148,14 @@ func execAWSGroupsList() {
 
 	awsSCIMService, err := aws.NewSCIMService(&ctx, httpClient, cfg.SCIMEndpoint, cfg.SCIMAccessToken)
 	if err != nil {
-		log.Fatalf("Error creating SCIM service: %s", err.Error())
+		log.Errorf("Error creating SCIM service: %s", err.Error())
+		return err
 	}
 
 	awsGroupsResponse, err := awsSCIMService.ListGroups(filter)
 	if err != nil {
-		log.Fatalf("Error listing groups, error: %s", err.Error())
+		log.Errorf("Error listing groups, error: %s", err.Error())
+		return err
 	}
 	log.Infof("%d groups found", awsGroupsResponse.TotalResults)
 
@@ -163,4 +167,5 @@ func execAWSGroupsList() {
 	default:
 		log.Fatalf("Unknown output format: %s", outFormat)
 	}
+	return nil
 }

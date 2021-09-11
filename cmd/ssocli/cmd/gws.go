@@ -51,12 +51,11 @@ var (
 
 	// groups list command
 	gwsGroupsListCmd = &cobra.Command{
-		Use:   "list",
-		Short: "list Groups",
-		Long:  `This command is used to list the groups from Google Workspace Directory Servive`,
-		Run: func(cmd *cobra.Command, args []string) {
-			execGWSGroupsList()
-		},
+		Use:     "list",
+		Aliases: []string{"ls"},
+		Short:   "list Groups",
+		Long:    `This command is used to list the groups from Google Workspace Directory Servive`,
+		RunE:    execGWSGroupsList,
 	}
 
 	// users command
@@ -68,12 +67,11 @@ var (
 
 	// user list command
 	gwsUsersListCmd = &cobra.Command{
-		Use:   "list",
-		Short: "list Users",
-		Long:  `This command is used to list the users from Google Workspace Directory Servive`,
-		Run: func(cmd *cobra.Command, args []string) {
-			execGWSUsersList()
-		},
+		Use:     "list",
+		Aliases: []string{"ls"},
+		Short:   "list Users",
+		Long:    `This command is used to list the users from Google Workspace Directory Servive`,
+		RunE:    execGWSUsersList,
 	}
 )
 
@@ -124,7 +122,7 @@ func getGWSDirectoryService(ctx context.Context) *google.DirectoryService {
 	return gDirService
 }
 
-func execGWSGroupsList() {
+func execGWSGroupsList(cmd *cobra.Command, args []string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), reqTimeout)
 	defer cancel()
 
@@ -132,7 +130,8 @@ func execGWSGroupsList() {
 
 	gGroups, err := gDirService.ListGroups(groupsQuery)
 	if err != nil {
-		log.Fatalf("Error listing groups: %s", err)
+		log.Errorf("Error listing groups: %s", err)
+		return err
 	}
 	log.Infof("%d groups found", len(gGroups))
 
@@ -143,9 +142,10 @@ func execGWSGroupsList() {
 			"Email": g.Email,
 		}).Info("List Group ->")
 	}
+	return nil
 }
 
-func execGWSUsersList() {
+func execGWSUsersList(cmd *cobra.Command, args []string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), reqTimeout)
 	defer cancel()
 
@@ -153,7 +153,8 @@ func execGWSUsersList() {
 
 	gUsers, err := gDirService.ListUsers(usersQuery)
 	if err != nil {
-		log.Fatalf("Error listing users: %s", err)
+		log.Errorf("Error listing users: %s", err)
+		return err
 	}
 	log.Infof("%d users found", len(gUsers))
 
@@ -165,4 +166,5 @@ func execGWSUsersList() {
 			"Suspended": u.Suspended,
 		}).Info("List User ->")
 	}
+	return nil
 }
