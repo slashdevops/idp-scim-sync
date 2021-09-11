@@ -1,4 +1,4 @@
-package state
+package model
 
 import "encoding/json"
 
@@ -8,6 +8,10 @@ type State struct {
 	LastSync      string         `json:"lastSync"`
 	HashCode      string         `json:"hashCode"`
 	Resources     StateResources `json:"resources"`
+}
+
+func (s *State) MarshalJSON() ([]byte, error) {
+	return json.Marshal(*s)
 }
 
 type StateResources struct {
@@ -30,41 +34,4 @@ type StoreGroupsUsersResult struct {
 
 type StoreStateResult struct {
 	Location string
-}
-
-func NewState(name string) *State {
-	return &State{
-		Name:          name,
-		SchemaVersion: "1.0",
-	}
-}
-
-func (s *State) GetName() string {
-	return s.Name
-}
-
-func (s *State) Empty() bool {
-	if s != nil {
-		return false
-	}
-
-	if s.Resources.StoreGroupsResult.Location != "" {
-		return false
-	}
-	if s.Resources.StoreGroupsUsersResult.Location != "" {
-		return false
-	}
-	if s.Resources.StoreUsersResult.Location != "" {
-		return false
-	}
-
-	return true
-}
-
-func (s *State) Build(groups *StoreGroupsResult, groupsUsers *StoreGroupsUsersResult, users *StoreUsersResult) (*State, error) {
-	return &State{}, nil
-}
-
-func (s *State) MarshalJSON() ([]byte, error) {
-	return json.Marshal(*s)
 }

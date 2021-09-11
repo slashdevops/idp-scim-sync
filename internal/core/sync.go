@@ -28,11 +28,10 @@ type SyncService struct {
 	prov             IdentityProviderService
 	scim             SCIMService
 	repo             SyncRepository
-	state            SyncState
 }
 
 // NewSyncService creates a new sync service.
-func NewSyncService(ctx context.Context, prov IdentityProviderService, scim SCIMService, repo SyncRepository, state SyncState, opts ...SyncServiceOption) (*SyncService, error) {
+func NewSyncService(ctx context.Context, prov IdentityProviderService, scim SCIMService, repo SyncRepository, opts ...SyncServiceOption) (*SyncService, error) {
 	if ctx == nil {
 		return nil, ErrNilContext
 	}
@@ -45,9 +44,6 @@ func NewSyncService(ctx context.Context, prov IdentityProviderService, scim SCIM
 	if repo == nil {
 		return nil, ErrRepositoryNil
 	}
-	if state == nil {
-		return nil, ErrSyncStateNil
-	}
 
 	ss := &SyncService{
 		ctx:              ctx,
@@ -57,7 +53,6 @@ func NewSyncService(ctx context.Context, prov IdentityProviderService, scim SCIM
 		provUsersFilter:  []string{}, // fill in with the opts
 		scim:             scim,
 		repo:             repo,
-		state:            state,
 	}
 
 	for _, opt := range opts {

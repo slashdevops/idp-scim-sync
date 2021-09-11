@@ -32,9 +32,8 @@ func TestWithIdentityProviderGroupsFilter(t *testing.T) {
 		prov := mocks.NewMockIdentityProviderService(mockCtrl)
 		scim := mocks.NewMockSCIMService(mockCtrl)
 		repo := mocks.NewMockSyncRepository(mockCtrl)
-		state := mocks.NewMockSyncState(mockCtrl)
 
-		got, _ := NewSyncService(ctx, prov, scim, repo, state, WithIdentityProviderGroupsFilter(filter))
+		got, _ := NewSyncService(ctx, prov, scim, repo, WithIdentityProviderGroupsFilter(filter))
 
 		want := &SyncService{
 			ctx:              ctx,
@@ -44,7 +43,6 @@ func TestWithIdentityProviderGroupsFilter(t *testing.T) {
 			provUsersFilter:  []string{},
 			scim:             scim,
 			repo:             repo,
-			state:            state,
 		}
 
 		// test length
@@ -86,9 +84,8 @@ func TestWithIdentityProviderUsersFilter(t *testing.T) {
 		prov := mocks.NewMockIdentityProviderService(mockCtrl)
 		scim := mocks.NewMockSCIMService(mockCtrl)
 		repo := mocks.NewMockSyncRepository(mockCtrl)
-		state := mocks.NewMockSyncState(mockCtrl)
 
-		got, _ := NewSyncService(ctx, prov, scim, repo, state, WithIdentityProviderUsersFilter(filter))
+		got, _ := NewSyncService(ctx, prov, scim, repo, WithIdentityProviderUsersFilter(filter))
 
 		want := &SyncService{
 			ctx:              ctx,
@@ -98,7 +95,6 @@ func TestWithIdentityProviderUsersFilter(t *testing.T) {
 			provUsersFilter:  filter,
 			scim:             scim,
 			repo:             repo,
-			state:            state,
 		}
 
 		// test length

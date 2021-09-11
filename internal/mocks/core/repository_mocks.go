@@ -9,7 +9,6 @@ import (
 
 	gomock "github.com/golang/mock/gomock"
 	model "github.com/slashdevops/idp-scim-sync/internal/model"
-	state "github.com/slashdevops/idp-scim-sync/internal/state"
 )
 
 // MockSyncRepository is a mock of SyncRepository interface.
@@ -66,10 +65,10 @@ func (mr *MockSyncRepositoryMockRecorder) GetGroupsUsers() *gomock.Call {
 }
 
 // GetState mocks base method.
-func (m *MockSyncRepository) GetState() (state.State, error) {
+func (m *MockSyncRepository) GetState() (model.State, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetState")
-	ret0, _ := ret[0].(state.State)
+	ret0, _ := ret[0].(model.State)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -96,10 +95,10 @@ func (mr *MockSyncRepositoryMockRecorder) GetUsers() *gomock.Call {
 }
 
 // StoreGroups mocks base method.
-func (m *MockSyncRepository) StoreGroups(gr *model.GroupsResult) (state.StoreGroupsResult, error) {
+func (m *MockSyncRepository) StoreGroups(gr *model.GroupsResult) (model.StoreGroupsResult, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "StoreGroups", gr)
-	ret0, _ := ret[0].(state.StoreGroupsResult)
+	ret0, _ := ret[0].(model.StoreGroupsResult)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -111,10 +110,10 @@ func (mr *MockSyncRepositoryMockRecorder) StoreGroups(gr interface{}) *gomock.Ca
 }
 
 // StoreGroupsUsers mocks base method.
-func (m *MockSyncRepository) StoreGroupsUsers(gr *model.GroupsUsersResult) (state.StoreGroupsUsersResult, error) {
+func (m *MockSyncRepository) StoreGroupsUsers(gr *model.GroupsUsersResult) (model.StoreGroupsUsersResult, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "StoreGroupsUsers", gr)
-	ret0, _ := ret[0].(state.StoreGroupsUsersResult)
+	ret0, _ := ret[0].(model.StoreGroupsUsersResult)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -126,10 +125,10 @@ func (mr *MockSyncRepositoryMockRecorder) StoreGroupsUsers(gr interface{}) *gomo
 }
 
 // StoreState mocks base method.
-func (m *MockSyncRepository) StoreState(sgr *state.StoreGroupsResult, sur *state.StoreUsersResult, sgur *state.StoreGroupsUsersResult) (state.StoreStateResult, error) {
+func (m *MockSyncRepository) StoreState(sgr *model.StoreGroupsResult, sur *model.StoreUsersResult, sgur *model.StoreGroupsUsersResult) (model.StoreStateResult, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "StoreState", sgr, sur, sgur)
-	ret0, _ := ret[0].(state.StoreStateResult)
+	ret0, _ := ret[0].(model.StoreStateResult)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -141,10 +140,10 @@ func (mr *MockSyncRepositoryMockRecorder) StoreState(sgr, sur, sgur interface{})
 }
 
 // StoreUsers mocks base method.
-func (m *MockSyncRepository) StoreUsers(ur *model.UsersResult) (state.StoreUsersResult, error) {
+func (m *MockSyncRepository) StoreUsers(ur *model.UsersResult) (model.StoreUsersResult, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "StoreUsers", ur)
-	ret0, _ := ret[0].(state.StoreUsersResult)
+	ret0, _ := ret[0].(model.StoreUsersResult)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
