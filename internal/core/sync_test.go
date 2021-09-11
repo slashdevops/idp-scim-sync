@@ -17,7 +17,7 @@ func Test_syncService_NewSyncService(t *testing.T) {
 		ctx := context.TODO()
 		mockProviderService := mocks.NewMockIdentityProviderService(mockCtrl)
 		mockSCIMService := mocks.NewMockSCIMService(mockCtrl)
-		mockRepository := mocks.NewMockSyncRepository(mockCtrl)
+		mockRepository := mocks.NewMockStateRepository(mockCtrl)
 
 		svc, err := NewSyncService(ctx, mockProviderService, mockSCIMService, mockRepository)
 
@@ -65,7 +65,7 @@ func Test_syncService_NewSyncService(t *testing.T) {
 		assert.Equal(t, err, ErrSCIMServiceNil)
 	})
 
-	t.Run("New Service without SyncRepository, return context specific error", func(t *testing.T) {
+	t.Run("New Service without StateRepository, return context specific error", func(t *testing.T) {
 		mockCtrl := gomock.NewController(t)
 		defer mockCtrl.Finish()
 
@@ -89,7 +89,7 @@ func Test_syncService_SyncGroupsAndUsers(t *testing.T) {
 		ctx := context.TODO()
 		mockProviderService := mocks.NewMockIdentityProviderService(mockCtrl)
 		mockSCIMService := mocks.NewMockSCIMService(mockCtrl)
-		mockRepository := mocks.NewMockSyncRepository(mockCtrl)
+		mockRepository := mocks.NewMockStateRepository(mockCtrl)
 
 		mockProviderService.EXPECT().GetGroups(ctx, gomock.Any()).Return(nil, nil)
 		mockProviderService.EXPECT().GetUsers(ctx, gomock.Any()).Return(nil, nil)

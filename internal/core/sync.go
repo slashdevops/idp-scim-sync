@@ -27,11 +27,11 @@ type SyncService struct {
 	provUsersFilter  []string
 	prov             IdentityProviderService
 	scim             SCIMService
-	repo             SyncRepository
+	repo             StateRepository
 }
 
 // NewSyncService creates a new sync service.
-func NewSyncService(ctx context.Context, prov IdentityProviderService, scim SCIMService, repo SyncRepository, opts ...SyncServiceOption) (*SyncService, error) {
+func NewSyncService(ctx context.Context, prov IdentityProviderService, scim SCIMService, repo StateRepository, opts ...SyncServiceOption) (*SyncService, error) {
 	if ctx == nil {
 		return nil, ErrNilContext
 	}

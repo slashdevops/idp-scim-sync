@@ -6,7 +6,7 @@ import (
 
 //go:generate go run github.com/golang/mock/mockgen@v1.6.0 -package=mocks -destination=../mocks/core/repository_mocks.go -source=repository.go
 
-type SyncRepository interface {
+type StateRepository interface {
 	StoreGroups(gr *model.GroupsResult) (model.StoreGroupsResult, error)
 	StoreUsers(ur *model.UsersResult) (model.StoreUsersResult, error)
 	StoreGroupsUsers(gr *model.GroupsUsersResult) (model.StoreGroupsUsersResult, error)
