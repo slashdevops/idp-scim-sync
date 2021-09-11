@@ -7,6 +7,7 @@ import (
 	"time"
 
 	log "github.com/sirupsen/logrus"
+	"github.com/slashdevops/idp-scim-sync/internal/model"
 )
 
 var (
@@ -27,11 +28,11 @@ type SyncService struct {
 	provUsersFilter  []string
 	prov             IdentityProviderService
 	scim             SCIMService
-	repo             StateRepository
+	repo             Repository
 }
 
 // NewSyncService creates a new sync service.
-func NewSyncService(ctx context.Context, prov IdentityProviderService, scim SCIMService, repo StateRepository, opts ...SyncServiceOption) (*SyncService, error) {
+func NewSyncService(ctx context.Context, prov IdentityProviderService, scim SCIMService, repo Repository, opts ...SyncServiceOption) (*SyncService, error) {
 	if ctx == nil {
 		return nil, ErrNilContext
 	}
@@ -66,11 +67,6 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 	ss.mu.Lock()
 	defer ss.mu.Unlock()
 
-	state, err := ss.repo.GetState()
-	if err != nil {
-		return ErrGettingState
-	}
-
 	// retrive data from the identity provider
 	// always theses steps are necessary
 	pGroupsResult, err := ss.prov.GetGroups(ss.ctx, ss.provGroupsFilter)
@@ -96,11 +92,16 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 		log.Warn("identity provider users empty")
 	}
 
+	// get the state from the repository
+	state, err := ss.repo.GetState()
+	if err != nil {
+		return ErrGettingState
+	}
+
 	// first time syncing
 	if state.LastSync == "" {
 
 		log.Info("State without last sync time, first time syncing")
-		state.LastSync = time.Now().Format(time.RFC3339)
 
 		// Check SCIM side to see if there are any elelemnts to be
 		// reconciled. I mean SCIM is not clean until the first sync
@@ -203,9 +204,11 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 				}
 			}
 		}
+
 	} else { // This is not the first time syncing
 		log.Info("State with last sync time, not first time syncing")
 
+		// get state data from repositroy
 		rGroupsResult, err := ss.repo.GetGroups()
 		if err != nil {
 			return err
@@ -221,103 +224,107 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 			return err
 		}
 
-		// now here we have the google fresh data and the last sync data state
-		// we need to compare the data and decide what to do
-		// see differences between the two data sets
-		gCreate, gUpdate, _, gDelete := groupsOperations(pGroupsResult, rGroupsResult)
-
-		if gCreate.Items == 0 {
-			log.Info("No groups to be created")
+		if pGroupsResult.HashCode == rGroupsResult.HashCode {
+			log.Info("Groups are the same")
 		} else {
-			if err := ss.scim.CreateGroups(ss.ctx, gCreate); err != nil {
-				return err
+			// now here we have the google fresh data and the last sync data state
+			// we need to compare the data and decide what to do
+			// see differences between the two data sets
+			gCreate, gUpdate, _, gDelete := groupsOperations(pGroupsResult, rGroupsResult)
+
+			if gCreate.Items == 0 {
+				log.Info("No groups to be created")
+			} else {
+				if err := ss.scim.CreateGroups(ss.ctx, gCreate); err != nil {
+					return err
+				}
+			}
+
+			if gUpdate.Items == 0 {
+				log.Info("No groups to be updated")
+			} else {
+				if err := ss.scim.UpdateGroups(ss.ctx, gUpdate); err != nil {
+					return err
+				}
+			}
+
+			if gDelete.Items == 0 {
+				log.Info("No groups to be deleted")
+			} else {
+				if err := ss.scim.DeleteGroups(ss.ctx, gDelete); err != nil {
+					return err
+				}
 			}
 		}
 
-		if gUpdate.Items == 0 {
-			log.Info("No groups to be updated")
+		if pUsersResult.HashCode == rUsersResult.HashCode {
+			log.Info("Users are the same")
 		} else {
-			if err := ss.scim.UpdateGroups(ss.ctx, gUpdate); err != nil {
-				return err
+
+			uCreate, uUpdate, _, uDelete := usersOperations(pUsersResult, rUsersResult)
+
+			if uCreate.Items == 0 {
+				log.Info("No users to be created")
+			} else {
+				if err := ss.scim.CreateUsers(ss.ctx, uCreate); err != nil {
+					return err
+				}
+			}
+
+			if uUpdate.Items == 0 {
+				log.Info("No users to be updated")
+			} else {
+				if err := ss.scim.UpdateUsers(ss.ctx, uUpdate); err != nil {
+					return err
+				}
+			}
+
+			if uDelete.Items == 0 {
+				log.Info("No users to be deleted")
+			} else {
+				if err := ss.scim.DeleteUsers(ss.ctx, uDelete); err != nil {
+					return err
+				}
 			}
 		}
 
-		if gDelete.Items == 0 {
-			log.Info("No groups to be deleted")
+		if pGroupsUsersResult.HashCode == rGroupsUsersResult.HashCode {
+			log.Info("Groups-Users are the same")
 		} else {
-			if err := ss.scim.DeleteGroups(ss.ctx, gDelete); err != nil {
-				return err
+
+			ugCreate, _, ugDelete := groupsUsersOperations(pGroupsUsersResult, rGroupsUsersResult)
+
+			if ugCreate.Items == 0 {
+				log.Info("No groups-users to be created")
+			} else {
+				if err := ss.scim.CreateMembers(ss.ctx, ugCreate); err != nil {
+					return err
+				}
 			}
-		}
 
-		uCreate, uUpdate, _, uDelete := usersOperations(pUsersResult, rUsersResult)
-
-		if uCreate.Items == 0 {
-			log.Info("No users to be created")
-		} else {
-			if err := ss.scim.CreateUsers(ss.ctx, uCreate); err != nil {
-				return err
-			}
-		}
-
-		if uUpdate.Items == 0 {
-			log.Info("No users to be updated")
-		} else {
-			if err := ss.scim.UpdateUsers(ss.ctx, uUpdate); err != nil {
-				return err
-			}
-		}
-
-		if uDelete.Items == 0 {
-			log.Info("No users to be deleted")
-		} else {
-			if err := ss.scim.DeleteUsers(ss.ctx, uDelete); err != nil {
-				return err
-			}
-		}
-
-		ugCreate, _, ugDelete := groupsUsersOperations(pGroupsUsersResult, rGroupsUsersResult)
-
-		if ugCreate.Items == 0 {
-			log.Info("No groups-users to be created")
-		} else {
-			if err := ss.scim.CreateMembers(ss.ctx, ugCreate); err != nil {
-				return err
-			}
-		}
-
-		if ugDelete.Items == 0 {
-			log.Info("No groups-users to be deleted")
-		} else {
-			if err := ss.scim.DeleteMembers(ss.ctx, ugDelete); err != nil {
-				return err
+			if ugDelete.Items == 0 {
+				log.Info("No groups-users to be deleted")
+			} else {
+				if err := ss.scim.DeleteMembers(ss.ctx, ugDelete); err != nil {
+					return err
+				}
 			}
 		}
 	}
 
-	// Create the sync state
-	// store data to repository
-	sStoreGroupsResult, err := ss.repo.StoreGroups(pGroupsResult)
-	if err != nil {
+	// after be sure all the SCIM part is aligned with the Identity Provider part
+	// we can update the state
+	state.LastSync = time.Now().Format(time.RFC3339)
+	state.Resources = model.StateResources{
+		Groups:      pGroupsResult,
+		Users:       pUsersResult,
+		GroupsUsers: pGroupsUsersResult,
+	}
+
+	if err := ss.repo.UpdateState(state); err != nil {
 		return err
 	}
 
-	sGroupsUsersResult, err := ss.repo.StoreGroupsUsers(pGroupsUsersResult)
-	if err != nil {
-		return err
-	}
-
-	sStoreUsersResult, err := ss.repo.StoreUsers(pUsersResult)
-	if err != nil {
-		return err
-	}
-
-	sStoreStateResult, err := ss.repo.StoreState(&sStoreGroupsResult, &sStoreUsersResult, &sGroupsUsersResult)
-	if err != nil {
-		return err
-	}
-
-	log.Infof("Sysced %s", sStoreStateResult.Location)
 	return nil
 }
 

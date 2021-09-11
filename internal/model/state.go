@@ -3,35 +3,25 @@ package model
 import "encoding/json"
 
 type State struct {
-	Name          string         `json:"name"`
-	SchemaVersion string         `json:"version"`
-	LastSync      string         `json:"lastSync"`
-	HashCode      string         `json:"hashCode"`
-	Resources     StateResources `json:"resources"`
-}
-
-func (s *State) MarshalJSON() ([]byte, error) {
-	return json.Marshal(*s)
+	LastSync  string         `json:"lastSync"`
+	Resources StateResources `json:"resources"`
 }
 
 type StateResources struct {
-	StoreGroupsResult      *StoreGroupsResult      `json:"storeGroupsResult"`
-	StoreUsersResult       *StoreUsersResult       `json:"storeUsersResult"`
-	StoreGroupsUsersResult *StoreGroupsUsersResult `json:"storeGroupsUsersResult"`
+	Groups      *GroupsResult      `json:"groups"`
+	Users       *UsersResult       `json:"users"`
+	GroupsUsers *GroupsUsersResult `json:"groupsUsers"`
 }
 
-type StoreGroupsResult struct {
-	Location string
-}
-
-type StoreUsersResult struct {
-	Location string
-}
-
-type StoreGroupsUsersResult struct {
-	Location string
-}
-
-type StoreStateResult struct {
-	Location string
+func (s *State) MarshalJSON() ([]byte, error) {
+	if s.Resources.Groups == nil {
+		s.Resources.Groups = &GroupsResult{}
+	}
+	if s.Resources.Users == nil {
+		s.Resources.Users = &UsersResult{}
+	}
+	if s.Resources.GroupsUsers == nil {
+		s.Resources.GroupsUsers = &GroupsUsersResult{}
+	}
+	return json.Marshal(*s)
 }
