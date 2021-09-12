@@ -313,7 +313,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 	}
 
 	// after be sure all the SCIM part is aligned with the Identity Provider part
-	// we can update the state
+	// we can update the state with the identity provider data
 	state.LastSync = time.Now().Format(time.RFC3339)
 	state.Resources = model.StateResources{
 		Groups:      pGroupsResult,
