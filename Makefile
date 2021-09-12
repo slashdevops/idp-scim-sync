@@ -1,14 +1,20 @@
-.DELETE_ON_ERROR:
+.DELETE_ON_ERROR: clean
 
 EXECUTABLES = go
 K := $(foreach exec,$(EXECUTABLES),\
   $(if $(shell which $(exec)),some string,$(error "No $(exec) in PATH)))
 
+BUILD_DIR := ./build
 PROJECTS_PATH := $(shell ls -d cmd/*)
 PROJECTS_NAME := $(foreach dir_name, $(PROJECTS_PATH), $(shell basename $(dir_name)) )
+PROJECT_DEPENDENCIES := $(shell go list -m -f '{{if not (or .Indirect .Main)}}{{.Path}}{{end}}' all)
 
 
 all: clean test build
+
+mod-update: tidy
+	$(foreach dep, $(PROJECT_DEPENDENCIES), $(shell go get -u $(dep)))
+	go mod tidy
 
 tidy:
 	go mod tidy
@@ -29,7 +35,7 @@ test-coverage: test
 	go tool cover -html=coverage.out
 
 build:
-	$(foreach proj_name, $(PROJECTS_NAME), $(shell CGO_ENABLED=0 go build -o ./bin/$(proj_name) ./cmd/$(proj_name)/))
+	$(foreach proj_name, $(PROJECTS_NAME), $(shell CGO_ENABLED=0 go build -o ./$(BUILD_DIR)/$(proj_name) ./cmd/$(proj_name)/))
 
 clean:
-	rm -rf ./bin ./*.out
+	rm -rf $(BUILD_DIR) ./*.out
