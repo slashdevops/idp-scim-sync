@@ -67,6 +67,10 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 	ss.mu.Lock()
 	defer ss.mu.Unlock()
 
+	log := log.WithFields(log.Fields{
+		"filter": ss.provGroupsFilter,
+	})
+
 	// retrive data from the identity provider
 	// always theses steps are necessary
 	pGroupsResult, err := ss.prov.GetGroups(ss.ctx, ss.provGroupsFilter)
@@ -104,8 +108,10 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 		log.Info("State without last sync time, first time syncing")
 
 		// Check SCIM side to see if there are any elelemnts to be
-		// reconciled. I mean SCIM is not clean until the first sync
+		// reconciled. I mean SCIM is not clean before the first sync
 		// and we need to reconcile the SCIM side with the identity provider side
+		// in case of migration from a different tool and we want to keep the state
+		// of the users and groups in the SCIM side.
 		sGroupsResult, err := ss.scim.GetGroups(ss.ctx)
 		if err != nil {
 			return err

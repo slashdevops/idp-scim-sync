@@ -11,20 +11,18 @@ import (
 )
 
 type AWSSCIMProvider struct {
-	ctx         *context.Context
 	httpClient  *http.Client
 	endpointURL *url.URL
 	bearerToken string
 }
 
-func NewSCIMService(ctx *context.Context, http *http.Client, endpoint string, token string) (*AWSSCIMProvider, error) {
+func NewSCIMService(http *http.Client, endpoint string, token string) (*AWSSCIMProvider, error) {
 	scimURL, err := url.Parse(endpoint)
 	if err != nil {
 		return nil, err
 	}
 
 	return &AWSSCIMProvider{
-		ctx:         ctx,
 		httpClient:  http,
 		endpointURL: scimURL,
 		bearerToken: token,
@@ -35,8 +33,8 @@ func (s *AWSSCIMProvider) EndpointURL() *url.URL {
 	return s.endpointURL
 }
 
-func (s *AWSSCIMProvider) sendRequest(req *http.Request, body interface{}) (resp *http.Response, err error) {
-	req = req.WithContext(*s.ctx)
+func (s *AWSSCIMProvider) sendRequest(ctx context.Context, req *http.Request, body interface{}) (resp *http.Response, err error) {
+	req = req.WithContext(ctx)
 
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/json")
@@ -61,7 +59,7 @@ func (s *AWSSCIMProvider) sendRequest(req *http.Request, body interface{}) (resp
 	return
 }
 
-func (s *AWSSCIMProvider) ListUsers(filter string) (*UsersResponse, error) {
+func (s *AWSSCIMProvider) ListUsers(ctx context.Context, filter string) (*UsersResponse, error) {
 	s.endpointURL.Path = path.Join(s.endpointURL.Path, "/Users")
 	var uResponse UsersResponse
 
@@ -76,7 +74,7 @@ func (s *AWSSCIMProvider) ListUsers(filter string) (*UsersResponse, error) {
 		return nil, err
 	}
 
-	resp, err := s.sendRequest(req, nil)
+	resp, err := s.sendRequest(ctx, req, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -89,7 +87,7 @@ func (s *AWSSCIMProvider) ListUsers(filter string) (*UsersResponse, error) {
 	return &uResponse, nil
 }
 
-func (s *AWSSCIMProvider) ListGroups(filter string) (*GroupsResponse, error) {
+func (s *AWSSCIMProvider) ListGroups(ctx context.Context, filter string) (*GroupsResponse, error) {
 	s.endpointURL.Path = path.Join(s.endpointURL.Path, "/Groups")
 	var gResponse GroupsResponse
 
@@ -104,7 +102,7 @@ func (s *AWSSCIMProvider) ListGroups(filter string) (*GroupsResponse, error) {
 		return nil, err
 	}
 
-	resp, err := s.sendRequest(req, nil)
+	resp, err := s.sendRequest(ctx, req, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -118,7 +116,7 @@ func (s *AWSSCIMProvider) ListGroups(filter string) (*GroupsResponse, error) {
 	return &gResponse, nil
 }
 
-func (s *AWSSCIMProvider) ServiceProviderConfig() (*ServiceProviderConfig, error) {
+func (s *AWSSCIMProvider) ServiceProviderConfig(ctx context.Context) (*ServiceProviderConfig, error) {
 	s.endpointURL.Path = path.Join(s.endpointURL.Path, "/ServiceProviderConfig")
 
 	req, err := http.NewRequest(http.MethodGet, s.endpointURL.String(), nil)
@@ -126,7 +124,7 @@ func (s *AWSSCIMProvider) ServiceProviderConfig() (*ServiceProviderConfig, error
 		return nil, err
 	}
 
-	resp, err := s.sendRequest(req, nil)
+	resp, err := s.sendRequest(ctx, req, nil)
 	if err != nil {
 		return nil, err
 	}

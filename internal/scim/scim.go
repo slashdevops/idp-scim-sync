@@ -12,8 +12,8 @@ import (
 // This implement core.SCIMProvider interface
 // and as consumer define AWSSCIMProvider to use aws.aws methods
 type AWSSCIMProvider interface {
-	ListUsers(filter string) (*aws.UsersResponse, error)
-	ListGroups(filter string) (*aws.GroupsResponse, error)
+	ListUsers(ctx context.Context, filter string) (*aws.UsersResponse, error)
+	ListGroups(ctx context.Context, filter string) (*aws.GroupsResponse, error)
 }
 
 // implement core.SCIMService interface
@@ -28,7 +28,7 @@ func NewSCIMProvider(scim AWSSCIMProvider) (*SCIMProvider, error) {
 }
 
 func (s *SCIMProvider) GetGroups(ctx context.Context) (*model.GroupsResult, error) {
-	sGroupsResponse, err := s.scim.ListGroups("")
+	sGroupsResponse, err := s.scim.ListGroups(ctx, "")
 	if err != nil {
 		return nil, err
 	}
@@ -54,7 +54,7 @@ func (s *SCIMProvider) GetGroups(ctx context.Context) (*model.GroupsResult, erro
 }
 
 func (s *SCIMProvider) GetUsers(ctx context.Context) (*model.UsersResult, error) {
-	UsersResponse, err := s.scim.ListUsers("")
+	UsersResponse, err := s.scim.ListUsers(ctx, "")
 	if err != nil {
 		return nil, err
 	}
@@ -105,7 +105,7 @@ func (s *SCIMProvider) GetUsersAndGroupsUsers(ctx context.Context, groups *model
 
 		// https://docs.aws.amazon.com/singlesignon/latest/developerguide/listgroups.html
 		f := fmt.Sprintf("members eq \"%s\"", user.ID)
-		sGroupsResponse, err := s.scim.ListGroups(f)
+		sGroupsResponse, err := s.scim.ListGroups(ctx, f)
 		if err != nil {
 			return nil, nil, err
 		}

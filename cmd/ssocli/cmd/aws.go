@@ -108,13 +108,13 @@ func runAWSServiceConfig(cmd *cobra.Command, args []string) error {
 		Timeout:   time.Second * 10,
 	}
 
-	awsSCIMService, err := aws.NewSCIMService(&ctx, httpClient, cfg.SCIMEndpoint, cfg.SCIMAccessToken)
+	awsSCIMService, err := aws.NewSCIMService(httpClient, cfg.SCIMEndpoint, cfg.SCIMAccessToken)
 	if err != nil {
 		log.Errorf("Error creating SCIM service: %s", err.Error())
 		return err
 	}
 
-	awsServiceConfig, err := awsSCIMService.ServiceProviderConfig()
+	awsServiceConfig, err := awsSCIMService.ServiceProviderConfig(ctx)
 	if err != nil {
 		log.Errorf("Error getting service provider config, error: %s", err.Error())
 		return err
@@ -146,13 +146,13 @@ func runAWSGroupsList(cmd *cobra.Command, args []string) error {
 		Timeout:   time.Second * 10,
 	}
 
-	awsSCIMService, err := aws.NewSCIMService(&ctx, httpClient, cfg.SCIMEndpoint, cfg.SCIMAccessToken)
+	awsSCIMService, err := aws.NewSCIMService(httpClient, cfg.SCIMEndpoint, cfg.SCIMAccessToken)
 	if err != nil {
 		log.Errorf("Error creating SCIM service: %s", err.Error())
 		return err
 	}
 
-	awsGroupsResponse, err := awsSCIMService.ListGroups(filter)
+	awsGroupsResponse, err := awsSCIMService.ListGroups(ctx, filter)
 	if err != nil {
 		log.Errorf("Error listing groups, error: %s", err.Error())
 		return err
