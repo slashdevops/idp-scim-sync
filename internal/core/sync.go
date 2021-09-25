@@ -105,7 +105,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 	// first time syncing
 	if state.LastSync == "" {
 
-		log.Info("State without last sync time, first time syncing")
+		log.Info("state without lastsync time, first time syncing")
 
 		// Check SCIM side to see if there are any elelemnts to be
 		// reconciled. I mean SCIM is not clean before the first sync
@@ -118,15 +118,15 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 		}
 
 		if sGroupsResult.Items == 0 {
-			log.Info("No SCIM groups to be reconciliate")
+			log.Info("no SCIM groups to be reconciling")
 		} else {
-			log.Warn("Reconciliating the SCIM data with the Identity Provider data until the first syncing")
+			log.Warn("reconciling the SCIM data with the Identity Provider data, the first syncing")
 
-			// reconciliate elements
+			// reconciling elements
 			gCreate, gUpdate, _, gDelete := groupsOperations(pGroupsResult, sGroupsResult)
 
 			if gCreate.Items == 0 {
-				log.Info("No groups to be created")
+				log.Info("no groups to be created")
 			} else {
 				if err := ss.scim.CreateGroups(ss.ctx, gCreate); err != nil {
 					return err
@@ -134,7 +134,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 			}
 
 			if gUpdate.Items == 0 {
-				log.Info("No groups to be updated")
+				log.Info("no groups to be updated")
 			} else {
 				if err := ss.scim.UpdateGroups(ss.ctx, gUpdate); err != nil {
 					return err
@@ -142,7 +142,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 			}
 
 			if gDelete.Items == 0 {
-				log.Info("No groups to be deleted")
+				log.Info("no groups to be deleted")
 			} else {
 				if err := ss.scim.DeleteGroups(ss.ctx, gDelete); err != nil {
 					return err
@@ -157,14 +157,14 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 		}
 
 		if sUsersResult.Items == 0 {
-			log.Info("No SCIM users to be reconciliate")
+			log.Info("no SCIM users to be reconciling")
 		} else {
 
-			// reconciliate users
+			// reconciling users
 			uCreate, uUpdate, _, uDelete := usersOperations(pUsersResult, sUsersResult)
 
 			if uCreate.Items == 0 {
-				log.Info("No users to be created")
+				log.Info("no users to be created")
 			} else {
 				if err := ss.scim.CreateUsers(ss.ctx, uCreate); err != nil {
 					return err
@@ -172,7 +172,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 			}
 
 			if uUpdate.Items == 0 {
-				log.Info("No users to be updated")
+				log.Info("no users to be updated")
 			} else {
 				if err := ss.scim.UpdateUsers(ss.ctx, uUpdate); err != nil {
 					return err
@@ -180,7 +180,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 			}
 
 			if uDelete.Items == 0 {
-				log.Info("No users to be deleted")
+				log.Info("no users to be deleted")
 			} else {
 				if err := ss.scim.DeleteUsers(ss.ctx, uDelete); err != nil {
 					return err
@@ -189,13 +189,13 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 		}
 
 		if sGroupsUsersResult.Items == 0 {
-			log.Info("No SCIM groups and members to be reconciliate")
+			log.Info("no SCIM groups and members to be reconciling")
 		} else {
-			// reconciliate groups-users --> groups members
+			// reconciling groups-users --> groups members
 			ugCreate, _, ugDelete := groupsUsersOperations(pGroupsUsersResult, sGroupsUsersResult)
 
 			if ugCreate.Items == 0 {
-				log.Info("No groups-users to be created")
+				log.Info("no groups-users to be created")
 			} else {
 				if err := ss.scim.CreateMembers(ss.ctx, ugCreate); err != nil {
 					return err
@@ -203,7 +203,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 			}
 
 			if ugDelete.Items == 0 {
-				log.Info("No groups-users to be deleted")
+				log.Info("no groups-users to be deleted")
 			} else {
 				if err := ss.scim.DeleteMembers(ss.ctx, ugDelete); err != nil {
 					return err
@@ -212,7 +212,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 		}
 
 	} else { // This is not the first time syncing
-		log.Info("State with last sync time, not first time syncing")
+		log.Info("state with last sync time, not first time syncing")
 
 		// get state data from repositroy
 		rGroupsResult, err := ss.repo.GetGroups()
@@ -231,7 +231,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 		}
 
 		if pGroupsResult.HashCode == rGroupsResult.HashCode {
-			log.Info("Groups are the same")
+			log.Info("groups are the same")
 		} else {
 			// now here we have the google fresh data and the last sync data state
 			// we need to compare the data and decide what to do
@@ -239,7 +239,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 			gCreate, gUpdate, _, gDelete := groupsOperations(pGroupsResult, rGroupsResult)
 
 			if gCreate.Items == 0 {
-				log.Info("No groups to be created")
+				log.Info("no groups to be created")
 			} else {
 				if err := ss.scim.CreateGroups(ss.ctx, gCreate); err != nil {
 					return err
@@ -247,7 +247,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 			}
 
 			if gUpdate.Items == 0 {
-				log.Info("No groups to be updated")
+				log.Info("no groups to be updated")
 			} else {
 				if err := ss.scim.UpdateGroups(ss.ctx, gUpdate); err != nil {
 					return err
@@ -255,7 +255,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 			}
 
 			if gDelete.Items == 0 {
-				log.Info("No groups to be deleted")
+				log.Info("no groups to be deleted")
 			} else {
 				if err := ss.scim.DeleteGroups(ss.ctx, gDelete); err != nil {
 					return err
@@ -264,13 +264,13 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 		}
 
 		if pUsersResult.HashCode == rUsersResult.HashCode {
-			log.Info("Users are the same")
+			log.Info("users are the same")
 		} else {
 
 			uCreate, uUpdate, _, uDelete := usersOperations(pUsersResult, rUsersResult)
 
 			if uCreate.Items == 0 {
-				log.Info("No users to be created")
+				log.Info("no users to be created")
 			} else {
 				if err := ss.scim.CreateUsers(ss.ctx, uCreate); err != nil {
 					return err
@@ -278,7 +278,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 			}
 
 			if uUpdate.Items == 0 {
-				log.Info("No users to be updated")
+				log.Info("no users to be updated")
 			} else {
 				if err := ss.scim.UpdateUsers(ss.ctx, uUpdate); err != nil {
 					return err
@@ -286,7 +286,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 			}
 
 			if uDelete.Items == 0 {
-				log.Info("No users to be deleted")
+				log.Info("no users to be deleted")
 			} else {
 				if err := ss.scim.DeleteUsers(ss.ctx, uDelete); err != nil {
 					return err
@@ -295,13 +295,13 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 		}
 
 		if pGroupsUsersResult.HashCode == rGroupsUsersResult.HashCode {
-			log.Info("Groups-Users are the same")
+			log.Info("groups-users are the same")
 		} else {
 
 			ugCreate, _, ugDelete := groupsUsersOperations(pGroupsUsersResult, rGroupsUsersResult)
 
 			if ugCreate.Items == 0 {
-				log.Info("No groups-users to be created")
+				log.Info("no groups-users to be created")
 			} else {
 				if err := ss.scim.CreateMembers(ss.ctx, ugCreate); err != nil {
 					return err
@@ -309,7 +309,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 			}
 
 			if ugDelete.Items == 0 {
-				log.Info("No groups-users to be deleted")
+				log.Info("no groups-users to be deleted")
 			} else {
 				if err := ss.scim.DeleteMembers(ss.ctx, ugDelete); err != nil {
 					return err
