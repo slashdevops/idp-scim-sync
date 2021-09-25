@@ -31,7 +31,7 @@ func TestWithIdentityProviderGroupsFilter(t *testing.T) {
 		filter := []string{"group1", "group2"}
 		prov := mocks.NewMockIdentityProviderService(mockCtrl)
 		scim := mocks.NewMockSCIMService(mockCtrl)
-		repo := mocks.NewMockRepository(mockCtrl)
+		repo := mocks.NewMockStateRepository(mockCtrl)
 
 		got, _ := NewSyncService(ctx, prov, scim, repo, WithIdentityProviderGroupsFilter(filter))
 
@@ -83,7 +83,7 @@ func TestWithIdentityProviderUsersFilter(t *testing.T) {
 		filter := []string{"user1", "user2"}
 		prov := mocks.NewMockIdentityProviderService(mockCtrl)
 		scim := mocks.NewMockSCIMService(mockCtrl)
-		repo := mocks.NewMockRepository(mockCtrl)
+		repo := mocks.NewMockStateRepository(mockCtrl)
 
 		got, _ := NewSyncService(ctx, prov, scim, repo, WithIdentityProviderUsersFilter(filter))
 

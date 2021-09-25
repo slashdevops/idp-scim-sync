@@ -28,11 +28,11 @@ type SyncService struct {
 	provUsersFilter  []string
 	prov             IdentityProviderService
 	scim             SCIMService
-	repo             Repository
+	repo             StateRepository
 }
 
 // NewSyncService creates a new sync service.
-func NewSyncService(ctx context.Context, prov IdentityProviderService, scim SCIMService, repo Repository, opts ...SyncServiceOption) (*SyncService, error) {
+func NewSyncService(ctx context.Context, prov IdentityProviderService, scim SCIMService, repo StateRepository, opts ...SyncServiceOption) (*SyncService, error) {
 	if ctx == nil {
 		return nil, ErrNilContext
 	}
@@ -195,7 +195,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 			ugCreate, _, ugDelete := groupsUsersOperations(pGroupsUsersResult, sGroupsUsersResult)
 
 			if ugCreate.Items == 0 {
-				log.Info("no groups-users to be created")
+				log.Info("no groups to be joined")
 			} else {
 				if err := ss.scim.CreateMembers(ss.ctx, ugCreate); err != nil {
 					return err
@@ -203,7 +203,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 			}
 
 			if ugDelete.Items == 0 {
-				log.Info("no groups-users to be deleted")
+				log.Info("no groups to be removed")
 			} else {
 				if err := ss.scim.DeleteMembers(ss.ctx, ugDelete); err != nil {
 					return err
@@ -212,31 +212,15 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 		}
 
 	} else { // This is not the first time syncing
-		log.Info("state with last sync time, not first time syncing")
+		log.WithField("lastsync", state.LastSync).Info("state with lastsync time, it is not first time syncing")
 
-		// get state data from repositroy
-		rGroupsResult, err := ss.repo.GetGroups()
-		if err != nil {
-			return err
-		}
-
-		rUsersResult, err := ss.repo.GetUsers()
-		if err != nil {
-			return err
-		}
-
-		rGroupsUsersResult, err := ss.repo.GetGroupsUsers()
-		if err != nil {
-			return err
-		}
-
-		if pGroupsResult.HashCode == rGroupsResult.HashCode {
+		if pGroupsResult.HashCode == state.Resources.Groups.HashCode {
 			log.Info("groups are the same")
 		} else {
 			// now here we have the google fresh data and the last sync data state
 			// we need to compare the data and decide what to do
 			// see differences between the two data sets
-			gCreate, gUpdate, _, gDelete := groupsOperations(pGroupsResult, rGroupsResult)
+			gCreate, gUpdate, _, gDelete := groupsOperations(pGroupsResult, state.Resources.Groups)
 
 			if gCreate.Items == 0 {
 				log.Info("no groups to be created")
@@ -263,11 +247,11 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 			}
 		}
 
-		if pUsersResult.HashCode == rUsersResult.HashCode {
+		if pUsersResult.HashCode == state.Resources.Users.HashCode {
 			log.Info("users are the same")
 		} else {
 
-			uCreate, uUpdate, _, uDelete := usersOperations(pUsersResult, rUsersResult)
+			uCreate, uUpdate, _, uDelete := usersOperations(pUsersResult, state.Resources.Users)
 
 			if uCreate.Items == 0 {
 				log.Info("no users to be created")
@@ -294,11 +278,11 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 			}
 		}
 
-		if pGroupsUsersResult.HashCode == rGroupsUsersResult.HashCode {
+		if pGroupsUsersResult.HashCode == state.Resources.GroupsUsers.HashCode {
 			log.Info("groups-users are the same")
 		} else {
 
-			ugCreate, _, ugDelete := groupsUsersOperations(pGroupsUsersResult, rGroupsUsersResult)
+			ugCreate, _, ugDelete := groupsUsersOperations(pGroupsUsersResult, state.Resources.GroupsUsers)
 
 			if ugCreate.Items == 0 {
 				log.Info("no groups-users to be created")
@@ -320,14 +304,16 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 
 	// after be sure all the SCIM part is aligned with the Identity Provider part
 	// we can update the state with the identity provider data
-	state.LastSync = time.Now().Format(time.RFC3339)
-	state.Resources = model.StateResources{
-		Groups:      pGroupsResult,
-		Users:       pUsersResult,
-		GroupsUsers: pGroupsUsersResult,
+	newState := &model.State{
+		LastSync: time.Now().Format(time.RFC3339),
+		Resources: model.StateResources{
+			Groups:      pGroupsResult,
+			Users:       pUsersResult,
+			GroupsUsers: pGroupsUsersResult,
+		},
 	}
 
-	if err := ss.repo.UpdateState(state); err != nil {
+	if err := ss.repo.UpdateState(newState); err != nil {
 		return err
 	}
 
