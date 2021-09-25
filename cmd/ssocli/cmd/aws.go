@@ -95,7 +95,7 @@ func init() {
 }
 
 func runAWSServiceConfig(cmd *cobra.Command, args []string) error {
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithTimeout(context.Background(), reqTimeout)
 	defer cancel()
 
 	httpTransport := http.DefaultTransport.(*http.Transport).Clone()
@@ -133,7 +133,7 @@ func runAWSServiceConfig(cmd *cobra.Command, args []string) error {
 }
 
 func runAWSGroupsList(cmd *cobra.Command, args []string) error {
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithTimeout(context.Background(), reqTimeout)
 	defer cancel()
 
 	httpTransport := http.DefaultTransport.(*http.Transport).Clone()

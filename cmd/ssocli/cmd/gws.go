@@ -18,7 +18,6 @@ package cmd
 import (
 	"context"
 	"io/ioutil"
-	"time"
 
 	"github.com/slashdevops/idp-scim-sync/internal/config"
 	"github.com/slashdevops/idp-scim-sync/pkg/google"
@@ -30,7 +29,6 @@ import (
 var (
 	groupsQuery []string
 	usersQuery  []string
-	reqTimeout  time.Duration
 )
 
 // command gws
@@ -86,7 +84,6 @@ func init() {
 
 	gwsCmd.PersistentFlags().StringVarP(&cfg.UserEmail, "gws-user-email", "u", "", "Google Workspace user email with allowed access to the Google Workspace Service Account")
 	gwsCmd.MarkPersistentFlagRequired("gws-user-email")
-	gwsCmd.PersistentFlags().DurationVarP(&reqTimeout, "timeout", "t", time.Second*10, "timeout for request")
 
 	// groups command
 	gwsGroupsCmd.AddCommand(gwsGroupsListCmd)

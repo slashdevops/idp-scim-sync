@@ -16,13 +16,18 @@ limitations under the License.
 package cmd
 
 import (
+	"time"
+
 	"github.com/slashdevops/idp-scim-sync/internal/config"
 	"github.com/spf13/cobra"
 
 	log "github.com/sirupsen/logrus"
 )
 
-var cfg config.Config
+var (
+	cfg        config.Config
+	reqTimeout time.Duration
+)
 
 // commands root
 var (
@@ -34,7 +39,7 @@ var (
 Keep your AWS Single Sign-On (SSO) users synchronized with your Google Workspace Groups
 Sync your Google Workspace Groups and Users to AWS Single Sing-On using
 AWS SSO SCIM API (https://docs.aws.amazon.com/singlesignon/latest/developerguide/what-is-scim.html).`,
-		//Run: func(cmd *cobra.Command, args []string) {},
+		// Run: func(cmd *cobra.Command, args []string) {},
 	}
 )
 
@@ -47,14 +52,15 @@ func init() {
 
 	cobra.OnInitialize(initConfig)
 
+	// global configuration for commands
 	rootCmd.PersistentFlags().BoolVarP(&cfg.Debug, "debug", "d", config.DefaultDebug, "enable log debug level")
 	rootCmd.PersistentFlags().StringVarP(&cfg.LogFormat, "log-format", "f", config.DefaultLogFormat, "set the log format")
 	rootCmd.PersistentFlags().StringVarP(&cfg.LogLevel, "log-level", "l", config.DefaultLogLevel, "set the log level")
+	rootCmd.PersistentFlags().DurationVarP(&reqTimeout, "timeout", "t", time.Second*10, "requests timeout")
 }
 
 // initConfig reads in config file and ENV variables if set.
 func initConfig() {
-
 	switch cfg.LogFormat {
 	case "json":
 		log.SetFormatter(&log.JSONFormatter{})
