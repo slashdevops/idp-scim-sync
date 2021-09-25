@@ -2,7 +2,9 @@ package disk
 
 import (
 	"encoding/json"
+	"errors"
 	"io"
+	"log"
 	"sync"
 
 	"github.com/slashdevops/idp-scim-sync/internal/model"
@@ -10,7 +12,15 @@ import (
 
 // implement core.SateRepository
 
-// consume afero.Fs
+// consume io.ReadWriter
+
+var (
+	ErrDataFilesNil       = errors.New("data files are nil")
+	ErrStateFileNil       = errors.New("state file is nil")
+	ErrGroupsFileNil      = errors.New("groups file is nil")
+	ErrUsersFileNil       = errors.New("users file is nil")
+	ErrGroupsUsersFileNil = errors.New("groups users file is nil")
+)
 
 type DBFiles struct {
 	state       io.ReadWriter
@@ -24,35 +34,31 @@ type DiskRepository struct {
 	db *DBFiles
 }
 
-func NewDiskRepository(db *DBFiles) *DiskRepository {
-	// paths := &repository.DB{
-	// 	StateFile:       "state.json",
-	// 	GroupsFile:      "groups.json",
-	// 	UsersFile:       "users.json",
-	// 	GroupsUsersFile: "groups_users.json",
-	// }
+func NewDiskRepository(db *DBFiles) (*DiskRepository, error) {
+	if db == nil {
+		return nil, ErrDataFilesNil
+	}
 
-	// stateFile, err := os.Open(paths.StateFile)
-	// if err != nil {
-	// 	fmt.Println(err)
-	// }
-	// groupsFile, err := os.Open(paths.GroupsFile)
-	// if err != nil {
-	// 	fmt.Println(err)
-	// }
-	// usersFile, err := os.Open(paths.UsersFile)
-	// if err != nil {
-	// 	fmt.Println(err)
-	// }
-	// groupsUsersFile, err := os.Open(paths.GroupsUsersFile)
-	// if err != nil {
-	// 	fmt.Println(err)
-	// }
+	if db.state == nil {
+		return nil, ErrStateFileNil
+	}
+
+	if db.groups == nil {
+		return nil, ErrGroupsFileNil
+	}
+
+	if db.users == nil {
+		return nil, ErrUsersFileNil
+	}
+
+	if db.groupsUsers == nil {
+		return nil, ErrGroupsUsersFileNil
+	}
 
 	return &DiskRepository{
 		mu: &sync.RWMutex{},
 		db: db,
-	}
+	}, nil
 }
 
 func (dr *DiskRepository) GetState() (*model.State, error) {
@@ -62,30 +68,50 @@ func (dr *DiskRepository) GetState() (*model.State, error) {
 
 	var gr *model.GroupsResult
 	groupsDecoder := json.NewDecoder(dr.db.groups)
-	err = groupsDecoder.Decode(&gr)
-	if err != nil {
+	if err = groupsDecoder.Decode(&gr); err == io.EOF {
+		log.Println("no data to decode")
+		gr = &model.GroupsResult{
+			Items:     0,
+			HashCode:  "",
+			Resources: make([]model.Group, 0),
+		}
+	} else if err != nil {
 		return nil, err
 	}
 
 	var ur *model.UsersResult
 	usersDecoder := json.NewDecoder(dr.db.users)
-	err = usersDecoder.Decode(&ur)
-	if err != nil {
+	if err = usersDecoder.Decode(&ur); err == io.EOF {
+		log.Println("no data to decode")
+		ur = &model.UsersResult{
+			Items:     0,
+			HashCode:  "",
+			Resources: make([]model.User, 0),
+		}
+	} else if err != nil {
 		return nil, err
 	}
 
 	var gur *model.GroupsUsersResult
 	groupsUsersDecoder := json.NewDecoder(dr.db.groupsUsers)
-	err = groupsUsersDecoder.Decode(&gur)
-	if err != nil {
+	if err = groupsUsersDecoder.Decode(&gur); err == io.EOF {
+		log.Println("no data to decode")
+		gur = &model.GroupsUsersResult{
+			Items:     0,
+			HashCode:  "",
+			Resources: make([]model.GroupUsers, 0),
+		}
+	} else if err != nil {
 		return nil, err
 	}
 
 	// read only the metadata not the Resoruces
 	var loadedState *model.State
 	decoder := json.NewDecoder(dr.db.state)
-	err = decoder.Decode(&loadedState)
-	if err != nil {
+	if err = decoder.Decode(loadedState); err == io.EOF {
+		log.Println("no state data to decode")
+		loadedState = &model.State{}
+	} else if err != nil {
 		return nil, err
 	}
 
@@ -97,6 +123,8 @@ func (dr *DiskRepository) GetState() (*model.State, error) {
 			GroupsUsers: gur,
 		},
 	}
+
+	log.Printf("state: %v", state)
 
 	return state, nil
 }

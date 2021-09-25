@@ -14,12 +14,12 @@ import (
 // delete: groups that exist in "state" but not in "idp"
 func groupsOperations(idp, state *model.GroupsResult) (create *model.GroupsResult, update *model.GroupsResult, equal *model.GroupsResult, delete *model.GroupsResult) {
 	idpGroups := make(map[string]struct{})
-	stateGroups := make(map[string]*model.Group)
+	stateGroups := make(map[string]model.Group)
 
-	toCreate := make([]*model.Group, 0)
-	toUpdate := make([]*model.Group, 0)
-	toEqual := make([]*model.Group, 0)
-	toDelete := make([]*model.Group, 0)
+	toCreate := make([]model.Group, 0)
+	toUpdate := make([]model.Group, 0)
+	toEqual := make([]model.Group, 0)
+	toDelete := make([]model.Group, 0)
 
 	for _, gr := range idp.Resources {
 		idpGroups[gr.Name] = struct{}{}
@@ -82,12 +82,12 @@ func groupsOperations(idp, state *model.GroupsResult) (create *model.GroupsResul
 // delete: users that exist in "state" but not in "idp"
 func usersOperations(idp, state *model.UsersResult) (create *model.UsersResult, update *model.UsersResult, equal *model.UsersResult, delete *model.UsersResult) {
 	idpUsers := make(map[string]struct{})
-	stateUsers := make(map[string]*model.User)
+	stateUsers := make(map[string]model.User)
 
-	toCreate := make([]*model.User, 0)
-	toUpdate := make([]*model.User, 0)
-	toEqual := make([]*model.User, 0)
-	toDelete := make([]*model.User, 0)
+	toCreate := make([]model.User, 0)
+	toUpdate := make([]model.User, 0)
+	toEqual := make([]model.User, 0)
+	toDelete := make([]model.User, 0)
 
 	for _, usr := range idp.Resources {
 		idpUsers[usr.Email] = struct{}{}
@@ -150,35 +150,35 @@ func usersOperations(idp, state *model.UsersResult) (create *model.UsersResult, 
 // equal: users that exist in both "idp" and "state" and their attributes are equal
 // delete: users that exist in "state" but not in "idp"
 func groupsUsersOperations(idp, state *model.GroupsUsersResult) (create *model.GroupsUsersResult, equal *model.GroupsUsersResult, delete *model.GroupsUsersResult) {
-	idpUsers := make(map[string]map[string]*model.User)
-	stateUsers := make(map[string]map[string]*model.User)
+	idpUsers := make(map[string]map[string]model.User)
+	stateUsers := make(map[string]map[string]model.User)
 
-	toCreate := make([]*model.GroupUsers, 0)
-	toEqual := make([]*model.GroupUsers, 0)
-	toDelete := make([]*model.GroupUsers, 0)
+	toCreate := make([]model.GroupUsers, 0)
+	toEqual := make([]model.GroupUsers, 0)
+	toDelete := make([]model.GroupUsers, 0)
 
 	for _, grpUsrs := range idp.Resources {
-		idpUsers[grpUsrs.Group.ID] = make(map[string]*model.User)
+		idpUsers[grpUsrs.Group.ID] = make(map[string]model.User)
 		for _, usr := range grpUsrs.Resources {
 			idpUsers[grpUsrs.Group.ID][usr.ID] = usr
 		}
 	}
 
 	for _, grpUsrs := range state.Resources {
-		stateUsers[grpUsrs.Group.ID] = make(map[string]*model.User)
+		stateUsers[grpUsrs.Group.ID] = make(map[string]model.User)
 		for _, usr := range grpUsrs.Resources {
 			stateUsers[grpUsrs.Group.ID][usr.ID] = usr
 		}
 	}
 
 	// map[group.ID][]*model.User
-	toC := make(map[string][]*model.User)
-	toE := make(map[string][]*model.User)
-	toD := make(map[string][]*model.User)
+	toC := make(map[string][]model.User)
+	toE := make(map[string][]model.User)
+	toD := make(map[string][]model.User)
 
 	for _, grpUsrs := range idp.Resources {
-		toC[grpUsrs.Group.ID] = make([]*model.User, 0)
-		toE[grpUsrs.Group.ID] = make([]*model.User, 0)
+		toC[grpUsrs.Group.ID] = make([]model.User, 0)
+		toE[grpUsrs.Group.ID] = make([]model.User, 0)
 
 		for _, usr := range grpUsrs.Resources {
 			if _, ok := stateUsers[grpUsrs.Group.ID][usr.ID]; !ok {
@@ -189,7 +189,7 @@ func groupsUsersOperations(idp, state *model.GroupsUsersResult) (create *model.G
 		}
 
 		if len(toC[grpUsrs.Group.ID]) > 0 {
-			toCreate = append(toCreate, &model.GroupUsers{
+			toCreate = append(toCreate, model.GroupUsers{
 				Items:     len(toC[grpUsrs.Group.ID]),
 				Group:     grpUsrs.Group,
 				Resources: toC[grpUsrs.Group.ID],
@@ -197,7 +197,7 @@ func groupsUsersOperations(idp, state *model.GroupsUsersResult) (create *model.G
 		}
 
 		if len(toE[grpUsrs.Group.ID]) > 0 {
-			toEqual = append(toEqual, &model.GroupUsers{
+			toEqual = append(toEqual, model.GroupUsers{
 				Items:     len(toE[grpUsrs.Group.ID]),
 				Group:     grpUsrs.Group,
 				Resources: toE[grpUsrs.Group.ID],
@@ -206,7 +206,7 @@ func groupsUsersOperations(idp, state *model.GroupsUsersResult) (create *model.G
 	}
 
 	for _, grpUsrs := range state.Resources {
-		toD[grpUsrs.Group.ID] = make([]*model.User, 0)
+		toD[grpUsrs.Group.ID] = make([]model.User, 0)
 
 		for _, usr := range grpUsrs.Resources {
 			if _, ok := idpUsers[grpUsrs.Group.ID][usr.ID]; !ok {
@@ -215,7 +215,7 @@ func groupsUsersOperations(idp, state *model.GroupsUsersResult) (create *model.G
 		}
 
 		if len(toD[grpUsrs.Group.ID]) > 0 {
-			toDelete = append(toDelete, &model.GroupUsers{
+			toDelete = append(toDelete, model.GroupUsers{
 				Items:     len(toD[grpUsrs.Group.ID]),
 				Group:     grpUsrs.Group,
 				Resources: toD[grpUsrs.Group.ID],

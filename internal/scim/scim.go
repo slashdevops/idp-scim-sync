@@ -33,9 +33,9 @@ func (s *SCIMProvider) GetGroups(ctx context.Context) (*model.GroupsResult, erro
 		return nil, err
 	}
 
-	groups := make([]*model.Group, 0)
+	groups := make([]model.Group, 0)
 	for _, group := range sGroupsResponse.Resources {
-		e := &model.Group{
+		e := model.Group{
 			ID:   group.ID,
 			Name: group.DisplayName,
 		}
@@ -59,9 +59,9 @@ func (s *SCIMProvider) GetUsers(ctx context.Context) (*model.UsersResult, error)
 		return nil, err
 	}
 
-	users := make([]*model.User, 0)
+	users := make([]model.User, 0)
 	for _, user := range UsersResponse.Resources {
-		e := &model.User{
+		e := model.User{
 			ID: user.ID,
 			Name: model.Name{
 				FamilyName: user.Name.FamilyName,
@@ -96,8 +96,8 @@ func (s *SCIMProvider) GetUsersAndGroupsUsers(ctx context.Context, groups *model
 	}
 	usersResult.HashCode = hash.Get(usersResult)
 
-	groupsIDUsers := make(map[string][]*model.User)
-	groupsData := make(map[string]*model.Group)
+	groupsIDUsers := make(map[string][]model.User)
+	groupsData := make(map[string]model.Group)
 
 	// inefficient but it is the only way to do that because AWS API Doesn't have efficient
 	// way to get the members of groups
@@ -115,7 +115,7 @@ func (s *SCIMProvider) GetUsersAndGroupsUsers(ctx context.Context, groups *model
 
 			// only one time assignment
 			if _, ok := groupsData[grp.ID]; !ok {
-				e := &model.Group{
+				e := model.Group{
 					ID:   grp.ID,
 					Name: grp.DisplayName,
 				}
@@ -126,12 +126,12 @@ func (s *SCIMProvider) GetUsersAndGroupsUsers(ctx context.Context, groups *model
 		}
 	}
 
-	groupsUsers := make([]*model.GroupUsers, 0)
+	groupsUsers := make([]model.GroupUsers, 0)
 
 	for groupID, users := range groupsIDUsers {
-		e := &model.GroupUsers{
+		e := model.GroupUsers{
 			Items:     len(users),
-			Group:     *groupsData[groupID],
+			Group:     groupsData[groupID],
 			Resources: users,
 		}
 		e.HashCode = hash.Get(e)

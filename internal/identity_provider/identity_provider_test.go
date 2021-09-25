@@ -64,14 +64,14 @@ func Test_GoogleProvider_GetGroups(t *testing.T) {
 			args: args{ctx: context.TODO(), filter: []string{""}},
 			want: &model.GroupsResult{
 				Items: 2,
-				Resources: []*model.Group{
+				Resources: []model.Group{
 					{ID: "1", Name: "group1", Email: "group1@mail.com", HashCode: hash.Get(model.Group{ID: "1", Name: "group1", Email: "group1@mail.com"})},
 					{ID: "2", Name: "group2", Email: "group2@mail.com", HashCode: hash.Get(model.Group{ID: "2", Name: "group2", Email: "group2@mail.com"})},
 				},
 				HashCode: hash.Get(
 					&model.GroupsResult{
 						Items: 2,
-						Resources: []*model.Group{
+						Resources: []model.Group{
 							{ID: "1", Name: "group1", Email: "group1@mail.com", HashCode: hash.Get(model.Group{ID: "1", Name: "group1", Email: "group1@mail.com"})},
 							{ID: "2", Name: "group2", Email: "group2@mail.com", HashCode: hash.Get(model.Group{ID: "2", Name: "group2", Email: "group2@mail.com"})},
 						},
@@ -149,14 +149,14 @@ func Test_GoogleProvider_GetUsers(t *testing.T) {
 			args: args{ctx: context.TODO(), filter: []string{""}},
 			want: &model.UsersResult{
 				Items: 2,
-				Resources: []*model.User{
+				Resources: []model.User{
 					{ID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user1@mail.com", DisplayName: "user 1", Active: true, HashCode: hash.Get(model.User{ID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user1@mail.com", DisplayName: "user 1", Active: true})},
 					{ID: "2", Name: model.Name{GivenName: "user", FamilyName: "2"}, Email: "user2@mail.com", DisplayName: "user 2", Active: false, HashCode: hash.Get(model.User{ID: "2", Name: model.Name{GivenName: "user", FamilyName: "2"}, Email: "user2@mail.com", DisplayName: "user 2", Active: false})},
 				},
 				HashCode: hash.Get(
 					&model.UsersResult{
 						Items: 2,
-						Resources: []*model.User{
+						Resources: []model.User{
 							{ID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user1@mail.com", DisplayName: "user 1", Active: true, HashCode: hash.Get(model.User{ID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user1@mail.com", DisplayName: "user 1", Active: true})},
 							{ID: "2", Name: model.Name{GivenName: "user", FamilyName: "2"}, Email: "user2@mail.com", DisplayName: "user 2", Active: false, HashCode: hash.Get(model.User{ID: "2", Name: model.Name{GivenName: "user", FamilyName: "2"}, Email: "user2@mail.com", DisplayName: "user 2", Active: false})},
 						},
@@ -234,14 +234,14 @@ func Test_GoogleProvider_GetGroupMembers(t *testing.T) {
 			args: args{ctx: context.TODO(), id: ""},
 			want: &model.MembersResult{
 				Items: 2,
-				Resources: []*model.Member{
+				Resources: []model.Member{
 					{ID: "1", Email: "user1@mail.com", HashCode: hash.Get(model.Member{ID: "1", Email: "user1@mail.com"})},
 					{ID: "2", Email: "user2@mail.com", HashCode: hash.Get(model.Member{ID: "2", Email: "user2@mail.com"})},
 				},
 				HashCode: hash.Get(
 					&model.MembersResult{
 						Items: 2,
-						Resources: []*model.Member{
+						Resources: []model.Member{
 							{ID: "1", Email: "user1@mail.com", HashCode: hash.Get(model.Member{ID: "1", Email: "user1@mail.com"})},
 							{ID: "2", Email: "user2@mail.com", HashCode: hash.Get(model.Member{ID: "2", Email: "user2@mail.com"})},
 						},
@@ -322,7 +322,7 @@ func Test_GoogleProvider_GetUsersFromGroupMembers(t *testing.T) {
 				ctx: context.TODO(),
 				mbr: &model.MembersResult{
 					Items: 2,
-					Resources: []*model.Member{
+					Resources: []model.Member{
 						{ID: "1", Email: "user1@mail.com"},
 						{ID: "2", Email: "user2@mail.com"},
 					},
@@ -330,14 +330,14 @@ func Test_GoogleProvider_GetUsersFromGroupMembers(t *testing.T) {
 			},
 			want: &model.UsersResult{
 				Items: 2,
-				Resources: []*model.User{
+				Resources: []model.User{
 					{ID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user1@mail.com", DisplayName: "user 1", Active: true, HashCode: hash.Get(&model.User{ID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user1@mail.com", DisplayName: "user 1", Active: true})},
 					{ID: "2", Name: model.Name{GivenName: "user", FamilyName: "2"}, Email: "user2@mail.com", DisplayName: "user 2", Active: false, HashCode: hash.Get(&model.User{ID: "2", Name: model.Name{GivenName: "user", FamilyName: "2"}, Email: "user2@mail.com", DisplayName: "user 2", Active: false})},
 				},
 				HashCode: hash.Get(
 					&model.UsersResult{
 						Items: 2,
-						Resources: []*model.User{
+						Resources: []model.User{
 							{ID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user1@mail.com", DisplayName: "user 1", Active: true, HashCode: hash.Get(&model.User{ID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user1@mail.com", DisplayName: "user 1", Active: true})},
 							{ID: "2", Name: model.Name{GivenName: "user", FamilyName: "2"}, Email: "user2@mail.com", DisplayName: "user 2", Active: false, HashCode: hash.Get(&model.User{ID: "2", Name: model.Name{GivenName: "user", FamilyName: "2"}, Email: "user2@mail.com", DisplayName: "user 2", Active: false})},
 						},
@@ -356,7 +356,7 @@ func Test_GoogleProvider_GetUsersFromGroupMembers(t *testing.T) {
 				ctx: context.TODO(),
 				mbr: &model.MembersResult{
 					Items: 0,
-					Resources: []*model.Member{
+					Resources: []model.Member{
 						{ID: "", Email: "user1@mail.com"},
 					},
 				},

@@ -19,14 +19,14 @@ type User struct {
 }
 
 type UsersResult struct {
-	Items     int     `json:"items"`
-	HashCode  string  `json:"hashCode"`
-	Resources []*User `json:"resources"`
+	Items     int    `json:"items"`
+	HashCode  string `json:"hashCode"`
+	Resources []User `json:"resources"`
 }
 
 func (ur *UsersResult) MarshalJSON() ([]byte, error) {
 	if ur.Resources == nil {
-		ur.Resources = make([]*User, 0)
+		ur.Resources = make([]User, 0)
 	}
 	return json.Marshal(*ur)
 }
@@ -39,14 +39,14 @@ type Group struct {
 }
 
 type GroupsResult struct {
-	Items     int      `json:"items"`
-	HashCode  string   `json:"hashCode"`
-	Resources []*Group `json:"resources"`
+	Items     int     `json:"items"`
+	HashCode  string  `json:"hashCode"`
+	Resources []Group `json:"resources"`
 }
 
 func (gr *GroupsResult) MarshalJSON() ([]byte, error) {
 	if gr.Resources == nil {
-		gr.Resources = make([]*Group, 0)
+		gr.Resources = make([]Group, 0)
 	}
 	return json.Marshal(*gr)
 }
@@ -58,39 +58,39 @@ type Member struct {
 }
 
 type MembersResult struct {
-	Items     int       `json:"items"`
-	HashCode  string    `json:"hashCode"`
-	Resources []*Member `json:"resources"`
+	Items     int      `json:"items"`
+	HashCode  string   `json:"hashCode"`
+	Resources []Member `json:"resources"`
 }
 
 type GroupMembers struct {
-	Items     int       `json:"items"`
-	Group     Group     `json:"group"`
-	Resources []*Member `json:"resources"`
+	Items     int      `json:"items"`
+	Group     Group    `json:"group"`
+	Resources []Member `json:"resources"`
 }
 
 type GroupsMembersResult struct {
-	Items     int             `json:"items"`
-	HashCode  string          `json:"hashCode"`
-	Resources []*GroupMembers `json:"resources"`
+	Items     int            `json:"items"`
+	HashCode  string         `json:"hashCode"`
+	Resources []GroupMembers `json:"resources"`
 }
 
 type GroupUsers struct {
-	Items     int     `json:"items"`
-	Group     Group   `json:"group"`
-	HashCode  string  `json:"hashCode"`
-	Resources []*User `json:"resources"`
+	Items     int    `json:"items"`
+	Group     Group  `json:"group"`
+	HashCode  string `json:"hashCode"`
+	Resources []User `json:"resources"`
 }
 
 type GroupsUsersResult struct {
-	Items     int           `json:"items"`
-	HashCode  string        `json:"hashCode"`
-	Resources []*GroupUsers `json:"resources"`
+	Items     int          `json:"items"`
+	HashCode  string       `json:"hashCode"`
+	Resources []GroupUsers `json:"resources"`
 }
 
 func (gur *GroupsUsersResult) MarshalJSON() ([]byte, error) {
 	if gur.Resources == nil {
-		gur.Resources = make([]*GroupUsers, 0)
+		gur.Resources = make([]GroupUsers, 0)
 	}
 	return json.Marshal(*gur)
 }

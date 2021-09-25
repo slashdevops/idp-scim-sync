@@ -26,28 +26,28 @@ func Test_groupsOperations(t *testing.T) {
 			args: args{
 				idp: &model.GroupsResult{
 					Items:     0,
-					Resources: []*model.Group{},
+					Resources: []model.Group{},
 				},
 				state: &model.GroupsResult{
 					Items:     0,
-					Resources: []*model.Group{},
+					Resources: []model.Group{},
 				},
 			},
 			wantCreate: &model.GroupsResult{
 				Items:     0,
-				Resources: []*model.Group{},
+				Resources: []model.Group{},
 			},
 			wantUpdate: &model.GroupsResult{
 				Items:     0,
-				Resources: []*model.Group{},
+				Resources: []model.Group{},
 			},
 			wantEqual: &model.GroupsResult{
 				Items:     0,
-				Resources: []*model.Group{},
+				Resources: []model.Group{},
 			},
 			wantDelete: &model.GroupsResult{
 				Items:     0,
-				Resources: []*model.Group{},
+				Resources: []model.Group{},
 			},
 		},
 		{
@@ -55,14 +55,14 @@ func Test_groupsOperations(t *testing.T) {
 			args: args{
 				idp: &model.GroupsResult{
 					Items: 2,
-					Resources: []*model.Group{
+					Resources: []model.Group{
 						{ID: "1", Name: "name1", Email: "1@mail.com"},
 						{ID: "2", Name: "name2", Email: "2@mail.com"},
 					},
 				},
 				state: &model.GroupsResult{
 					Items: 2,
-					Resources: []*model.Group{
+					Resources: []model.Group{
 						{ID: "1", Name: "name1", Email: "1@mail.com"},
 						{ID: "2", Name: "name2", Email: "2@mail.com"},
 					},
@@ -70,22 +70,22 @@ func Test_groupsOperations(t *testing.T) {
 			},
 			wantCreate: &model.GroupsResult{
 				Items:     0,
-				Resources: []*model.Group{},
+				Resources: []model.Group{},
 			},
 			wantUpdate: &model.GroupsResult{
 				Items:     0,
-				Resources: []*model.Group{},
+				Resources: []model.Group{},
 			},
 			wantEqual: &model.GroupsResult{
 				Items: 2,
-				Resources: []*model.Group{
+				Resources: []model.Group{
 					{ID: "1", Name: "name1", Email: "1@mail.com"},
 					{ID: "2", Name: "name2", Email: "2@mail.com"},
 				},
 			},
 			wantDelete: &model.GroupsResult{
 				Items:     0,
-				Resources: []*model.Group{},
+				Resources: []model.Group{},
 			},
 		},
 		{
@@ -93,14 +93,14 @@ func Test_groupsOperations(t *testing.T) {
 			args: args{
 				idp: &model.GroupsResult{
 					Items: 2,
-					Resources: []*model.Group{
+					Resources: []model.Group{
 						{ID: "1", Name: "name1", Email: "1@mail.com"},
 						{ID: "2", Name: "name2", Email: "22@mail.com"},
 					},
 				},
 				state: &model.GroupsResult{
 					Items: 2,
-					Resources: []*model.Group{
+					Resources: []model.Group{
 						{ID: "1", Name: "name1", Email: "1@mail.com"},
 						{ID: "2", Name: "name2", Email: "2@mail.com"},
 					},
@@ -108,23 +108,23 @@ func Test_groupsOperations(t *testing.T) {
 			},
 			wantCreate: &model.GroupsResult{
 				Items:     0,
-				Resources: []*model.Group{},
+				Resources: []model.Group{},
 			},
 			wantUpdate: &model.GroupsResult{
 				Items: 1,
-				Resources: []*model.Group{
+				Resources: []model.Group{
 					{ID: "2", Name: "name2", Email: "22@mail.com"},
 				},
 			},
 			wantEqual: &model.GroupsResult{
 				Items: 1,
-				Resources: []*model.Group{
+				Resources: []model.Group{
 					{ID: "1", Name: "name1", Email: "1@mail.com"},
 				},
 			},
 			wantDelete: &model.GroupsResult{
 				Items:     0,
-				Resources: []*model.Group{},
+				Resources: []model.Group{},
 			},
 		},
 		{
@@ -132,14 +132,14 @@ func Test_groupsOperations(t *testing.T) {
 			args: args{
 				idp: &model.GroupsResult{
 					Items: 2,
-					Resources: []*model.Group{
+					Resources: []model.Group{
 						{ID: "1", Name: "name1", Email: "1@mail.com"},
 						{ID: "2", Name: "name2", Email: "22@mail.com"},
 					},
 				},
 				state: &model.GroupsResult{
 					Items: 3,
-					Resources: []*model.Group{
+					Resources: []model.Group{
 						{ID: "1", Name: "name1", Email: "1@mail.com"},
 						{ID: "2", Name: "name2", Email: "2@mail.com"},
 						{ID: "3", Name: "name3", Email: "3@mail.com"},
@@ -148,23 +148,23 @@ func Test_groupsOperations(t *testing.T) {
 			},
 			wantCreate: &model.GroupsResult{
 				Items:     0,
-				Resources: []*model.Group{},
+				Resources: []model.Group{},
 			},
 			wantUpdate: &model.GroupsResult{
 				Items: 1,
-				Resources: []*model.Group{
+				Resources: []model.Group{
 					{ID: "2", Name: "name2", Email: "22@mail.com"},
 				},
 			},
 			wantEqual: &model.GroupsResult{
 				Items: 1,
-				Resources: []*model.Group{
+				Resources: []model.Group{
 					{ID: "1", Name: "name1", Email: "1@mail.com"},
 				},
 			},
 			wantDelete: &model.GroupsResult{
 				Items: 1,
-				Resources: []*model.Group{
+				Resources: []model.Group{
 					{ID: "3", Name: "name3", Email: "3@mail.com"},
 				},
 			},
@@ -174,7 +174,7 @@ func Test_groupsOperations(t *testing.T) {
 			args: args{
 				idp: &model.GroupsResult{
 					Items: 4,
-					Resources: []*model.Group{
+					Resources: []model.Group{
 						{ID: "1", Name: "name1", Email: "1@mail.com"},
 						{ID: "2", Name: "name2", Email: "22@mail.com"},
 						{ID: "4", Name: "name4", Email: "4@mail.com"},
@@ -182,7 +182,7 @@ func Test_groupsOperations(t *testing.T) {
 				},
 				state: &model.GroupsResult{
 					Items: 3,
-					Resources: []*model.Group{
+					Resources: []model.Group{
 						{ID: "1", Name: "name1", Email: "1@mail.com"},
 						{ID: "2", Name: "name2", Email: "2@mail.com"},
 						{ID: "3", Name: "name3", Email: "3@mail.com"},
@@ -191,25 +191,25 @@ func Test_groupsOperations(t *testing.T) {
 			},
 			wantCreate: &model.GroupsResult{
 				Items: 1,
-				Resources: []*model.Group{
+				Resources: []model.Group{
 					{ID: "4", Name: "name4", Email: "4@mail.com"},
 				},
 			},
 			wantUpdate: &model.GroupsResult{
 				Items: 1,
-				Resources: []*model.Group{
+				Resources: []model.Group{
 					{ID: "2", Name: "name2", Email: "22@mail.com"},
 				},
 			},
 			wantEqual: &model.GroupsResult{
 				Items: 1,
-				Resources: []*model.Group{
+				Resources: []model.Group{
 					{ID: "1", Name: "name1", Email: "1@mail.com"},
 				},
 			},
 			wantDelete: &model.GroupsResult{
 				Items: 1,
-				Resources: []*model.Group{
+				Resources: []model.Group{
 					{ID: "3", Name: "name3", Email: "3@mail.com"},
 				},
 			},
@@ -219,34 +219,34 @@ func Test_groupsOperations(t *testing.T) {
 			args: args{
 				idp: &model.GroupsResult{
 					Items: 1,
-					Resources: []*model.Group{
+					Resources: []model.Group{
 						{ID: "11", Name: "name1", Email: "1@mail.com"},
 					},
 				},
 				state: &model.GroupsResult{
 					Items: 1,
-					Resources: []*model.Group{
+					Resources: []model.Group{
 						{ID: "1", Name: "name1", Email: "1@mail.com"},
 					},
 				},
 			},
 			wantCreate: &model.GroupsResult{
 				Items:     0,
-				Resources: []*model.Group{},
+				Resources: []model.Group{},
 			},
 			wantUpdate: &model.GroupsResult{
 				Items: 1,
-				Resources: []*model.Group{
+				Resources: []model.Group{
 					{ID: "11", Name: "name1", Email: "1@mail.com"},
 				},
 			},
 			wantEqual: &model.GroupsResult{
 				Items:     0,
-				Resources: []*model.Group{},
+				Resources: []model.Group{},
 			},
 			wantDelete: &model.GroupsResult{
 				Items:     0,
-				Resources: []*model.Group{},
+				Resources: []model.Group{},
 			},
 		},
 	}
@@ -287,28 +287,28 @@ func Test_usersOperations(t *testing.T) {
 			args: args{
 				idp: &model.UsersResult{
 					Items:     0,
-					Resources: []*model.User{},
+					Resources: []model.User{},
 				},
 				state: &model.UsersResult{
 					Items:     0,
-					Resources: []*model.User{},
+					Resources: []model.User{},
 				},
 			},
 			wantCreate: &model.UsersResult{
 				Items:     0,
-				Resources: []*model.User{},
+				Resources: []model.User{},
 			},
 			wantUpdate: &model.UsersResult{
 				Items:     0,
-				Resources: []*model.User{},
+				Resources: []model.User{},
 			},
 			wantEqual: &model.UsersResult{
 				Items:     0,
-				Resources: []*model.User{},
+				Resources: []model.User{},
 			},
 			wantDelete: &model.UsersResult{
 				Items:     0,
-				Resources: []*model.User{},
+				Resources: []model.User{},
 			},
 		},
 		{
@@ -316,14 +316,14 @@ func Test_usersOperations(t *testing.T) {
 			args: args{
 				idp: &model.UsersResult{
 					Items: 2,
-					Resources: []*model.User{
+					Resources: []model.User{
 						{ID: "1", Email: "john.doe@email.com", Name: model.Name{FamilyName: "john", GivenName: "doe"}, DisplayName: "john doe", Active: true},
 						{ID: "2", Email: "foo.bar@email.com", Name: model.Name{FamilyName: "foo", GivenName: "bar"}, DisplayName: "foo bar", Active: true},
 					},
 				},
 				state: &model.UsersResult{
 					Items: 2,
-					Resources: []*model.User{
+					Resources: []model.User{
 						{ID: "1", Email: "john.doe@email.com", Name: model.Name{FamilyName: "john", GivenName: "doe"}, DisplayName: "john doe", Active: true},
 						{ID: "2", Email: "foo.bar@email.com", Name: model.Name{FamilyName: "foo", GivenName: "bar"}, DisplayName: "foo bar", Active: true},
 					},
@@ -331,22 +331,22 @@ func Test_usersOperations(t *testing.T) {
 			},
 			wantCreate: &model.UsersResult{
 				Items:     0,
-				Resources: []*model.User{},
+				Resources: []model.User{},
 			},
 			wantUpdate: &model.UsersResult{
 				Items:     0,
-				Resources: []*model.User{},
+				Resources: []model.User{},
 			},
 			wantEqual: &model.UsersResult{
 				Items: 2,
-				Resources: []*model.User{
+				Resources: []model.User{
 					{ID: "1", Email: "john.doe@email.com", Name: model.Name{FamilyName: "john", GivenName: "doe"}, DisplayName: "john doe", Active: true},
 					{ID: "2", Email: "foo.bar@email.com", Name: model.Name{FamilyName: "foo", GivenName: "bar"}, DisplayName: "foo bar", Active: true},
 				},
 			},
 			wantDelete: &model.UsersResult{
 				Items:     0,
-				Resources: []*model.User{},
+				Resources: []model.User{},
 			},
 		},
 		{
@@ -354,14 +354,14 @@ func Test_usersOperations(t *testing.T) {
 			args: args{
 				idp: &model.UsersResult{
 					Items: 2,
-					Resources: []*model.User{
+					Resources: []model.User{
 						{ID: "1", Email: "john.doe@email.com", Name: model.Name{FamilyName: "john", GivenName: "doe"}, DisplayName: "john doe", Active: true},
 						{ID: "2", Email: "foo.bar@email.com", Name: model.Name{FamilyName: "foonew", GivenName: "bar"}, DisplayName: "foonew bar", Active: true},
 					},
 				},
 				state: &model.UsersResult{
 					Items: 2,
-					Resources: []*model.User{
+					Resources: []model.User{
 						{ID: "1", Email: "john.doe@email.com", Name: model.Name{FamilyName: "john", GivenName: "doe"}, DisplayName: "john doe", Active: true},
 						{ID: "2", Email: "foo.bar@email.com", Name: model.Name{FamilyName: "foo", GivenName: "bar"}, DisplayName: "foo bar", Active: true},
 						{ID: "3", Email: "donato.ricupero@email.com", Name: model.Name{FamilyName: "donato", GivenName: "ricupero"}, DisplayName: "donato ricupero", Active: true},
@@ -370,23 +370,23 @@ func Test_usersOperations(t *testing.T) {
 			},
 			wantCreate: &model.UsersResult{
 				Items:     0,
-				Resources: []*model.User{},
+				Resources: []model.User{},
 			},
 			wantUpdate: &model.UsersResult{
 				Items: 1,
-				Resources: []*model.User{
+				Resources: []model.User{
 					{ID: "2", Email: "foo.bar@email.com", Name: model.Name{FamilyName: "foonew", GivenName: "bar"}, DisplayName: "foonew bar", Active: true},
 				},
 			},
 			wantEqual: &model.UsersResult{
 				Items: 1,
-				Resources: []*model.User{
+				Resources: []model.User{
 					{ID: "1", Email: "john.doe@email.com", Name: model.Name{FamilyName: "john", GivenName: "doe"}, DisplayName: "john doe", Active: true},
 				},
 			},
 			wantDelete: &model.UsersResult{
 				Items: 1,
-				Resources: []*model.User{
+				Resources: []model.User{
 					{ID: "3", Email: "donato.ricupero@email.com", Name: model.Name{FamilyName: "donato", GivenName: "ricupero"}, DisplayName: "donato ricupero", Active: true},
 				},
 			},
@@ -396,14 +396,14 @@ func Test_usersOperations(t *testing.T) {
 			args: args{
 				idp: &model.UsersResult{
 					Items: 2,
-					Resources: []*model.User{
+					Resources: []model.User{
 						{ID: "1", Email: "john.doe@email.com", Name: model.Name{FamilyName: "john", GivenName: "doe"}, DisplayName: "john doe", Active: true},
 						{ID: "2", Email: "foo.bar@email.com", Name: model.Name{FamilyName: "foonew", GivenName: "bar"}, DisplayName: "foonew bar", Active: true},
 					},
 				},
 				state: &model.UsersResult{
 					Items: 2,
-					Resources: []*model.User{
+					Resources: []model.User{
 						{ID: "1", Email: "john.doe@email.com", Name: model.Name{FamilyName: "john", GivenName: "doe"}, DisplayName: "john doe", Active: true},
 						{ID: "2", Email: "foo.bar@email.com", Name: model.Name{FamilyName: "foo", GivenName: "bar"}, DisplayName: "foo bar", Active: true},
 					},
@@ -411,23 +411,23 @@ func Test_usersOperations(t *testing.T) {
 			},
 			wantCreate: &model.UsersResult{
 				Items:     0,
-				Resources: []*model.User{},
+				Resources: []model.User{},
 			},
 			wantUpdate: &model.UsersResult{
 				Items: 1,
-				Resources: []*model.User{
+				Resources: []model.User{
 					{ID: "2", Email: "foo.bar@email.com", Name: model.Name{FamilyName: "foonew", GivenName: "bar"}, DisplayName: "foonew bar", Active: true},
 				},
 			},
 			wantEqual: &model.UsersResult{
 				Items: 1,
-				Resources: []*model.User{
+				Resources: []model.User{
 					{ID: "1", Email: "john.doe@email.com", Name: model.Name{FamilyName: "john", GivenName: "doe"}, DisplayName: "john doe", Active: true},
 				},
 			},
 			wantDelete: &model.UsersResult{
 				Items:     0,
-				Resources: []*model.User{},
+				Resources: []model.User{},
 			},
 		},
 		{
@@ -435,7 +435,7 @@ func Test_usersOperations(t *testing.T) {
 			args: args{
 				idp: &model.UsersResult{
 					Items: 2,
-					Resources: []*model.User{
+					Resources: []model.User{
 						{ID: "1", Email: "john.doe@email.com", Name: model.Name{FamilyName: "john", GivenName: "doe"}, DisplayName: "john doe", Active: true},
 						{ID: "2", Email: "foo.bar@email.com", Name: model.Name{FamilyName: "foonew", GivenName: "bar"}, DisplayName: "foonew bar", Active: true},
 						{ID: "4", Email: "don.nadie@email.com", Name: model.Name{FamilyName: "don", GivenName: "nadie"}, DisplayName: "don nadie", Active: true},
@@ -443,7 +443,7 @@ func Test_usersOperations(t *testing.T) {
 				},
 				state: &model.UsersResult{
 					Items: 2,
-					Resources: []*model.User{
+					Resources: []model.User{
 						{ID: "1", Email: "john.doe@email.com", Name: model.Name{FamilyName: "john", GivenName: "doe"}, DisplayName: "john doe", Active: true},
 						{ID: "2", Email: "foo.bar@email.com", Name: model.Name{FamilyName: "foo", GivenName: "bar"}, DisplayName: "foo bar", Active: true},
 						{ID: "3", Email: "donato.ricupero@email.com", Name: model.Name{FamilyName: "donato", GivenName: "ricupero"}, DisplayName: "donato ricupero", Active: true},
@@ -452,25 +452,25 @@ func Test_usersOperations(t *testing.T) {
 			},
 			wantCreate: &model.UsersResult{
 				Items: 1,
-				Resources: []*model.User{
+				Resources: []model.User{
 					{ID: "4", Email: "don.nadie@email.com", Name: model.Name{FamilyName: "don", GivenName: "nadie"}, DisplayName: "don nadie", Active: true},
 				},
 			},
 			wantUpdate: &model.UsersResult{
 				Items: 1,
-				Resources: []*model.User{
+				Resources: []model.User{
 					{ID: "2", Email: "foo.bar@email.com", Name: model.Name{FamilyName: "foonew", GivenName: "bar"}, DisplayName: "foonew bar", Active: true},
 				},
 			},
 			wantEqual: &model.UsersResult{
 				Items: 1,
-				Resources: []*model.User{
+				Resources: []model.User{
 					{ID: "1", Email: "john.doe@email.com", Name: model.Name{FamilyName: "john", GivenName: "doe"}, DisplayName: "john doe", Active: true},
 				},
 			},
 			wantDelete: &model.UsersResult{
 				Items: 1,
-				Resources: []*model.User{
+				Resources: []model.User{
 					{ID: "3", Email: "donato.ricupero@email.com", Name: model.Name{FamilyName: "donato", GivenName: "ricupero"}, DisplayName: "donato ricupero", Active: true},
 				},
 			},
@@ -512,24 +512,24 @@ func Test_groupsUsersOperations(t *testing.T) {
 			args: args{
 				idp: &model.GroupsUsersResult{
 					Items:     0,
-					Resources: []*model.GroupUsers{},
+					Resources: []model.GroupUsers{},
 				},
 				state: &model.GroupsUsersResult{
 					Items:     0,
-					Resources: []*model.GroupUsers{},
+					Resources: []model.GroupUsers{},
 				},
 			},
 			wantCreate: &model.GroupsUsersResult{
 				Items:     0,
-				Resources: []*model.GroupUsers{},
+				Resources: []model.GroupUsers{},
 			},
 			wantEqual: &model.GroupsUsersResult{
 				Items:     0,
-				Resources: []*model.GroupUsers{},
+				Resources: []model.GroupUsers{},
 			},
 			wantDelete: &model.GroupsUsersResult{
 				Items:     0,
-				Resources: []*model.GroupUsers{},
+				Resources: []model.GroupUsers{},
 			},
 		},
 		{
@@ -537,11 +537,11 @@ func Test_groupsUsersOperations(t *testing.T) {
 			args: args{
 				idp: &model.GroupsUsersResult{
 					Items: 2,
-					Resources: []*model.GroupUsers{
+					Resources: []model.GroupUsers{
 						{
 							Items: 2,
 							Group: model.Group{ID: "1", Name: "group 1", Email: "g.1@mail.com"},
-							Resources: []*model.User{
+							Resources: []model.User{
 								{ID: "1", Name: model.Name{FamilyName: "user", GivenName: "1"}, Email: "u.1@mail.com"},
 								{ID: "2", Name: model.Name{FamilyName: "user", GivenName: "2"}, Email: "u.2@mail.com"},
 							},
@@ -549,7 +549,7 @@ func Test_groupsUsersOperations(t *testing.T) {
 						{
 							Items: 1,
 							Group: model.Group{ID: "2", Name: "group 2", Email: "g.2@mail.com"},
-							Resources: []*model.User{
+							Resources: []model.User{
 								{ID: "1", Name: model.Name{FamilyName: "user", GivenName: "1"}, Email: "u.1@mail.com"},
 							},
 						},
@@ -557,11 +557,11 @@ func Test_groupsUsersOperations(t *testing.T) {
 				},
 				state: &model.GroupsUsersResult{
 					Items: 2,
-					Resources: []*model.GroupUsers{
+					Resources: []model.GroupUsers{
 						{
 							Items: 2,
 							Group: model.Group{ID: "1", Name: "group 1", Email: "g.1@mail.com"},
-							Resources: []*model.User{
+							Resources: []model.User{
 								{ID: "1", Name: model.Name{FamilyName: "user", GivenName: "1"}, Email: "u.1@mail.com"},
 								{ID: "2", Name: model.Name{FamilyName: "user", GivenName: "2"}, Email: "u.2@mail.com"},
 							},
@@ -569,7 +569,7 @@ func Test_groupsUsersOperations(t *testing.T) {
 						{
 							Items: 1,
 							Group: model.Group{ID: "2", Name: "group 2", Email: "g.2@mail.com"},
-							Resources: []*model.User{
+							Resources: []model.User{
 								{ID: "1", Name: model.Name{FamilyName: "user", GivenName: "1"}, Email: "u.1@mail.com"},
 							},
 						},
@@ -578,15 +578,15 @@ func Test_groupsUsersOperations(t *testing.T) {
 			},
 			wantCreate: &model.GroupsUsersResult{
 				Items:     0,
-				Resources: []*model.GroupUsers{},
+				Resources: []model.GroupUsers{},
 			},
 			wantEqual: &model.GroupsUsersResult{
 				Items: 2,
-				Resources: []*model.GroupUsers{
+				Resources: []model.GroupUsers{
 					{
 						Items: 2,
 						Group: model.Group{ID: "1", Name: "group 1", Email: "g.1@mail.com"},
-						Resources: []*model.User{
+						Resources: []model.User{
 							{ID: "1", Name: model.Name{FamilyName: "user", GivenName: "1"}, Email: "u.1@mail.com"},
 							{ID: "2", Name: model.Name{FamilyName: "user", GivenName: "2"}, Email: "u.2@mail.com"},
 						},
@@ -594,7 +594,7 @@ func Test_groupsUsersOperations(t *testing.T) {
 					{
 						Items: 1,
 						Group: model.Group{ID: "2", Name: "group 2", Email: "g.2@mail.com"},
-						Resources: []*model.User{
+						Resources: []model.User{
 							{ID: "1", Name: model.Name{FamilyName: "user", GivenName: "1"}, Email: "u.1@mail.com"},
 						},
 					},
@@ -602,7 +602,7 @@ func Test_groupsUsersOperations(t *testing.T) {
 			},
 			wantDelete: &model.GroupsUsersResult{
 				Items:     0,
-				Resources: []*model.GroupUsers{},
+				Resources: []model.GroupUsers{},
 			},
 		},
 		{
@@ -610,11 +610,11 @@ func Test_groupsUsersOperations(t *testing.T) {
 			args: args{
 				idp: &model.GroupsUsersResult{
 					Items: 2,
-					Resources: []*model.GroupUsers{
+					Resources: []model.GroupUsers{
 						{
 							Items: 2,
 							Group: model.Group{ID: "1", Name: "group 1", Email: "g.1@mail.com"},
-							Resources: []*model.User{
+							Resources: []model.User{
 								{ID: "1", Name: model.Name{FamilyName: "user", GivenName: "1"}, Email: "u.1@mail.com"},
 								{ID: "2", Name: model.Name{FamilyName: "user", GivenName: "2"}, Email: "u.2@mail.com"},
 							},
@@ -622,7 +622,7 @@ func Test_groupsUsersOperations(t *testing.T) {
 						{
 							Items: 1,
 							Group: model.Group{ID: "2", Name: "group 2", Email: "g.2@mail.com"},
-							Resources: []*model.User{
+							Resources: []model.User{
 								{ID: "1", Name: model.Name{FamilyName: "user", GivenName: "1"}, Email: "u.1@mail.com"},
 							},
 						},
@@ -630,18 +630,18 @@ func Test_groupsUsersOperations(t *testing.T) {
 				},
 				state: &model.GroupsUsersResult{
 					Items: 2,
-					Resources: []*model.GroupUsers{
+					Resources: []model.GroupUsers{
 						{
 							Items: 1,
 							Group: model.Group{ID: "1", Name: "group 1", Email: "g.1@mail.com"},
-							Resources: []*model.User{
+							Resources: []model.User{
 								{ID: "1", Name: model.Name{FamilyName: "user", GivenName: "1"}, Email: "u.1@mail.com"},
 							},
 						},
 						{
 							Items: 2,
 							Group: model.Group{ID: "2", Name: "group 2", Email: "g.2@mail.com"},
-							Resources: []*model.User{
+							Resources: []model.User{
 								{ID: "1", Name: model.Name{FamilyName: "user", GivenName: "1"}, Email: "u.1@mail.com"},
 								{ID: "3", Name: model.Name{FamilyName: "user", GivenName: "3"}, Email: "u.3@mail.com"},
 							},
@@ -651,11 +651,11 @@ func Test_groupsUsersOperations(t *testing.T) {
 			},
 			wantCreate: &model.GroupsUsersResult{
 				Items: 1,
-				Resources: []*model.GroupUsers{
+				Resources: []model.GroupUsers{
 					{
 						Items: 1,
 						Group: model.Group{ID: "1", Name: "group 1", Email: "g.1@mail.com"},
-						Resources: []*model.User{
+						Resources: []model.User{
 							{ID: "2", Name: model.Name{FamilyName: "user", GivenName: "2"}, Email: "u.2@mail.com"},
 						},
 					},
@@ -663,18 +663,18 @@ func Test_groupsUsersOperations(t *testing.T) {
 			},
 			wantEqual: &model.GroupsUsersResult{
 				Items: 2,
-				Resources: []*model.GroupUsers{
+				Resources: []model.GroupUsers{
 					{
 						Items: 1,
 						Group: model.Group{ID: "1", Name: "group 1", Email: "g.1@mail.com"},
-						Resources: []*model.User{
+						Resources: []model.User{
 							{ID: "1", Name: model.Name{FamilyName: "user", GivenName: "1"}, Email: "u.1@mail.com"},
 						},
 					},
 					{
 						Items: 1,
 						Group: model.Group{ID: "2", Name: "group 2", Email: "g.2@mail.com"},
-						Resources: []*model.User{
+						Resources: []model.User{
 							{ID: "1", Name: model.Name{FamilyName: "user", GivenName: "1"}, Email: "u.1@mail.com"},
 						},
 					},
@@ -682,11 +682,11 @@ func Test_groupsUsersOperations(t *testing.T) {
 			},
 			wantDelete: &model.GroupsUsersResult{
 				Items: 1,
-				Resources: []*model.GroupUsers{
+				Resources: []model.GroupUsers{
 					{
 						Items: 1,
 						Group: model.Group{ID: "2", Name: "group 2", Email: "g.2@mail.com"},
-						Resources: []*model.User{
+						Resources: []model.User{
 							{ID: "3", Name: model.Name{FamilyName: "user", GivenName: "3"}, Email: "u.3@mail.com"},
 						},
 					},

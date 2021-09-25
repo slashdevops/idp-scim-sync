@@ -49,7 +49,7 @@ func NewIdentityProvider(gps GoogleProviderService) (*IdentityProvider, error) {
 // The filter parameter is a list of strings that can be used to filter the groups
 // according to the Google Directory API.
 func (i *IdentityProvider) GetGroups(ctx context.Context, filter []string) (*model.GroupsResult, error) {
-	syncGroups := make([]*model.Group, 0)
+	syncGroups := make([]model.Group, 0)
 
 	googleGroups, err := i.ps.ListGroups(ctx, filter)
 	if err != nil {
@@ -58,7 +58,7 @@ func (i *IdentityProvider) GetGroups(ctx context.Context, filter []string) (*mod
 
 	for _, grp := range googleGroups {
 
-		e := &model.Group{
+		e := model.Group{
 			ID:    grp.Id,
 			Name:  grp.Name,
 			Email: grp.Email,
@@ -83,7 +83,7 @@ func (i *IdentityProvider) GetGroups(ctx context.Context, filter []string) (*mod
 // The filter parameter is a list of strings that can be used to filter the users
 // according to the Google Directory API.
 func (i *IdentityProvider) GetUsers(ctx context.Context, filter []string) (*model.UsersResult, error) {
-	syncUsers := make([]*model.User, 0)
+	syncUsers := make([]model.User, 0)
 
 	googleUsers, err := i.ps.ListUsers(ctx, filter)
 	if err != nil {
@@ -92,7 +92,7 @@ func (i *IdentityProvider) GetUsers(ctx context.Context, filter []string) (*mode
 
 	for _, usr := range googleUsers {
 
-		e := &model.User{
+		e := model.User{
 			ID:          usr.Id,
 			Name:        model.Name{FamilyName: usr.Name.FamilyName, GivenName: usr.Name.GivenName},
 			DisplayName: fmt.Sprintf("%s %s", usr.Name.GivenName, usr.Name.FamilyName),
@@ -114,7 +114,7 @@ func (i *IdentityProvider) GetUsers(ctx context.Context, filter []string) (*mode
 }
 
 func (i *IdentityProvider) GetGroupMembers(ctx context.Context, id string) (*model.MembersResult, error) {
-	syncMembers := make([]*model.Member, 0)
+	syncMembers := make([]model.Member, 0)
 
 	googleMembers, err := i.ps.ListGroupMembers(ctx, id)
 	if err != nil {
@@ -122,7 +122,7 @@ func (i *IdentityProvider) GetGroupMembers(ctx context.Context, id string) (*mod
 	}
 
 	for _, member := range googleMembers {
-		e := &model.Member{
+		e := model.Member{
 			ID:    member.Id,
 			Email: member.Email,
 		}
@@ -141,7 +141,7 @@ func (i *IdentityProvider) GetGroupMembers(ctx context.Context, id string) (*mod
 }
 
 func (i *IdentityProvider) GetUsersFromGroupMembers(ctx context.Context, mbr *model.MembersResult) (*model.UsersResult, error) {
-	syncUsers := make([]*model.User, 0)
+	syncUsers := make([]model.User, 0)
 
 	for _, member := range mbr.Resources {
 		u, err := i.ps.GetUser(ctx, member.ID)
@@ -149,7 +149,7 @@ func (i *IdentityProvider) GetUsersFromGroupMembers(ctx context.Context, mbr *mo
 			return nil, ErrGettingUser
 		}
 
-		e := &model.User{
+		e := model.User{
 			ID:          u.Id,
 			Name:        model.Name{FamilyName: u.Name.FamilyName, GivenName: u.Name.GivenName},
 			DisplayName: fmt.Sprintf("%s %s", u.Name.GivenName, u.Name.FamilyName),
@@ -172,8 +172,8 @@ func (i *IdentityProvider) GetUsersFromGroupMembers(ctx context.Context, mbr *mo
 
 // GetUsersAndGroupsUsers returns a model.UsersResult and model.GroupsUsersResult data structures with the users and groups
 func (i *IdentityProvider) GetUsersAndGroupsUsers(ctx context.Context, groups *model.GroupsResult) (*model.UsersResult, *model.GroupsUsersResult, error) {
-	pUsers := make([]*model.User, 0)
-	pGroupsUsers := make([]*model.GroupUsers, 0)
+	pUsers := make([]model.User, 0)
+	pGroupsUsers := make([]model.GroupUsers, 0)
 
 	for _, pGroup := range groups.Resources {
 
@@ -188,7 +188,7 @@ func (i *IdentityProvider) GetUsersAndGroupsUsers(ctx context.Context, groups *m
 		}
 		pUsers = append(pUsers, pUsersFromMembers.Resources...)
 
-		pGroupUsers := &model.GroupUsers{
+		pGroupUsers := model.GroupUsers{
 			Items: len(pMembers.Resources),
 			Group: model.Group{
 				ID:    pGroup.ID,

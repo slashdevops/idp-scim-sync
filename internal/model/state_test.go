@@ -30,7 +30,7 @@ func TestState_MarshalJSON(t *testing.T) {
 					Groups: &GroupsResult{
 						Items:    1,
 						HashCode: "hashCode",
-						Resources: []*Group{
+						Resources: []Group{
 							{
 								ID:       "id",
 								Name:     "name",
@@ -42,7 +42,7 @@ func TestState_MarshalJSON(t *testing.T) {
 					Users: &UsersResult{
 						Items:    1,
 						HashCode: "hashCode",
-						Resources: []*User{
+						Resources: []User{
 							{
 								ID:       "id",
 								Name:     Name{FamilyName: "lastName", GivenName: "name"},
@@ -54,7 +54,7 @@ func TestState_MarshalJSON(t *testing.T) {
 					GroupsUsers: &GroupsUsersResult{
 						Items:    1,
 						HashCode: "hashCode",
-						Resources: []*GroupUsers{
+						Resources: []GroupUsers{
 							{
 								Items:    1,
 								HashCode: "hashCode",
@@ -64,7 +64,7 @@ func TestState_MarshalJSON(t *testing.T) {
 									Email:    "email",
 									HashCode: "hashCode",
 								},
-								Resources: []*User{
+								Resources: []User{
 									{
 										ID:       "id",
 										Name:     Name{FamilyName: "lastName", GivenName: "name"},

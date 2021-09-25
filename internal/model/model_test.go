@@ -8,7 +8,7 @@ import (
 func TestUsersResult_MarshalJSON(t *testing.T) {
 	type fields struct {
 		Items     int
-		Resources []*User
+		Resources []User
 		HashCode  string
 	}
 	tests := []struct {
@@ -28,7 +28,7 @@ func TestUsersResult_MarshalJSON(t *testing.T) {
 			fields: fields{
 				Items:    1,
 				HashCode: "test",
-				Resources: []*User{
+				Resources: []User{
 					{
 						ID: "1",
 						Name: Name{
@@ -69,7 +69,7 @@ func TestGroupsResult_MarshalJSON(t *testing.T) {
 	type fields struct {
 		Items     int
 		HashCode  string
-		Resources []*Group
+		Resources []Group
 	}
 	tests := []struct {
 		name    string
@@ -88,7 +88,7 @@ func TestGroupsResult_MarshalJSON(t *testing.T) {
 			fields: fields{
 				Items:    1,
 				HashCode: "test",
-				Resources: []*Group{
+				Resources: []Group{
 					{
 						ID:       "1",
 						Name:     "group",
@@ -123,7 +123,7 @@ func TestGroupsUsersResult_MarshalJSON(t *testing.T) {
 	type fields struct {
 		Items     int
 		HashCode  string
-		Resources []*GroupUsers
+		Resources []GroupUsers
 	}
 	tests := []struct {
 		name    string
@@ -142,7 +142,7 @@ func TestGroupsUsersResult_MarshalJSON(t *testing.T) {
 			fields: fields{
 				Items:    1,
 				HashCode: "test",
-				Resources: []*GroupUsers{
+				Resources: []GroupUsers{
 					{
 						Items: 1,
 						Group: Group{
@@ -152,7 +152,7 @@ func TestGroupsUsersResult_MarshalJSON(t *testing.T) {
 							HashCode: "test",
 						},
 						HashCode: "test",
-						Resources: []*User{
+						Resources: []User{
 							{
 								ID: "1",
 								Name: Name{
