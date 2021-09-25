@@ -19,7 +19,7 @@ func TestState_MarshalJSON(t *testing.T) {
 		{
 			name:    "empty",
 			fields:  fields{},
-			want:    []byte(`{"lastSync":"","resources":{"groups":{"items":0,"hashCode":"","resources":[]},"users":{"items":0,"hashCode":"","resources":[]},"groupsUsers":{"items":0,"hashCode":"","resources":[]}}}`),
+			want:    []byte(`{"resources":{"groups":{"items":0,"hashCode":"","resources":null},"users":{"items":0,"hashCode":"","resources":null},"groupsUsers":{"items":0,"hashCode":"","resources":null}}}`),
 			wantErr: false,
 		},
 		{
@@ -27,7 +27,7 @@ func TestState_MarshalJSON(t *testing.T) {
 			fields: fields{
 				LastSync: "2020-01-01T00:00:00Z",
 				Resources: StateResources{
-					Groups: &GroupsResult{
+					Groups: GroupsResult{
 						Items:    1,
 						HashCode: "hashCode",
 						Resources: []Group{
@@ -39,7 +39,7 @@ func TestState_MarshalJSON(t *testing.T) {
 							},
 						},
 					},
-					Users: &UsersResult{
+					Users: UsersResult{
 						Items:    1,
 						HashCode: "hashCode",
 						Resources: []User{
@@ -51,7 +51,7 @@ func TestState_MarshalJSON(t *testing.T) {
 							},
 						},
 					},
-					GroupsUsers: &GroupsUsersResult{
+					GroupsUsers: GroupsUsersResult{
 						Items:    1,
 						HashCode: "hashCode",
 						Resources: []GroupUsers{

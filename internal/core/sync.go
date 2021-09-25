@@ -220,7 +220,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 			// now here we have the google fresh data and the last sync data state
 			// we need to compare the data and decide what to do
 			// see differences between the two data sets
-			gCreate, gUpdate, _, gDelete := groupsOperations(pGroupsResult, state.Resources.Groups)
+			gCreate, gUpdate, _, gDelete := groupsOperations(pGroupsResult, &state.Resources.Groups)
 
 			if gCreate.Items == 0 {
 				log.Info("no groups to be created")
@@ -251,7 +251,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 			log.Info("users are the same")
 		} else {
 
-			uCreate, uUpdate, _, uDelete := usersOperations(pUsersResult, state.Resources.Users)
+			uCreate, uUpdate, _, uDelete := usersOperations(pUsersResult, &state.Resources.Users)
 
 			if uCreate.Items == 0 {
 				log.Info("no users to be created")
@@ -282,7 +282,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 			log.Info("groups-users are the same")
 		} else {
 
-			ugCreate, _, ugDelete := groupsUsersOperations(pGroupsUsersResult, state.Resources.GroupsUsers)
+			ugCreate, _, ugDelete := groupsUsersOperations(pGroupsUsersResult, &state.Resources.GroupsUsers)
 
 			if ugCreate.Items == 0 {
 				log.Info("no groups-users to be created")
@@ -307,9 +307,9 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 	newState := &model.State{
 		LastSync: time.Now().Format(time.RFC3339),
 		Resources: model.StateResources{
-			Groups:      pGroupsResult,
-			Users:       pUsersResult,
-			GroupsUsers: pGroupsUsersResult,
+			Groups:      *pGroupsResult,
+			Users:       *pUsersResult,
+			GroupsUsers: *pGroupsUsersResult,
 		},
 	}
 

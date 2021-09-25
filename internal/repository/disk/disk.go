@@ -66,11 +66,11 @@ func (dr *DiskRepository) GetState() (*model.State, error) {
 	defer dr.mu.RUnlock()
 	var err error
 
-	var gr *model.GroupsResult
+	var gr model.GroupsResult
 	groupsDecoder := json.NewDecoder(dr.db.groups)
 	if err = groupsDecoder.Decode(&gr); err == io.EOF {
 		log.Println("no data to decode")
-		gr = &model.GroupsResult{
+		gr = model.GroupsResult{
 			Items:     0,
 			HashCode:  "",
 			Resources: make([]model.Group, 0),
@@ -79,11 +79,11 @@ func (dr *DiskRepository) GetState() (*model.State, error) {
 		return nil, err
 	}
 
-	var ur *model.UsersResult
+	var ur model.UsersResult
 	usersDecoder := json.NewDecoder(dr.db.users)
 	if err = usersDecoder.Decode(&ur); err == io.EOF {
 		log.Println("no data to decode")
-		ur = &model.UsersResult{
+		ur = model.UsersResult{
 			Items:     0,
 			HashCode:  "",
 			Resources: make([]model.User, 0),
@@ -92,11 +92,11 @@ func (dr *DiskRepository) GetState() (*model.State, error) {
 		return nil, err
 	}
 
-	var gur *model.GroupsUsersResult
+	var gur model.GroupsUsersResult
 	groupsUsersDecoder := json.NewDecoder(dr.db.groupsUsers)
 	if err = groupsUsersDecoder.Decode(&gur); err == io.EOF {
 		log.Println("no data to decode")
-		gur = &model.GroupsUsersResult{
+		gur = model.GroupsUsersResult{
 			Items:     0,
 			HashCode:  "",
 			Resources: make([]model.GroupUsers, 0),
@@ -106,11 +106,11 @@ func (dr *DiskRepository) GetState() (*model.State, error) {
 	}
 
 	// read only the metadata not the Resoruces
-	var loadedState *model.State
+	var loadedState model.State
 	decoder := json.NewDecoder(dr.db.state)
-	if err = decoder.Decode(loadedState); err == io.EOF {
+	if err = decoder.Decode(&loadedState); err == io.EOF {
 		log.Println("no state data to decode")
-		loadedState = &model.State{}
+		loadedState = model.State{}
 	} else if err != nil {
 		return nil, err
 	}
