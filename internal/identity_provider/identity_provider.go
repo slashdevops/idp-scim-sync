@@ -24,10 +24,10 @@ var (
 // and as a consumer define GoogleProviderService to use pkg.google methods
 
 type GoogleProviderService interface {
-	ListUsers(query []string) ([]*admin.User, error)
-	ListGroups(query []string) ([]*admin.Group, error)
-	ListGroupMembers(groupID string) ([]*admin.Member, error)
-	GetUser(userID string) (*admin.User, error)
+	ListUsers(ctx context.Context, query []string) ([]*admin.User, error)
+	ListGroups(ctx context.Context, query []string) ([]*admin.Group, error)
+	ListGroupMembers(ctx context.Context, groupID string) ([]*admin.Member, error)
+	GetUser(ctx context.Context, userID string) (*admin.User, error)
 }
 
 type IdentityProvider struct {
@@ -51,7 +51,7 @@ func NewIdentityProvider(gps GoogleProviderService) (*IdentityProvider, error) {
 func (i *IdentityProvider) GetGroups(ctx context.Context, filter []string) (*model.GroupsResult, error) {
 	syncGroups := make([]*model.Group, 0)
 
-	googleGroups, err := i.ps.ListGroups(filter)
+	googleGroups, err := i.ps.ListGroups(ctx, filter)
 	if err != nil {
 		return nil, ErrListingGroups
 	}
@@ -85,7 +85,7 @@ func (i *IdentityProvider) GetGroups(ctx context.Context, filter []string) (*mod
 func (i *IdentityProvider) GetUsers(ctx context.Context, filter []string) (*model.UsersResult, error) {
 	syncUsers := make([]*model.User, 0)
 
-	googleUsers, err := i.ps.ListUsers(filter)
+	googleUsers, err := i.ps.ListUsers(ctx, filter)
 	if err != nil {
 		return nil, ErrListingUsers
 	}
@@ -116,7 +116,7 @@ func (i *IdentityProvider) GetUsers(ctx context.Context, filter []string) (*mode
 func (i *IdentityProvider) GetGroupMembers(ctx context.Context, id string) (*model.MembersResult, error) {
 	syncMembers := make([]*model.Member, 0)
 
-	googleMembers, err := i.ps.ListGroupMembers(id)
+	googleMembers, err := i.ps.ListGroupMembers(ctx, id)
 	if err != nil {
 		return nil, ErrListingGroupMembers
 	}
@@ -144,7 +144,7 @@ func (i *IdentityProvider) GetUsersFromGroupMembers(ctx context.Context, mbr *mo
 	syncUsers := make([]*model.User, 0)
 
 	for _, member := range mbr.Resources {
-		u, err := i.ps.GetUser(member.ID)
+		u, err := i.ps.GetUser(ctx, member.ID)
 		if err != nil {
 			return nil, ErrGettingUser
 		}

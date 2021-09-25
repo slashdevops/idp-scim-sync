@@ -5,6 +5,7 @@
 package mocks
 
 import (
+	context "context"
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"
@@ -35,61 +36,61 @@ func (m *MockGoogleProviderService) EXPECT() *MockGoogleProviderServiceMockRecor
 }
 
 // GetUser mocks base method.
-func (m *MockGoogleProviderService) GetUser(userID string) (*admin.User, error) {
+func (m *MockGoogleProviderService) GetUser(ctx context.Context, userID string) (*admin.User, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetUser", userID)
+	ret := m.ctrl.Call(m, "GetUser", ctx, userID)
 	ret0, _ := ret[0].(*admin.User)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetUser indicates an expected call of GetUser.
-func (mr *MockGoogleProviderServiceMockRecorder) GetUser(userID interface{}) *gomock.Call {
+func (mr *MockGoogleProviderServiceMockRecorder) GetUser(ctx, userID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUser", reflect.TypeOf((*MockGoogleProviderService)(nil).GetUser), userID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUser", reflect.TypeOf((*MockGoogleProviderService)(nil).GetUser), ctx, userID)
 }
 
 // ListGroupMembers mocks base method.
-func (m *MockGoogleProviderService) ListGroupMembers(groupID string) ([]*admin.Member, error) {
+func (m *MockGoogleProviderService) ListGroupMembers(ctx context.Context, groupID string) ([]*admin.Member, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListGroupMembers", groupID)
+	ret := m.ctrl.Call(m, "ListGroupMembers", ctx, groupID)
 	ret0, _ := ret[0].([]*admin.Member)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // ListGroupMembers indicates an expected call of ListGroupMembers.
-func (mr *MockGoogleProviderServiceMockRecorder) ListGroupMembers(groupID interface{}) *gomock.Call {
+func (mr *MockGoogleProviderServiceMockRecorder) ListGroupMembers(ctx, groupID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListGroupMembers", reflect.TypeOf((*MockGoogleProviderService)(nil).ListGroupMembers), groupID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListGroupMembers", reflect.TypeOf((*MockGoogleProviderService)(nil).ListGroupMembers), ctx, groupID)
 }
 
 // ListGroups mocks base method.
-func (m *MockGoogleProviderService) ListGroups(query []string) ([]*admin.Group, error) {
+func (m *MockGoogleProviderService) ListGroups(ctx context.Context, query []string) ([]*admin.Group, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListGroups", query)
+	ret := m.ctrl.Call(m, "ListGroups", ctx, query)
 	ret0, _ := ret[0].([]*admin.Group)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // ListGroups indicates an expected call of ListGroups.
-func (mr *MockGoogleProviderServiceMockRecorder) ListGroups(query interface{}) *gomock.Call {
+func (mr *MockGoogleProviderServiceMockRecorder) ListGroups(ctx, query interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListGroups", reflect.TypeOf((*MockGoogleProviderService)(nil).ListGroups), query)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListGroups", reflect.TypeOf((*MockGoogleProviderService)(nil).ListGroups), ctx, query)
 }
 
 // ListUsers mocks base method.
-func (m *MockGoogleProviderService) ListUsers(query []string) ([]*admin.User, error) {
+func (m *MockGoogleProviderService) ListUsers(ctx context.Context, query []string) ([]*admin.User, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListUsers", query)
+	ret := m.ctrl.Call(m, "ListUsers", ctx, query)
 	ret0, _ := ret[0].([]*admin.User)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // ListUsers indicates an expected call of ListUsers.
-func (mr *MockGoogleProviderServiceMockRecorder) ListUsers(query interface{}) *gomock.Call {
+func (mr *MockGoogleProviderServiceMockRecorder) ListUsers(ctx, query interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListUsers", reflect.TypeOf((*MockGoogleProviderService)(nil).ListUsers), query)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListUsers", reflect.TypeOf((*MockGoogleProviderService)(nil).ListUsers), ctx, query)
 }

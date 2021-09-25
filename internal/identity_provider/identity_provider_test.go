@@ -54,11 +54,12 @@ func Test_GoogleProvider_GetGroups(t *testing.T) {
 		{
 			name: "Should return GroupsResult and no error",
 			prepare: func(f *fields) {
+				ctx := context.Background()
 				googleGroups := make([]*admin.Group, 0)
 				googleGroups = append(googleGroups, &admin.Group{Email: "group1@mail.com", Id: "1", Name: "group1"})
 				googleGroups = append(googleGroups, &admin.Group{Email: "group2@mail.com", Id: "2", Name: "group2"})
 
-				f.ds.EXPECT().ListGroups(gomock.Eq([]string{""})).Return(googleGroups, nil).Times(1)
+				f.ds.EXPECT().ListGroups(ctx, gomock.Eq([]string{""})).Return(googleGroups, nil).Times(1)
 			},
 			args: args{ctx: context.TODO(), filter: []string{""}},
 			want: &model.GroupsResult{
@@ -82,7 +83,8 @@ func Test_GoogleProvider_GetGroups(t *testing.T) {
 		{
 			name: "Should return error",
 			prepare: func(f *fields) {
-				f.ds.EXPECT().ListGroups(gomock.Eq([]string{""})).Return(nil, ErrListingGroups).Times(1)
+				ctx := context.Background()
+				f.ds.EXPECT().ListGroups(ctx, gomock.Eq([]string{""})).Return(nil, ErrListingGroups).Times(1)
 			},
 			args:    args{ctx: context.TODO(), filter: []string{""}},
 			want:    nil,
@@ -137,11 +139,12 @@ func Test_GoogleProvider_GetUsers(t *testing.T) {
 		{
 			name: "Should return UsersResult and no error",
 			prepare: func(f *fields) {
+				ctx := context.Background()
 				googleUsers := make([]*admin.User, 0)
 				googleUsers = append(googleUsers, &admin.User{PrimaryEmail: "user1@mail.com", Id: "1", Name: &admin.UserName{GivenName: "user", FamilyName: "1"}, Suspended: false})
 				googleUsers = append(googleUsers, &admin.User{PrimaryEmail: "user2@mail.com", Id: "2", Name: &admin.UserName{GivenName: "user", FamilyName: "2"}, Suspended: true})
 
-				f.ds.EXPECT().ListUsers(gomock.Eq([]string{""})).Return(googleUsers, nil).Times(1)
+				f.ds.EXPECT().ListUsers(ctx, gomock.Eq([]string{""})).Return(googleUsers, nil).Times(1)
 			},
 			args: args{ctx: context.TODO(), filter: []string{""}},
 			want: &model.UsersResult{
@@ -165,7 +168,8 @@ func Test_GoogleProvider_GetUsers(t *testing.T) {
 		{
 			name: "Should return error",
 			prepare: func(f *fields) {
-				f.ds.EXPECT().ListUsers(gomock.Eq([]string{""})).Return(nil, ErrListingUsers).Times(1)
+				ctx := context.Background()
+				f.ds.EXPECT().ListUsers(ctx, gomock.Eq([]string{""})).Return(nil, ErrListingUsers).Times(1)
 			},
 			args:    args{ctx: context.TODO(), filter: []string{""}},
 			want:    nil,
@@ -220,11 +224,12 @@ func Test_GoogleProvider_GetGroupMembers(t *testing.T) {
 		{
 			name: "Should return MembersResult and no error",
 			prepare: func(f *fields) {
+				ctx := context.Background()
 				googleGroupMembers := make([]*admin.Member, 0)
 				googleGroupMembers = append(googleGroupMembers, &admin.Member{Email: "user1@mail.com", Id: "1"})
 				googleGroupMembers = append(googleGroupMembers, &admin.Member{Email: "user2@mail.com", Id: "2"})
 
-				f.ds.EXPECT().ListGroupMembers(gomock.Eq("")).Return(googleGroupMembers, nil).Times(1)
+				f.ds.EXPECT().ListGroupMembers(ctx, gomock.Eq("")).Return(googleGroupMembers, nil).Times(1)
 			},
 			args: args{ctx: context.TODO(), id: ""},
 			want: &model.MembersResult{
@@ -248,7 +253,8 @@ func Test_GoogleProvider_GetGroupMembers(t *testing.T) {
 		{
 			name: "Should return error",
 			prepare: func(f *fields) {
-				f.ds.EXPECT().ListGroupMembers(gomock.Eq("")).Return(nil, ErrListingGroupMembers).Times(1)
+				ctx := context.Background()
+				f.ds.EXPECT().ListGroupMembers(ctx, gomock.Eq("")).Return(nil, ErrListingGroupMembers).Times(1)
 			},
 			args:    args{ctx: context.TODO(), id: ""},
 			want:    nil,
@@ -303,12 +309,13 @@ func Test_GoogleProvider_GetUsersFromGroupMembers(t *testing.T) {
 		{
 			name: "Should return UsersResult and no error",
 			prepare: func(f *fields) {
+				ctx := context.Background()
 				googleUser1 := &admin.User{PrimaryEmail: "user1@mail.com", Id: "1", Name: &admin.UserName{GivenName: "user", FamilyName: "1"}, Suspended: false}
 				googleUser2 := &admin.User{PrimaryEmail: "user2@mail.com", Id: "2", Name: &admin.UserName{GivenName: "user", FamilyName: "2"}, Suspended: true}
 
 				gomock.InOrder(
-					f.ds.EXPECT().GetUser(gomock.Eq("1")).Return(googleUser1, nil).Times(1),
-					f.ds.EXPECT().GetUser(gomock.Eq("2")).Return(googleUser2, nil).Times(1),
+					f.ds.EXPECT().GetUser(ctx, gomock.Eq("1")).Return(googleUser1, nil).Times(1),
+					f.ds.EXPECT().GetUser(ctx, gomock.Eq("2")).Return(googleUser2, nil).Times(1),
 				)
 			},
 			args: args{
@@ -342,7 +349,8 @@ func Test_GoogleProvider_GetUsersFromGroupMembers(t *testing.T) {
 		{
 			name: "Should return error",
 			prepare: func(f *fields) {
-				f.ds.EXPECT().GetUser(gomock.Eq("")).Return(nil, ErrGettingUser).Times(1)
+				ctx := context.Background()
+				f.ds.EXPECT().GetUser(ctx, gomock.Eq("")).Return(nil, ErrGettingUser).Times(1)
 			},
 			args: args{
 				ctx: context.TODO(),

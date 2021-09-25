@@ -114,7 +114,7 @@ func getGWSDirectoryService(ctx context.Context) *google.DirectoryService {
 		log.Fatalf("Error creating service: %s", err)
 	}
 
-	gDirService, err := google.NewDirectoryService(ctx, gService)
+	gDirService, err := google.NewDirectoryService(gService)
 	if err != nil {
 		log.Fatalf("Error creating directory service: %s", err)
 	}
@@ -128,7 +128,7 @@ func execGWSGroupsList(cmd *cobra.Command, args []string) error {
 
 	gDirService := getGWSDirectoryService(ctx)
 
-	gGroups, err := gDirService.ListGroups(groupsQuery)
+	gGroups, err := gDirService.ListGroups(ctx, groupsQuery)
 	if err != nil {
 		log.Errorf("Error listing groups: %s", err)
 		return err
@@ -151,7 +151,7 @@ func execGWSUsersList(cmd *cobra.Command, args []string) error {
 
 	gDirService := getGWSDirectoryService(ctx)
 
-	gUsers, err := gDirService.ListUsers(usersQuery)
+	gUsers, err := gDirService.ListUsers(ctx, usersQuery)
 	if err != nil {
 		log.Errorf("Error listing users: %s", err)
 		return err

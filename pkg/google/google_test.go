@@ -54,17 +54,16 @@ func TestNewDirectoryService(t *testing.T) {
 			t.Fatalf("Error creating a service: %s", err)
 		}
 
-		client, err := NewDirectoryService(ctx, svc)
+		client, err := NewDirectoryService(svc)
 
 		assert.NoError(t, err)
 		assert.NotNil(t, client)
 	})
 
 	t.Run("New Directory Service Client without right parameters", func(t *testing.T) {
-		ctx := context.TODO()
 		svc := &admin.Service{}
 
-		client, err := NewDirectoryService(ctx, svc)
+		client, err := NewDirectoryService(svc)
 
 		assert.NoError(t, err)
 		assert.NotNil(t, client)
