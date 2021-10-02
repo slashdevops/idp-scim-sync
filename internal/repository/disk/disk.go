@@ -2,10 +2,11 @@ package disk
 
 import (
 	"encoding/json"
-	"errors"
 	"io"
-	"log"
 	"sync"
+
+	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/slashdevops/idp-scim-sync/internal/model"
 )
@@ -36,23 +37,23 @@ type DiskRepository struct {
 
 func NewDiskRepository(db *DBFiles) (*DiskRepository, error) {
 	if db == nil {
-		return nil, ErrDataFilesNil
+		return nil, errors.Wrapf(ErrDataFilesNil, "NewDiskRepository")
 	}
 
 	if db.state == nil {
-		return nil, ErrStateFileNil
+		return nil, errors.Wrapf(ErrStateFileNil, "NewDiskRepository")
 	}
 
 	if db.groups == nil {
-		return nil, ErrGroupsFileNil
+		return nil, errors.Wrapf(ErrGroupsFileNil, "NewDiskRepository")
 	}
 
 	if db.users == nil {
-		return nil, ErrUsersFileNil
+		return nil, errors.Wrapf(ErrUsersFileNil, "NewDiskRepository")
 	}
 
 	if db.groupsUsers == nil {
-		return nil, ErrGroupsUsersFileNil
+		return nil, errors.Wrapf(ErrGroupsUsersFileNil, "NewDiskRepository")
 	}
 
 	return &DiskRepository{
@@ -67,63 +68,42 @@ func (dr *DiskRepository) GetState() (*model.State, error) {
 	var err error
 
 	var gr model.GroupsResult
-	groupsDecoder := json.NewDecoder(dr.db.groups)
-	if err = groupsDecoder.Decode(&gr); err == io.EOF {
-		log.Println("no data to decode")
-		gr = model.GroupsResult{
-			Items:     0,
-			HashCode:  "",
-			Resources: make([]model.Group, 0),
-		}
+	if err = json.NewDecoder(dr.db.groups).Decode(&gr); err == io.EOF {
 	} else if err != nil {
-		return nil, err
+		return nil, errors.Wrapf(err, "GetState")
 	}
 
 	var ur model.UsersResult
-	usersDecoder := json.NewDecoder(dr.db.users)
-	if err = usersDecoder.Decode(&ur); err == io.EOF {
-		log.Println("no data to decode")
-		ur = model.UsersResult{
-			Items:     0,
-			HashCode:  "",
-			Resources: make([]model.User, 0),
-		}
+	if err = json.NewDecoder(dr.db.users).Decode(&ur); err == io.EOF {
 	} else if err != nil {
-		return nil, err
+		return nil, errors.Wrapf(err, "GetState")
 	}
 
-	var gur model.GroupsUsersResult
-	groupsUsersDecoder := json.NewDecoder(dr.db.groupsUsers)
-	if err = groupsUsersDecoder.Decode(&gur); err == io.EOF {
-		log.Println("no data to decode")
-		gur = model.GroupsUsersResult{
-			Items:     0,
-			HashCode:  "",
-			Resources: make([]model.GroupUsers, 0),
-		}
+	var grUr model.GroupsUsersResult
+	if err = json.NewDecoder(dr.db.groupsUsers).Decode(&grUr); err == io.EOF {
 	} else if err != nil {
-		return nil, err
+		return nil, errors.Wrapf(err, "GetState")
 	}
 
 	// read only the metadata not the Resoruces
 	var loadedState model.State
-	decoder := json.NewDecoder(dr.db.state)
-	if err = decoder.Decode(&loadedState); err == io.EOF {
-		log.Println("no state data to decode")
-		loadedState = model.State{}
+	if err = json.NewDecoder(dr.db.state).Decode(&loadedState); err == io.EOF {
 	} else if err != nil {
-		return nil, err
+		return nil, errors.Wrapf(err, "GetState")
 	}
 
+	r := model.StateResources{
+		Groups:      gr,
+		Users:       ur,
+		GroupsUsers: grUr,
+	}
 	state := &model.State{
-		LastSync: loadedState.LastSync,
-		Resources: model.StateResources{
-			Groups:      gr,
-			Users:       ur,
-			GroupsUsers: gur,
-		},
+		LastSync:  loadedState.LastSync,
+		HashCode:  loadedState.HashCode,
+		Resources: r,
 	}
 
+	log.Printf("loadedState: %v", loadedState)
 	log.Printf("state: %v", state)
 
 	return state, nil
@@ -134,22 +114,19 @@ func (dr *DiskRepository) UpdateState(state *model.State) error {
 	defer dr.mu.Unlock()
 	var err error
 
-	groupsEncoder := json.NewEncoder(dr.db.groups)
-	err = groupsEncoder.Encode(&state.Resources.Groups)
+	err = json.NewEncoder(dr.db.groups).Encode(&state.Resources.Groups)
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "UpdateState")
 	}
 
-	usersEncoder := json.NewEncoder(dr.db.users)
-	err = usersEncoder.Encode(&state.Resources.Users)
+	err = json.NewEncoder(dr.db.users).Encode(&state.Resources.Users)
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "UpdateState")
 	}
 
-	groupsUsersEncoder := json.NewEncoder(dr.db.groupsUsers)
-	err = groupsUsersEncoder.Encode(&state.Resources.GroupsUsers)
+	err = json.NewEncoder(dr.db.groupsUsers).Encode(&state.Resources.GroupsUsers)
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "UpdateState")
 	}
 
 	newState := &model.State{
@@ -157,10 +134,9 @@ func (dr *DiskRepository) UpdateState(state *model.State) error {
 		Resources: model.StateResources{},
 	}
 
-	decoder := json.NewEncoder(dr.db.state)
-	err = decoder.Encode(&newState)
+	err = json.NewEncoder(dr.db.state).Encode(&newState)
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "UpdateState")
 	}
 
 	return nil

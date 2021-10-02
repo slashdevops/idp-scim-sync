@@ -97,4 +97,59 @@ func Test_StateRepository_GetState(t *testing.T) {
 		assert.Equal(t, "", state.Resources.GroupsUsers.HashCode)
 		assert.Equal(t, 0, len(state.Resources.GroupsUsers.Resources))
 	})
+
+	t.Run("Golden files", func(t *testing.T) {
+		stateFile, err := os.OpenFile("testdata/state.golden", os.O_RDWR, 0644)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer stateFile.Close()
+
+		groupsFile, err := os.OpenFile("testdata/groups.golden", os.O_RDWR, 0644)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer groupsFile.Close()
+
+		usersFile, err := os.OpenFile("testdata/users.golden", os.O_RDWR, 0644)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer usersFile.Close()
+
+		groupsUsersFile, err := os.OpenFile("testdata/groups_users.golden", os.O_RDWR, 0644)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer groupsUsersFile.Close()
+
+		db := &DBFiles{
+			state:       stateFile,
+			groups:      groupsFile,
+			users:       usersFile,
+			groupsUsers: groupsUsersFile,
+		}
+
+		repo, err := NewDiskRepository(db)
+		assert.NoError(t, err)
+
+		state, err := repo.GetState()
+		assert.NoError(t, err)
+		assert.NotNil(t, state)
+
+		assert.Equal(t, "2021-09-25T20:49:46+02:00", state.LastSync)
+		assert.Equal(t, "123456789", state.HashCode)
+
+		assert.Equal(t, 2, state.Resources.Groups.Items)
+		assert.Equal(t, "123456789", state.Resources.Groups.HashCode)
+		assert.Equal(t, 2, len(state.Resources.Groups.Resources))
+
+		assert.Equal(t, 2, state.Resources.Users.Items)
+		assert.Equal(t, "123456789", state.Resources.Users.HashCode)
+		assert.Equal(t, 2, len(state.Resources.Users.Resources))
+
+		assert.Equal(t, 2, state.Resources.GroupsUsers.Items)
+		assert.Equal(t, "123456789", state.Resources.GroupsUsers.HashCode)
+		assert.Equal(t, 2, len(state.Resources.GroupsUsers.Resources))
+	})
 }

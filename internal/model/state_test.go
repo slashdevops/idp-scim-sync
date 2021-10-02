@@ -19,7 +19,7 @@ func TestState_MarshalJSON(t *testing.T) {
 		{
 			name:    "empty",
 			fields:  fields{},
-			want:    []byte(`{"resources":{"groups":{"items":0,"hashCode":"","resources":null},"users":{"items":0,"hashCode":"","resources":null},"groupsUsers":{"items":0,"hashCode":"","resources":null}}}`),
+			want:    []byte(`{"hashCode":"","resources":{"groups":{"items":0,"hashCode":"","resources":null},"users":{"items":0,"hashCode":"","resources":null},"groupsUsers":{"items":0,"hashCode":"","resources":null}}}`),
 			wantErr: false,
 		},
 		{
@@ -77,7 +77,7 @@ func TestState_MarshalJSON(t *testing.T) {
 					},
 				},
 			},
-			want:    []byte(`{"lastSync":"2020-01-01T00:00:00Z","resources":{"groups":{"items":1,"hashCode":"hashCode","resources":[{"id":"id","name":"name","email":"email","hashCode":"hashCode"}]},"users":{"items":1,"hashCode":"hashCode","resources":[{"id":"id","name":{"familyName":"lastName","givenName":"name"},"displayName":"","active":false,"email":"email","hashCode":"hashCode"}]},"groupsUsers":{"items":1,"hashCode":"hashCode","resources":[{"items":1,"group":{"id":"id","name":"name","email":"email","hashCode":"hashCode"},"hashCode":"hashCode","resources":[{"id":"id","name":{"familyName":"lastName","givenName":"name"},"displayName":"","active":false,"email":"email","hashCode":"hashCode"}]}]}}}`),
+			want:    []byte(`{"lastSync":"2020-01-01T00:00:00Z","hashCode":"","resources":{"groups":{"items":1,"hashCode":"hashCode","resources":[{"id":"id","name":"name","email":"email","hashCode":"hashCode"}]},"users":{"items":1,"hashCode":"hashCode","resources":[{"id":"id","name":{"familyName":"lastName","givenName":"name"},"displayName":"","active":false,"email":"email","hashCode":"hashCode"}]},"groupsUsers":{"items":1,"hashCode":"hashCode","resources":[{"items":1,"group":{"id":"id","name":"name","email":"email","hashCode":"hashCode"},"hashCode":"hashCode","resources":[{"id":"id","name":{"familyName":"lastName","givenName":"name"},"displayName":"","active":false,"email":"email","hashCode":"hashCode"}]}]}}}`),
 			wantErr: false,
 		},
 	}
