@@ -78,8 +78,8 @@ type GroupsMembersResult struct {
 
 type GroupUsers struct {
 	Items     int    `json:"items"`
-	Group     Group  `json:"group"`
 	HashCode  string `json:"hashCode"`
+	Group     Group  `json:"group"`
 	Resources []User `json:"resources"`
 }
 

@@ -6,9 +6,9 @@ import (
 	"sync"
 
 	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
 
 	"github.com/slashdevops/idp-scim-sync/internal/model"
+	"github.com/slashdevops/idp-scim-sync/internal/repository"
 )
 
 // implement core.SateRepository
@@ -16,18 +16,23 @@ import (
 // consume io.ReadWriter
 
 var (
-	ErrDataFilesNil       = errors.New("data files are nil")
-	ErrStateFileNil       = errors.New("state file is nil")
-	ErrGroupsFileNil      = errors.New("groups file is nil")
-	ErrUsersFileNil       = errors.New("users file is nil")
-	ErrGroupsUsersFileNil = errors.New("groups users file is nil")
+	ErrDataFilesNil               = errors.New("data files are nil")
+	ErrStateFileNil               = errors.New("state file is nil")
+	ErrGroupsFileNil              = errors.New("groups file is nil")
+	ErrUsersFileNil               = errors.New("users file is nil")
+	ErrGroupsUsersFileNil         = errors.New("groups users file is nil")
+	ErrInconsistentHashCode       = errors.New("inconsistent hash code")
+	ErrInconsistentNumberElements = errors.New("inconsistent number of elements")
 )
 
 type DBFiles struct {
-	state       io.ReadWriter
-	groups      io.ReadWriter
-	users       io.ReadWriter
-	groupsUsers io.ReadWriter
+	state           io.ReadWriter
+	groups          io.ReadWriter
+	groupsMeta      io.ReadWriter
+	users           io.ReadWriter
+	usersMeta       io.ReadWriter
+	groupsUsers     io.ReadWriter
+	groupsUsersMeta io.ReadWriter
 }
 
 type DiskRepository struct {
@@ -40,26 +45,166 @@ func NewDiskRepository(db *DBFiles) (*DiskRepository, error) {
 		return nil, errors.Wrapf(ErrDataFilesNil, "NewDiskRepository")
 	}
 
-	if db.state == nil {
-		return nil, errors.Wrapf(ErrStateFileNil, "NewDiskRepository")
-	}
-
-	if db.groups == nil {
-		return nil, errors.Wrapf(ErrGroupsFileNil, "NewDiskRepository")
-	}
-
-	if db.users == nil {
-		return nil, errors.Wrapf(ErrUsersFileNil, "NewDiskRepository")
-	}
-
-	if db.groupsUsers == nil {
-		return nil, errors.Wrapf(ErrGroupsUsersFileNil, "NewDiskRepository")
-	}
-
 	return &DiskRepository{
 		mu: &sync.RWMutex{},
 		db: db,
 	}, nil
+}
+
+func (dr *DiskRepository) GetGroups() (*model.GroupsResult, error) {
+	dr.mu.RLock()
+	defer dr.mu.RUnlock()
+
+	grps := make([]model.Group, 0)
+	d := json.NewDecoder(dr.db.groups)
+	for {
+		var grp model.Group
+		if err := d.Decode(&grp); err == io.EOF {
+			break
+		} else if err != nil {
+			return nil, errors.Wrapf(err, "disk.GetGroups")
+		}
+		grps = append(grps, grp)
+	}
+
+	grpsMeta, err := dr.GetGroupsMeta()
+	if err != nil {
+		return nil, errors.Wrapf(err, "disk.GetGroups.GetGroupsMeta")
+	}
+
+	// check consistency
+	// if len(grps) != grpsMeta.Items {
+	// 	return nil, errors.Wrapf(ErrInconsistentNumberElements, "disk.GetGroups")
+	// }
+
+	// if hash.Get(grps) != grpsMeta.HashCode {
+	// 	return nil, errors.Wrapf(ErrInconsistentHashCode, "disk.GetGroups")
+	// }
+
+	gr := &model.GroupsResult{
+		Items:     grpsMeta.Items,
+		HashCode:  grpsMeta.HashCode,
+		Resources: grps,
+	}
+
+	return gr, nil
+}
+
+func (dr *DiskRepository) GetGroupsMeta() (*repository.GroupsMetaIndex, error) {
+	dr.mu.RLock()
+	defer dr.mu.RUnlock()
+
+	var grpsMeta repository.GroupsMetaIndex
+	if err := json.NewDecoder(dr.db.groupsMeta).Decode(&grpsMeta); err == io.EOF {
+	} else if err != nil {
+		return nil, errors.Wrapf(err, "disk.GetGroupsMeta")
+	}
+
+	return &grpsMeta, nil
+}
+
+func (dr *DiskRepository) GetUsers() (*model.UsersResult, error) {
+	dr.mu.RLock()
+	defer dr.mu.RUnlock()
+
+	usrs := make([]model.User, 0)
+	d := json.NewDecoder(dr.db.users)
+	for {
+		var usr model.User
+		if err := d.Decode(&usr); err == io.EOF {
+			break
+		} else if err != nil {
+			return nil, errors.Wrapf(err, "disk.GetUsers")
+		}
+		usrs = append(usrs, usr)
+	}
+
+	usrsMeta, err := dr.GetUsersMeta()
+	if err != nil {
+		return nil, errors.Wrapf(err, "disk.GetUsers.GetUsersMeta")
+	}
+
+	// check consistency
+	// if len(usrs) != usrsMeta.Items {
+	// 	return nil, errors.Wrapf(ErrInconsistentNumberElements, "disk.GetUsers")
+	// }
+
+	// if hash.Get(usrs) != usrsMeta.HashCode {
+	// 	return nil, errors.Wrapf(ErrInconsistentHashCode, "disk.GetUsers")
+	// }
+
+	us := &model.UsersResult{
+		Items:     usrsMeta.Items,
+		HashCode:  usrsMeta.HashCode,
+		Resources: usrs,
+	}
+
+	return us, nil
+}
+
+func (dr *DiskRepository) GetUsersMeta() (*repository.UsersMetaIndex, error) {
+	dr.mu.RLock()
+	defer dr.mu.RUnlock()
+
+	var usrsMeta repository.UsersMetaIndex
+	if err := json.NewDecoder(dr.db.usersMeta).Decode(&usrsMeta); err == io.EOF {
+	} else if err != nil {
+		return nil, errors.Wrapf(err, "disk.GetUsersMeta")
+	}
+
+	return &usrsMeta, nil
+}
+
+func (dr *DiskRepository) GetGroupsUsers() (*model.GroupsUsersResult, error) {
+	dr.mu.RLock()
+	defer dr.mu.RUnlock()
+
+	grpsUsrs := make([]model.GroupUsers, 0)
+	d := json.NewDecoder(dr.db.groupsUsers)
+	for {
+		var grpUsrs model.GroupUsers
+		if err := d.Decode(&grpUsrs); err == io.EOF {
+			break
+		} else if err != nil {
+			return nil, errors.Wrapf(err, "disk.GetGroupsUsers")
+		}
+		grpsUsrs = append(grpsUsrs, grpUsrs)
+	}
+
+	grpsUsrsMeta, err := dr.GetGroupsUsersMeta()
+	if err != nil {
+		return nil, errors.Wrapf(err, "disk.GetGroupsUsers.GetGroupsUsersMeta")
+	}
+
+	// check consistency
+	// if len(grpsUsrs) != grpsUsrsMeta.Items {
+	// 	return nil, errors.Wrapf(ErrInconsistentNumberElements, "disk.GetUsers")
+	// }
+
+	// if hash.Get(grpsUsrs) != grpsUsrsMeta.HashCode {
+	// 	return nil, errors.Wrapf(ErrInconsistentHashCode, "disk.GetUsers")
+	// }
+
+	us := &model.GroupsUsersResult{
+		Items:     grpsUsrsMeta.Items,
+		HashCode:  grpsUsrsMeta.HashCode,
+		Resources: grpsUsrs,
+	}
+
+	return us, nil
+}
+
+func (dr *DiskRepository) GetGroupsUsersMeta() (*repository.GroupsUsersMetaIndex, error) {
+	dr.mu.RLock()
+	defer dr.mu.RUnlock()
+
+	var grpsUsrsMeta repository.GroupsUsersMetaIndex
+	if err := json.NewDecoder(dr.db.groupsUsersMeta).Decode(&grpsUsrsMeta); err == io.EOF {
+	} else if err != nil {
+		return nil, errors.Wrapf(err, "disk.GetGroupsUsersMeta")
+	}
+
+	return &grpsUsrsMeta, nil
 }
 
 func (dr *DiskRepository) GetState() (*model.State, error) {
@@ -67,44 +212,38 @@ func (dr *DiskRepository) GetState() (*model.State, error) {
 	defer dr.mu.RUnlock()
 	var err error
 
-	var gr model.GroupsResult
-	if err = json.NewDecoder(dr.db.groups).Decode(&gr); err == io.EOF {
-	} else if err != nil {
-		return nil, errors.Wrapf(err, "GetState")
+	grps, err := dr.GetGroups()
+	if err != nil {
+		return nil, errors.Wrapf(err, "disk.GetState.GetGroups")
 	}
 
-	var ur model.UsersResult
-	if err = json.NewDecoder(dr.db.users).Decode(&ur); err == io.EOF {
-	} else if err != nil {
-		return nil, errors.Wrapf(err, "GetState")
+	usrs, err := dr.GetUsers()
+	if err != nil {
+		return nil, errors.Wrapf(err, "disk.GetState.GetUsers")
 	}
 
-	var grUr model.GroupsUsersResult
-	if err = json.NewDecoder(dr.db.groupsUsers).Decode(&grUr); err == io.EOF {
-	} else if err != nil {
-		return nil, errors.Wrapf(err, "GetState")
+	grpsUsrs, err := dr.GetGroupsUsers()
+	if err != nil {
+		return nil, errors.Wrapf(err, "disk.GetState.GetGroupsUsers")
 	}
 
 	// read only the metadata not the Resoruces
-	var loadedState model.State
+	var loadedState repository.StateMetaIndex
 	if err = json.NewDecoder(dr.db.state).Decode(&loadedState); err == io.EOF {
 	} else if err != nil {
 		return nil, errors.Wrapf(err, "GetState")
 	}
 
 	r := model.StateResources{
-		Groups:      gr,
-		Users:       ur,
-		GroupsUsers: grUr,
+		Groups:      *grps,
+		Users:       *usrs,
+		GroupsUsers: *grpsUsrs,
 	}
 	state := &model.State{
 		LastSync:  loadedState.LastSync,
 		HashCode:  loadedState.HashCode,
 		Resources: r,
 	}
-
-	log.Printf("loadedState: %v", loadedState)
-	log.Printf("state: %v", state)
 
 	return state, nil
 }

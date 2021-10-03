@@ -1,0 +1,2 @@
+{"id":"1","name":{"familyName":"1","givenName":"user"},"displayName":"user 1","active": true, "email":"user.1@mail.com","hashCode":"123456789"}
+{"id":"2","name":{"familyName":"2","givenName":"user"},"displayName":"user 2","active": true, "email":"user.2@mail.com","hashCode":"987654321"}
