@@ -65,6 +65,7 @@ type MembersResult struct {
 
 type GroupMembers struct {
 	Items     int      `json:"items"`
+	HashCode  string   `json:"hashCode"`
 	Group     Group    `json:"group"`
 	Resources []Member `json:"resources"`
 }
