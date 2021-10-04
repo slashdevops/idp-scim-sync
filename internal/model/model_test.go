@@ -168,7 +168,7 @@ func TestGroupsUsersResult_MarshalJSON(t *testing.T) {
 					},
 				},
 			},
-			want: []byte(`{"items":1,"hashCode":"test","resources":[{"items":1,"group":{"id":"1","name":"group 1","email":"group.1@mail.com","hashCode":"test"},"hashCode":"test","resources":[{"id":"1","name":{"familyName":"1","givenName":"user"},"displayName":"user 1","active":true,"email":"user.1@mail.com","hashCode":"test"}]}]}`),
+			want: []byte(`{"items":1,"hashCode":"test","resources":[{"items":1,"hashCode":"test","group":{"id":"1","name":"group 1","email":"group.1@mail.com","hashCode":"test"},"resources":[{"id":"1","name":{"familyName":"1","givenName":"user"},"displayName":"user 1","active":true,"email":"user.1@mail.com","hashCode":"test"}]}]}`),
 		},
 	}
 	for _, tt := range tests {
