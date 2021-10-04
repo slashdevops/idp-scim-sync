@@ -105,7 +105,7 @@ func Test_StateRepository_GetGroupsMeta(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, repo)
 
-		grpsMeta, err := repo.GetGroupsMeta()
+		grpsMeta, err := repo.GetGroupsMetadata()
 		assert.NoError(t, err)
 		assert.NotNil(t, grpsMeta)
 		assert.Equal(t, 0, grpsMeta.Items)
@@ -127,7 +127,7 @@ func Test_StateRepository_GetGroupsMeta(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, repo)
 
-		grpsMeta, err := repo.GetGroupsMeta()
+		grpsMeta, err := repo.GetGroupsMetadata()
 		assert.NoError(t, err)
 		assert.NotNil(t, grpsMeta)
 		assert.Equal(t, 2, grpsMeta.Items)
@@ -225,7 +225,7 @@ func Test_StateRepository_GetUsersMeta(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, repo)
 
-		usrsMeta, err := repo.GetUsersMeta()
+		usrsMeta, err := repo.GetUsersMetadata()
 		assert.NoError(t, err)
 		assert.NotNil(t, usrsMeta)
 		assert.Equal(t, 0, usrsMeta.Items)
@@ -247,7 +247,7 @@ func Test_StateRepository_GetUsersMeta(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, repo)
 
-		usersMeta, err := repo.GetUsersMeta()
+		usersMeta, err := repo.GetUsersMetadata()
 		assert.NoError(t, err)
 		assert.NotNil(t, usersMeta)
 		assert.Equal(t, 2, usersMeta.Items)
@@ -356,7 +356,7 @@ func Test_StateRepository_GetGroupsUsersMeta(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, repo)
 
-		grpsUsrsMeta, err := repo.GetGroupsUsersMeta()
+		grpsUsrsMeta, err := repo.GetGroupsUsersMetadata()
 		assert.NoError(t, err)
 		assert.NotNil(t, grpsUsrsMeta)
 		assert.Equal(t, 0, grpsUsrsMeta.Items)
@@ -378,7 +378,7 @@ func Test_StateRepository_GetGroupsUsersMeta(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, repo)
 
-		grpsUsrsMeta, err := repo.GetGroupsUsersMeta()
+		grpsUsrsMeta, err := repo.GetGroupsUsersMetadata()
 		assert.NoError(t, err)
 		assert.NotNil(t, grpsUsrsMeta)
 		assert.Equal(t, 2, grpsUsrsMeta.Items)

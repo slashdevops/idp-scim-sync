@@ -19,6 +19,9 @@ var (
 	ErrSyncStateNil                  = errors.New("sync state cannot be nil")
 	ErrGettingState                  = errors.New("error getting state")
 	ErrGettingGetUsersAndGroupsUsers = errors.New("error getting users and groups and their users")
+	ErrGettingGroupsMetadata         = errors.New("error getting groups metadata")
+	ErrGettingStateMetadata          = errors.New("error getting state metadata")
+	ErrGettingStateGroups            = errors.New("error getting state groups")
 )
 
 type SyncService struct {
@@ -97,13 +100,13 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 	}
 
 	// get the state from the repository
-	state, err := ss.repo.GetState()
+	stateMetadata, err := ss.repo.GetStateMetadata()
 	if err != nil {
-		return ErrGettingState
+		return ErrGettingStateMetadata
 	}
 
 	// first time syncing
-	if state.LastSync == "" {
+	if stateMetadata.LastSync == "" {
 
 		log.Info("state without lastsync time, first time syncing")
 
@@ -212,15 +215,26 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 		}
 
 	} else { // This is not the first time syncing
-		log.WithField("lastsync", state.LastSync).Info("state with lastsync time, it is not first time syncing")
+		log.WithField("lastsync", stateMetadata.LastSync).Info("state with lastsync time, it is not first time syncing")
 
-		if pGroupsResult.HashCode == state.Resources.Groups.HashCode {
-			log.Info("groups are the same")
+		stateGroupsMetadata, err := ss.repo.GetGroupsMetadata()
+		if err != nil {
+			return ErrGettingGroupsMetadata
+		}
+
+		if pGroupsResult.HashCode == stateGroupsMetadata.HashCode {
+			log.Info("provider groups and state groups are the same, nothing to do with groups")
 		} else {
+			log.Info("provider groups and state groups are diferent")
 			// now here we have the google fresh data and the last sync data state
 			// we need to compare the data and decide what to do
 			// see differences between the two data sets
-			gCreate, gUpdate, _, gDelete := groupsOperations(pGroupsResult, &state.Resources.Groups)
+			stateGroups, err := ss.repo.GetGroups()
+			if err != nil {
+				return ErrGettingStateGroups
+			}
+
+			gCreate, gUpdate, _, gDelete := groupsOperations(pGroupsResult, stateGroups)
 
 			if gCreate.Items == 0 {
 				log.Info("no groups to be created")
@@ -247,11 +261,22 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 			}
 		}
 
-		if pUsersResult.HashCode == state.Resources.Users.HashCode {
-			log.Info("users are the same")
-		} else {
+		stateUsersMetadata, err := ss.repo.GetUsersMetadata()
+		if err != nil {
+			return ErrGettingGroupsMetadata
+		}
 
-			uCreate, uUpdate, _, uDelete := usersOperations(pUsersResult, &state.Resources.Users)
+		if pUsersResult.HashCode == stateUsersMetadata.HashCode {
+			log.Info("provider users and state users are the same, nothing to do with users")
+		} else {
+			log.Info("provider users and state users are diferent")
+
+			stateUsers, err := ss.repo.GetUsers()
+			if err != nil {
+				return ErrGettingStateGroups
+			}
+
+			uCreate, uUpdate, _, uDelete := usersOperations(pUsersResult, stateUsers)
 
 			if uCreate.Items == 0 {
 				log.Info("no users to be created")
@@ -278,14 +303,25 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 			}
 		}
 
-		if pGroupsUsersResult.HashCode == state.Resources.GroupsUsers.HashCode {
-			log.Info("groups-users are the same")
-		} else {
+		stateGroupsUsersMetadata, err := ss.repo.GetGroupsUsersMetadata()
+		if err != nil {
+			return ErrGettingGroupsMetadata
+		}
 
-			ugCreate, _, ugDelete := groupsUsersOperations(pGroupsUsersResult, &state.Resources.GroupsUsers)
+		if pGroupsUsersResult.HashCode == stateGroupsUsersMetadata.HashCode {
+			log.Info("provider groups-members and state groups-members are the same, nothing to do with groups-members")
+		} else {
+			log.Info("provider groups-members and state groups-members are diferent")
+
+			stateGroupsUsers, err := ss.repo.GetGroupsUsers()
+			if err != nil {
+				return ErrGettingStateGroups
+			}
+
+			ugCreate, _, ugDelete := groupsUsersOperations(pGroupsUsersResult, stateGroupsUsers)
 
 			if ugCreate.Items == 0 {
-				log.Info("no groups-users to be created")
+				log.Info("no groups-members to be created")
 			} else {
 				if err := ss.scim.CreateMembers(ss.ctx, ugCreate); err != nil {
 					return err
@@ -293,7 +329,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 			}
 
 			if ugDelete.Items == 0 {
-				log.Info("no groups-users to be deleted")
+				log.Info("no groups-members to be deleted")
 			} else {
 				if err := ss.scim.DeleteMembers(ss.ctx, ugDelete); err != nil {
 					return err

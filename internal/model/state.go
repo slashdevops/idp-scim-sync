@@ -17,3 +17,15 @@ type StateResources struct {
 func (s *State) MarshalJSON() ([]byte, error) {
 	return json.Marshal(*s)
 }
+
+type StateMetadataResources struct {
+	GroupsLocation      string `json:"groupsLocation"`
+	UsersLocation       string `json:"usersLocation"`
+	GroupsUsersLocation string `json:"groupsUsersLocation"`
+}
+
+type StateMetadata struct {
+	LastSync  string                 `json:"lastSync"`
+	HashCode  string                 `json:"hashCode"`
+	Resources StateMetadataResources `json:"resources"`
+}

@@ -34,6 +34,66 @@ func (m *MockStateRepository) EXPECT() *MockStateRepositoryMockRecorder {
 	return m.recorder
 }
 
+// GetGroups mocks base method.
+func (m *MockStateRepository) GetGroups() (*model.GroupsResult, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetGroups")
+	ret0, _ := ret[0].(*model.GroupsResult)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetGroups indicates an expected call of GetGroups.
+func (mr *MockStateRepositoryMockRecorder) GetGroups() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetGroups", reflect.TypeOf((*MockStateRepository)(nil).GetGroups))
+}
+
+// GetGroupsMetadata mocks base method.
+func (m *MockStateRepository) GetGroupsMetadata() (*model.GroupsMetadata, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetGroupsMetadata")
+	ret0, _ := ret[0].(*model.GroupsMetadata)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetGroupsMetadata indicates an expected call of GetGroupsMetadata.
+func (mr *MockStateRepositoryMockRecorder) GetGroupsMetadata() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetGroupsMetadata", reflect.TypeOf((*MockStateRepository)(nil).GetGroupsMetadata))
+}
+
+// GetGroupsUsers mocks base method.
+func (m *MockStateRepository) GetGroupsUsers() (*model.GroupsUsersResult, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetGroupsUsers")
+	ret0, _ := ret[0].(*model.GroupsUsersResult)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetGroupsUsers indicates an expected call of GetGroupsUsers.
+func (mr *MockStateRepositoryMockRecorder) GetGroupsUsers() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetGroupsUsers", reflect.TypeOf((*MockStateRepository)(nil).GetGroupsUsers))
+}
+
+// GetGroupsUsersMetadata mocks base method.
+func (m *MockStateRepository) GetGroupsUsersMetadata() (*model.GroupsUsersMetadata, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetGroupsUsersMetadata")
+	ret0, _ := ret[0].(*model.GroupsUsersMetadata)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetGroupsUsersMetadata indicates an expected call of GetGroupsUsersMetadata.
+func (mr *MockStateRepositoryMockRecorder) GetGroupsUsersMetadata() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetGroupsUsersMetadata", reflect.TypeOf((*MockStateRepository)(nil).GetGroupsUsersMetadata))
+}
+
 // GetState mocks base method.
 func (m *MockStateRepository) GetState() (*model.State, error) {
 	m.ctrl.T.Helper()
@@ -47,6 +107,51 @@ func (m *MockStateRepository) GetState() (*model.State, error) {
 func (mr *MockStateRepositoryMockRecorder) GetState() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetState", reflect.TypeOf((*MockStateRepository)(nil).GetState))
+}
+
+// GetStateMetadata mocks base method.
+func (m *MockStateRepository) GetStateMetadata() (*model.StateMetadata, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetStateMetadata")
+	ret0, _ := ret[0].(*model.StateMetadata)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetStateMetadata indicates an expected call of GetStateMetadata.
+func (mr *MockStateRepositoryMockRecorder) GetStateMetadata() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetStateMetadata", reflect.TypeOf((*MockStateRepository)(nil).GetStateMetadata))
+}
+
+// GetUsers mocks base method.
+func (m *MockStateRepository) GetUsers() (*model.UsersResult, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetUsers")
+	ret0, _ := ret[0].(*model.UsersResult)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetUsers indicates an expected call of GetUsers.
+func (mr *MockStateRepositoryMockRecorder) GetUsers() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUsers", reflect.TypeOf((*MockStateRepository)(nil).GetUsers))
+}
+
+// GetUsersMetadata mocks base method.
+func (m *MockStateRepository) GetUsersMetadata() (*model.UsersMetadata, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetUsersMetadata")
+	ret0, _ := ret[0].(*model.UsersMetadata)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetUsersMetadata indicates an expected call of GetUsersMetadata.
+func (mr *MockStateRepositoryMockRecorder) GetUsersMetadata() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUsersMetadata", reflect.TypeOf((*MockStateRepository)(nil).GetUsersMetadata))
 }
 
 // UpdateState mocks base method.

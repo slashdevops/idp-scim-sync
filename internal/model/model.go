@@ -95,3 +95,21 @@ func (gur *GroupsUsersResult) MarshalJSON() ([]byte, error) {
 	}
 	return json.Marshal(*gur)
 }
+
+type GroupsMetadata struct {
+	Items    int    `json:"items"`
+	HashCode string `json:"hashCode"`
+	Location string `json:"location"`
+}
+
+type UsersMetadata struct {
+	Items    int    `json:"items"`
+	HashCode string `json:"hashCode"`
+	Location string `json:"location"`
+}
+
+type GroupsUsersMetadata struct {
+	Items    int    `json:"items"`
+	HashCode string `json:"hashCode"`
+	Location string `json:"location"`
+}

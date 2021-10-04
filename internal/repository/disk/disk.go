@@ -8,7 +8,6 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/slashdevops/idp-scim-sync/internal/model"
-	"github.com/slashdevops/idp-scim-sync/internal/repository"
 )
 
 // implement core.SateRepository
@@ -67,7 +66,7 @@ func (dr *DiskRepository) GetGroups() (*model.GroupsResult, error) {
 		grps = append(grps, grp)
 	}
 
-	grpsMeta, err := dr.GetGroupsMeta()
+	grpsMeta, err := dr.GetGroupsMetadata()
 	if err != nil {
 		return nil, errors.Wrapf(err, "disk.GetGroups.GetGroupsMeta")
 	}
@@ -90,11 +89,11 @@ func (dr *DiskRepository) GetGroups() (*model.GroupsResult, error) {
 	return gr, nil
 }
 
-func (dr *DiskRepository) GetGroupsMeta() (*repository.GroupsMetaIndex, error) {
+func (dr *DiskRepository) GetGroupsMetadata() (*model.GroupsMetadata, error) {
 	dr.mu.RLock()
 	defer dr.mu.RUnlock()
 
-	var grpsMeta repository.GroupsMetaIndex
+	var grpsMeta model.GroupsMetadata
 	if err := json.NewDecoder(dr.db.groupsMeta).Decode(&grpsMeta); err == io.EOF {
 	} else if err != nil {
 		return nil, errors.Wrapf(err, "disk.GetGroupsMeta")
@@ -119,7 +118,7 @@ func (dr *DiskRepository) GetUsers() (*model.UsersResult, error) {
 		usrs = append(usrs, usr)
 	}
 
-	usrsMeta, err := dr.GetUsersMeta()
+	usrsMeta, err := dr.GetUsersMetadata()
 	if err != nil {
 		return nil, errors.Wrapf(err, "disk.GetUsers.GetUsersMeta")
 	}
@@ -142,11 +141,11 @@ func (dr *DiskRepository) GetUsers() (*model.UsersResult, error) {
 	return us, nil
 }
 
-func (dr *DiskRepository) GetUsersMeta() (*repository.UsersMetaIndex, error) {
+func (dr *DiskRepository) GetUsersMetadata() (*model.UsersMetadata, error) {
 	dr.mu.RLock()
 	defer dr.mu.RUnlock()
 
-	var usrsMeta repository.UsersMetaIndex
+	var usrsMeta model.UsersMetadata
 	if err := json.NewDecoder(dr.db.usersMeta).Decode(&usrsMeta); err == io.EOF {
 	} else if err != nil {
 		return nil, errors.Wrapf(err, "disk.GetUsersMeta")
@@ -171,7 +170,7 @@ func (dr *DiskRepository) GetGroupsUsers() (*model.GroupsUsersResult, error) {
 		grpsUsrs = append(grpsUsrs, grpUsrs)
 	}
 
-	grpsUsrsMeta, err := dr.GetGroupsUsersMeta()
+	grpsUsrsMeta, err := dr.GetGroupsUsersMetadata()
 	if err != nil {
 		return nil, errors.Wrapf(err, "disk.GetGroupsUsers.GetGroupsUsersMeta")
 	}
@@ -194,11 +193,11 @@ func (dr *DiskRepository) GetGroupsUsers() (*model.GroupsUsersResult, error) {
 	return us, nil
 }
 
-func (dr *DiskRepository) GetGroupsUsersMeta() (*repository.GroupsUsersMetaIndex, error) {
+func (dr *DiskRepository) GetGroupsUsersMetadata() (*model.GroupsUsersMetadata, error) {
 	dr.mu.RLock()
 	defer dr.mu.RUnlock()
 
-	var grpsUsrsMeta repository.GroupsUsersMetaIndex
+	var grpsUsrsMeta model.GroupsUsersMetadata
 	if err := json.NewDecoder(dr.db.groupsUsersMeta).Decode(&grpsUsrsMeta); err == io.EOF {
 	} else if err != nil {
 		return nil, errors.Wrapf(err, "disk.GetGroupsUsersMeta")
@@ -228,7 +227,7 @@ func (dr *DiskRepository) GetState() (*model.State, error) {
 	}
 
 	// read only the metadata not the Resoruces
-	var loadedState repository.StateMetaIndex
+	var loadedState model.StateMetadata
 	if err = json.NewDecoder(dr.db.state).Decode(&loadedState); err == io.EOF {
 	} else if err != nil {
 		return nil, errors.Wrapf(err, "GetState")
@@ -246,6 +245,19 @@ func (dr *DiskRepository) GetState() (*model.State, error) {
 	}
 
 	return state, nil
+}
+
+func (dr *DiskRepository) GetStateMetadata() (*model.StateMetadata, error) {
+	dr.mu.RLock()
+	defer dr.mu.RUnlock()
+
+	var stateMeta model.StateMetadata
+	if err := json.NewDecoder(dr.db.state).Decode(&stateMeta); err == io.EOF {
+	} else if err != nil {
+		return nil, errors.Wrapf(err, "disk.GetStateMetadata")
+	}
+
+	return &stateMeta, nil
 }
 
 func (dr *DiskRepository) UpdateState(state *model.State) error {

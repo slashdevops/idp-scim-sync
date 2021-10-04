@@ -8,5 +8,15 @@ import (
 
 type StateRepository interface {
 	GetState() (*model.State, error)
+	GetStateMetadata() (*model.StateMetadata, error)
 	UpdateState(state *model.State) error
+
+	GetGroups() (*model.GroupsResult, error)
+	GetGroupsMetadata() (*model.GroupsMetadata, error)
+
+	GetUsers() (*model.UsersResult, error)
+	GetUsersMetadata() (*model.UsersMetadata, error)
+
+	GetGroupsUsers() (*model.GroupsUsersResult, error)
+	GetGroupsUsersMetadata() (*model.GroupsUsersMetadata, error)
 }
