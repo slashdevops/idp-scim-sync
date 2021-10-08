@@ -75,6 +75,8 @@ func Test_StateRepository_GetState(t *testing.T) {
 		assert.Equal(t, 1, state.Resources.Users.Items)
 		assert.Equal(t, "hashCode", state.Resources.Users.HashCode)
 		assert.Equal(t, 1, len(state.Resources.Users.Resources))
+		assert.Equal(t, "1", state.Resources.Users.Resources[0].ID)
+		assert.Equal(t, "user 1", state.Resources.Users.Resources[0].DisplayName)
 
 		assert.Equal(t, 1, state.Resources.GroupsUsers.Items)
 		assert.Equal(t, "123456789", state.Resources.GroupsUsers.HashCode)
@@ -104,7 +106,7 @@ func Test_StateRepository_UpdateState(t *testing.T) {
 					HashCode: "1234567890",
 					Resources: []model.Group{
 						{
-							ID:       "id",
+							ID:       "1",
 							Name:     "group 1",
 							Email:    "group.1@mail.com",
 							HashCode: "123456789",
@@ -116,10 +118,11 @@ func Test_StateRepository_UpdateState(t *testing.T) {
 					HashCode: "hashCode",
 					Resources: []model.User{
 						{
-							ID:       "id",
-							Name:     model.Name{FamilyName: "1", GivenName: "user"},
-							Email:    "user.1@mail.com",
-							HashCode: "123456789",
+							ID:          "1",
+							Name:        model.Name{FamilyName: "1", GivenName: "user"},
+							DisplayName: "user 1",
+							Email:       "user.1@mail.com",
+							HashCode:    "123456789",
 						},
 					},
 				},
@@ -131,17 +134,18 @@ func Test_StateRepository_UpdateState(t *testing.T) {
 							Items:    1,
 							HashCode: "123456789",
 							Group: model.Group{
-								ID:       "id",
+								ID:       "1",
 								Name:     "group 1",
 								Email:    "group.1@mail.com",
 								HashCode: "123456789",
 							},
 							Resources: []model.User{
 								{
-									ID:       "id",
-									Name:     model.Name{FamilyName: "1", GivenName: "user"},
-									Email:    "user.1@mail.com",
-									HashCode: "123456789",
+									ID:          "1",
+									Name:        model.Name{FamilyName: "1", GivenName: "user"},
+									DisplayName: "user 1",
+									Email:       "user.1@mail.com",
+									HashCode:    "123456789",
 								},
 							},
 						},
@@ -176,6 +180,8 @@ func Test_StateRepository_UpdateState(t *testing.T) {
 		assert.Equal(t, 1, state.Resources.Users.Items)
 		assert.Equal(t, "hashCode", state.Resources.Users.HashCode)
 		assert.Equal(t, 1, len(state.Resources.Users.Resources))
+		assert.Equal(t, "1", state.Resources.Users.Resources[0].ID)
+		assert.Equal(t, "user 1", state.Resources.Users.Resources[0].DisplayName)
 
 		assert.Equal(t, 1, state.Resources.GroupsUsers.Items)
 		assert.Equal(t, "123456789", state.Resources.GroupsUsers.HashCode)
