@@ -50,7 +50,9 @@ func (dr *DiskRepository) UpdateState(state *model.State) error {
 	dr.mu.Lock()
 	defer dr.mu.Unlock()
 
-	err := json.NewEncoder(dr.stateFile).Encode(state)
+	enc := json.NewEncoder(dr.stateFile)
+	enc.SetIndent("", "  ")
+	err := enc.Encode(state)
 	if err != nil {
 		return errors.Wrapf(err, "UpdateState")
 	}

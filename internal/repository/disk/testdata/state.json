@@ -1,18 +1,18 @@
 {
-  "schemaVersion": "1.0.0",
-  "codeVersion": "0.0.1",
+  "schemaVersion": "",
+  "codeVersion": "",
   "lastSync": "2021-09-25T20:49:46+02:00",
   "hashCode": "hashCode",
   "resources": {
     "groups": {
       "items": 1,
-      "hashCode": "hashCode",
+      "hashCode": "123456789",
       "resources": [
         {
           "id": "id",
-          "name": "name",
-          "email": "email",
-          "hashCode": "hashCode"
+          "name": "group 1",
+          "email": "group.1@mail.com",
+          "hashCode": "123456789"
         }
       ]
     },
@@ -23,40 +23,40 @@
         {
           "id": "id",
           "name": {
-            "familyName": "lastName",
-            "givenName": "name"
+            "familyName": "1",
+            "givenName": "user"
           },
           "displayName": "",
           "active": false,
-          "email": "email",
-          "hashCode": "hashCode"
+          "email": "user.1@mail.com",
+          "hashCode": "123456789"
         }
       ]
     },
     "groupsUsers": {
       "items": 1,
-      "hashCode": "hashCode",
+      "hashCode": "123456789",
       "resources": [
         {
           "items": 1,
-          "hashCode": "hashCode",
+          "hashCode": "123456789",
           "group": {
             "id": "id",
-            "name": "name",
-            "email": "email",
-            "hashCode": "hashCode"
+            "name": "group 1",
+            "email": "group.1@mail.com",
+            "hashCode": "123456789"
           },
           "resources": [
             {
               "id": "id",
               "name": {
-                "familyName": "lastName",
-                "givenName": "name"
+                "familyName": "1",
+                "givenName": "user"
               },
               "displayName": "",
               "active": false,
-              "email": "email",
-              "hashCode": "hashCode"
+              "email": "user.1@mail.com",
+              "hashCode": "123456789"
             }
           ]
         }
