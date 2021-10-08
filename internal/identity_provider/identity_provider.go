@@ -172,6 +172,9 @@ func (i *IdentityProvider) GetUsersFromGroupMembers(ctx context.Context, mbr *mo
 
 // GetUsersAndGroupsUsers returns a model.UsersResult and model.GroupsUsersResult data structures with the users and groups
 func (i *IdentityProvider) GetUsersAndGroupsUsers(ctx context.Context, groups *model.GroupsResult) (*model.UsersResult, *model.GroupsUsersResult, error) {
+	// make pUsers unique
+	userSet := make(map[string]struct{})
+
 	pUsers := make([]model.User, 0)
 	pGroupsUsers := make([]model.GroupUsers, 0)
 
@@ -186,7 +189,13 @@ func (i *IdentityProvider) GetUsersAndGroupsUsers(ctx context.Context, groups *m
 		if err != nil {
 			return nil, nil, err
 		}
-		pUsers = append(pUsers, pUsersFromMembers.Resources...)
+
+		for _, pUser := range pUsersFromMembers.Resources {
+			if _, ok := userSet[pUser.ID]; !ok {
+				pUsers = append(pUsers, pUser)
+				userSet[pUser.ID] = struct{}{}
+			}
+		}
 
 		pGroupUsers := model.GroupUsers{
 			Items: len(pMembers.Resources),
