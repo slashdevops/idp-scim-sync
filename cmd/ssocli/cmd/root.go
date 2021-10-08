@@ -56,7 +56,7 @@ func init() {
 	rootCmd.PersistentFlags().BoolVarP(&cfg.Debug, "debug", "d", config.DefaultDebug, "enable log debug level")
 	rootCmd.PersistentFlags().StringVarP(&cfg.LogFormat, "log-format", "f", config.DefaultLogFormat, "set the log format")
 	rootCmd.PersistentFlags().StringVarP(&cfg.LogLevel, "log-level", "l", config.DefaultLogLevel, "set the log level")
-	rootCmd.PersistentFlags().DurationVarP(&reqTimeout, "timeout", "t", time.Second*10, "requests timeout")
+	rootCmd.PersistentFlags().DurationVarP(&reqTimeout, "timeout", "", time.Second*10, "requests timeout")
 }
 
 // initConfig reads in config file and ENV variables if set.
