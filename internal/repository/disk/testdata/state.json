@@ -1,9 +1,66 @@
 {
+  "schemaVersion": "1.0.0",
+  "codeVersion": "0.0.1",
   "lastSync": "2021-09-25T20:49:46+02:00",
-  "hashCode": "123456789",
+  "hashCode": "hashCode",
   "resources": {
-    "groupsLocation": "",
-    "usersLocation": "",
-    "groupsUsersLocation": ""
+    "groups": {
+      "items": 1,
+      "hashCode": "hashCode",
+      "resources": [
+        {
+          "id": "id",
+          "name": "name",
+          "email": "email",
+          "hashCode": "hashCode"
+        }
+      ]
+    },
+    "users": {
+      "items": 1,
+      "hashCode": "hashCode",
+      "resources": [
+        {
+          "id": "id",
+          "name": {
+            "familyName": "lastName",
+            "givenName": "name"
+          },
+          "displayName": "",
+          "active": false,
+          "email": "email",
+          "hashCode": "hashCode"
+        }
+      ]
+    },
+    "groupsUsers": {
+      "items": 1,
+      "hashCode": "hashCode",
+      "resources": [
+        {
+          "items": 1,
+          "hashCode": "hashCode",
+          "group": {
+            "id": "id",
+            "name": "name",
+            "email": "email",
+            "hashCode": "hashCode"
+          },
+          "resources": [
+            {
+              "id": "id",
+              "name": {
+                "familyName": "lastName",
+                "givenName": "name"
+              },
+              "displayName": "",
+              "active": false,
+              "email": "email",
+              "hashCode": "hashCode"
+            }
+          ]
+        }
+      ]
+    }
   }
 }

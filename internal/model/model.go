@@ -28,7 +28,7 @@ func (ur *UsersResult) MarshalJSON() ([]byte, error) {
 	if ur.Resources == nil {
 		ur.Resources = make([]User, 0)
 	}
-	return json.Marshal(*ur)
+	return json.MarshalIndent(*ur, "", "  ")
 }
 
 type Group struct {
@@ -48,7 +48,7 @@ func (gr *GroupsResult) MarshalJSON() ([]byte, error) {
 	if gr.Resources == nil {
 		gr.Resources = make([]Group, 0)
 	}
-	return json.Marshal(*gr)
+	return json.MarshalIndent(*gr, "", "  ")
 }
 
 type Member struct {
@@ -93,23 +93,5 @@ func (gur *GroupsUsersResult) MarshalJSON() ([]byte, error) {
 	if gur.Resources == nil {
 		gur.Resources = make([]GroupUsers, 0)
 	}
-	return json.Marshal(*gur)
-}
-
-type GroupsMetadata struct {
-	Items    int    `json:"items"`
-	HashCode string `json:"hashCode"`
-	Location string `json:"location"`
-}
-
-type UsersMetadata struct {
-	Items    int    `json:"items"`
-	HashCode string `json:"hashCode"`
-	Location string `json:"location"`
-}
-
-type GroupsUsersMetadata struct {
-	Items    int    `json:"items"`
-	HashCode string `json:"hashCode"`
-	Location string `json:"location"`
+	return json.MarshalIndent(*gur, "", "  ")
 }

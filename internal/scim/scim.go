@@ -9,19 +9,16 @@ import (
 	"github.com/slashdevops/idp-scim-sync/pkg/aws"
 )
 
-// This implement core.SCIMProvider interface
-// and as consumer define AWSSCIMProvider to use aws.aws methods
+// This implement core.SCIMService interface
+// and as consumer define AWSSCIMProvider interface to use aws.aws methods
 type AWSSCIMProvider interface {
 	ListUsers(ctx context.Context, filter string) (*aws.UsersResponse, error)
 	ListGroups(ctx context.Context, filter string) (*aws.GroupsResponse, error)
 }
 
-// implement core.SCIMService interface
 type SCIMProvider struct {
 	scim AWSSCIMProvider
 }
-
-// Implement SCIMProviderService Interface
 
 func NewSCIMProvider(scim AWSSCIMProvider) (*SCIMProvider, error) {
 	return &SCIMProvider{scim: scim}, nil

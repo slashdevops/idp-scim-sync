@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func TestUsersResult_MarshalJSON(t *testing.T) {
+func Test_UsersResult_MarshalJSON(t *testing.T) {
 	type fields struct {
 		Items     int
 		Resources []User
@@ -18,9 +18,13 @@ func TestUsersResult_MarshalJSON(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name:    "empty",
-			fields:  fields{},
-			want:    []byte(`{"items":0,"hashCode":"","resources":[]}`),
+			name:   "empty",
+			fields: fields{},
+			want: []byte(`{
+  "items": 0,
+  "hashCode": "",
+  "resources": []
+}`),
 			wantErr: false,
 		},
 		{
@@ -42,7 +46,23 @@ func TestUsersResult_MarshalJSON(t *testing.T) {
 					},
 				},
 			},
-			want:    []byte(`{"items":1,"hashCode":"test","resources":[{"id":"1","name":{"familyName":"1","givenName":"user"},"displayName":"user 1","active":true,"email":"user.1@mail.com","hashCode":"1111"}]}`),
+			want: []byte(`{
+  "items": 1,
+  "hashCode": "test",
+  "resources": [
+    {
+      "id": "1",
+      "name": {
+        "familyName": "1",
+        "givenName": "user"
+      },
+      "displayName": "user 1",
+      "active": true,
+      "email": "user.1@mail.com",
+      "hashCode": "1111"
+    }
+  ]
+}`),
 			wantErr: false,
 		},
 	}
@@ -65,7 +85,7 @@ func TestUsersResult_MarshalJSON(t *testing.T) {
 	}
 }
 
-func TestGroupsResult_MarshalJSON(t *testing.T) {
+func Test_GroupsResult_MarshalJSON(t *testing.T) {
 	type fields struct {
 		Items     int
 		HashCode  string
@@ -78,9 +98,13 @@ func TestGroupsResult_MarshalJSON(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name:    "empty",
-			fields:  fields{},
-			want:    []byte(`{"items":0,"hashCode":"","resources":[]}`),
+			name:   "empty",
+			fields: fields{},
+			want: []byte(`{
+  "items": 0,
+  "hashCode": "",
+  "resources": []
+}`),
 			wantErr: false,
 		},
 		{
@@ -96,7 +120,18 @@ func TestGroupsResult_MarshalJSON(t *testing.T) {
 					},
 				},
 			},
-			want:    []byte(`{"items":1,"hashCode":"test","resources":[{"id":"1","name":"group","email":"","hashCode":"1111"}]}`),
+			want: []byte(`{
+  "items": 1,
+  "hashCode": "test",
+  "resources": [
+    {
+      "id": "1",
+      "name": "group",
+      "email": "",
+      "hashCode": "1111"
+    }
+  ]
+}`),
 			wantErr: false,
 		},
 	}
@@ -119,7 +154,7 @@ func TestGroupsResult_MarshalJSON(t *testing.T) {
 	}
 }
 
-func TestGroupsUsersResult_MarshalJSON(t *testing.T) {
+func Test_GroupsUsersResult_MarshalJSON(t *testing.T) {
 	type fields struct {
 		Items     int
 		HashCode  string
@@ -132,9 +167,13 @@ func TestGroupsUsersResult_MarshalJSON(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name:    "empty",
-			fields:  fields{},
-			want:    []byte(`{"items":0,"hashCode":"","resources":[]}`),
+			name:   "empty",
+			fields: fields{},
+			want: []byte(`{
+  "items": 0,
+  "hashCode": "",
+  "resources": []
+}`),
 			wantErr: false,
 		},
 		{
@@ -168,7 +207,35 @@ func TestGroupsUsersResult_MarshalJSON(t *testing.T) {
 					},
 				},
 			},
-			want: []byte(`{"items":1,"hashCode":"test","resources":[{"items":1,"hashCode":"test","group":{"id":"1","name":"group 1","email":"group.1@mail.com","hashCode":"test"},"resources":[{"id":"1","name":{"familyName":"1","givenName":"user"},"displayName":"user 1","active":true,"email":"user.1@mail.com","hashCode":"test"}]}]}`),
+			want: []byte(`{
+  "items": 1,
+  "hashCode": "test",
+  "resources": [
+    {
+      "items": 1,
+      "hashCode": "test",
+      "group": {
+        "id": "1",
+        "name": "group 1",
+        "email": "group.1@mail.com",
+        "hashCode": "test"
+      },
+      "resources": [
+        {
+          "id": "1",
+          "name": {
+            "familyName": "1",
+            "givenName": "user"
+          },
+          "displayName": "user 1",
+          "active": true,
+          "email": "user.1@mail.com",
+          "hashCode": "test"
+        }
+      ]
+    }
+  ]
+}`),
 		},
 	}
 	for _, tt := range tests {

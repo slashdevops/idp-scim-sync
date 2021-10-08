@@ -1,2 +1,0 @@
-{"items":1,"hashCode":"123456789","group":{"id":"1","name":"group 1","email":"group.1@mail.com","hashCode":"123456789"},"resources":[{"id":"1","name":{"familyName":"1","givenName":"user"},"displayName":"user 1","active": true, "email":"user.1@mail.com","hashCode":"123456789"}]}
-{"items":1,"hashCode":"987654321","group":{"id":"2","name":"group 2","email":"group.2@mail.com","hashCode":"987654321"},"resources":[{"id":"2","name":{"familyName":"2","givenName":"user"},"displayName":"user 2","active": true, "email":"user.2@mail.com","hashCode":"987654321"}]}
