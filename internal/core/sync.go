@@ -11,7 +11,6 @@ import (
 )
 
 var (
-	ErrNilContext                    = errors.New("context cannot be nil")
 	ErrProviderServiceNil            = errors.New("identity provider service cannot be nil")
 	ErrSCIMServiceNil                = errors.New("SCIM service cannot be nil")
 	ErrGettingGroups                 = errors.New("error getting groups")
@@ -33,9 +32,6 @@ type SyncService struct {
 
 // NewSyncService creates a new sync service.
 func NewSyncService(ctx context.Context, prov IdentityProviderService, scim SCIMService, repo StateRepository, opts ...SyncServiceOption) (*SyncService, error) {
-	if ctx == nil {
-		return nil, ErrNilContext
-	}
 	if prov == nil {
 		return nil, ErrProviderServiceNil
 	}

@@ -14,37 +14,25 @@ func Test_syncService_NewSyncService(t *testing.T) {
 		mockCtrl := gomock.NewController(t)
 		defer mockCtrl.Finish()
 
-		ctx := context.TODO()
 		mockProviderService := mocks.NewMockIdentityProviderService(mockCtrl)
 		mockSCIMService := mocks.NewMockSCIMService(mockCtrl)
 		mockStateRepository := mocks.NewMockStateRepository(mockCtrl)
 
-		svc, err := NewSyncService(ctx, mockProviderService, mockSCIMService, mockStateRepository)
+		svc, err := NewSyncService(context.TODO(), mockProviderService, mockSCIMService, mockStateRepository)
 
 		assert.NoError(t, err)
 		assert.NotNil(t, svc)
 	})
 
 	t.Run("New Service without parameters", func(t *testing.T) {
-		ctx := context.TODO()
-
-		svc, err := NewSyncService(ctx, nil, nil, nil)
+		svc, err := NewSyncService(context.TODO(), nil, nil, nil)
 
 		assert.Error(t, err)
 		assert.Nil(t, svc)
-	})
-
-	t.Run("New Service without context, return specific error", func(t *testing.T) {
-		svc, err := NewSyncService(nil, nil, nil, nil)
-
-		assert.Error(t, err)
-		assert.Nil(t, svc)
-		assert.Equal(t, err, ErrNilContext)
 	})
 
 	t.Run("New Service without IdentityProviderServoce, return specific error", func(t *testing.T) {
-		ctx := context.TODO()
-		svc, err := NewSyncService(ctx, nil, nil, nil)
+		svc, err := NewSyncService(context.TODO(), nil, nil, nil)
 
 		assert.Error(t, err)
 		assert.Nil(t, svc)
@@ -55,10 +43,9 @@ func Test_syncService_NewSyncService(t *testing.T) {
 		mockCtrl := gomock.NewController(t)
 		defer mockCtrl.Finish()
 
-		ctx := context.TODO()
 		mockProviderService := mocks.NewMockIdentityProviderService(mockCtrl)
 
-		svc, err := NewSyncService(ctx, mockProviderService, nil, nil)
+		svc, err := NewSyncService(context.TODO(), mockProviderService, nil, nil)
 
 		assert.Error(t, err)
 		assert.Nil(t, svc)
@@ -69,11 +56,10 @@ func Test_syncService_NewSyncService(t *testing.T) {
 		mockCtrl := gomock.NewController(t)
 		defer mockCtrl.Finish()
 
-		ctx := context.TODO()
 		mockProviderService := mocks.NewMockIdentityProviderService(mockCtrl)
 		mockSCIMService := mocks.NewMockSCIMService(mockCtrl)
 
-		svc, err := NewSyncService(ctx, mockProviderService, mockSCIMService, nil, nil)
+		svc, err := NewSyncService(context.TODO(), mockProviderService, mockSCIMService, nil, nil)
 
 		assert.Error(t, err)
 		assert.Nil(t, svc)
