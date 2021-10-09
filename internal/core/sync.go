@@ -97,7 +97,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 	}
 
 	// get the state metadata from the repository
-	state, err := ss.repo.GetState()
+	state, err := ss.repo.GetState(ss.ctx)
 	if err != nil {
 		return ErrGettingState
 	}
@@ -306,7 +306,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 		}
 	}
 
-	// after be sure all the SCIM part is aligned with the Identity Provider part
+	// after be sure all the SCIM side is aligned with the Identity Provider side
 	// we can update the state with the identity provider data
 	newState := &model.State{
 		SchemaVersion: "1.0.0",
@@ -319,7 +319,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 		},
 	}
 
-	if err := ss.repo.UpdateState(newState); err != nil {
+	if err := ss.repo.UpdateState(ss.ctx, newState); err != nil {
 		return err
 	}
 

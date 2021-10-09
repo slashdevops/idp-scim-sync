@@ -7,7 +7,7 @@ import (
 
 	gomock "github.com/golang/mock/gomock"
 	"github.com/slashdevops/idp-scim-sync/internal/hash"
-	mocks "github.com/slashdevops/idp-scim-sync/internal/mocks/provider"
+	mocks "github.com/slashdevops/idp-scim-sync/internal/mocks/identity_provider"
 	"github.com/slashdevops/idp-scim-sync/internal/model"
 	"github.com/slashdevops/idp-scim-sync/internal/utils"
 	"github.com/stretchr/testify/assert"

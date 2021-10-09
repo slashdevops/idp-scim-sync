@@ -1,6 +1,7 @@
 package disk
 
 import (
+	"context"
 	"io/ioutil"
 	"os"
 	"testing"
@@ -32,7 +33,7 @@ func Test_StateRepository_GetState(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, repo)
 
-		state, err := repo.GetState()
+		state, err := repo.GetState(context.TODO())
 		assert.NoError(t, err)
 		assert.NotNil(t, state)
 		assert.Equal(t, "", state.LastSync)
@@ -61,7 +62,7 @@ func Test_StateRepository_GetState(t *testing.T) {
 		repo, err := NewDiskRepository(stateFile)
 		assert.NoError(t, err)
 
-		state, err := repo.GetState()
+		state, err := repo.GetState(context.TODO())
 		assert.NoError(t, err)
 		assert.NotNil(t, state)
 
@@ -154,7 +155,7 @@ func Test_StateRepository_UpdateState(t *testing.T) {
 			},
 		}
 
-		err = repo.UpdateState(stateDef)
+		err = repo.UpdateState(context.TODO(), stateDef)
 		assert.NoError(t, err)
 
 		stateFileRO, err := os.OpenFile(stateFile.Name(), os.O_RDONLY, 0644)
@@ -167,7 +168,7 @@ func Test_StateRepository_UpdateState(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, repoRO)
 
-		state, err := repoRO.GetState()
+		state, err := repoRO.GetState(context.TODO())
 		assert.NoError(t, err)
 		assert.NotNil(t, state)
 		assert.Equal(t, "2021-09-25T20:49:46+02:00", state.LastSync)

@@ -5,6 +5,7 @@
 package mocks
 
 import (
+	context "context"
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"
@@ -35,30 +36,30 @@ func (m *MockStateRepository) EXPECT() *MockStateRepositoryMockRecorder {
 }
 
 // GetState mocks base method.
-func (m *MockStateRepository) GetState() (*model.State, error) {
+func (m *MockStateRepository) GetState(ctx context.Context) (*model.State, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetState")
+	ret := m.ctrl.Call(m, "GetState", ctx)
 	ret0, _ := ret[0].(*model.State)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetState indicates an expected call of GetState.
-func (mr *MockStateRepositoryMockRecorder) GetState() *gomock.Call {
+func (mr *MockStateRepositoryMockRecorder) GetState(ctx interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetState", reflect.TypeOf((*MockStateRepository)(nil).GetState))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetState", reflect.TypeOf((*MockStateRepository)(nil).GetState), ctx)
 }
 
 // UpdateState mocks base method.
-func (m *MockStateRepository) UpdateState(state *model.State) error {
+func (m *MockStateRepository) UpdateState(ctx context.Context, state *model.State) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateState", state)
+	ret := m.ctrl.Call(m, "UpdateState", ctx, state)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // UpdateState indicates an expected call of UpdateState.
-func (mr *MockStateRepositoryMockRecorder) UpdateState(state interface{}) *gomock.Call {
+func (mr *MockStateRepositoryMockRecorder) UpdateState(ctx, state interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateState", reflect.TypeOf((*MockStateRepository)(nil).UpdateState), state)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateState", reflect.TypeOf((*MockStateRepository)(nil).UpdateState), ctx, state)
 }

@@ -1,6 +1,7 @@
 package disk
 
 import (
+	"context"
 	"encoding/json"
 	"io"
 	"sync"
@@ -32,7 +33,7 @@ func NewDiskRepository(stateFile io.ReadWriter) (*DiskRepository, error) {
 	}, nil
 }
 
-func (dr *DiskRepository) GetState() (*model.State, error) {
+func (dr *DiskRepository) GetState(ctx context.Context) (*model.State, error) {
 	dr.mu.RLock()
 	defer dr.mu.RUnlock()
 	var err error
@@ -46,7 +47,7 @@ func (dr *DiskRepository) GetState() (*model.State, error) {
 	return &state, nil
 }
 
-func (dr *DiskRepository) UpdateState(state *model.State) error {
+func (dr *DiskRepository) UpdateState(ctx context.Context, state *model.State) error {
 	dr.mu.Lock()
 	defer dr.mu.Unlock()
 

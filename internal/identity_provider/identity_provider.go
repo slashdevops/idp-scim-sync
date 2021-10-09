@@ -18,7 +18,7 @@ var (
 	ErrGettingUser         = errors.New("error getting user")
 )
 
-//go:generate go run github.com/golang/mock/mockgen@v1.6.0 -package=mocks -destination=../mocks/provider/identity_provider_mocks.go -source=identity_provider.go GoogleProviderService
+//go:generate go run github.com/golang/mock/mockgen@v1.6.0 -package=mocks -destination=../mocks/identity_provider/identity_provider_mocks.go -source=identity_provider.go GoogleProviderService
 
 // This implement core.IdentityProviderService interface
 // and as a consumer define GoogleProviderService to use pkg.google methods
