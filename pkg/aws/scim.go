@@ -10,13 +10,21 @@ import (
 	"path"
 )
 
+// Consume HTTPClient interface
+
+//go:generate go run github.com/golang/mock/mockgen@v1.6.0 -package=mocks -destination=../../mocks/aws/scim_mocks.go -source=scim.go HTTPClient
+
+type HTTPClient interface {
+	Do(req *http.Request) (*http.Response, error)
+}
+
 type AWSSCIMProvider struct {
-	httpClient  *http.Client
+	httpClient  HTTPClient
 	endpointURL *url.URL
 	bearerToken string
 }
 
-func NewSCIMService(http *http.Client, endpoint string, token string) (*AWSSCIMProvider, error) {
+func NewSCIMService(http HTTPClient, endpoint string, token string) (*AWSSCIMProvider, error) {
 	scimURL, err := url.Parse(endpoint)
 	if err != nil {
 		return nil, err
@@ -38,7 +46,7 @@ func (s *AWSSCIMProvider) sendRequest(ctx context.Context, req *http.Request, bo
 
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/json")
-	req.Header.Set("User-Agent", "idp-scim-sync/1.0")
+	req.Header.Set("User-Agent", "idp-scim-sync/1.0") // TODO: add right user agent
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", s.bearerToken))
 
 	resp, err = s.httpClient.Do(req)
