@@ -6,9 +6,13 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/secretsmanager"
+	"github.com/pkg/errors"
 )
 
 // consume secretsmanager.Client
+
+var ErrSMClientNil = errors.New("AWS SecretsManager Client is nil")
+
 // https://aws.github.io/aws-sdk-go-v2/docs/unit-testing/
 
 //go:generate go run github.com/golang/mock/mockgen@v1.6.0 -package=mocks -destination=../../mocks/aws/secretsmanager_mocks.go -source=secretsmanager.go SecretsManagerClientAPI
@@ -21,10 +25,14 @@ type SecretsManager struct {
 	svc SecretsManagerClientAPI
 }
 
-func NewSecretsManagerService(svc SecretsManagerClientAPI) *SecretsManager {
+func NewSecretsManagerService(svc SecretsManagerClientAPI) (*SecretsManager, error) {
+	if svc == nil {
+		return nil, errors.Wrapf(ErrSMClientNil, "NewSecretsManagerService")
+	}
+
 	return &SecretsManager{
 		svc: svc,
-	}
+	}, nil
 }
 
 func (s *SecretsManager) GetSecretValue(ctx context.Context, secretKey string) (string, error) {

@@ -121,7 +121,11 @@ func configLambda() {
 	}
 
 	svc := secretsmanager.NewFromConfig(awsconf)
-	secrets := aws.NewSecretsManagerService(svc)
+
+	secrets, err := aws.NewSecretsManagerService(svc)
+	if err != nil {
+		log.Fatalf(errors.Wrap(err, "cannot create secrets manager service").Error())
+	}
 
 	unwrap, err := secrets.GetSecretValue(context.TODO(), "SSOLambdaGoogleUserEmail")
 	if err != nil {
