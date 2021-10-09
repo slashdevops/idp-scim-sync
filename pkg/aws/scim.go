@@ -8,9 +8,16 @@ import (
 	"net/http"
 	"net/url"
 	"path"
+
+	"github.com/pkg/errors"
 )
 
 // Consume HTTPClient interface
+
+var (
+	ErrParsingURL    = errors.Errorf("error parsing url")
+	ErrEndPointEmpty = errors.Errorf("endpoint is empty and it is required")
+)
 
 //go:generate go run github.com/golang/mock/mockgen@v1.6.0 -package=mocks -destination=../../mocks/aws/scim_mocks.go -source=scim.go HTTPClient
 
@@ -25,9 +32,13 @@ type AWSSCIMProvider struct {
 }
 
 func NewSCIMService(http HTTPClient, endpoint string, token string) (*AWSSCIMProvider, error) {
+	if endpoint == "" {
+		return nil, errors.Wrapf(ErrEndPointEmpty, "NewSCIMService")
+	}
+
 	scimURL, err := url.Parse(endpoint)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrapf(ErrParsingURL, "NewSCIMService")
 	}
 
 	return &AWSSCIMProvider{
