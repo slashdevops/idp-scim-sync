@@ -28,7 +28,7 @@ var (
 	ErrStateNil            = errors.New("State is nil")
 )
 
-//go:generate go run github.com/golang/mock/mockgen@v1.6.0 -package=mocks -destination=../../mocks/repository/s3_mocks.go -source=s3.go S3ClientAPI
+//go:generate go run github.com/golang/mock/mockgen@v1.6.0 -package=mocks -destination=../../../mocks/repository/s3_mocks.go -source=s3.go S3ClientAPI
 
 type S3ClientAPI interface {
 	GetObject(ctx context.Context, params *s3.GetObjectInput, optFns ...func(*s3.Options)) (*s3.GetObjectOutput, error)

@@ -9,8 +9,8 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/golang/mock/gomock"
-	mocks "github.com/slashdevops/idp-scim-sync/internal/mocks/repository"
 	"github.com/slashdevops/idp-scim-sync/internal/model"
+	mocks "github.com/slashdevops/idp-scim-sync/mocks/repository"
 	"github.com/stretchr/testify/assert"
 )
 

@@ -8,16 +8,20 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/secretsmanager"
 )
 
+// consume secretsmanager.Client
 // https://aws.github.io/aws-sdk-go-v2/docs/unit-testing/
-type SecretsManagerService interface {
+
+//go:generate go run github.com/golang/mock/mockgen@v1.6.0 -package=mocks -destination=../../mocks/aws/secretsmanager_mocks.go -source=secretsmanager.go SecretsManagerClientAPI
+
+type SecretsManagerClientAPI interface {
 	GetSecretValue(ctx context.Context, params *secretsmanager.GetSecretValueInput, optFns ...func(*secretsmanager.Options)) (*secretsmanager.GetSecretValueOutput, error)
 }
 
 type SecretsManager struct {
-	svc SecretsManagerService
+	svc SecretsManagerClientAPI
 }
 
-func NewSecretsManagerService(svc SecretsManagerService) *SecretsManager {
+func NewSecretsManagerService(svc SecretsManagerClientAPI) *SecretsManager {
 	return &SecretsManager{
 		svc: svc,
 	}

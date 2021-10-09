@@ -7,8 +7,8 @@ import (
 	"testing"
 
 	gomock "github.com/golang/mock/gomock"
-	mocks "github.com/slashdevops/idp-scim-sync/internal/mocks/core"
 	"github.com/slashdevops/idp-scim-sync/internal/utils"
+	mocks "github.com/slashdevops/idp-scim-sync/mocks/core"
 )
 
 func TestWithIdentityProviderGroupsFilter(t *testing.T) {

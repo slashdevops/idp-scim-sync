@@ -9,8 +9,8 @@ import (
 	admin "google.golang.org/api/admin/directory/v1"
 )
 
-func TestNewService(t *testing.T) {
-	t.Run("New Service with parameters", func(t *testing.T) {
+func Test_NewService(t *testing.T) {
+	t.Run("Should return a new Service with mocked parameters", func(t *testing.T) {
 		ctx := context.TODO()
 		userEmail := "mock-email@mock-project.iam.gserviceaccount.com"
 		serviceAccountFile := "testdata/service_account.json"
@@ -26,7 +26,7 @@ func TestNewService(t *testing.T) {
 		assert.NotNil(t, svc)
 	})
 
-	t.Run("New Service without parameters", func(t *testing.T) {
+	t.Run("Should return a new Service with empty service account parameter", func(t *testing.T) {
 		ctx := context.TODO()
 		userEmail := ""
 		scope := ""
@@ -37,8 +37,8 @@ func TestNewService(t *testing.T) {
 	})
 }
 
-func TestNewDirectoryService(t *testing.T) {
-	t.Run("New Directory Service Client with parameters", func(t *testing.T) {
+func Test_NewDirectoryService(t *testing.T) {
+	t.Run("Should return a new Directory Service Client with mocked parameters", func(t *testing.T) {
 		ctx := context.TODO()
 		userEmail := "mock-email@mock-project.iam.gserviceaccount.com"
 		serviceAccountFile := "testdata/service_account.json"
@@ -55,16 +55,14 @@ func TestNewDirectoryService(t *testing.T) {
 		}
 
 		client, err := NewDirectoryService(svc)
-
 		assert.NoError(t, err)
 		assert.NotNil(t, client)
 	})
 
-	t.Run("New Directory Service Client without right parameters", func(t *testing.T) {
+	t.Run("Should return a new Directory Service Client", func(t *testing.T) {
 		svc := &admin.Service{}
 
 		client, err := NewDirectoryService(svc)
-
 		assert.NoError(t, err)
 		assert.NotNil(t, client)
 	})
