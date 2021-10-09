@@ -10,5 +10,5 @@ import (
 
 type StateRepository interface {
 	GetState(ctx context.Context) (*model.State, error)
-	UpdateState(ctx context.Context, state *model.State) error
+	SaveState(ctx context.Context, state *model.State) error
 }

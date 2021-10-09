@@ -47,7 +47,7 @@ func (dr *DiskRepository) GetState(ctx context.Context) (*model.State, error) {
 	return &state, nil
 }
 
-func (dr *DiskRepository) UpdateState(ctx context.Context, state *model.State) error {
+func (dr *DiskRepository) SaveState(ctx context.Context, state *model.State) error {
 	dr.mu.Lock()
 	defer dr.mu.Unlock()
 
@@ -55,7 +55,7 @@ func (dr *DiskRepository) UpdateState(ctx context.Context, state *model.State) e
 	enc.SetIndent("", "  ")
 	err := enc.Encode(state)
 	if err != nil {
-		return errors.Wrapf(err, "UpdateState")
+		return errors.Wrapf(err, "SaveState")
 	}
 
 	return nil

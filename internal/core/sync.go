@@ -315,7 +315,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 		},
 	}
 
-	if err := ss.repo.UpdateState(ss.ctx, newState); err != nil {
+	if err := ss.repo.SaveState(ss.ctx, newState); err != nil {
 		return err
 	}
 

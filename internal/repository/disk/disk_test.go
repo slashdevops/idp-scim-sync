@@ -85,7 +85,7 @@ func Test_StateRepository_GetState(t *testing.T) {
 	})
 }
 
-func Test_StateRepository_UpdateState(t *testing.T) {
+func Test_StateRepository_SaveState(t *testing.T) {
 	t.Run("Empty file", func(t *testing.T) {
 		tmpDir := os.TempDir()
 
@@ -155,7 +155,7 @@ func Test_StateRepository_UpdateState(t *testing.T) {
 			},
 		}
 
-		err = repo.UpdateState(context.TODO(), stateDef)
+		err = repo.SaveState(context.TODO(), stateDef)
 		assert.NoError(t, err)
 
 		stateFileRO, err := os.OpenFile(stateFile.Name(), os.O_RDONLY, 0644)

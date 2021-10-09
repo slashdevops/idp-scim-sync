@@ -90,13 +90,13 @@ func (r *S3Repository) GetState(ctx context.Context) (*model.State, error) {
 	return &state, nil
 }
 
-func (r *S3Repository) UpdateState(ctx context.Context, state *model.State) error {
+func (r *S3Repository) SaveState(ctx context.Context, state *model.State) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
 	jsonPayload, err := json.MarshalIndent(state, "", "  ")
 	if err != nil {
-		return errors.Wrapf(ErrMarshallingState, "UpdateState")
+		return errors.Wrapf(ErrMarshallingState, "SaveState")
 	}
 
 	output, err := r.client.PutObject(ctx, &s3.PutObjectInput{
@@ -105,7 +105,7 @@ func (r *S3Repository) UpdateState(ctx context.Context, state *model.State) erro
 		Body:   bytes.NewReader(jsonPayload),
 	})
 	if err != nil {
-		return errors.Wrapf(ErrPuttingS3Object, "UpdateState")
+		return errors.Wrapf(ErrPuttingS3Object, "SaveState")
 	}
 
 	log.Debugf("PutObjectOutput: %v", output)
