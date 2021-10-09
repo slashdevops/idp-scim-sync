@@ -131,3 +131,61 @@ func Test_S3Repository_GetState(t *testing.T) {
 		assert.ErrorIs(t, err, ErrGettingS3Object)
 	})
 }
+
+func Test_S3Repository_SaveState(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	t.Run("Should return error with nil state", func(t *testing.T) {
+		mockS3Repository := mocks.NewMockS3ClientAPI(mockCtrl)
+
+		svc, err := NewS3Repository(mockS3Repository, WithBucket("MyBucket"), WithKey("MyKey"))
+		assert.NoError(t, err)
+		assert.NotNil(t, svc)
+
+		err = svc.SaveState(context.TODO(), nil)
+		assert.Error(t, err)
+		assert.ErrorIs(t, err, ErrStateNil)
+	})
+
+	t.Run("Should work fine with valid state", func(t *testing.T) {
+		mockS3Repository := mocks.NewMockS3ClientAPI(mockCtrl)
+
+		sObj := &model.State{
+			SchemaVersion: "1.0.0",
+			CodeVersion:   "0.0.1",
+			LastSync:      "2020-01-01T00:00:00Z",
+			HashCode:      "123456789",
+			Resources: model.StateResources{
+				Groups:      model.GroupsResult{},
+				Users:       model.UsersResult{},
+				GroupsUsers: model.GroupsUsersResult{},
+			},
+		}
+
+		mockS3Repository.EXPECT().PutObject(context.TODO(), gomock.Any()).Return(nil, nil)
+
+		svc, err := NewS3Repository(mockS3Repository, WithBucket("MyBucket"), WithKey("MyKey"))
+		assert.NoError(t, err)
+		assert.NotNil(t, svc)
+
+		err = svc.SaveState(context.TODO(), sObj)
+		assert.NoError(t, err)
+	})
+
+	t.Run("Should return error", func(t *testing.T) {
+		mockS3Repository := mocks.NewMockS3ClientAPI(mockCtrl)
+
+		sObj := &model.State{}
+
+		mockS3Repository.EXPECT().PutObject(context.TODO(), gomock.Any()).Return(nil, errors.New("error"))
+
+		svc, err := NewS3Repository(mockS3Repository, WithBucket("MyBucket"), WithKey("MyKey"))
+		assert.NoError(t, err)
+		assert.NotNil(t, svc)
+
+		err = svc.SaveState(context.TODO(), sObj)
+		assert.Error(t, err)
+		assert.ErrorIs(t, err, ErrPuttingS3Object)
+	})
+}

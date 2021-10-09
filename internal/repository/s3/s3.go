@@ -11,6 +11,7 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/slashdevops/idp-scim-sync/internal/model"
+	"github.com/slashdevops/idp-scim-sync/internal/utils"
 )
 
 // Implement model.Repository interface
@@ -24,6 +25,7 @@ var (
 	ErrPuttingS3Object     = errors.New("Error putting S3 object")
 	ErrOptionWithBucketNil = errors.New("Option WithBucket is nil")
 	ErrOptionWithKeyNil    = errors.New("Option WithKey is nil")
+	ErrStateNil            = errors.New("State is nil")
 )
 
 //go:generate go run github.com/golang/mock/mockgen@v1.6.0 -package=mocks -destination=../../mocks/repository/s3_mocks.go -source=s3.go S3ClientAPI
@@ -78,7 +80,7 @@ func (r *S3Repository) GetState(ctx context.Context) (*model.State, error) {
 	}
 	defer resp.Body.Close()
 
-	log.Debugf("GetObjectOutput: %v", resp)
+	log.Debugf("GetObjectOutput: %s", utils.ToJSON(resp))
 
 	var state model.State
 	dec := json.NewDecoder(resp.Body)
@@ -94,6 +96,10 @@ func (r *S3Repository) SaveState(ctx context.Context, state *model.State) error 
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
+	if state == nil {
+		return errors.Wrapf(ErrStateNil, "SaveState")
+	}
+
 	jsonPayload, err := json.MarshalIndent(state, "", "  ")
 	if err != nil {
 		return errors.Wrapf(ErrMarshallingState, "SaveState")
@@ -108,7 +114,7 @@ func (r *S3Repository) SaveState(ctx context.Context, state *model.State) error 
 		return errors.Wrapf(ErrPuttingS3Object, "SaveState")
 	}
 
-	log.Debugf("PutObjectOutput: %v", output)
+	log.Debugf("PutObjectOutput: %s", utils.ToJSON(output))
 
 	return nil
 }
