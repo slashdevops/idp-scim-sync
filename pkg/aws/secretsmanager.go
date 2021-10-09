@@ -3,6 +3,7 @@ package aws
 import (
 	"context"
 	"encoding/base64"
+	"fmt"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/secretsmanager"
@@ -40,13 +41,17 @@ func NewSecretsManagerService(svc SecretsManagerClientAPI) (*SecretsManager, err
 }
 
 func (s *SecretsManager) GetSecretValue(ctx context.Context, secretKey string) (string, error) {
-	r, err := s.svc.GetSecretValue(ctx, &secretsmanager.GetSecretValueInput{
+	vIn := &secretsmanager.GetSecretValueInput{
 		SecretId:     aws.String(secretKey),
 		VersionStage: aws.String("AWSCURRENT"),
-	})
+	}
+
+	r, err := s.svc.GetSecretValue(ctx, vIn)
 	if err != nil {
 		return "", errors.Wrapf(ErrGettingSecretValue, "GetSecretValue")
 	}
+
+	fmt.Printf("len= %v", len(r.SecretBinary))
 
 	var secretString string
 

@@ -2,6 +2,8 @@ package aws
 
 import (
 	"context"
+	"encoding/base64"
+	"errors"
 	"testing"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -37,6 +39,7 @@ func Test_SecretsManager_GetSecretValue(t *testing.T) {
 
 	t.Run("Should return valid value when key exist", func(t *testing.T) {
 		mockSMClientAPI := mocks.NewMockSecretsManagerClientAPI(mockCtrl)
+		ctx := context.TODO()
 
 		SMOut := &secretsmanager.GetSecretValueOutput{
 			SecretString: aws.String("testValue"),
@@ -47,34 +50,79 @@ func Test_SecretsManager_GetSecretValue(t *testing.T) {
 			VersionStage: aws.String("AWSCURRENT"),
 		}
 
-		mockSMClientAPI.EXPECT().GetSecretValue(context.TODO(), SMIn).Return(SMOut, nil)
+		mockSMClientAPI.EXPECT().GetSecretValue(ctx, SMIn).Times(1).Return(SMOut, nil)
 
 		svc, err := NewSecretsManagerService(mockSMClientAPI)
 		assert.NoError(t, err)
 		assert.NotNil(t, svc)
 
-		value, err := svc.GetSecretValue(context.TODO(), "testKey")
+		value, err := svc.GetSecretValue(ctx, "testKey")
 		assert.NoError(t, err)
 		assert.NotNil(t, value)
 		assert.Equal(t, "testValue", value)
 	})
 
-	// t.Run("Should return a error and empty valid value when key doesn't exist", func(t *testing.T) {
-	// 	mockSMClientAPI := mocks.NewMockSecretsManagerClientAPI(mockCtrl)
+	t.Run("Should return a error and empty valid value when key doesn't exist", func(t *testing.T) {
+		mockSMClientAPI := mocks.NewMockSecretsManagerClientAPI(mockCtrl)
+		ctx := context.TODO()
 
-	// 	SMIn := &secretsmanager.GetSecretValueInput{
-	// 		SecretId:     aws.String("testKey"),
-	// 		VersionStage: aws.String("AWSCURRENT"),
-	// 	}
+		mockSMClientAPI.EXPECT().GetSecretValue(ctx, gomock.Any()).Times(1).Return(nil, errors.New("test error"))
 
-	// 	mockSMClientAPI.EXPECT().GetSecretValue(context.TODO(), SMIn).Return(nil, errors.New("test error"))
+		svc, err := NewSecretsManagerService(mockSMClientAPI)
+		assert.NoError(t, err)
+		assert.NotNil(t, svc)
 
-	// 	svc, err := NewSecretsManagerService(mockSMClientAPI)
-	// 	assert.NoError(t, err)
-	// 	assert.NotNil(t, svc)
+		value, err := svc.GetSecretValue(ctx, "testKeya")
+		assert.Error(t, err)
+		assert.ErrorIs(t, err, ErrGettingSecretValue)
+		assert.Empty(t, value)
+	})
 
-	// 	value, err := svc.GetSecretValue(context.TODO(), "testKeya")
-	// 	assert.Error(t, err)
-	// 	assert.Nil(t, value)
-	// })
+	t.Run("Should return error decoding bin value", func(t *testing.T) {
+		mockSMClientAPI := mocks.NewMockSecretsManagerClientAPI(mockCtrl)
+		ctx := context.TODO()
+
+		SMOut := &secretsmanager.GetSecretValueOutput{
+			SecretBinary: []byte("testValue"),
+		}
+
+		mockSMClientAPI.EXPECT().GetSecretValue(ctx, gomock.Any()).Times(1).Return(SMOut, nil)
+
+		svc, err := NewSecretsManagerService(mockSMClientAPI)
+		assert.NoError(t, err)
+		assert.NotNil(t, svc)
+
+		value, err := svc.GetSecretValue(ctx, "testValue")
+		assert.Error(t, err)
+		assert.ErrorIs(t, err, ErrDecodingBinarySecretValue)
+		assert.Empty(t, value)
+	})
+
+	t.Run("Should return valid value when key is bin", func(t *testing.T) {
+		mockSMClientAPI := mocks.NewMockSecretsManagerClientAPI(mockCtrl)
+		ctx := context.TODO()
+		key := "MyTestKey"
+
+		SMIn := &secretsmanager.GetSecretValueInput{
+			SecretId:     aws.String(key),
+			VersionStage: aws.String("AWSCURRENT"),
+		}
+
+		message := base64.StdEncoding.EncodeToString([]byte(key))
+
+		SMOut := &secretsmanager.GetSecretValueOutput{
+			SecretBinary: []byte(message),
+		}
+
+		mockSMClientAPI.EXPECT().GetSecretValue(ctx, SMIn).Times(1).Return(SMOut, nil)
+
+		svc, err := NewSecretsManagerService(mockSMClientAPI)
+		assert.NoError(t, err)
+		assert.NotNil(t, svc)
+
+		value, err := svc.GetSecretValue(ctx, key)
+		assert.NoError(t, err)
+		assert.NotNil(t, value)
+		assert.Equal(t, key, value)
+	})
 }
