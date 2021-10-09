@@ -85,6 +85,7 @@ func init() {
 	awsCmd.MarkPersistentFlagRequired("aws-scim-endpoint")
 
 	awsCmd.AddCommand(awsServiceCmd)
+
 	awsServiceCmd.AddCommand(awsServiceConfigCmd)
 	awsServiceConfigCmd.Flags().StringVar(&outFormat, "output-format", "json", "output format (json|yaml)")
 
