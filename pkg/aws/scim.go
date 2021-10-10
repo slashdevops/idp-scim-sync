@@ -15,8 +15,12 @@ import (
 // Consume HTTPClient interface
 
 var (
-	ErrParsingURL    = errors.Errorf("error parsing url")
-	ErrEndPointEmpty = errors.Errorf("endpoint is empty and it is required")
+	ErrParsingURL          = errors.Errorf("error parsing url")
+	ErrEndpointEmpty       = errors.Errorf("endpoint is empty and it is required")
+	ErrCallingDo           = errors.Errorf("error calling http client Do method")
+	ErrReadingResponseBody = errors.Errorf("error reading response body")
+	ErrSendingRequest      = errors.Errorf("error sending request")
+	ErrDecodingResponse    = errors.Errorf("error decoding response")
 )
 
 //go:generate go run github.com/golang/mock/mockgen@v1.6.0 -package=mocks -destination=../../mocks/aws/scim_mocks.go -source=scim.go HTTPClient
@@ -33,12 +37,12 @@ type AWSSCIMProvider struct {
 
 func NewSCIMService(http HTTPClient, endpoint string, token string) (*AWSSCIMProvider, error) {
 	if endpoint == "" {
-		return nil, errors.Wrapf(ErrEndPointEmpty, "NewSCIMService")
+		return nil, errors.Wrapf(ErrEndpointEmpty, "NewSCIMService")
 	}
 
 	scimURL, err := url.Parse(endpoint)
 	if err != nil {
-		return nil, errors.Wrapf(ErrParsingURL, "NewSCIMService")
+		return nil, errors.Wrapf(ErrParsingURL, "NewSCIMService -> "+err.Error())
 	}
 
 	return &AWSSCIMProvider{
@@ -52,7 +56,7 @@ func (s *AWSSCIMProvider) EndpointURL() *url.URL {
 	return s.endpointURL
 }
 
-func (s *AWSSCIMProvider) sendRequest(ctx context.Context, req *http.Request, body interface{}) (resp *http.Response, err error) {
+func (s *AWSSCIMProvider) sendRequest(ctx context.Context, req *http.Request, body interface{}) (*http.Response, error) {
 	req = req.WithContext(ctx)
 
 	req.Header.Set("Content-Type", "application/json")
@@ -60,22 +64,22 @@ func (s *AWSSCIMProvider) sendRequest(ctx context.Context, req *http.Request, bo
 	req.Header.Set("User-Agent", "idp-scim-sync/1.0") // TODO: add right user agent
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", s.bearerToken))
 
-	resp, err = s.httpClient.Do(req)
+	resp, err := s.httpClient.Do(req)
 	if err != nil {
-		return
+		return nil, errors.Wrapf(ErrCallingDo, "sendRequest -> "+err.Error())
 	}
 
 	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusBadRequest {
 		bodyBytes, err := io.ReadAll(resp.Body)
 		if err != nil {
-			return nil, err
+			return nil, errors.Wrapf(ErrReadingResponseBody, "sendRequest -> "+err.Error())
 		}
 		defer resp.Body.Close()
 
-		return nil, fmt.Errorf("unknown error, response body: %s status code: %d", string(bodyBytes), resp.StatusCode)
+		return nil, fmt.Errorf("%w: response body -> %s, status code -> %d", err, string(bodyBytes), resp.StatusCode)
 	}
 
-	return
+	return resp, nil
 }
 
 func (s *AWSSCIMProvider) ListUsers(ctx context.Context, filter string) (*UsersResponse, error) {
@@ -90,17 +94,17 @@ func (s *AWSSCIMProvider) ListUsers(ctx context.Context, filter string) (*UsersR
 
 	req, err := http.NewRequest(http.MethodGet, s.endpointURL.String(), nil)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%w: http method -> %s, endpoint -> %v", err, http.MethodGet, s.endpointURL.String())
 	}
 
 	resp, err := s.sendRequest(ctx, req, nil)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrapf(ErrSendingRequest, "ListUsers -> "+err.Error())
 	}
 	defer resp.Body.Close()
 
 	if err = json.NewDecoder(resp.Body).Decode(&uResponse); err == nil {
-		return nil, fmt.Errorf("error decoding response, error: %s", err)
+		return nil, errors.Wrapf(ErrDecodingResponse, "ListUsers -> "+err.Error())
 	}
 
 	return &uResponse, nil
@@ -118,18 +122,18 @@ func (s *AWSSCIMProvider) ListGroups(ctx context.Context, filter string) (*Group
 
 	req, err := http.NewRequest(http.MethodGet, s.endpointURL.String(), nil)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%w: http method -> %s, endpoint -> %v", err, http.MethodGet, s.endpointURL.String())
 	}
 
 	resp, err := s.sendRequest(ctx, req, nil)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrapf(ErrSendingRequest, "ListGroups -> "+err.Error())
 	}
 	defer resp.Body.Close()
 
 	d := json.NewDecoder(resp.Body)
 	if err := d.Decode(&gResponse); err != nil {
-		return nil, fmt.Errorf("error decoding response, error: %s", err)
+		return nil, errors.Wrapf(ErrDecodingResponse, "ListGroups -> "+err.Error())
 	}
 
 	return &gResponse, nil
@@ -140,28 +144,19 @@ func (s *AWSSCIMProvider) ServiceProviderConfig(ctx context.Context) (*ServicePr
 
 	req, err := http.NewRequest(http.MethodGet, s.endpointURL.String(), nil)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%w: http method -> %s, endpoint -> %v", err, http.MethodGet, s.endpointURL.String())
 	}
 
 	resp, err := s.sendRequest(ctx, req, nil)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrapf(ErrSendingRequest, "ServiceProviderConfig -> "+err.Error())
 	}
 	defer resp.Body.Close()
-
-	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusBadRequest {
-		bodyBytes, err := io.ReadAll(resp.Body)
-		if err != nil {
-			return nil, err
-		}
-
-		return nil, fmt.Errorf("unknown error, response body: %s status code: %d", string(bodyBytes), resp.StatusCode)
-	}
 
 	var config ServiceProviderConfig
 	d := json.NewDecoder(resp.Body)
 	if err := d.Decode(&config); err != nil {
-		return nil, fmt.Errorf("error decoding response, error: %s", err)
+		return nil, errors.Wrapf(ErrDecodingResponse, "ServiceProviderConfig -> "+err.Error())
 	}
 
 	return &config, nil

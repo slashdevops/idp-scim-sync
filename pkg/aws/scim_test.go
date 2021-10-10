@@ -30,12 +30,12 @@ func Test_NewSCIMService(t *testing.T) {
 		assert.Nil(t, got)
 	})
 
-	t.Run("Should return ErrEndPointEmpty error ", func(t *testing.T) {
+	t.Run("Should return ErrEndpointEmpty error ", func(t *testing.T) {
 		mockHTTPCLient := mocks.NewMockHTTPClient(mockCtrl)
 
 		got, err := NewSCIMService(mockHTTPCLient, "", "MyToken")
 		assert.Error(t, err)
-		assert.ErrorIs(t, err, ErrEndPointEmpty)
+		assert.ErrorIs(t, err, ErrEndpointEmpty)
 		assert.Nil(t, got)
 	})
 }
