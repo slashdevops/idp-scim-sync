@@ -1,9 +1,11 @@
 package aws
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"path"
@@ -20,6 +22,7 @@ var (
 	ErrReadingResponseBody = errors.Errorf("error reading response body")
 	ErrSendingRequest      = errors.Errorf("error sending request")
 	ErrDecodingResponse    = errors.Errorf("error decoding response")
+	ErrEncodingRequest     = errors.Errorf("error encoding request")
 )
 
 //go:generate go run github.com/golang/mock/mockgen@v1.6.0 -package=mocks -destination=../../mocks/aws/scim_mocks.go -source=scim.go HTTPClient
@@ -30,7 +33,7 @@ type HTTPClient interface {
 
 type AWSSCIMProvider struct {
 	httpClient  HTTPClient
-	endpointURL *url.URL
+	url         *url.URL
 	UserAgent   string
 	bearerToken string
 }
@@ -44,28 +47,60 @@ func NewSCIMService(httpClient HTTPClient, endpoint string, token string) (*AWSS
 		return nil, errors.Wrapf(ErrEndpointEmpty, "NewSCIMService")
 	}
 
-	scimURL, err := url.Parse(endpoint)
+	url, err := url.Parse(endpoint)
 	if err != nil {
 		return nil, errors.Wrapf(ErrParsingURL, "NewSCIMService -> "+err.Error())
 	}
 
 	return &AWSSCIMProvider{
 		httpClient:  httpClient,
-		endpointURL: scimURL,
+		url:         url,
 		bearerToken: token,
 	}, nil
 }
 
-func (s *AWSSCIMProvider) GetEndpointURL() *url.URL {
-	return s.endpointURL
+func (s *AWSSCIMProvider) newRequest(method string, url string, body interface{}) (*http.Request, error) {
+	u, err := s.url.Parse(url)
+	if err != nil {
+		return nil, errors.Wrapf(ErrParsingURL, "NewRequest -> "+err.Error())
+	}
+
+	var buf io.ReadWriter
+	if body != nil {
+		buf = &bytes.Buffer{}
+		enc := json.NewEncoder(buf)
+		enc.SetEscapeHTML(false)
+
+		err := enc.Encode(body)
+		if err != nil {
+			return nil, errors.Wrapf(ErrEncodingRequest, "NewRequest -> "+err.Error())
+		}
+	}
+
+	req, err := http.NewRequest(method, u.String(), buf)
+	if err != nil {
+		return nil, err
+	}
+
+	if body != nil {
+		req.Header.Set("Content-Type", "application/json")
+	}
+
+	req.Header.Set("Accept", "application/json")
+
+	if s.UserAgent != "" {
+		req.Header.Set("User-Agent", s.UserAgent)
+	}
+	return req, nil
+}
+
+func (s *AWSSCIMProvider) GetURL() *url.URL {
+	return s.url
 }
 
 func (s *AWSSCIMProvider) sendRequest(ctx context.Context, req *http.Request, body interface{}) (*http.Response, error) {
 	req = req.WithContext(ctx)
 
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Accept", "application/json")
-	req.Header.Set("User-Agent", s.UserAgent)
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", s.bearerToken))
 
 	resp, err := s.httpClient.Do(req)
@@ -77,18 +112,18 @@ func (s *AWSSCIMProvider) sendRequest(ctx context.Context, req *http.Request, bo
 }
 
 func (s *AWSSCIMProvider) ListUsers(ctx context.Context, filter string) (*UsersResponse, error) {
-	s.endpointURL.Path = path.Join(s.endpointURL.Path, "/Users")
+	s.url.Path = path.Join(s.url.Path, "/Users")
 	var uResponse UsersResponse
 
 	if filter != "" {
-		q := s.endpointURL.Query()
+		q := s.url.Query()
 		q.Add("filter", filter)
-		s.endpointURL.RawQuery = q.Encode()
+		s.url.RawQuery = q.Encode()
 	}
 
-	req, err := http.NewRequest(http.MethodGet, s.endpointURL.String(), nil)
+	req, err := s.newRequest(http.MethodGet, s.url.String(), nil)
 	if err != nil {
-		return nil, fmt.Errorf("%w: http method -> %s, endpoint -> %v", err, http.MethodGet, s.endpointURL.String())
+		return nil, fmt.Errorf("%w: http method -> %s, endpoint -> %v", err, http.MethodGet, s.url.String())
 	}
 
 	resp, err := s.sendRequest(ctx, req, nil)
@@ -105,18 +140,18 @@ func (s *AWSSCIMProvider) ListUsers(ctx context.Context, filter string) (*UsersR
 }
 
 func (s *AWSSCIMProvider) ListGroups(ctx context.Context, filter string) (*GroupsResponse, error) {
-	s.endpointURL.Path = path.Join(s.endpointURL.Path, "/Groups")
+	s.url.Path = path.Join(s.url.Path, "/Groups")
 	var gResponse GroupsResponse
 
 	if filter != "" {
-		q := s.endpointURL.Query()
+		q := s.url.Query()
 		q.Add("filter", filter)
-		s.endpointURL.RawQuery = q.Encode()
+		s.url.RawQuery = q.Encode()
 	}
 
-	req, err := http.NewRequest(http.MethodGet, s.endpointURL.String(), nil)
+	req, err := s.newRequest(http.MethodGet, s.url.String(), nil)
 	if err != nil {
-		return nil, fmt.Errorf("%w: http method -> %s, endpoint -> %v", err, http.MethodGet, s.endpointURL.String())
+		return nil, fmt.Errorf("%w: http method -> %s, endpoint -> %v", err, http.MethodGet, s.url.String())
 	}
 
 	resp, err := s.sendRequest(ctx, req, nil)
@@ -134,11 +169,11 @@ func (s *AWSSCIMProvider) ListGroups(ctx context.Context, filter string) (*Group
 }
 
 func (s *AWSSCIMProvider) ServiceProviderConfig(ctx context.Context) (*ServiceProviderConfig, error) {
-	s.endpointURL.Path = path.Join(s.endpointURL.Path, "/ServiceProviderConfig")
+	s.url.Path = path.Join(s.url.Path, "/ServiceProviderConfig")
 
-	req, err := http.NewRequest(http.MethodGet, s.endpointURL.String(), nil)
+	req, err := s.newRequest(http.MethodGet, s.url.String(), nil)
 	if err != nil {
-		return nil, fmt.Errorf("%w: http method -> %s, endpoint -> %v", err, http.MethodGet, s.endpointURL.String())
+		return nil, fmt.Errorf("%w: http method -> %s, endpoint -> %v", err, http.MethodGet, s.url.String())
 	}
 
 	resp, err := s.sendRequest(ctx, req, nil)
