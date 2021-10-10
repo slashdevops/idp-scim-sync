@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"net/url"
 	"path"
@@ -67,16 +66,6 @@ func (s *AWSSCIMProvider) sendRequest(ctx context.Context, req *http.Request, bo
 	resp, err := s.httpClient.Do(req)
 	if err != nil {
 		return nil, errors.Wrapf(ErrCallingDo, "sendRequest -> "+err.Error())
-	}
-
-	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusBadRequest {
-		bodyBytes, err := io.ReadAll(resp.Body)
-		if err != nil {
-			return nil, errors.Wrapf(ErrReadingResponseBody, "sendRequest -> "+err.Error())
-		}
-		defer resp.Body.Close()
-
-		return nil, fmt.Errorf("%w: response body -> %s, status code -> %d", err, string(bodyBytes), resp.StatusCode)
 	}
 
 	return resp, nil
