@@ -31,10 +31,15 @@ type HTTPClient interface {
 type AWSSCIMProvider struct {
 	httpClient  HTTPClient
 	endpointURL *url.URL
+	UserAgent   string
 	bearerToken string
 }
 
-func NewSCIMService(http HTTPClient, endpoint string, token string) (*AWSSCIMProvider, error) {
+func NewSCIMService(httpClient HTTPClient, endpoint string, token string) (*AWSSCIMProvider, error) {
+	if httpClient == nil {
+		httpClient = http.DefaultClient
+	}
+
 	if endpoint == "" {
 		return nil, errors.Wrapf(ErrEndpointEmpty, "NewSCIMService")
 	}
@@ -45,13 +50,13 @@ func NewSCIMService(http HTTPClient, endpoint string, token string) (*AWSSCIMPro
 	}
 
 	return &AWSSCIMProvider{
-		httpClient:  http,
+		httpClient:  httpClient,
 		endpointURL: scimURL,
 		bearerToken: token,
 	}, nil
 }
 
-func (s *AWSSCIMProvider) EndpointURL() *url.URL {
+func (s *AWSSCIMProvider) GetEndpointURL() *url.URL {
 	return s.endpointURL
 }
 
@@ -60,7 +65,7 @@ func (s *AWSSCIMProvider) sendRequest(ctx context.Context, req *http.Request, bo
 
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/json")
-	req.Header.Set("User-Agent", "idp-scim-sync/1.0") // TODO: add right user agent
+	req.Header.Set("User-Agent", s.UserAgent)
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", s.bearerToken))
 
 	resp, err := s.httpClient.Do(req)

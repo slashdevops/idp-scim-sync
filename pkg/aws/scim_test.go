@@ -27,6 +27,12 @@ func Test_NewSCIMService(t *testing.T) {
 		assert.NotNil(t, got)
 	})
 
+	t.Run("Should return AWSSCIMProvider using default client when httpClient is nil", func(t *testing.T) {
+		got, err := NewSCIMService(nil, "https://testing.com", "MyToken")
+		assert.NoError(t, err)
+		assert.NotNil(t, got)
+	})
+
 	t.Run("Should return ErrParsingURL error", func(t *testing.T) {
 		mockHTTPCLient := mocks.NewMockHTTPClient(mockCtrl)
 
@@ -46,7 +52,7 @@ func Test_NewSCIMService(t *testing.T) {
 	})
 }
 
-func Test_AWSSCIMProvider_EndpointURL(t *testing.T) {
+func Test_AWSSCIMProvider_GetEndpointURL(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
@@ -63,7 +69,7 @@ func Test_AWSSCIMProvider_EndpointURL(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, url)
 
-		assert.Equal(t, url, got.EndpointURL())
+		assert.Equal(t, url, got.GetEndpointURL())
 	})
 }
 
