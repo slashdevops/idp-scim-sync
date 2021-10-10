@@ -122,3 +122,11 @@ type UsersResponse struct {
 	GeneralResponse
 	Resources []*User `json:"Resources"`
 }
+
+type APIErrorResponse struct {
+	Status             string   `json:"status"`
+	Detail             string   `json:"detail"`
+	Timestamp          string   `json:"timestamp"`
+	ExceptionRequestId string   `json:"exceptionRequestId"`
+	Schema             []string `json:"schema"`
+}

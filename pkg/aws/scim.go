@@ -11,9 +11,14 @@ import (
 	"path"
 
 	"github.com/pkg/errors"
+	"github.com/slashdevops/idp-scim-sync/internal/utils"
 )
 
-// Consume HTTPClient interface
+// Consume http methods
+// implement scim.AWSSCIMProvider interface
+
+// AWS SSO SCIM API
+// reference: https://docs.aws.amazon.com/singlesignon/latest/developerguide/what-is-scim.html
 
 var (
 	ErrParsingURL          = errors.Errorf("error parsing url")
@@ -98,14 +103,31 @@ func (s *AWSSCIMProvider) GetURL() *url.URL {
 	return s.url
 }
 
-func (s *AWSSCIMProvider) sendRequest(ctx context.Context, req *http.Request, body interface{}) (*http.Response, error) {
+func (s *AWSSCIMProvider) checkHTTPResponse(r *http.Response) error {
+	if r.StatusCode < http.StatusOK || r.StatusCode >= http.StatusBadRequest {
+		var errResp APIErrorResponse
+		if err := json.NewDecoder(r.Body).Decode(&errResp); err != nil {
+			defer r.Body.Close()
+			return errors.Wrapf(ErrDecodingResponse, "checkHTTPResponse -> "+err.Error())
+		}
+		return errors.Errorf("%s: %s", r.Status, utils.ToJSON(errResp))
+	}
+
+	return nil
+}
+
+func (s *AWSSCIMProvider) request(ctx context.Context, req *http.Request, body interface{}) (*http.Response, error) {
 	req = req.WithContext(ctx)
 
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", s.bearerToken))
 
 	resp, err := s.httpClient.Do(req)
 	if err != nil {
-		return nil, errors.Wrapf(ErrCallingDo, "sendRequest -> "+err.Error())
+		return nil, errors.Wrapf(ErrCallingDo, "request -> "+err.Error())
+	}
+
+	if err := s.checkHTTPResponse(resp); err != nil {
+		return nil, err
 	}
 
 	return resp, nil
@@ -113,7 +135,6 @@ func (s *AWSSCIMProvider) sendRequest(ctx context.Context, req *http.Request, bo
 
 func (s *AWSSCIMProvider) ListUsers(ctx context.Context, filter string) (*UsersResponse, error) {
 	s.url.Path = path.Join(s.url.Path, "/Users")
-	var uResponse UsersResponse
 
 	if filter != "" {
 		q := s.url.Query()
@@ -126,22 +147,22 @@ func (s *AWSSCIMProvider) ListUsers(ctx context.Context, filter string) (*UsersR
 		return nil, fmt.Errorf("%w: http method -> %s, endpoint -> %v", err, http.MethodGet, s.url.String())
 	}
 
-	resp, err := s.sendRequest(ctx, req, nil)
+	resp, err := s.request(ctx, req, nil)
 	if err != nil {
 		return nil, errors.Wrapf(ErrSendingRequest, "ListUsers -> "+err.Error())
 	}
 	defer resp.Body.Close()
 
-	if err = json.NewDecoder(resp.Body).Decode(&uResponse); err == nil {
+	var response UsersResponse
+	if err = json.NewDecoder(resp.Body).Decode(&response); err != nil {
 		return nil, errors.Wrapf(ErrDecodingResponse, "ListUsers -> "+err.Error())
 	}
 
-	return &uResponse, nil
+	return &response, nil
 }
 
 func (s *AWSSCIMProvider) ListGroups(ctx context.Context, filter string) (*GroupsResponse, error) {
 	s.url.Path = path.Join(s.url.Path, "/Groups")
-	var gResponse GroupsResponse
 
 	if filter != "" {
 		q := s.url.Query()
@@ -154,18 +175,18 @@ func (s *AWSSCIMProvider) ListGroups(ctx context.Context, filter string) (*Group
 		return nil, fmt.Errorf("%w: http method -> %s, endpoint -> %v", err, http.MethodGet, s.url.String())
 	}
 
-	resp, err := s.sendRequest(ctx, req, nil)
+	resp, err := s.request(ctx, req, nil)
 	if err != nil {
 		return nil, errors.Wrapf(ErrSendingRequest, "ListGroups -> "+err.Error())
 	}
 	defer resp.Body.Close()
 
-	d := json.NewDecoder(resp.Body)
-	if err := d.Decode(&gResponse); err != nil {
+	var response GroupsResponse
+	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
 		return nil, errors.Wrapf(ErrDecodingResponse, "ListGroups -> "+err.Error())
 	}
 
-	return &gResponse, nil
+	return &response, nil
 }
 
 func (s *AWSSCIMProvider) ServiceProviderConfig(ctx context.Context) (*ServiceProviderConfig, error) {
@@ -176,17 +197,16 @@ func (s *AWSSCIMProvider) ServiceProviderConfig(ctx context.Context) (*ServicePr
 		return nil, fmt.Errorf("%w: http method -> %s, endpoint -> %v", err, http.MethodGet, s.url.String())
 	}
 
-	resp, err := s.sendRequest(ctx, req, nil)
+	resp, err := s.request(ctx, req, nil)
 	if err != nil {
 		return nil, errors.Wrapf(ErrSendingRequest, "ServiceProviderConfig -> "+err.Error())
 	}
 	defer resp.Body.Close()
 
-	var config ServiceProviderConfig
-	d := json.NewDecoder(resp.Body)
-	if err := d.Decode(&config); err != nil {
+	var response ServiceProviderConfig
+	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
 		return nil, errors.Wrapf(ErrDecodingResponse, "ServiceProviderConfig -> "+err.Error())
 	}
 
-	return &config, nil
+	return &response, nil
 }

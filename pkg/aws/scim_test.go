@@ -73,7 +73,7 @@ func Test_AWSSCIMProvider_GetURL(t *testing.T) {
 	})
 }
 
-func Test_AWSSCIMProvider_sendRequest(t *testing.T) {
+func Test_AWSSCIMProvider_request(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
@@ -89,7 +89,7 @@ func Test_AWSSCIMProvider_sendRequest(t *testing.T) {
 
 		req := httptest.NewRequest(http.MethodGet, endpoint, nil)
 
-		resp, err := got.sendRequest(context.TODO(), req, nil)
+		resp, err := got.request(context.TODO(), req, nil)
 		assert.Error(t, err)
 		assert.Nil(t, resp)
 		assert.ErrorIs(t, err, ErrCallingDo)
@@ -115,7 +115,7 @@ func Test_AWSSCIMProvider_sendRequest(t *testing.T) {
 
 		req := httptest.NewRequest(http.MethodGet, endpoint, nil)
 
-		resp, err := got.sendRequest(context.TODO(), req, nil)
+		resp, err := got.request(context.TODO(), req, nil)
 		assert.NoError(t, err)
 		assert.NotNil(t, resp)
 		assert.Equal(t, mockResp, resp)
