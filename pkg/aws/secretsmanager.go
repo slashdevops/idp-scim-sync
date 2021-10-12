@@ -12,11 +12,7 @@ import (
 
 // consume secretsmanager.Client
 
-var (
-	ErrSMClientNil               = errors.New("AWS SecretsManager Client is nil")
-	ErrGettingSecretValue        = errors.New("Error getting secret value")
-	ErrDecodingBinarySecretValue = errors.New("Error decoding secret binary value")
-)
+var ErrSecretManagerClientNil = errors.New("aws: AWS SecretsManager Client cannot be nil")
 
 // https://aws.github.io/aws-sdk-go-v2/docs/unit-testing/
 
@@ -32,7 +28,7 @@ type SecretsManager struct {
 
 func NewSecretsManagerService(svc SecretsManagerClientAPI) (*SecretsManager, error) {
 	if svc == nil {
-		return nil, errors.Wrapf(ErrSMClientNil, "NewSecretsManagerService: ")
+		return nil, ErrSecretManagerClientNil
 	}
 
 	return &SecretsManager{
@@ -48,7 +44,7 @@ func (s *SecretsManager) GetSecretValue(ctx context.Context, secretKey string) (
 
 	r, err := s.svc.GetSecretValue(ctx, vIn)
 	if err != nil {
-		return "", errors.Wrapf(ErrGettingSecretValue, "GetSecretValue -> "+err.Error())
+		return "", fmt.Errorf("aws: error getting secret value: %s", err)
 	}
 
 	fmt.Printf("len= %v", len(r.SecretBinary))
@@ -61,7 +57,7 @@ func (s *SecretsManager) GetSecretValue(ctx context.Context, secretKey string) (
 		decodedBinarySecretBytes := make([]byte, base64.StdEncoding.DecodedLen(len(r.SecretBinary)))
 		l, err := base64.StdEncoding.Decode(decodedBinarySecretBytes, r.SecretBinary)
 		if err != nil {
-			return "", errors.Wrapf(ErrDecodingBinarySecretValue, "GetSecretValue -> "+err.Error())
+			return "", fmt.Errorf("aws: error decoding secret binary value: %s", err)
 		}
 		secretString = string(decodedBinarySecretBytes[:l])
 	}

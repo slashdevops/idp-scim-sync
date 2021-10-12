@@ -28,7 +28,7 @@ func Test_NewSecretsManagerService(t *testing.T) {
 	t.Run("Should return an error if no client is provided", func(t *testing.T) {
 		svc, err := NewSecretsManagerService(nil)
 		assert.Error(t, err)
-		assert.ErrorIs(t, err, ErrSMClientNil)
+		assert.ErrorIs(t, err, ErrSecretManagerClientNil)
 		assert.Nil(t, svc)
 	})
 }
@@ -74,7 +74,6 @@ func Test_SecretsManager_GetSecretValue(t *testing.T) {
 
 		value, err := svc.GetSecretValue(ctx, "testKeya")
 		assert.Error(t, err)
-		assert.ErrorIs(t, err, ErrGettingSecretValue)
 		assert.Empty(t, value)
 	})
 
@@ -94,7 +93,6 @@ func Test_SecretsManager_GetSecretValue(t *testing.T) {
 
 		value, err := svc.GetSecretValue(ctx, "testValue")
 		assert.Error(t, err)
-		assert.ErrorIs(t, err, ErrDecodingBinarySecretValue)
 		assert.Empty(t, value)
 	})
 
