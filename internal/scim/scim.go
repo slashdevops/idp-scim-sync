@@ -13,7 +13,7 @@ import (
 // and as consumer define AWSSCIMProvider interface to use aws.aws methods
 type AWSSCIMProvider interface {
 	ListUsers(ctx context.Context, filter string) (*aws.UsersResponse, error)
-	ListGroups(ctx context.Context, filter string) (*aws.GroupsResponse, error)
+	ListGroups(ctx context.Context, filter string) (*aws.ListsGroupsResponse, error)
 }
 
 type SCIMProvider struct {

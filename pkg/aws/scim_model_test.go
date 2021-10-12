@@ -227,9 +227,9 @@ etag:
 	}
 }
 
-func Test_GroupsResponse_ToJSON(t *testing.T) {
+func Test_ListsGroupsResponse_ToJSON(t *testing.T) {
 	type obj struct {
-		gr GroupsResponse
+		gr ListsGroupsResponse
 	}
 	tests := []struct {
 		name string
@@ -239,14 +239,14 @@ func Test_GroupsResponse_ToJSON(t *testing.T) {
 		{
 			name: "empty",
 			obj: obj{
-				gr: GroupsResponse{},
+				gr: ListsGroupsResponse{},
 			},
 			want: `{"totalResults":0,"itemsPerPage":0,"startIndex":0,"schemas":null,"Resources":null}`,
 		},
 		{
 			name: "full",
 			obj: obj{
-				gr: GroupsResponse{
+				gr: ListsGroupsResponse{
 					GeneralResponse: GeneralResponse{
 						TotalResults: 1,
 						ItemsPerPage: 1,
@@ -262,27 +262,27 @@ func Test_GroupsResponse_ToJSON(t *testing.T) {
 							},
 							Schemas:     []string{"Schemas"},
 							DisplayName: "displayName",
-							Members:     []string{"Members"},
+							Members:     []Memeber{{Value: "Value", Ref: "Ref", Type: "Type"}},
 						},
 					},
 				},
 			},
-			want: `{"totalResults":1,"itemsPerPage":1,"startIndex":1,"schemas":null,"Resources":[{"id":"id","meta":{"resourceType":"ResourceType","created":"Created","lastModified":"LastModified"},"schemas":["Schemas"],"displayName":"displayName","members":["Members"]}]}`,
+			want: `{"totalResults":1,"itemsPerPage":1,"startIndex":1,"schemas":null,"Resources":[{"id":"id","meta":{"resourceType":"ResourceType","created":"Created","lastModified":"LastModified"},"schemas":["Schemas"],"displayName":"displayName","members":[{"value":"Value","$ref":"Ref","type":"Type"}]}]}`,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := &tt.obj.gr
 			if got := c.ToJSON(); got != tt.want {
-				t.Errorf("GroupsResponse.ToJSON() = %v, want %v", got, tt.want)
+				t.Errorf("ListsGroupsResponse.ToJSON() = %v, want %v", got, tt.want)
 			}
 		})
 	}
 }
 
-func Test_GroupsResponse_ToYAML(t *testing.T) {
+func Test_ListsGroupsResponse_ToYAML(t *testing.T) {
 	type obj struct {
-		gr GroupsResponse
+		gr ListsGroupsResponse
 	}
 	tests := []struct {
 		name string
@@ -292,7 +292,7 @@ func Test_GroupsResponse_ToYAML(t *testing.T) {
 		{
 			name: "empty",
 			obj: obj{
-				gr: GroupsResponse{},
+				gr: ListsGroupsResponse{},
 			},
 			want: `generalresponse:
     totalresults: 0
@@ -305,7 +305,7 @@ resources: []
 		{
 			name: "full",
 			obj: obj{
-				gr: GroupsResponse{
+				gr: ListsGroupsResponse{
 					GeneralResponse: GeneralResponse{
 						TotalResults: 1,
 						ItemsPerPage: 1,
@@ -321,7 +321,7 @@ resources: []
 							},
 							Schemas:     []string{"Schemas"},
 							DisplayName: "displayName",
-							Members:     []string{"Members"},
+							Members:     []Memeber{{Value: "Value", Ref: "Ref", Type: "Type"}},
 						},
 					},
 				},
@@ -341,7 +341,9 @@ resources:
         - Schemas
       displayname: displayName
       members:
-        - Members
+        - value: Value
+          ref: Ref
+          type: Type
 `,
 		},
 	}
@@ -349,7 +351,7 @@ resources:
 		t.Run(tt.name, func(t *testing.T) {
 			c := &tt.obj.gr
 			if got := c.ToYAML(); got != tt.want {
-				t.Errorf("GroupsResponse.ToYAML() = %v, want %v", got, tt.want)
+				t.Errorf("ListsGroupsResponse.ToYAML() = %v, want %v", got, tt.want)
 			}
 		})
 	}

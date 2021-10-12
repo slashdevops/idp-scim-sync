@@ -7,37 +7,48 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+type Name struct {
+	FamilyName string `json:"familyName"`
+	GivenName  string `json:"givenName"`
+	MiddleName string `json:"middleName"`
+}
+
+type Email struct {
+	Value   string `json:"value"`
+	Type    string `json:"type"`
+	Primary bool   `json:"primary"`
+}
+
 type Meta struct {
 	ResourceType string `json:"resourceType"`
 	Created      string `json:"created"`
 	LastModified string `json:"lastModified"`
 }
 
+type Memeber struct {
+	Value string `json:"value"`
+	Ref   string `json:"$ref"`
+	Type  string `json:"type"`
+}
+
 type Group struct {
-	ID          string   `json:"id"`
-	Meta        Meta     `json:"meta"`
-	Schemas     []string `json:"schemas"`
-	DisplayName string   `json:"displayName"`
-	Members     []string `json:"members"`
+	ID          string    `json:"id"`
+	Meta        Meta      `json:"meta"`
+	Schemas     []string  `json:"schemas"`
+	DisplayName string    `json:"displayName"`
+	Members     []Memeber `json:"members"`
 }
 
 type User struct {
-	ID         string   `json:"id"`
-	ExternalId string   `json:"externalId"`
-	Meta       Meta     `json:"meta"`
-	Schemas    []string `json:"schemas"`
-	UserName   string   `json:"userName"`
-	Name       struct {
-		FamilyName string `json:"familyName"`
-		GivenName  string `json:"givenName"`
-	} `json:"name"`
-	DisplayName string `json:"displayName"`
-	Active      bool   `json:"active"`
-	Emails      []struct {
-		Value   string `json:"value"`
-		Type    string `json:"type"`
-		Primary bool   `json:"primary"`
-	} `json:"emails"`
+	ID          string   `json:"id"`
+	ExternalId  string   `json:"externalId"`
+	Meta        Meta     `json:"meta"`
+	Schemas     []string `json:"schemas"`
+	UserName    string   `json:"userName"`
+	Name        Name     `json:"name"`
+	DisplayName string   `json:"displayName"`
+	Active      bool     `json:"active"`
+	Emails      []Email  `json:"emails"`
 }
 
 type ServiceProviderConfig struct {
@@ -97,12 +108,12 @@ type GeneralResponse struct {
 	Schemas      []string `json:"schemas"`
 }
 
-type GroupsResponse struct {
+type ListsGroupsResponse struct {
 	GeneralResponse
 	Resources []*Group `json:"Resources"`
 }
 
-func (c *GroupsResponse) ToJSON() string {
+func (c *ListsGroupsResponse) ToJSON() string {
 	out, err := json.Marshal(c)
 	if err != nil {
 		log.Panic(err)
@@ -110,7 +121,7 @@ func (c *GroupsResponse) ToJSON() string {
 	return string(out)
 }
 
-func (c *GroupsResponse) ToYAML() string {
+func (c *ListsGroupsResponse) ToYAML() string {
 	out, err := yaml.Marshal(c)
 	if err != nil {
 		log.Panic(err)
@@ -129,4 +140,40 @@ type APIErrorResponse struct {
 	Timestamp          string   `json:"timestamp"`
 	ExceptionRequestId string   `json:"exceptionRequestId"`
 	Schema             []string `json:"schema"`
+}
+
+type CreateGroupResponse struct {
+	ID          string   `json:"id"`
+	Meta        Meta     `json:"meta"`
+	Schemas     []string `json:"schemas"`
+	DisplayName string   `json:"displayName"`
+}
+
+type CreateGroupRequest struct {
+	DisplayName string    `json:"displayName"`
+	Memebers    []Memeber `json:"members"`
+}
+
+type CreateUserRequest struct {
+	ID          string  `json:"id"`
+	ExternalId  string  `json:"externalId"`
+	UserName    string  `json:"userName"`
+	Name        Name    `json:"name"`
+	DisplayName string  `json:"displayName"`
+	NickName    string  `json:"nickName"`
+	ProfileURL  string  `json:"profileURL"`
+	Active      bool    `json:"active"`
+	Emails      []Email `json:"emails"`
+}
+
+type CreateUserResponse struct {
+	ID          string   `json:"id"`
+	ExternalId  string   `json:"externalId"`
+	Meta        Meta     `json:"meta"`
+	Schemas     []string `json:"schemas"`
+	UserName    string   `json:"userName"`
+	Name        Name     `json:"name"`
+	DisplayName string   `json:"displayName"`
+	Active      bool     `json:"active"`
+	Emails      []Email  `json:"emails"`
 }
