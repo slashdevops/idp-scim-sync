@@ -33,21 +33,20 @@ func Test_NewSCIMService(t *testing.T) {
 		assert.NotNil(t, got)
 	})
 
-	t.Run("Should return ErrParsingURL error", func(t *testing.T) {
+	t.Run("Should return error when url is bad formed", func(t *testing.T) {
 		mockHTTPCLient := mocks.NewMockHTTPClient(mockCtrl)
 
 		got, err := NewSCIMService(mockHTTPCLient, "https://%%testing.com", "MyToken")
 		assert.Error(t, err)
-		assert.ErrorIs(t, err, ErrParsingURL)
 		assert.Nil(t, got)
 	})
 
-	t.Run("Should return ErrEndpointEmpty error ", func(t *testing.T) {
+	t.Run("Should return error when the url is empty ", func(t *testing.T) {
 		mockHTTPCLient := mocks.NewMockHTTPClient(mockCtrl)
 
 		got, err := NewSCIMService(mockHTTPCLient, "", "MyToken")
 		assert.Error(t, err)
-		assert.ErrorIs(t, err, ErrEndpointEmpty)
+		assert.ErrorIs(t, err, ErrURLEmpty)
 		assert.Nil(t, got)
 	})
 }
@@ -77,7 +76,7 @@ func Test_AWSSCIMProvider_request(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
-	t.Run("Should return ErrCallingDo error", func(t *testing.T) {
+	t.Run("Should return error when error come from request", func(t *testing.T) {
 		mockHTTPCLient := mocks.NewMockHTTPClient(mockCtrl)
 		endpoint := "https://testing.com"
 
@@ -92,7 +91,6 @@ func Test_AWSSCIMProvider_request(t *testing.T) {
 		resp, err := got.request(context.TODO(), req, nil)
 		assert.Error(t, err)
 		assert.Nil(t, resp)
-		assert.ErrorIs(t, err, ErrCallingDo)
 	})
 
 	t.Run("Should return valid response", func(t *testing.T) {

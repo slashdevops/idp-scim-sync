@@ -44,7 +44,7 @@ func (s *SecretsManager) GetSecretValue(ctx context.Context, secretKey string) (
 
 	r, err := s.svc.GetSecretValue(ctx, vIn)
 	if err != nil {
-		return "", fmt.Errorf("aws: error getting secret value: %s", err)
+		return "", fmt.Errorf("aws: error getting secret value: %v", err)
 	}
 
 	fmt.Printf("len= %v", len(r.SecretBinary))
@@ -57,7 +57,7 @@ func (s *SecretsManager) GetSecretValue(ctx context.Context, secretKey string) (
 		decodedBinarySecretBytes := make([]byte, base64.StdEncoding.DecodedLen(len(r.SecretBinary)))
 		l, err := base64.StdEncoding.Decode(decodedBinarySecretBytes, r.SecretBinary)
 		if err != nil {
-			return "", fmt.Errorf("aws: error decoding secret binary value: %s", err)
+			return "", fmt.Errorf("aws: error decoding secret binary value: %v", err)
 		}
 		secretString = string(decodedBinarySecretBytes[:l])
 	}

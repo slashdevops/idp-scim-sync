@@ -20,15 +20,7 @@ import (
 // AWS SSO SCIM API
 // reference: https://docs.aws.amazon.com/singlesignon/latest/developerguide/what-is-scim.html
 
-var (
-	ErrParsingURL          = errors.Errorf("error parsing url")
-	ErrEndpointEmpty       = errors.Errorf("endpoint is empty and it is required")
-	ErrCallingDo           = errors.Errorf("error calling http client Do method")
-	ErrReadingResponseBody = errors.Errorf("error reading response body")
-	ErrSendingRequest      = errors.Errorf("error sending request")
-	ErrDecodingResponse    = errors.Errorf("error decoding response")
-	ErrEncodingRequest     = errors.Errorf("error encoding request")
-)
+var ErrURLEmpty = errors.Errorf("aws: url may not be empty")
 
 //go:generate go run github.com/golang/mock/mockgen@v1.6.0 -package=mocks -destination=../../mocks/aws/scim_mocks.go -source=scim.go HTTPClient
 
@@ -43,18 +35,18 @@ type AWSSCIMProvider struct {
 	bearerToken string
 }
 
-func NewSCIMService(httpClient HTTPClient, endpoint string, token string) (*AWSSCIMProvider, error) {
+func NewSCIMService(httpClient HTTPClient, urlStr string, token string) (*AWSSCIMProvider, error) {
 	if httpClient == nil {
 		httpClient = http.DefaultClient
 	}
 
-	if endpoint == "" {
-		return nil, errors.Wrapf(ErrEndpointEmpty, "NewSCIMService")
+	if urlStr == "" {
+		return nil, ErrURLEmpty
 	}
 
-	url, err := url.Parse(endpoint)
+	url, err := url.Parse(urlStr)
 	if err != nil {
-		return nil, errors.Wrapf(ErrParsingURL, "NewSCIMService -> "+err.Error())
+		return nil, fmt.Errorf("aws: error parsing url: %v", err)
 	}
 
 	return &AWSSCIMProvider{
@@ -64,10 +56,10 @@ func NewSCIMService(httpClient HTTPClient, endpoint string, token string) (*AWSS
 	}, nil
 }
 
-func (s *AWSSCIMProvider) newRequest(method string, url string, body interface{}) (*http.Request, error) {
-	u, err := s.url.Parse(url)
+func (s *AWSSCIMProvider) newRequest(method string, urlStr string, body interface{}) (*http.Request, error) {
+	u, err := s.url.Parse(urlStr)
 	if err != nil {
-		return nil, errors.Wrapf(ErrParsingURL, "NewRequest -> "+err.Error())
+		return nil, fmt.Errorf("aws: error parsing url: %v", err)
 	}
 
 	var buf io.ReadWriter
@@ -78,13 +70,13 @@ func (s *AWSSCIMProvider) newRequest(method string, url string, body interface{}
 
 		err := enc.Encode(body)
 		if err != nil {
-			return nil, errors.Wrapf(ErrEncodingRequest, "NewRequest -> "+err.Error())
+			return nil, fmt.Errorf("aws: error encoding request body: %v", err)
 		}
 	}
 
 	req, err := http.NewRequest(method, u.String(), buf)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("aws: error creating request: %v", err)
 	}
 
 	if body != nil {
@@ -108,9 +100,9 @@ func (s *AWSSCIMProvider) checkHTTPResponse(r *http.Response) error {
 		var errResp APIErrorResponse
 		if err := json.NewDecoder(r.Body).Decode(&errResp); err != nil {
 			defer r.Body.Close()
-			return errors.Wrapf(ErrDecodingResponse, "checkHTTPResponse -> "+err.Error())
+			return fmt.Errorf("aws: error decoding response body: %v", err)
 		}
-		return errors.Errorf("%s: %s", r.Status, utils.ToJSON(errResp))
+		return fmt.Errorf("aws: error, code %s, response %s", r.Status, utils.ToJSON(errResp))
 	}
 
 	return nil
@@ -123,7 +115,7 @@ func (s *AWSSCIMProvider) request(ctx context.Context, req *http.Request, body i
 
 	resp, err := s.httpClient.Do(req)
 	if err != nil {
-		return nil, errors.Wrapf(ErrCallingDo, "request -> "+err.Error())
+		return nil, fmt.Errorf("aws: error sending request: %v", err)
 	}
 
 	if err := s.checkHTTPResponse(resp); err != nil {
@@ -144,18 +136,18 @@ func (s *AWSSCIMProvider) ListUsers(ctx context.Context, filter string) (*UsersR
 
 	req, err := s.newRequest(http.MethodGet, s.url.String(), nil)
 	if err != nil {
-		return nil, fmt.Errorf("%w: http method -> %s, endpoint -> %v", err, http.MethodGet, s.url.String())
+		return nil, fmt.Errorf("aws: error creating request, http method: %s, url: %v, error: %v", http.MethodGet, s.url.String(), err)
 	}
 
 	resp, err := s.request(ctx, req, nil)
 	if err != nil {
-		return nil, errors.Wrapf(ErrSendingRequest, "ListUsers -> "+err.Error())
+		return nil, fmt.Errorf("aws: error sending request, http method: %s, url: %v, error: %v", http.MethodGet, s.url.String(), err)
 	}
 	defer resp.Body.Close()
 
 	var response UsersResponse
 	if err = json.NewDecoder(resp.Body).Decode(&response); err != nil {
-		return nil, errors.Wrapf(ErrDecodingResponse, "ListUsers -> "+err.Error())
+		return nil, fmt.Errorf("aws: error decoding response body: %v", err)
 	}
 
 	return &response, nil
@@ -172,18 +164,18 @@ func (s *AWSSCIMProvider) ListGroups(ctx context.Context, filter string) (*Group
 
 	req, err := s.newRequest(http.MethodGet, s.url.String(), nil)
 	if err != nil {
-		return nil, fmt.Errorf("%w: http method -> %s, endpoint -> %v", err, http.MethodGet, s.url.String())
+		return nil, fmt.Errorf("aws: error creating request, http method: %s, url: %v, error: %v", http.MethodGet, s.url.String(), err)
 	}
 
 	resp, err := s.request(ctx, req, nil)
 	if err != nil {
-		return nil, errors.Wrapf(ErrSendingRequest, "ListGroups -> "+err.Error())
+		return nil, fmt.Errorf("aws: error sending request, http method: %s, url: %v, error: %v", http.MethodGet, s.url.String(), err)
 	}
 	defer resp.Body.Close()
 
 	var response GroupsResponse
 	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
-		return nil, errors.Wrapf(ErrDecodingResponse, "ListGroups -> "+err.Error())
+		return nil, fmt.Errorf("aws: error decoding response body: %v", err)
 	}
 
 	return &response, nil
@@ -194,18 +186,18 @@ func (s *AWSSCIMProvider) ServiceProviderConfig(ctx context.Context) (*ServicePr
 
 	req, err := s.newRequest(http.MethodGet, s.url.String(), nil)
 	if err != nil {
-		return nil, fmt.Errorf("%w: http method -> %s, endpoint -> %v", err, http.MethodGet, s.url.String())
+		return nil, fmt.Errorf("aws: error creating request, http method: %s, url: %v, error: %v", http.MethodGet, s.url.String(), err)
 	}
 
 	resp, err := s.request(ctx, req, nil)
 	if err != nil {
-		return nil, errors.Wrapf(ErrSendingRequest, "ServiceProviderConfig -> "+err.Error())
+		return nil, fmt.Errorf("aws: error sending request, http method: %s, url: %v, error: %v", http.MethodGet, s.url.String(), err)
 	}
 	defer resp.Body.Close()
 
 	var response ServiceProviderConfig
 	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
-		return nil, errors.Wrapf(ErrDecodingResponse, "ServiceProviderConfig -> "+err.Error())
+		return nil, fmt.Errorf("aws: error decoding response body: %v", err)
 	}
 
 	return &response, nil
