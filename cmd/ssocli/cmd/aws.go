@@ -21,6 +21,7 @@ import (
 	"time"
 
 	log "github.com/sirupsen/logrus"
+	"github.com/slashdevops/idp-scim-sync/internal/utils"
 	"github.com/slashdevops/idp-scim-sync/pkg/aws"
 	"github.com/spf13/cobra"
 )
@@ -123,9 +124,9 @@ func runAWSServiceConfig(cmd *cobra.Command, args []string) error {
 
 	switch outFormat {
 	case "json":
-		log.Printf("%s", awsServiceConfig.ToJSON())
+		log.Printf("%s", utils.ToJSON(awsServiceConfig))
 	case "yaml":
-		log.Printf("%s", awsServiceConfig.ToYAML())
+		log.Printf("%s", utils.ToYAML(awsServiceConfig))
 	default:
 		log.Fatalf("Unknown output format: %s", outFormat)
 	}
@@ -162,9 +163,9 @@ func runAWSGroupsList(cmd *cobra.Command, args []string) error {
 
 	switch outFormat {
 	case "json":
-		log.Printf("%s", awsGroupsResponse.ToJSON())
+		log.Printf("%s", utils.ToJSON(awsGroupsResponse))
 	case "yaml":
-		log.Printf("%s", awsGroupsResponse.ToYAML())
+		log.Printf("%s", utils.ToYAML(awsGroupsResponse))
 	default:
 		log.Fatalf("Unknown output format: %s", outFormat)
 	}

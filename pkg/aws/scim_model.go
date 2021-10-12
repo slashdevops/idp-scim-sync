@@ -1,12 +1,5 @@
 package aws
 
-import (
-	"encoding/json"
-	"log"
-
-	"gopkg.in/yaml.v3"
-)
-
 type Name struct {
 	FamilyName string `json:"familyName"`
 	GivenName  string `json:"givenName"`
@@ -85,22 +78,6 @@ type ServiceProviderConfig struct {
 	} `json:"etag"`
 }
 
-func (c *ServiceProviderConfig) ToJSON() string {
-	out, err := json.Marshal(c)
-	if err != nil {
-		log.Panic(err)
-	}
-	return string(out)
-}
-
-func (c *ServiceProviderConfig) ToYAML() string {
-	out, err := yaml.Marshal(c)
-	if err != nil {
-		log.Panic(err)
-	}
-	return string(out)
-}
-
 type GeneralResponse struct {
 	TotalResults int      `json:"totalResults"`
 	ItemsPerPage int      `json:"itemsPerPage"`
@@ -111,22 +88,6 @@ type GeneralResponse struct {
 type ListsGroupsResponse struct {
 	GeneralResponse
 	Resources []*Group `json:"Resources"`
-}
-
-func (c *ListsGroupsResponse) ToJSON() string {
-	out, err := json.Marshal(c)
-	if err != nil {
-		log.Panic(err)
-	}
-	return string(out)
-}
-
-func (c *ListsGroupsResponse) ToYAML() string {
-	out, err := yaml.Marshal(c)
-	if err != nil {
-		log.Panic(err)
-	}
-	return string(out)
 }
 
 type UsersResponse struct {
