@@ -6,7 +6,6 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
-	"net/url"
 	"strings"
 	"testing"
 
@@ -48,27 +47,6 @@ func Test_NewSCIMService(t *testing.T) {
 		assert.Error(t, err)
 		assert.ErrorIs(t, err, ErrURLEmpty)
 		assert.Nil(t, got)
-	})
-}
-
-func Test_AWSSCIMProvider_GetURL(t *testing.T) {
-	mockCtrl := gomock.NewController(t)
-	defer mockCtrl.Finish()
-
-	t.Run("Should return valid url", func(t *testing.T) {
-		mockHTTPCLient := mocks.NewMockHTTPClient(mockCtrl)
-
-		endpoint := "https://testing.com"
-
-		got, err := NewSCIMService(mockHTTPCLient, endpoint, "MyToken")
-		assert.NoError(t, err)
-		assert.NotNil(t, got)
-
-		url, err := url.Parse(endpoint)
-		assert.NoError(t, err)
-		assert.NotNil(t, url)
-
-		assert.Equal(t, url, got.GetURL())
 	})
 }
 

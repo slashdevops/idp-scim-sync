@@ -62,12 +62,7 @@ func NewSCIMService(httpClient HTTPClient, urlStr string, token string) (*AWSSCI
 	}, nil
 }
 
-func (s *AWSSCIMProvider) newRequest(method string, urlStr string, body interface{}) (*http.Request, error) {
-	u, err := s.url.Parse(urlStr)
-	if err != nil {
-		return nil, fmt.Errorf("aws: error parsing url: %v", err)
-	}
-
+func (s *AWSSCIMProvider) newRequest(method string, u *url.URL, body interface{}) (*http.Request, error) {
 	var buf io.ReadWriter
 	if body != nil {
 		buf = &bytes.Buffer{}
@@ -97,10 +92,6 @@ func (s *AWSSCIMProvider) newRequest(method string, urlStr string, body interfac
 	return req, nil
 }
 
-func (s *AWSSCIMProvider) GetURL() *url.URL {
-	return s.url
-}
-
 func (s *AWSSCIMProvider) checkHTTPResponse(r *http.Response) error {
 	if r.StatusCode < http.StatusOK || r.StatusCode >= http.StatusBadRequest {
 		var errResp APIErrorResponse
@@ -114,6 +105,7 @@ func (s *AWSSCIMProvider) checkHTTPResponse(r *http.Response) error {
 	return nil
 }
 
+// do sends an HTTP request and returns an HTTP response, following policy (e.g. redirects, cookies, auth) as configured on the client.
 func (s *AWSSCIMProvider) do(ctx context.Context, req *http.Request, body interface{}) (*http.Response, error) {
 	req = req.WithContext(ctx)
 
@@ -131,23 +123,29 @@ func (s *AWSSCIMProvider) do(ctx context.Context, req *http.Request, body interf
 	return resp, nil
 }
 
+// ListUsers returns a list of users from the AWS SSO Using the API
 func (s *AWSSCIMProvider) ListUsers(ctx context.Context, filter string) (*UsersResponse, error) {
-	s.url.Path = path.Join(s.url.Path, "/Users")
-
-	if filter != "" {
-		q := s.url.Query()
-		q.Add("filter", filter)
-		s.url.RawQuery = q.Encode()
+	reqUrl, err := url.Parse(s.url.String())
+	if err != nil {
+		return nil, fmt.Errorf("aws: error parsing url: %v", err)
 	}
 
-	req, err := s.newRequest(http.MethodGet, s.url.String(), nil)
+	reqUrl.Path = path.Join(reqUrl.Path, "/Users")
+
+	if filter != "" {
+		q := reqUrl.Query()
+		q.Add("filter", filter)
+		reqUrl.RawQuery = q.Encode()
+	}
+
+	req, err := s.newRequest(http.MethodGet, reqUrl, nil)
 	if err != nil {
-		return nil, fmt.Errorf("aws: error creating request, http method: %s, url: %v, error: %v", http.MethodGet, s.url.String(), err)
+		return nil, fmt.Errorf("aws: error creating request, http method: %s, url: %v, error: %v", http.MethodGet, reqUrl.String(), err)
 	}
 
 	resp, err := s.do(ctx, req, nil)
 	if err != nil {
-		return nil, fmt.Errorf("aws: error sending request, http method: %s, url: %v, error: %v", http.MethodGet, s.url.String(), err)
+		return nil, fmt.Errorf("aws: error sending request, http method: %s, url: %v, error: %v", http.MethodGet, reqUrl.String(), err)
 	}
 	defer resp.Body.Close()
 
@@ -159,23 +157,29 @@ func (s *AWSSCIMProvider) ListUsers(ctx context.Context, filter string) (*UsersR
 	return &response, nil
 }
 
+// ListGroups returns a list of groups from the AWS SSO Using the API
 func (s *AWSSCIMProvider) ListGroups(ctx context.Context, filter string) (*ListsGroupsResponse, error) {
-	s.url.Path = path.Join(s.url.Path, "/Groups")
-
-	if filter != "" {
-		q := s.url.Query()
-		q.Add("filter", filter)
-		s.url.RawQuery = q.Encode()
+	reqUrl, err := url.Parse(s.url.String())
+	if err != nil {
+		return nil, fmt.Errorf("aws: error parsing url: %v", err)
 	}
 
-	req, err := s.newRequest(http.MethodGet, s.url.String(), nil)
+	reqUrl.Path = path.Join(reqUrl.Path, "/Groups")
+
+	if filter != "" {
+		q := reqUrl.Query()
+		q.Add("filter", filter)
+		reqUrl.RawQuery = q.Encode()
+	}
+
+	req, err := s.newRequest(http.MethodGet, reqUrl, nil)
 	if err != nil {
-		return nil, fmt.Errorf("aws: error creating request, http method: %s, url: %v, error: %v", http.MethodGet, s.url.String(), err)
+		return nil, fmt.Errorf("aws: error creating request, http method: %s, url: %v, error: %v", http.MethodGet, reqUrl.String(), err)
 	}
 
 	resp, err := s.do(ctx, req, nil)
 	if err != nil {
-		return nil, fmt.Errorf("aws: error sending request, http method: %s, url: %v, error: %v", http.MethodGet, s.url.String(), err)
+		return nil, fmt.Errorf("aws: error sending request, http method: %s, url: %v, error: %v", http.MethodGet, reqUrl.String(), err)
 	}
 	defer resp.Body.Close()
 
@@ -187,17 +191,25 @@ func (s *AWSSCIMProvider) ListGroups(ctx context.Context, filter string) (*Lists
 	return &response, nil
 }
 
+// ServiceProviderConfig returns additional information about the AWS SSO SCIM implementation
+// references:
+// + https://docs.aws.amazon.com/singlesignon/latest/developerguide/serviceproviderconfig.html
 func (s *AWSSCIMProvider) ServiceProviderConfig(ctx context.Context) (*ServiceProviderConfig, error) {
-	s.url.Path = path.Join(s.url.Path, "/ServiceProviderConfig")
-
-	req, err := s.newRequest(http.MethodGet, s.url.String(), nil)
+	reqUrl, err := url.Parse(s.url.String())
 	if err != nil {
-		return nil, fmt.Errorf("aws: error creating request, http method: %s, url: %v, error: %v", http.MethodGet, s.url.String(), err)
+		return nil, fmt.Errorf("aws: error parsing url: %v", err)
+	}
+
+	reqUrl.Path = path.Join(reqUrl.Path, "/ServiceProviderConfig")
+
+	req, err := s.newRequest(http.MethodGet, reqUrl, nil)
+	if err != nil {
+		return nil, fmt.Errorf("aws: error creating request, http method: %s, url: %v, error: %v", http.MethodGet, reqUrl.String(), err)
 	}
 
 	resp, err := s.do(ctx, req, nil)
 	if err != nil {
-		return nil, fmt.Errorf("aws: error sending request, http method: %s, url: %v, error: %v", http.MethodGet, s.url.String(), err)
+		return nil, fmt.Errorf("aws: error sending request, http method: %s, url: %v, error: %v", http.MethodGet, reqUrl.String(), err)
 	}
 	defer resp.Body.Close()
 
@@ -209,6 +221,9 @@ func (s *AWSSCIMProvider) ServiceProviderConfig(ctx context.Context) (*ServicePr
 	return &response, nil
 }
 
+// CreateGroup creates a new group in the AWS SSO Using the API
+// reference:
+// + https://docs.aws.amazon.com/singlesignon/latest/developerguide/creategroup.html
 func (s *AWSSCIMProvider) CreateGroup(ctx context.Context, g *CreateGroupRequest) (*CreateGroupResponse, error) {
 	if g == nil {
 		return nil, fmt.Errorf("aws: error creating group, group is nil")
@@ -217,16 +232,21 @@ func (s *AWSSCIMProvider) CreateGroup(ctx context.Context, g *CreateGroupRequest
 		return nil, ErrDisplayNameEmpty
 	}
 
-	s.url.Path = path.Join(s.url.Path, "/Groups")
-
-	req, err := s.newRequest(http.MethodPost, s.url.String(), *g)
+	reqUrl, err := url.Parse(s.url.String())
 	if err != nil {
-		return nil, fmt.Errorf("aws: error creating request, http method: %s, url: %v, error: %v", http.MethodPost, s.url.String(), err)
+		return nil, fmt.Errorf("aws: error parsing url: %v", err)
+	}
+
+	reqUrl.Path = path.Join(reqUrl.Path, "/Groups")
+
+	req, err := s.newRequest(http.MethodPost, reqUrl, *g)
+	if err != nil {
+		return nil, fmt.Errorf("aws: error creating request, http method: %s, url: %v, error: %v", http.MethodPost, reqUrl.String(), err)
 	}
 
 	resp, err := s.do(ctx, req, nil)
 	if err != nil {
-		return nil, fmt.Errorf("aws: error sending request, http method: %s, url: %v, error: %v", http.MethodPost, s.url.String(), err)
+		return nil, fmt.Errorf("aws: error sending request, http method: %s, url: %v, error: %v", http.MethodPost, reqUrl.String(), err)
 	}
 	defer resp.Body.Close()
 
@@ -238,7 +258,7 @@ func (s *AWSSCIMProvider) CreateGroup(ctx context.Context, g *CreateGroupRequest
 	return &response, nil
 }
 
-// CreateUser creates a new user in the SCIM provider.
+// CreateUser creates a new user in the AWS SSO Using the API.
 // references:
 // + https://docs.aws.amazon.com/singlesignon/latest/developerguide/createuser.html
 func (s *AWSSCIMProvider) CreateUser(ctx context.Context, u *CreateUserRequest) (*CreateUserResponse, error) {
@@ -262,16 +282,21 @@ func (s *AWSSCIMProvider) CreateUser(ctx context.Context, u *CreateUserRequest) 
 	}
 	u.Emails[0].Primary = true
 
-	s.url.Path = path.Join(s.url.Path, "/Users")
-
-	req, err := s.newRequest(http.MethodPost, s.url.String(), *u)
+	reqUrl, err := url.Parse(s.url.String())
 	if err != nil {
-		return nil, fmt.Errorf("aws: error creating request, http method: %s, url: %v, error: %v", http.MethodPost, s.url.String(), err)
+		return nil, fmt.Errorf("aws: error parsing url: %v", err)
+	}
+
+	reqUrl.Path = path.Join(reqUrl.Path, "/Users")
+
+	req, err := s.newRequest(http.MethodPost, reqUrl, *u)
+	if err != nil {
+		return nil, fmt.Errorf("aws: error creating request, http method: %s, url: %v, error: %v", http.MethodPost, reqUrl.String(), err)
 	}
 
 	resp, err := s.do(ctx, req, nil)
 	if err != nil {
-		return nil, fmt.Errorf("aws: error sending request, http method: %s, url: %v, error: %v", http.MethodPost, s.url.String(), err)
+		return nil, fmt.Errorf("aws: error sending request, http method: %s, url: %v, error: %v", http.MethodPost, reqUrl.String(), err)
 	}
 	defer resp.Body.Close()
 
