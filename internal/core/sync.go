@@ -144,7 +144,10 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 		}
 
 		// the groups here could be empty, but we need to check if users exist even if there are not groups
-		sUsersResult, sGroupsUsersResult, err := ss.scim.GetUsersAndGroupsUsers(ss.ctx, sGroupsResult)
+		// here I return all the users and not only the members of groups
+		// becuase the users and groups in the scim needs to be controlled by
+		// the sync process
+		sUsersResult, sGroupsUsersResult, err := ss.scim.GetUsersAndGroupsUsers(ss.ctx)
 		if err != nil {
 			return fmt.Errorf("error getting users and groups and their users from SCIM provider: %w", err)
 		}

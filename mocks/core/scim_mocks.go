@@ -150,9 +150,9 @@ func (mr *MockSCIMServiceMockRecorder) GetUsers(ctx interface{}) *gomock.Call {
 }
 
 // GetUsersAndGroupsUsers mocks base method.
-func (m *MockSCIMService) GetUsersAndGroupsUsers(ctx context.Context, groups *model.GroupsResult) (*model.UsersResult, *model.GroupsUsersResult, error) {
+func (m *MockSCIMService) GetUsersAndGroupsUsers(ctx context.Context) (*model.UsersResult, *model.GroupsUsersResult, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetUsersAndGroupsUsers", ctx, groups)
+	ret := m.ctrl.Call(m, "GetUsersAndGroupsUsers", ctx)
 	ret0, _ := ret[0].(*model.UsersResult)
 	ret1, _ := ret[1].(*model.GroupsUsersResult)
 	ret2, _ := ret[2].(error)
@@ -160,9 +160,9 @@ func (m *MockSCIMService) GetUsersAndGroupsUsers(ctx context.Context, groups *mo
 }
 
 // GetUsersAndGroupsUsers indicates an expected call of GetUsersAndGroupsUsers.
-func (mr *MockSCIMServiceMockRecorder) GetUsersAndGroupsUsers(ctx, groups interface{}) *gomock.Call {
+func (mr *MockSCIMServiceMockRecorder) GetUsersAndGroupsUsers(ctx interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUsersAndGroupsUsers", reflect.TypeOf((*MockSCIMService)(nil).GetUsersAndGroupsUsers), ctx, groups)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUsersAndGroupsUsers", reflect.TypeOf((*MockSCIMService)(nil).GetUsersAndGroupsUsers), ctx)
 }
 
 // UpdateGroups mocks base method.

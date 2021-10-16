@@ -12,7 +12,7 @@ import (
 type SCIMService interface {
 	GetGroups(ctx context.Context) (*model.GroupsResult, error)
 	GetUsers(ctx context.Context) (*model.UsersResult, error)
-	GetUsersAndGroupsUsers(ctx context.Context, groups *model.GroupsResult) (*model.UsersResult, *model.GroupsUsersResult, error)
+	GetUsersAndGroupsUsers(ctx context.Context) (*model.UsersResult, *model.GroupsUsersResult, error)
 
 	CreateGroups(ctx context.Context, gr *model.GroupsResult) error
 	CreateUsers(ctx context.Context, ur *model.UsersResult) error
