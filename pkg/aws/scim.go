@@ -261,26 +261,26 @@ func (s *AWSSCIMProvider) CreateGroup(ctx context.Context, g *CreateGroupRequest
 // CreateUser creates a new user in the AWS SSO Using the API.
 // references:
 // + https://docs.aws.amazon.com/singlesignon/latest/developerguide/createuser.html
-func (s *AWSSCIMProvider) CreateUser(ctx context.Context, u *CreateUserRequest) (*CreateUserResponse, error) {
-	if u == nil {
+func (s *AWSSCIMProvider) CreateUser(ctx context.Context, usr *CreateUserRequest) (*CreateUserResponse, error) {
+	if usr == nil {
 		return nil, fmt.Errorf("aws: error creating user, user is nil")
 	}
 
 	// Check constraints in the reference document
-	if u.DisplayName == "" {
+	if usr.DisplayName == "" {
 		return nil, ErrDisplayNameEmpty
 	}
-	if u.Name.GivenName == "" {
+	if usr.Name.GivenName == "" {
 		return nil, ErrGivenNameEmpty
 	}
-	if u.Name.FamilyName == "" {
+	if usr.Name.FamilyName == "" {
 		return nil, ErrFamilyNameEmpty
 	}
 
-	if len(u.Emails) > 1 {
+	if len(usr.Emails) > 1 {
 		return nil, ErrEmailsTooMany
 	}
-	u.Emails[0].Primary = true
+	usr.Emails[0].Primary = true
 
 	reqUrl, err := url.Parse(s.url.String())
 	if err != nil {
@@ -289,7 +289,7 @@ func (s *AWSSCIMProvider) CreateUser(ctx context.Context, u *CreateUserRequest) 
 
 	reqUrl.Path = path.Join(reqUrl.Path, "/Users")
 
-	req, err := s.newRequest(http.MethodPost, reqUrl, *u)
+	req, err := s.newRequest(http.MethodPost, reqUrl, *usr)
 	if err != nil {
 		return nil, fmt.Errorf("aws: error creating request, http method: %s, url: %v, error: %v", http.MethodPost, reqUrl.String(), err)
 	}

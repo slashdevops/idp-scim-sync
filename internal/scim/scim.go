@@ -172,8 +172,8 @@ func (s *SCIMProvider) CreateGroups(ctx context.Context, gr *model.GroupsResult)
 	return nil
 }
 
-func (s *SCIMProvider) CreateUsers(ctx context.Context, ur *model.UsersResult) error {
-	for _, user := range ur.Resources {
+func (s *SCIMProvider) CreateUsers(ctx context.Context, usrs *model.UsersResult) error {
+	for _, user := range usrs.Resources {
 
 		sUserRequest := &aws.CreateUserRequest{
 			DisplayName: user.DisplayName,

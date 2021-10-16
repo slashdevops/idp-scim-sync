@@ -274,3 +274,87 @@ func Test_SCIMProvider_CreateGroups(t *testing.T) {
 		assert.Error(t, err)
 	})
 }
+
+func Test_SCIMProvider_CreateUsers(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	t.Run("Should do nothing with empty GroupsResult", func(t *testing.T) {
+		mockSCIM := mocks.NewMockAWSSCIMProvider(mockCtrl)
+		empty := &model.UsersResult{}
+
+		svc, _ := NewSCIMProvider(mockSCIM)
+		err := svc.CreateUsers(context.TODO(), empty)
+
+		assert.NoError(t, err)
+	})
+
+	t.Run("Should call CreateUser 1 time and no return error", func(t *testing.T) {
+		mockSCIM := mocks.NewMockAWSSCIMProvider(mockCtrl)
+		cur := &aws.CreateUserRequest{
+			DisplayName: "user 1",
+			ExternalId:  "1",
+			Name:        aws.Name{FamilyName: "1", GivenName: "user"},
+			Emails: []aws.Email{
+				{Value: "user.1@mail.com", Type: "work"},
+			},
+			Active: true,
+		}
+		resp := &aws.CreateUserResponse{}
+		ctx := context.TODO()
+
+		mockSCIM.EXPECT().CreateUser(ctx, cur).Return(resp, nil).Times(1)
+
+		usr := &model.UsersResult{
+			Items: 1,
+			Resources: []model.User{
+				{
+					ID:          "1",
+					Name:        model.Name{FamilyName: "1", GivenName: "user"},
+					DisplayName: "user 1",
+					Email:       "user.1@mail.com",
+					Active:      true,
+				},
+			},
+		}
+
+		svc, _ := NewSCIMProvider(mockSCIM)
+		err := svc.CreateUsers(ctx, usr)
+
+		assert.NoError(t, err)
+	})
+
+	t.Run("Should call CreateUser 1 time and return error", func(t *testing.T) {
+		mockSCIM := mocks.NewMockAWSSCIMProvider(mockCtrl)
+		cur := &aws.CreateUserRequest{
+			DisplayName: "user 1",
+			ExternalId:  "1",
+			Name:        aws.Name{FamilyName: "1", GivenName: "user"},
+			Emails: []aws.Email{
+				{Value: "user.1@mail.com", Type: "work"},
+			},
+			Active: false,
+		}
+		resp := &aws.CreateUserResponse{}
+		ctx := context.TODO()
+
+		mockSCIM.EXPECT().CreateUser(ctx, cur).Return(resp, errors.New("test error")).Times(1)
+
+		usr := &model.UsersResult{
+			Items: 1,
+			Resources: []model.User{
+				{
+					ID:          "1",
+					Name:        model.Name{FamilyName: "1", GivenName: "user"},
+					DisplayName: "user 1",
+					Email:       "user.1@mail.com",
+				},
+			},
+		}
+
+		svc, _ := NewSCIMProvider(mockSCIM)
+		err := svc.CreateUsers(ctx, usr)
+
+		assert.Error(t, err)
+	})
+}
