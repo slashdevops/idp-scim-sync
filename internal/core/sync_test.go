@@ -96,46 +96,19 @@ func Test_syncService_getIdentityProviderData(t *testing.T) {
 
 		filters := []string{""}
 		grpr := &model.GroupsResult{
-			Items: 1,
-			Resources: []model.Group{
-				{
-					ID:       "1",
-					Name:     "group 1",
-					Email:    "group.1@mail.com",
-					HashCode: "123456789",
-				},
-			},
+			Items:     1,
+			HashCode:  "",
+			Resources: []model.Group{{ID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: "123456789"}},
 		}
 		usrs := &model.UsersResult{
-			Items: 1,
-			Resources: []model.User{
-				{
-					ID:    "1",
-					Name:  model.Name{GivenName: "user", FamilyName: "1"},
-					Email: "user.1@mail.com",
-				},
-			},
+			Items:     1,
+			HashCode:  "",
+			Resources: []model.User{{ID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com"}},
 		}
 		grpsUsrs := &model.GroupsUsersResult{
-			Items: 1,
-			Resources: []model.GroupUsers{
-				{
-					Items: 1,
-					Group: model.Group{
-						ID:       "1",
-						Name:     "group 1",
-						Email:    "group.1@mail.com",
-						HashCode: "123456789",
-					},
-					Resources: []model.User{
-						{
-							ID:    "1",
-							Name:  model.Name{GivenName: "user", FamilyName: "1"},
-							Email: "user.1@mail.com",
-						},
-					},
-				},
-			},
+			Items:     1,
+			HashCode:  "",
+			Resources: []model.GroupUsers{{Items: 1, Group: model.Group{ID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: "123456789"}, Resources: []model.User{{ID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com"}}}},
 		}
 
 		mockProviderService.EXPECT().GetGroups(ctx, filters).Return(grpr, nil).Times(1)
@@ -183,15 +156,9 @@ func Test_syncService_getIdentityProviderData(t *testing.T) {
 
 		filters := []string{""}
 		grpr := &model.GroupsResult{
-			Items: 1,
-			Resources: []model.Group{
-				{
-					ID:       "1",
-					Name:     "group 1",
-					Email:    "group.1@mail.com",
-					HashCode: "123456789",
-				},
-			},
+			Items:     1,
+			HashCode:  "",
+			Resources: []model.Group{{ID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: "123456789"}},
 		}
 
 		mockProviderService.EXPECT().GetGroups(ctx, filters).Return(grpr, nil).Times(1)
@@ -232,15 +199,9 @@ func Test_syncService_getSCIMData(t *testing.T) {
 		mockSCIMService := mocks.NewMockSCIMService(mockCtrl)
 
 		grpr := &model.GroupsResult{
-			Items: 1,
-			Resources: []model.Group{
-				{
-					ID:       "1",
-					Name:     "group 1",
-					Email:    "group.1@mail.com",
-					HashCode: "123456789",
-				},
-			},
+			Items:     1,
+			HashCode:  "",
+			Resources: []model.Group{{ID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: "123456789"}},
 		}
 		usrs := &model.UsersResult{Items: 1, Resources: []model.User{{ID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com"}}}
 		grpsUsrs := &model.GroupsUsersResult{Items: 1, Resources: []model.GroupUsers{{Items: 1, Group: model.Group{ID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: "123456789"}, Resources: []model.User{{ID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com"}}}}}
@@ -288,15 +249,9 @@ func Test_syncService_getSCIMData(t *testing.T) {
 		mockProviderService := mocks.NewMockSCIMService(mockCtrl)
 
 		grpr := &model.GroupsResult{
-			Items: 1,
-			Resources: []model.Group{
-				{
-					ID:       "1",
-					Name:     "group 1",
-					Email:    "group.1@mail.com",
-					HashCode: "123456789",
-				},
-			},
+			Items:     1,
+			HashCode:  "",
+			Resources: []model.Group{{ID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: "123456789"}},
 		}
 
 		mockProviderService.EXPECT().GetGroups(ctx).Return(grpr, nil).Times(1)
