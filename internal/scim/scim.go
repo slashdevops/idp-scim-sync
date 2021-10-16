@@ -11,6 +11,8 @@ import (
 
 // This implement core.SCIMService interface
 
+//go:generate go run github.com/golang/mock/mockgen@v1.6.0 -package=mocks -destination=../../mocks/scim/scim_mocks.go -source=scim.go AWSSCIMProvider
+
 // Define AWSSCIMProvider interface to use aws.aws methods
 type AWSSCIMProvider interface {
 	ListUsers(ctx context.Context, filter string) (*aws.UsersResponse, error)
@@ -20,11 +22,17 @@ type AWSSCIMProvider interface {
 	CreateGroup(ctx context.Context, g *aws.CreateGroupRequest) (*aws.CreateGroupResponse, error)
 }
 
+var ErrAWSSCIMProviderNil = fmt.Errorf("AWSSCIMProvider is nil")
+
 type SCIMProvider struct {
 	scim AWSSCIMProvider
 }
 
 func NewSCIMProvider(scim AWSSCIMProvider) (*SCIMProvider, error) {
+	if scim == nil {
+		return nil, ErrAWSSCIMProviderNil
+	}
+
 	return &SCIMProvider{scim: scim}, nil
 }
 
