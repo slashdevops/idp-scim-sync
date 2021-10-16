@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/golang/mock/gomock"
+	"github.com/slashdevops/idp-scim-sync/internal/model"
 	mocks "github.com/slashdevops/idp-scim-sync/mocks/scim"
 	"github.com/slashdevops/idp-scim-sync/pkg/aws"
 	"github.com/stretchr/testify/assert"
@@ -76,14 +77,14 @@ func Test_SCIMProvider_GetGroups(t *testing.T) {
 					ID:          "1",
 					DisplayName: "group 1",
 					Schemas:     []string{"urn:ietf:params:scim:schemas:core:2.0:Group"},
-					Members:     []aws.Memeber{},
+					Members:     []aws.Member{},
 					Meta:        aws.Meta{ResourceType: "Group", Created: "2020-04-01T12:00:00Z", LastModified: "2020-04-01T12:00:00Z"},
 				},
 				{
 					ID:          "2",
 					DisplayName: "group 2",
 					Schemas:     []string{"urn:ietf:params:scim:schemas:core:2.0:Group"},
-					Members:     []aws.Memeber{},
+					Members:     []aws.Member{},
 					Meta:        aws.Meta{ResourceType: "Group", Created: "2020-04-02T12:00:00Z", LastModified: "2020-04-02T12:00:00Z"},
 				},
 			},
@@ -203,4 +204,44 @@ func Test_SCIMProvider_GetUsers(t *testing.T) {
 		// assert.Equal(t, "", gr.Resources[0].HashCode) //TODO: create a object to compare this
 		// assert.Equal(t, "", gr.Resources[1].HashCode) //TODO: create a object to compare this
 	})
+}
+
+func Test_SCIMProvider_CreateGroups(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	t.Run("Should do nothing with empty GroupsResult", func(t *testing.T) {
+		mockSCIM := mocks.NewMockAWSSCIMProvider(mockCtrl)
+		// mockSCIM.EXPECT().CreateGroup(context.TODO(), gomock.Any()).Return(nil, errors.New("test error"))
+		empty := &model.GroupsResult{}
+
+		svc, _ := NewSCIMProvider(mockSCIM)
+		err := svc.CreateGroups(context.TODO(), empty)
+
+		assert.NoError(t, err)
+	})
+
+	// t.Run("Should call CreateGroup 1 time and no return error", func(t *testing.T) {
+	// 	mockSCIM := mocks.NewMockAWSSCIMProvider(mockCtrl)
+	// 	cgr := &aws.CreateGroupRequest{DisplayName: "group 1"}
+	// 	ctx := context.TODO()
+
+	// 	mockSCIM.EXPECT().CreateGroup(ctx, cgr).Return(gomock.Any(), nil).Times(1)
+
+	// 	gr := &model.GroupsResult{
+	// 		Items: 1,
+	// 		Resources: []model.Group{
+	// 			{
+	// 				ID:    "1",
+	// 				Name:  "group 1",
+	// 				Email: "group.1@mail.com",
+	// 			},
+	// 		},
+	// 	}
+
+	// 	svc, _ := NewSCIMProvider(mockSCIM)
+	// 	err := svc.CreateGroups(ctx, gr)
+
+	// 	assert.NoError(t, err)
+	// })
 }

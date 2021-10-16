@@ -18,18 +18,18 @@ type Meta struct {
 	LastModified string `json:"lastModified"`
 }
 
-type Memeber struct {
+type Member struct {
 	Value string `json:"value"`
 	Ref   string `json:"$ref"`
 	Type  string `json:"type"`
 }
 
 type Group struct {
-	ID          string    `json:"id"`
-	Meta        Meta      `json:"meta"`
-	Schemas     []string  `json:"schemas"`
-	DisplayName string    `json:"displayName"`
-	Members     []Memeber `json:"members"`
+	ID          string   `json:"id"`
+	Meta        Meta     `json:"meta"`
+	Schemas     []string `json:"schemas"`
+	DisplayName string   `json:"displayName"`
+	Members     []Member `json:"members"`
 }
 
 type User struct {
@@ -111,8 +111,8 @@ type CreateGroupResponse struct {
 }
 
 type CreateGroupRequest struct {
-	DisplayName string    `json:"displayName"`
-	Memebers    []Memeber `json:"members"`
+	DisplayName string   `json:"displayName"`
+	Members     []Member `json:"members"`
 }
 
 type CreateUserRequest struct {
