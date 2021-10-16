@@ -334,7 +334,7 @@ func reconcilingSCIMUsers(ctx context.Context, scim SCIMService, create *model.U
 	return nil
 }
 
-// reconcilingSCIMUsers
+// reconcilingSCIMGroupsUsers
 func reconcilingSCIMGroupsUsers(ctx context.Context, scim SCIMService, create *model.GroupsUsersResult, delete *model.GroupsUsersResult) error {
 	if create.Items == 0 {
 		log.Info("no users to be joined to groups")
