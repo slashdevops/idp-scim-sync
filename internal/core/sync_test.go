@@ -243,27 +243,7 @@ func Test_syncService_getSCIMData(t *testing.T) {
 			},
 		}
 		usrs := &model.UsersResult{Items: 1, Resources: []model.User{{ID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com"}}}
-		grpsUsrs := &model.GroupsUsersResult{
-			Items: 1,
-			Resources: []model.GroupUsers{
-				{
-					Items: 1,
-					Group: model.Group{
-						ID:       "1",
-						Name:     "group 1",
-						Email:    "group.1@mail.com",
-						HashCode: "123456789",
-					},
-					Resources: []model.User{
-						{
-							ID:    "1",
-							Name:  model.Name{GivenName: "user", FamilyName: "1"},
-							Email: "user.1@mail.com",
-						},
-					},
-				},
-			},
-		}
+		grpsUsrs := &model.GroupsUsersResult{Items: 1, Resources: []model.GroupUsers{{Items: 1, Group: model.Group{ID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: "123456789"}, Resources: []model.User{{ID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com"}}}}}
 
 		mockSCIMService.EXPECT().GetGroups(ctx).Return(grpr, nil).Times(1)
 		mockSCIMService.EXPECT().GetUsersAndGroupsUsers(ctx).Return(usrs, grpsUsrs, nil).Times(1)
@@ -499,6 +479,63 @@ func Test_syncService_reconcilingSCIMUsers(t *testing.T) {
 		mockSCIMService.EXPECT().DeleteUsers(ctx, delete).Return(nil).Times(1)
 
 		err := reconcilingSCIMUsers(ctx, mockSCIMService, create, update, delete)
+		assert.NoError(t, err)
+	})
+}
+
+func Test_syncService_reconcilingSCIMGroupsUsers(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	ctx := context.TODO()
+
+	t.Run("Should call all the methods one time each and no error", func(t *testing.T) {
+		mockSCIMService := mocks.NewMockSCIMService(mockCtrl)
+
+		create := &model.GroupsUsersResult{Items: 1, Resources: []model.GroupUsers{{Items: 1, Group: model.Group{ID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: "123456789"}, Resources: []model.User{{ID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com"}}}}}
+		delete := &model.GroupsUsersResult{Items: 1, Resources: []model.GroupUsers{{Items: 1, Group: model.Group{ID: "2", Name: "group 2", Email: "group.2@mail.com", HashCode: "123456789"}, Resources: []model.User{{ID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com"}}}}}
+
+		mockSCIMService.EXPECT().CreateMembers(ctx, create).Return(nil).Times(1)
+		mockSCIMService.EXPECT().DeleteMembers(ctx, delete).Return(nil).Times(1)
+
+		err := reconcilingSCIMGroupsUsers(ctx, mockSCIMService, create, delete)
+		assert.NoError(t, err)
+	})
+
+	t.Run("Should return error when CreateMembers return error", func(t *testing.T) {
+		mockSCIMService := mocks.NewMockSCIMService(mockCtrl)
+
+		create := &model.GroupsUsersResult{Items: 1, Resources: []model.GroupUsers{{Items: 1, Group: model.Group{ID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: "123456789"}, Resources: []model.User{{ID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com"}}}}}
+		delete := &model.GroupsUsersResult{Items: 1, Resources: []model.GroupUsers{{Items: 1, Group: model.Group{ID: "2", Name: "group 2", Email: "group.2@mail.com", HashCode: "123456789"}, Resources: []model.User{{ID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com"}}}}}
+
+		mockSCIMService.EXPECT().CreateMembers(ctx, create).Return(errors.New("test error")).Times(1)
+
+		err := reconcilingSCIMGroupsUsers(ctx, mockSCIMService, create, delete)
+		assert.Error(t, err)
+	})
+
+	t.Run("Should return error when DeleteMembers return error", func(t *testing.T) {
+		mockSCIMService := mocks.NewMockSCIMService(mockCtrl)
+
+		create := &model.GroupsUsersResult{Items: 1, Resources: []model.GroupUsers{{Items: 1, Group: model.Group{ID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: "123456789"}, Resources: []model.User{{ID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com"}}}}}
+		delete := &model.GroupsUsersResult{Items: 1, Resources: []model.GroupUsers{{Items: 1, Group: model.Group{ID: "2", Name: "group 2", Email: "group.2@mail.com", HashCode: "123456789"}, Resources: []model.User{{ID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com"}}}}}
+
+		mockSCIMService.EXPECT().CreateMembers(ctx, create).Return(nil).Times(1)
+		mockSCIMService.EXPECT().DeleteMembers(ctx, delete).Return(errors.New("test error")).Times(1)
+
+		err := reconcilingSCIMGroupsUsers(ctx, mockSCIMService, create, delete)
+		assert.Error(t, err)
+	})
+
+	t.Run("Should call all the methods one time each and no error when resources are empty", func(t *testing.T) {
+		mockSCIMService := mocks.NewMockSCIMService(mockCtrl)
+
+		create := &model.GroupsUsersResult{Items: 0, Resources: []model.GroupUsers{}}
+		delete := &model.GroupsUsersResult{Items: 0, Resources: []model.GroupUsers{}}
+
+		mockSCIMService.EXPECT().CreateMembers(ctx, create).Return(nil).Times(1)
+		mockSCIMService.EXPECT().DeleteMembers(ctx, delete).Return(nil).Times(1)
+
+		err := reconcilingSCIMGroupsUsers(ctx, mockSCIMService, create, delete)
 		assert.NoError(t, err)
 	})
 }
