@@ -222,3 +222,136 @@ func Test_syncService_getIdentityProviderData(t *testing.T) {
 		assert.NotNil(t, groupsUsers)
 	})
 }
+
+func Test_syncService_getSCIMData(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	ctx := context.TODO()
+
+	t.Run("Should return valid values", func(t *testing.T) {
+		mockProviderService := mocks.NewMockSCIMService(mockCtrl)
+
+		grpr := &model.GroupsResult{
+			Items: 1,
+			Resources: []model.Group{
+				{
+					ID:       "1",
+					Name:     "group 1",
+					Email:    "group.1@mail.com",
+					HashCode: "123456789",
+				},
+			},
+		}
+		usrs := &model.UsersResult{
+			Items: 1,
+			Resources: []model.User{
+				{
+					ID:    "1",
+					Name:  model.Name{GivenName: "user", FamilyName: "1"},
+					Email: "user.1@mail.com",
+				},
+			},
+		}
+		grpsUsrs := &model.GroupsUsersResult{
+			Items: 1,
+			Resources: []model.GroupUsers{
+				{
+					Items: 1,
+					Group: model.Group{
+						ID:       "1",
+						Name:     "group 1",
+						Email:    "group.1@mail.com",
+						HashCode: "123456789",
+					},
+					Resources: []model.User{
+						{
+							ID:    "1",
+							Name:  model.Name{GivenName: "user", FamilyName: "1"},
+							Email: "user.1@mail.com",
+						},
+					},
+				},
+			},
+		}
+
+		mockProviderService.EXPECT().GetGroups(ctx).Return(grpr, nil).Times(1)
+		mockProviderService.EXPECT().GetUsersAndGroupsUsers(ctx).Return(usrs, grpsUsrs, nil).Times(1)
+
+		users, groups, groupsUsers, err := getSCIMData(ctx, mockProviderService)
+		assert.NoError(t, err)
+		assert.NotNil(t, users)
+		assert.NotNil(t, groups)
+		assert.NotNil(t, groupsUsers)
+
+		assert.Equal(t, len(users.Resources), 1)
+		assert.Equal(t, len(groups.Resources), 1)
+		assert.Equal(t, len(groupsUsers.Resources), 1)
+
+		assert.Equal(t, users.Resources[0].ID, "1")
+		assert.Equal(t, users.Resources[0].Name.GivenName, "user")
+		assert.Equal(t, users.Resources[0].Name.FamilyName, "1")
+		assert.Equal(t, users.Resources[0].Email, "user.1@mail.com")
+
+		assert.Equal(t, groups.Resources[0].ID, "1")
+		assert.Equal(t, groups.Resources[0].Name, "group 1")
+		assert.Equal(t, groups.Resources[0].Email, "group.1@mail.com")
+
+		assert.Equal(t, groupsUsers.Resources[0].Group.ID, "1")
+		assert.Equal(t, groupsUsers.Resources[0].Group.Name, "group 1")
+		assert.Equal(t, groupsUsers.Resources[0].Group.Email, "group.1@mail.com")
+	})
+
+	t.Run("Should return error when GetGroups return error", func(t *testing.T) {
+		mockProviderService := mocks.NewMockSCIMService(mockCtrl)
+
+		mockProviderService.EXPECT().GetGroups(ctx).Return(nil, errors.New("test error")).Times(1)
+
+		users, groups, groupsUsers, err := getSCIMData(ctx, mockProviderService)
+		assert.Error(t, err)
+		assert.Nil(t, users)
+		assert.Nil(t, groups)
+		assert.Nil(t, groupsUsers)
+	})
+
+	t.Run("Should return valid values", func(t *testing.T) {
+		mockProviderService := mocks.NewMockSCIMService(mockCtrl)
+
+		grpr := &model.GroupsResult{
+			Items: 1,
+			Resources: []model.Group{
+				{
+					ID:       "1",
+					Name:     "group 1",
+					Email:    "group.1@mail.com",
+					HashCode: "123456789",
+				},
+			},
+		}
+
+		mockProviderService.EXPECT().GetGroups(ctx).Return(grpr, nil).Times(1)
+		mockProviderService.EXPECT().GetUsersAndGroupsUsers(ctx).Return(nil, nil, errors.New("test error")).Times(1)
+
+		users, groups, groupsUsers, err := getSCIMData(ctx, mockProviderService)
+		assert.Error(t, err)
+		assert.Nil(t, users)
+		assert.Nil(t, groups)
+		assert.Nil(t, groupsUsers)
+	})
+
+	t.Run("Should return empty UsersResult, GroupsResult and GroupsUsersResult", func(t *testing.T) {
+		mockProviderService := mocks.NewMockSCIMService(mockCtrl)
+
+		grpr := &model.GroupsResult{Items: 0, Resources: []model.Group{}}
+		usrs := &model.UsersResult{Items: 0, Resources: []model.User{}}
+		grpsUsrs := &model.GroupsUsersResult{Items: 0, Resources: []model.GroupUsers{}}
+
+		mockProviderService.EXPECT().GetGroups(ctx).Return(grpr, nil).Times(1)
+		mockProviderService.EXPECT().GetUsersAndGroupsUsers(ctx).Return(usrs, grpsUsrs, nil).Times(1)
+
+		users, groups, groupsUsers, err := getSCIMData(ctx, mockProviderService)
+		assert.NoError(t, err)
+		assert.NotNil(t, users)
+		assert.NotNil(t, groups)
+		assert.NotNil(t, groupsUsers)
+	})
+}
