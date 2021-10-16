@@ -64,29 +64,10 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 		"filter": ss.provGroupsFilter,
 	})
 
-	// retrive data from the identity provider
-	// always theses steps are necessary
-	pGroupsResult, err := ss.prov.GetGroups(ss.ctx, ss.provGroupsFilter)
+	// get data from the identity provider
+	pUsersResult, pGroupsResult, pGroupsUsersResult, err := getIdentityProviderData(ss.ctx, ss.prov, ss.provGroupsFilter)
 	if err != nil {
-		return fmt.Errorf("error getting groups from the identity provider: %w", err)
-	}
-
-	if pGroupsResult.Items == 0 {
-		log.Warn("identity provider groups empty")
-		return nil
-	}
-
-	pUsersResult, pGroupsUsersResult, err := ss.prov.GetUsersAndGroupsUsers(ss.ctx, pGroupsResult)
-	if err != nil {
-		return fmt.Errorf("error getting users and groups and their users: %w", err)
-	}
-
-	if pGroupsUsersResult.Items == 0 {
-		log.Warn("identity provider groups members empty")
-	}
-
-	if pUsersResult.Items == 0 {
-		log.Warn("identity provider users empty")
+		return fmt.Errorf("error getting data from the identity provider: %w", err)
 	}
 
 	// get the state metadata from the repository
@@ -99,112 +80,101 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 	if state.LastSync == "" {
 
 		log.Info("state without lastsync time, first time syncing")
+		log.Warn("reconciling the SCIM data with the Identity Provider data, the first syncing")
 
-		// Check SCIM side to see if there are any elelemnts to be
+		// Check SCIM side to see if there are elelemnts to be
 		// reconciled. I mean SCIM is not clean before the first sync
-		// and we need to reconcile the SCIM side with the identity provider side
-		// in case of migration from a different tool and we want to keep the state
-		// of the users and groups in the SCIM side.
-		sGroupsResult, err := ss.scim.GetGroups(ss.ctx)
+		// and we need to reconcile the SCIM side with the identity provider side.
+		// In case of migration from a different tool and we want to keep the state
+		// of the users and groups in the SCIM side, just no recreate, keep the existing ones.
+		//
+		// During this check the groups could be empty, but we need to check if users exist
+		// even if there are not groups.  Becuase the users, groups their members in the scim needs to be
+		// controlled by the sync process.
+		sUsersResult, sGroupsResult, sGroupsUsersResult, err := getSCIMData(ss.ctx, ss.scim)
 		if err != nil {
-			return fmt.Errorf("error getting groups from the SCIM service: %w", err)
+			return fmt.Errorf("error getting data from the SCIM service: %w", err)
 		}
 
-		if sGroupsResult.Items == 0 {
-			log.Info("no SCIM groups to be reconciling")
-		} else {
-			log.Warn("reconciling the SCIM data with the Identity Provider data, the first syncing")
+		log.Info("starting reconciling groups")
+		gCreate, gUpdate, _, gDelete := groupsOperations(pGroupsResult, sGroupsResult)
 
-			// reconciling elements
-			gCreate, gUpdate, _, gDelete := groupsOperations(pGroupsResult, sGroupsResult)
-
-			if gCreate.Items == 0 {
-				log.Info("no groups to be created")
-			} else {
-				if err := ss.scim.CreateGroups(ss.ctx, gCreate); err != nil {
-					return fmt.Errorf("error creating groups in SCIM Provider: %w", err)
-				}
-			}
-
-			if gUpdate.Items == 0 {
-				log.Info("no groups to be updated")
-			} else {
-				if err := ss.scim.UpdateGroups(ss.ctx, gUpdate); err != nil {
-					return fmt.Errorf("error updating groups in SCIM Provider: %w", err)
-				}
-			}
-
-			if gDelete.Items == 0 {
-				log.Info("no groups to be deleted")
-			} else {
-				if err := ss.scim.DeleteGroups(ss.ctx, gDelete); err != nil {
-					return fmt.Errorf("error deleting groups in SCIM Provider: %w", err)
-				}
-			}
+		if gCreate.Items == 0 {
+			log.Info("no groups to be create")
 		}
 
-		// the groups here could be empty, but we need to check if users exist even if there are not groups
-		// here I return all the users and not only the members of groups
-		// becuase the users and groups in the scim needs to be controlled by
-		// the sync process
-		sUsersResult, sGroupsUsersResult, err := ss.scim.GetUsersAndGroupsUsers(ss.ctx)
-		if err != nil {
-			return fmt.Errorf("error getting users and groups and their users from SCIM provider: %w", err)
+		log.WithField("quantity", gCreate.Items).Info("creating groups")
+		if err := ss.scim.CreateGroups(ss.ctx, gCreate); err != nil {
+			return fmt.Errorf("error creating groups in SCIM Provider: %w", err)
 		}
 
-		if sUsersResult.Items == 0 {
-			log.Info("no SCIM users to be reconciling")
-		} else {
-
-			// reconciling users
-			uCreate, uUpdate, _, uDelete := usersOperations(pUsersResult, sUsersResult)
-
-			if uCreate.Items == 0 {
-				log.Info("no users to be created")
-			} else {
-				if err := ss.scim.CreateUsers(ss.ctx, uCreate); err != nil {
-					return fmt.Errorf("error creating users in SCIM Provider: %w", err)
-				}
-			}
-
-			if uUpdate.Items == 0 {
-				log.Info("no users to be updated")
-			} else {
-				if err := ss.scim.UpdateUsers(ss.ctx, uUpdate); err != nil {
-					return fmt.Errorf("error updating users in SCIM Provider: %w", err)
-				}
-			}
-
-			if uDelete.Items == 0 {
-				log.Info("no users to be deleted")
-			} else {
-				if err := ss.scim.DeleteUsers(ss.ctx, uDelete); err != nil {
-					return fmt.Errorf("error deleting users in SCIM Provider: %w", err)
-				}
-			}
+		if gUpdate.Items == 0 {
+			log.Info("no groups to be updated")
 		}
 
-		if sGroupsUsersResult.Items == 0 {
-			log.Info("no SCIM groups and members to be reconciling")
-		} else {
-			// reconciling groups-users --> groups members
-			ugCreate, _, ugDelete := groupsUsersOperations(pGroupsUsersResult, sGroupsUsersResult)
+		log.WithField("quantity", gUpdate.Items).Info("updating groups")
+		if err := ss.scim.UpdateGroups(ss.ctx, gUpdate); err != nil {
+			return fmt.Errorf("error updating groups in SCIM Provider: %w", err)
+		}
 
-			if ugCreate.Items == 0 {
-				log.Info("no groups to be joined")
-			} else {
-				if err := ss.scim.CreateMembers(ss.ctx, ugCreate); err != nil {
-					return fmt.Errorf("error creating groups members in SCIM Provider: %w", err)
-				}
-			}
+		if gDelete.Items == 0 {
+			log.Info("no groups to be deleted")
+		}
 
-			if ugDelete.Items == 0 {
-				log.Info("no groups to be removed")
-			} else {
-				if err := ss.scim.DeleteMembers(ss.ctx, ugDelete); err != nil {
-					return fmt.Errorf("error deleting groups members in SCIM Provider: %w", err)
-				}
-			}
+		log.WithField("quantity", gDelete.Items).Info("deleting groups")
+		if err := ss.scim.DeleteGroups(ss.ctx, gDelete); err != nil {
+			return fmt.Errorf("error deleting groups in SCIM Provider: %w", err)
+		}
+
+		log.Info("starting reconciling users")
+		uCreate, uUpdate, _, uDelete := usersOperations(pUsersResult, sUsersResult)
+
+		if uCreate.Items == 0 {
+			log.Info("no users to be created")
+		}
+
+		log.WithField("quantity", uCreate.Items).Info("creating users")
+		if err := ss.scim.CreateUsers(ss.ctx, uCreate); err != nil {
+			return fmt.Errorf("error creating users in SCIM Provider: %w", err)
+		}
+
+		if uUpdate.Items == 0 {
+			log.Info("no users to be updated")
+		}
+
+		log.WithField("quantity", uUpdate.Items).Info("updating users")
+		if err := ss.scim.UpdateUsers(ss.ctx, uUpdate); err != nil {
+			return fmt.Errorf("error updating users in SCIM Provider: %w", err)
+		}
+
+		if uDelete.Items == 0 {
+			log.Info("no users to be deleted")
+		}
+
+		log.WithField("quantity", uDelete.Items).Info("deleting users")
+		if err := ss.scim.DeleteUsers(ss.ctx, uDelete); err != nil {
+			return fmt.Errorf("error deleting users in SCIM Provider: %w", err)
+		}
+
+		log.Info("starting reconciling groups members")
+		ugCreate, _, ugDelete := groupsUsersOperations(pGroupsUsersResult, sGroupsUsersResult)
+
+		if ugCreate.Items == 0 {
+			log.Info("no users to be joined to groups")
+		}
+
+		log.WithField("quantity", ugCreate.Items).Info("joining users to groups")
+		if err := ss.scim.CreateMembers(ss.ctx, ugCreate); err != nil {
+			return fmt.Errorf("error creating groups members in SCIM Provider: %w", err)
+		}
+
+		if ugDelete.Items == 0 {
+			log.Info("no usrs to be removed from groups")
+		}
+
+		log.WithField("quantity", ugDelete.Items).Info("removing users to groups")
+		if err := ss.scim.DeleteMembers(ss.ctx, ugDelete); err != nil {
+			return fmt.Errorf("error removing users from groups in SCIM Provider: %w", err)
 		}
 
 	} else { // This is not the first time syncing
@@ -212,94 +182,89 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 
 		if pGroupsResult.HashCode == state.Resources.Groups.HashCode {
 			log.Info("provider groups and state groups are the same, nothing to do with groups")
-		} else {
-			log.Info("provider groups and state groups are diferent")
-			// now here we have the google fresh data and the last sync data state
-			// we need to compare the data and decide what to do
-			// see differences between the two data sets
+		}
 
-			gCreate, gUpdate, _, gDelete := groupsOperations(pGroupsResult, &state.Resources.Groups)
+		log.Info("provider groups and state groups are diferent")
+		// now here we have the google fresh data and the last sync data state
+		// we need to compare the data and decide what to do
+		// see differences between the two data sets
 
-			if gCreate.Items == 0 {
-				log.Info("no groups to be created")
-			} else {
-				if err := ss.scim.CreateGroups(ss.ctx, gCreate); err != nil {
-					return fmt.Errorf("error creating groups in SCIM Provider: %w", err)
-				}
-			}
+		// syncing groups
+		gCreate, gUpdate, _, gDelete := groupsOperations(pGroupsResult, &state.Resources.Groups)
 
-			if gUpdate.Items == 0 {
-				log.Info("no groups to be updated")
-			} else {
-				if err := ss.scim.UpdateGroups(ss.ctx, gUpdate); err != nil {
-					return fmt.Errorf("error updating groups in SCIM Provider: %w", err)
-				}
-			}
+		if gCreate.Items == 0 {
+			log.Info("no groups to be created")
+		}
+		if err := ss.scim.CreateGroups(ss.ctx, gCreate); err != nil {
+			return fmt.Errorf("error creating groups in SCIM Provider: %w", err)
+		}
 
-			if gDelete.Items == 0 {
-				log.Info("no groups to be deleted")
-			} else {
-				if err := ss.scim.DeleteGroups(ss.ctx, gDelete); err != nil {
-					return fmt.Errorf("error deleting groups in SCIM Provider: %w", err)
-				}
-			}
+		if gUpdate.Items == 0 {
+			log.Info("no groups to be updated")
+		}
+		if err := ss.scim.UpdateGroups(ss.ctx, gUpdate); err != nil {
+			return fmt.Errorf("error updating groups in SCIM Provider: %w", err)
+		}
+
+		if gDelete.Items == 0 {
+			log.Info("no groups to be deleted")
+		}
+		if err := ss.scim.DeleteGroups(ss.ctx, gDelete); err != nil {
+			return fmt.Errorf("error deleting groups in SCIM Provider: %w", err)
 		}
 
 		if pUsersResult.HashCode == state.Resources.Users.HashCode {
 			log.Info("provider users and state users are the same, nothing to do with users")
-		} else {
-			log.Info("provider users and state users are diferent")
+		}
 
-			uCreate, uUpdate, _, uDelete := usersOperations(pUsersResult, &state.Resources.Users)
+		log.Info("provider users and state users are diferent")
 
-			if uCreate.Items == 0 {
-				log.Info("no users to be created")
-			} else {
-				if err := ss.scim.CreateUsers(ss.ctx, uCreate); err != nil {
-					return fmt.Errorf("error creating users in SCIM Provider: %w", err)
-				}
-			}
+		// syncing users
+		uCreate, uUpdate, _, uDelete := usersOperations(pUsersResult, &state.Resources.Users)
 
-			if uUpdate.Items == 0 {
-				log.Info("no users to be updated")
-			} else {
-				if err := ss.scim.UpdateUsers(ss.ctx, uUpdate); err != nil {
-					return fmt.Errorf("error updating users in SCIM Provider: %w", err)
-				}
-			}
+		if uCreate.Items == 0 {
+			log.Info("no users to be created")
+		}
+		if err := ss.scim.CreateUsers(ss.ctx, uCreate); err != nil {
+			return fmt.Errorf("error creating users in SCIM Provider: %w", err)
+		}
 
-			if uDelete.Items == 0 {
-				log.Info("no users to be deleted")
-			} else {
-				if err := ss.scim.DeleteUsers(ss.ctx, uDelete); err != nil {
-					return fmt.Errorf("error deleting users in SCIM Provider: %w", err)
-				}
-			}
+		if uUpdate.Items == 0 {
+			log.Info("no users to be updated")
+		}
+		if err := ss.scim.UpdateUsers(ss.ctx, uUpdate); err != nil {
+			return fmt.Errorf("error updating users in SCIM Provider: %w", err)
+		}
+
+		if uDelete.Items == 0 {
+			log.Info("no users to be deleted")
+		}
+		if err := ss.scim.DeleteUsers(ss.ctx, uDelete); err != nil {
+			return fmt.Errorf("error deleting users in SCIM Provider: %w", err)
 		}
 
 		if pGroupsUsersResult.HashCode == state.Resources.GroupsUsers.HashCode {
 			log.Info("provider groups-members and state groups-members are the same, nothing to do with groups-members")
-		} else {
-			log.Info("provider groups-members and state groups-members are diferent")
-
-			ugCreate, _, ugDelete := groupsUsersOperations(pGroupsUsersResult, &state.Resources.GroupsUsers)
-
-			if ugCreate.Items == 0 {
-				log.Info("no groups-members to be created")
-			} else {
-				if err := ss.scim.CreateMembers(ss.ctx, ugCreate); err != nil {
-					return fmt.Errorf("error creating groups members in SCIM Provider: %w", err)
-				}
-			}
-
-			if ugDelete.Items == 0 {
-				log.Info("no groups-members to be deleted")
-			} else {
-				if err := ss.scim.DeleteMembers(ss.ctx, ugDelete); err != nil {
-					return fmt.Errorf("error deleting groups members in SCIM Provider: %w", err)
-				}
-			}
 		}
+		log.Info("provider groups-members and state groups-members are diferent")
+
+		// syncing groups-users --> groups members
+		ugCreate, _, ugDelete := groupsUsersOperations(pGroupsUsersResult, &state.Resources.GroupsUsers)
+
+		if ugCreate.Items == 0 {
+			log.Info("no groups-members to be created")
+		}
+		if err := ss.scim.CreateMembers(ss.ctx, ugCreate); err != nil {
+			return fmt.Errorf("error creating groups members in SCIM Provider: %w", err)
+		}
+
+		if ugDelete.Items == 0 {
+			log.Info("no groups-members to be deleted")
+		}
+		if err := ss.scim.DeleteMembers(ss.ctx, ugDelete); err != nil {
+			return fmt.Errorf("error deleting groups members in SCIM Provider: %w", err)
+		}
+
 	}
 
 	// after be sure all the SCIM side is aligned with the Identity Provider side
@@ -345,4 +310,60 @@ func (ss *SyncService) SyncGroupsAndUsers() error {
 	}
 
 	return nil
+}
+
+// getIdentityProviderData return the users, groups and groups and their users from Identity Provider Service
+func getIdentityProviderData(ctx context.Context, ip IdentityProviderService, groupFilter []string) (*model.UsersResult, *model.GroupsResult, *model.GroupsUsersResult, error) {
+	// retrive data from the identity provider
+	// always theses steps are necessary
+	groupsResult, err := ip.GetGroups(ctx, groupFilter)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("error getting groups from the identity provider: %w", err)
+	}
+
+	if groupsResult.Items == 0 {
+		log.Warnf("there are no groups in the identity provider that match with this filter: %s", groupFilter)
+	}
+
+	usersResult, groupsUsersResult, err := ip.GetUsersAndGroupsUsers(ctx, groupsResult)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("error getting users and groups and their users: %w", err)
+	}
+
+	if groupsUsersResult.Items == 0 {
+		log.Warn("there are no group users in the identity provider")
+	}
+
+	if usersResult.Items == 0 {
+		log.Warn("there are no users in the identity provider")
+	}
+
+	return usersResult, groupsResult, groupsUsersResult, nil
+}
+
+// getSCIMData return the users, groups and groups and their users from SCIM Service
+func getSCIMData(ctx context.Context, scim SCIMService) (*model.UsersResult, *model.GroupsResult, *model.GroupsUsersResult, error) {
+	groupsResult, err := scim.GetGroups(ctx)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("error getting groups from the SCIM service: %w", err)
+	}
+
+	if groupsResult.Items == 0 {
+		log.Warn("there are no groups in the SCIM Service")
+	}
+
+	usersResult, groupsUsersResult, err := scim.GetUsersAndGroupsUsers(ctx)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("error getting users and groups and their users from SCIM provider: %w", err)
+	}
+
+	if usersResult.Items == 0 {
+		log.Warn("no SCIM users to be reconciling")
+	}
+
+	if groupsUsersResult.Items == 0 {
+		log.Warn("no SCIM groups and members to be reconciling")
+	}
+
+	return usersResult, groupsResult, groupsUsersResult, nil
 }
