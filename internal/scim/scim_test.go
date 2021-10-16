@@ -212,7 +212,6 @@ func Test_SCIMProvider_CreateGroups(t *testing.T) {
 
 	t.Run("Should do nothing with empty GroupsResult", func(t *testing.T) {
 		mockSCIM := mocks.NewMockAWSSCIMProvider(mockCtrl)
-		// mockSCIM.EXPECT().CreateGroup(context.TODO(), gomock.Any()).Return(nil, errors.New("test error"))
 		empty := &model.GroupsResult{}
 
 		svc, _ := NewSCIMProvider(mockSCIM)
@@ -221,27 +220,57 @@ func Test_SCIMProvider_CreateGroups(t *testing.T) {
 		assert.NoError(t, err)
 	})
 
-	// t.Run("Should call CreateGroup 1 time and no return error", func(t *testing.T) {
-	// 	mockSCIM := mocks.NewMockAWSSCIMProvider(mockCtrl)
-	// 	cgr := &aws.CreateGroupRequest{DisplayName: "group 1"}
-	// 	ctx := context.TODO()
+	t.Run("Should call CreateGroup 1 time and no return error", func(t *testing.T) {
+		mockSCIM := mocks.NewMockAWSSCIMProvider(mockCtrl)
+		cgr := &aws.CreateGroupRequest{
+			DisplayName: "group 1",
+		}
+		resp := &aws.CreateGroupResponse{}
+		ctx := context.TODO()
 
-	// 	mockSCIM.EXPECT().CreateGroup(ctx, cgr).Return(gomock.Any(), nil).Times(1)
+		mockSCIM.EXPECT().CreateGroup(ctx, cgr).Return(resp, nil).Times(1)
 
-	// 	gr := &model.GroupsResult{
-	// 		Items: 1,
-	// 		Resources: []model.Group{
-	// 			{
-	// 				ID:    "1",
-	// 				Name:  "group 1",
-	// 				Email: "group.1@mail.com",
-	// 			},
-	// 		},
-	// 	}
+		gr := &model.GroupsResult{
+			Items: 1,
+			Resources: []model.Group{
+				{
+					ID:    "1",
+					Name:  "group 1",
+					Email: "group.1@mail.com",
+				},
+			},
+		}
 
-	// 	svc, _ := NewSCIMProvider(mockSCIM)
-	// 	err := svc.CreateGroups(ctx, gr)
+		svc, _ := NewSCIMProvider(mockSCIM)
+		err := svc.CreateGroups(ctx, gr)
 
-	// 	assert.NoError(t, err)
-	// })
+		assert.NoError(t, err)
+	})
+
+	t.Run("Should call CreateGroup 1 time and  return error", func(t *testing.T) {
+		mockSCIM := mocks.NewMockAWSSCIMProvider(mockCtrl)
+		cgr := &aws.CreateGroupRequest{
+			DisplayName: "group 1",
+		}
+		resp := &aws.CreateGroupResponse{}
+		ctx := context.TODO()
+
+		mockSCIM.EXPECT().CreateGroup(ctx, cgr).Return(resp, errors.New("test error")).Times(1)
+
+		gr := &model.GroupsResult{
+			Items: 1,
+			Resources: []model.Group{
+				{
+					ID:    "1",
+					Name:  "group 1",
+					Email: "group.1@mail.com",
+				},
+			},
+		}
+
+		svc, _ := NewSCIMProvider(mockSCIM)
+		err := svc.CreateGroups(ctx, gr)
+
+		assert.Error(t, err)
+	})
 }
