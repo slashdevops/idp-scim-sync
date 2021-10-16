@@ -10,10 +10,14 @@ import (
 )
 
 // This implement core.SCIMService interface
-// and as consumer define AWSSCIMProvider interface to use aws.aws methods
+
+// Define AWSSCIMProvider interface to use aws.aws methods
 type AWSSCIMProvider interface {
 	ListUsers(ctx context.Context, filter string) (*aws.UsersResponse, error)
 	ListGroups(ctx context.Context, filter string) (*aws.ListsGroupsResponse, error)
+
+	CreateUser(ctx context.Context, u *aws.CreateUserRequest) (*aws.CreateUserResponse, error)
+	CreateGroup(ctx context.Context, g *aws.CreateGroupRequest) (*aws.CreateGroupResponse, error)
 }
 
 type SCIMProvider struct {
@@ -146,10 +150,44 @@ func (s *SCIMProvider) GetUsersAndGroupsUsers(ctx context.Context, groups *model
 }
 
 func (s *SCIMProvider) CreateGroups(ctx context.Context, gr *model.GroupsResult) error {
+	for _, group := range gr.Resources {
+
+		sGroupRequest := &aws.CreateGroupRequest{
+			DisplayName: group.Name,
+		}
+
+		_, err := s.scim.CreateGroup(ctx, sGroupRequest)
+		if err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
 func (s *SCIMProvider) CreateUsers(ctx context.Context, ur *model.UsersResult) error {
+	for _, user := range ur.Resources {
+
+		sUserRequest := &aws.CreateUserRequest{
+			DisplayName: user.DisplayName,
+			ExternalId:  user.ID,
+			Name: aws.Name{
+				FamilyName: user.Name.FamilyName,
+				GivenName:  user.Name.GivenName,
+			},
+			Emails: []aws.Email{
+				{
+					Value: user.Email,
+					Type:  "work",
+				},
+			},
+			Active: user.Active,
+		}
+
+		_, err := s.scim.CreateUser(ctx, sUserRequest)
+		if err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
