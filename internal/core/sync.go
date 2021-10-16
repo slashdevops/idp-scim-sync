@@ -3,6 +3,7 @@ package core
 import (
 	"context"
 	"errors"
+	"fmt"
 	"sync"
 	"time"
 
@@ -11,13 +12,9 @@ import (
 )
 
 var (
-	ErrProviderServiceNil            = errors.New("identity provider service cannot be nil")
-	ErrSCIMServiceNil                = errors.New("SCIM service cannot be nil")
-	ErrGettingGroups                 = errors.New("error getting groups")
-	ErrRepositoryNil                 = errors.New("repository cannot be nil")
-	ErrSyncStateNil                  = errors.New("sync state cannot be nil")
-	ErrGettingState                  = errors.New("error getting state")
-	ErrGettingGetUsersAndGroupsUsers = errors.New("error getting users and groups and their users")
+	ErrProviderServiceNil = errors.New("identity provider service cannot be nil")
+	ErrSCIMServiceNil     = errors.New("SCIM service cannot be nil")
+	ErrRepositoryNil      = errors.New("repository cannot be nil")
 )
 
 type SyncService struct {
@@ -71,7 +68,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 	// always theses steps are necessary
 	pGroupsResult, err := ss.prov.GetGroups(ss.ctx, ss.provGroupsFilter)
 	if err != nil {
-		return ErrGettingGroups
+		return fmt.Errorf("error getting groups from the identity provider: %w", err)
 	}
 
 	if pGroupsResult.Items == 0 {
@@ -81,7 +78,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 
 	pUsersResult, pGroupsUsersResult, err := ss.prov.GetUsersAndGroupsUsers(ss.ctx, pGroupsResult)
 	if err != nil {
-		return ErrGettingGetUsersAndGroupsUsers
+		return fmt.Errorf("error getting users and groups and their users: %w", err)
 	}
 
 	if pGroupsUsersResult.Items == 0 {
@@ -95,7 +92,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 	// get the state metadata from the repository
 	state, err := ss.repo.GetState(ss.ctx)
 	if err != nil {
-		return ErrGettingState
+		return fmt.Errorf("error getting state from the repository: %w", err)
 	}
 
 	// first time syncing
@@ -110,7 +107,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 		// of the users and groups in the SCIM side.
 		sGroupsResult, err := ss.scim.GetGroups(ss.ctx)
 		if err != nil {
-			return err
+			return fmt.Errorf("error getting groups from the SCIM service: %w", err)
 		}
 
 		if sGroupsResult.Items == 0 {
@@ -125,7 +122,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 				log.Info("no groups to be created")
 			} else {
 				if err := ss.scim.CreateGroups(ss.ctx, gCreate); err != nil {
-					return err
+					return fmt.Errorf("error creating groups in SCIM Provider: %w", err)
 				}
 			}
 
@@ -133,7 +130,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 				log.Info("no groups to be updated")
 			} else {
 				if err := ss.scim.UpdateGroups(ss.ctx, gUpdate); err != nil {
-					return err
+					return fmt.Errorf("error updating groups in SCIM Provider: %w", err)
 				}
 			}
 
@@ -141,7 +138,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 				log.Info("no groups to be deleted")
 			} else {
 				if err := ss.scim.DeleteGroups(ss.ctx, gDelete); err != nil {
-					return err
+					return fmt.Errorf("error deleting groups in SCIM Provider: %w", err)
 				}
 			}
 		}
@@ -149,7 +146,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 		// the groups here could be empty, but we need to check if users exist even if there are not groups
 		sUsersResult, sGroupsUsersResult, err := ss.scim.GetUsersAndGroupsUsers(ss.ctx, sGroupsResult)
 		if err != nil {
-			return err
+			return fmt.Errorf("error getting users and groups and their users from SCIM provider: %w", err)
 		}
 
 		if sUsersResult.Items == 0 {
@@ -163,7 +160,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 				log.Info("no users to be created")
 			} else {
 				if err := ss.scim.CreateUsers(ss.ctx, uCreate); err != nil {
-					return err
+					return fmt.Errorf("error creating users in SCIM Provider: %w", err)
 				}
 			}
 
@@ -171,7 +168,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 				log.Info("no users to be updated")
 			} else {
 				if err := ss.scim.UpdateUsers(ss.ctx, uUpdate); err != nil {
-					return err
+					return fmt.Errorf("error updating users in SCIM Provider: %w", err)
 				}
 			}
 
@@ -179,7 +176,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 				log.Info("no users to be deleted")
 			} else {
 				if err := ss.scim.DeleteUsers(ss.ctx, uDelete); err != nil {
-					return err
+					return fmt.Errorf("error deleting users in SCIM Provider: %w", err)
 				}
 			}
 		}
@@ -194,7 +191,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 				log.Info("no groups to be joined")
 			} else {
 				if err := ss.scim.CreateMembers(ss.ctx, ugCreate); err != nil {
-					return err
+					return fmt.Errorf("error creating groups members in SCIM Provider: %w", err)
 				}
 			}
 
@@ -202,7 +199,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 				log.Info("no groups to be removed")
 			} else {
 				if err := ss.scim.DeleteMembers(ss.ctx, ugDelete); err != nil {
-					return err
+					return fmt.Errorf("error deleting groups members in SCIM Provider: %w", err)
 				}
 			}
 		}
@@ -224,7 +221,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 				log.Info("no groups to be created")
 			} else {
 				if err := ss.scim.CreateGroups(ss.ctx, gCreate); err != nil {
-					return err
+					return fmt.Errorf("error creating groups in SCIM Provider: %w", err)
 				}
 			}
 
@@ -232,7 +229,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 				log.Info("no groups to be updated")
 			} else {
 				if err := ss.scim.UpdateGroups(ss.ctx, gUpdate); err != nil {
-					return err
+					return fmt.Errorf("error updating groups in SCIM Provider: %w", err)
 				}
 			}
 
@@ -240,7 +237,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 				log.Info("no groups to be deleted")
 			} else {
 				if err := ss.scim.DeleteGroups(ss.ctx, gDelete); err != nil {
-					return err
+					return fmt.Errorf("error deleting groups in SCIM Provider: %w", err)
 				}
 			}
 		}
@@ -256,7 +253,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 				log.Info("no users to be created")
 			} else {
 				if err := ss.scim.CreateUsers(ss.ctx, uCreate); err != nil {
-					return err
+					return fmt.Errorf("error creating users in SCIM Provider: %w", err)
 				}
 			}
 
@@ -264,7 +261,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 				log.Info("no users to be updated")
 			} else {
 				if err := ss.scim.UpdateUsers(ss.ctx, uUpdate); err != nil {
-					return err
+					return fmt.Errorf("error updating users in SCIM Provider: %w", err)
 				}
 			}
 
@@ -272,7 +269,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 				log.Info("no users to be deleted")
 			} else {
 				if err := ss.scim.DeleteUsers(ss.ctx, uDelete); err != nil {
-					return err
+					return fmt.Errorf("error deleting users in SCIM Provider: %w", err)
 				}
 			}
 		}
@@ -288,7 +285,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 				log.Info("no groups-members to be created")
 			} else {
 				if err := ss.scim.CreateMembers(ss.ctx, ugCreate); err != nil {
-					return err
+					return fmt.Errorf("error creating groups members in SCIM Provider: %w", err)
 				}
 			}
 
@@ -296,7 +293,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 				log.Info("no groups-members to be deleted")
 			} else {
 				if err := ss.scim.DeleteMembers(ss.ctx, ugDelete); err != nil {
-					return err
+					return fmt.Errorf("error deleting groups members in SCIM Provider: %w", err)
 				}
 			}
 		}
@@ -316,7 +313,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 	}
 
 	if err := ss.repo.SaveState(ss.ctx, newState); err != nil {
-		return err
+		return fmt.Errorf("error saving state: %w", err)
 	}
 
 	return nil
@@ -328,20 +325,20 @@ func (ss *SyncService) SyncGroupsAndUsers() error {
 
 	pGroups, err := ss.prov.GetGroups(ss.ctx, ss.provGroupsFilter)
 	if err != nil {
-		return err
+		return fmt.Errorf("error getting groups from provider: %w", err)
 	}
 
 	pUsers, err := ss.prov.GetUsers(ss.ctx, ss.provUsersFilter)
 	if err != nil {
-		return err
+		return fmt.Errorf("error getting users from provider: %w", err)
 	}
 
 	if err := ss.scim.DeleteGroups(ss.ctx, pGroups); err != nil {
-		return err
+		return fmt.Errorf("error deleting groups in SCIM Provider: %w", err)
 	}
 
 	if err := ss.scim.DeleteUsers(ss.ctx, pUsers); err != nil {
-		return err
+		return fmt.Errorf("error deleting users in SCIM Provider: %w", err)
 	}
 
 	return nil

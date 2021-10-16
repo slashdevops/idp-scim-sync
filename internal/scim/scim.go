@@ -96,6 +96,9 @@ func (s *SCIMProvider) GetUsers(ctx context.Context) (*model.UsersResult, error)
 
 //
 func (s *SCIMProvider) GetUsersAndGroupsUsers(ctx context.Context, groups *model.GroupsResult) (*model.UsersResult, *model.GroupsUsersResult, error) {
+	// for _, g := range groups.Resources {
+	// 	fmt.Println(g.Name)
+	// }
 	// here I return all the users and not only the members of groups
 	// becuase the users and groups in the scim needs to be controlled by
 	// the sync process
