@@ -124,7 +124,7 @@ func (s *AWSSCIMProvider) do(ctx context.Context, req *http.Request, body interf
 }
 
 // ListUsers returns a list of users from the AWS SSO Using the API
-func (s *AWSSCIMProvider) ListUsers(ctx context.Context, filter string) (*UsersResponse, error) {
+func (s *AWSSCIMProvider) ListUsers(ctx context.Context, filter string) (*ListUsersResponse, error) {
 	reqUrl, err := url.Parse(s.url.String())
 	if err != nil {
 		return nil, fmt.Errorf("aws: error parsing url: %v", err)
@@ -149,7 +149,7 @@ func (s *AWSSCIMProvider) ListUsers(ctx context.Context, filter string) (*UsersR
 	}
 	defer resp.Body.Close()
 
-	var response UsersResponse
+	var response ListUsersResponse
 	if err = json.NewDecoder(resp.Body).Decode(&response); err != nil {
 		return nil, fmt.Errorf("aws: error decoding response body: %v", err)
 	}
@@ -158,7 +158,7 @@ func (s *AWSSCIMProvider) ListUsers(ctx context.Context, filter string) (*UsersR
 }
 
 // ListGroups returns a list of groups from the AWS SSO Using the API
-func (s *AWSSCIMProvider) ListGroups(ctx context.Context, filter string) (*ListsGroupsResponse, error) {
+func (s *AWSSCIMProvider) ListGroups(ctx context.Context, filter string) (*ListGroupsResponse, error) {
 	reqUrl, err := url.Parse(s.url.String())
 	if err != nil {
 		return nil, fmt.Errorf("aws: error parsing url: %v", err)
@@ -183,7 +183,7 @@ func (s *AWSSCIMProvider) ListGroups(ctx context.Context, filter string) (*Lists
 	}
 	defer resp.Body.Close()
 
-	var response ListsGroupsResponse
+	var response ListGroupsResponse
 	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
 		return nil, fmt.Errorf("aws: error decoding response body: %v", err)
 	}

@@ -85,12 +85,12 @@ type GeneralResponse struct {
 	Schemas      []string `json:"schemas"`
 }
 
-type ListsGroupsResponse struct {
+type ListGroupsResponse struct {
 	GeneralResponse
 	Resources []*Group `json:"Resources"`
 }
 
-type UsersResponse struct {
+type ListUsersResponse struct {
 	GeneralResponse
 	Resources []*User `json:"Resources"`
 }

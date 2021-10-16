@@ -66,10 +66,10 @@ func (mr *MockAWSSCIMProviderMockRecorder) CreateUser(ctx, u interface{}) *gomoc
 }
 
 // ListGroups mocks base method.
-func (m *MockAWSSCIMProvider) ListGroups(ctx context.Context, filter string) (*aws.ListsGroupsResponse, error) {
+func (m *MockAWSSCIMProvider) ListGroups(ctx context.Context, filter string) (*aws.ListGroupsResponse, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ListGroups", ctx, filter)
-	ret0, _ := ret[0].(*aws.ListsGroupsResponse)
+	ret0, _ := ret[0].(*aws.ListGroupsResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -81,10 +81,10 @@ func (mr *MockAWSSCIMProviderMockRecorder) ListGroups(ctx, filter interface{}) *
 }
 
 // ListUsers mocks base method.
-func (m *MockAWSSCIMProvider) ListUsers(ctx context.Context, filter string) (*aws.UsersResponse, error) {
+func (m *MockAWSSCIMProvider) ListUsers(ctx context.Context, filter string) (*aws.ListUsersResponse, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ListUsers", ctx, filter)
-	ret0, _ := ret[0].(*aws.UsersResponse)
+	ret0, _ := ret[0].(*aws.ListUsersResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

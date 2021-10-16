@@ -15,8 +15,8 @@ import (
 
 // Define AWSSCIMProvider interface to use aws.aws methods
 type AWSSCIMProvider interface {
-	ListUsers(ctx context.Context, filter string) (*aws.UsersResponse, error)
-	ListGroups(ctx context.Context, filter string) (*aws.ListsGroupsResponse, error)
+	ListUsers(ctx context.Context, filter string) (*aws.ListUsersResponse, error)
+	ListGroups(ctx context.Context, filter string) (*aws.ListGroupsResponse, error)
 
 	CreateUser(ctx context.Context, u *aws.CreateUserRequest) (*aws.CreateUserResponse, error)
 	CreateGroup(ctx context.Context, g *aws.CreateGroupRequest) (*aws.CreateGroupResponse, error)
