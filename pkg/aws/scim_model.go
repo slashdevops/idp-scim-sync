@@ -18,6 +18,17 @@ type Meta struct {
 	LastModified string `json:"lastModified"`
 }
 
+type Operation struct {
+	OP    string   `json:"op"`
+	Path  string   `json:"path"`
+	Value []string `json:"value"`
+}
+
+type Patch struct {
+	Schemas    []string    `json:"schemas"`
+	Operations []Operation `json:"Operations"`
+}
+
 type Member struct {
 	Value string `json:"value"`
 	Ref   string `json:"$ref"`
@@ -137,4 +148,9 @@ type CreateUserResponse struct {
 	DisplayName string   `json:"displayName"`
 	Active      bool     `json:"active"`
 	Emails      []Email  `json:"emails"`
+}
+
+type PatchGroupRequest struct {
+	Group Group `json:"group"`
+	Patch Patch `json:"patch"`
 }

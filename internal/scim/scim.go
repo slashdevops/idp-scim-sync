@@ -20,6 +20,8 @@ type AWSSCIMProvider interface {
 
 	CreateUser(ctx context.Context, u *aws.CreateUserRequest) (*aws.CreateUserResponse, error)
 	CreateGroup(ctx context.Context, g *aws.CreateGroupRequest) (*aws.CreateGroupResponse, error)
+
+	PatchGroup(ctx context.Context, pgr *aws.PatchGroupRequest) error
 }
 
 var ErrAWSSCIMProviderNil = fmt.Errorf("AWSSCIMProvider is nil")
@@ -196,7 +198,26 @@ func (s *SCIMProvider) CreateUsers(ctx context.Context, usrs *model.UsersResult)
 	return nil
 }
 
-func (s *SCIMProvider) CreateMembers(ctx context.Context, ur *model.GroupsUsersResult) error {
+func (s *SCIMProvider) CreateMembers(ctx context.Context, gur *model.GroupsUsersResult) error {
+	// for _, groupUsers := range gur.Resources {
+
+	// 	patchGroupRequest := &aws.PatchGroupRequest{
+	// 		Group: aws.Group{
+	// 			ID:          groupUsers.Group.ID,
+	// 			DisplayName: groupUsers.Group.Name,
+	// 		},
+	// 	}
+
+	// 	for _, user := range groupUsers.Resources {
+	// 		sGroupRequest.ExternalIds = append(sGroupRequest.ExternalIds, user.ID)
+	// 	}
+
+	// 	err := s.scim.PatchGroup(ctx, patchGroupRequest)
+	// 	if err != nil {
+	// 		return err
+	// 	}
+	// }
+
 	return nil
 }
 

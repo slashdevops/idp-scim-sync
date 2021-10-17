@@ -94,3 +94,17 @@ func (mr *MockAWSSCIMProviderMockRecorder) ListUsers(ctx, filter interface{}) *g
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListUsers", reflect.TypeOf((*MockAWSSCIMProvider)(nil).ListUsers), ctx, filter)
 }
+
+// PatchGroup mocks base method.
+func (m *MockAWSSCIMProvider) PatchGroup(ctx context.Context, pgr *aws.PatchGroupRequest) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PatchGroup", ctx, pgr)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// PatchGroup indicates an expected call of PatchGroup.
+func (mr *MockAWSSCIMProviderMockRecorder) PatchGroup(ctx, pgr interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PatchGroup", reflect.TypeOf((*MockAWSSCIMProvider)(nil).PatchGroup), ctx, pgr)
+}
