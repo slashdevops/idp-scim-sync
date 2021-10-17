@@ -10,7 +10,8 @@ type Name struct {
 }
 
 type User struct {
-	ID          string `json:"id"`
+	IPID        string `json:"ipid"`
+	SCIMID      string `json:"scimid"`
 	Name        Name   `json:"name"`
 	DisplayName string `json:"displayName"`
 	Active      bool   `json:"active"`
@@ -32,7 +33,8 @@ func (ur *UsersResult) MarshalJSON() ([]byte, error) {
 }
 
 type Group struct {
-	ID       string `json:"id"`
+	IPID     string `json:"ipid"`
+	SCIMID   string `json:"scimid"`
 	Name     string `json:"name"`
 	Email    string `json:"email"`
 	HashCode string `json:"hashCode"`

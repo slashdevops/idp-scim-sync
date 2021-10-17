@@ -101,8 +101,8 @@ func Test_SCIMProvider_GetGroups(t *testing.T) {
 		assert.Equal(t, 2, gr.Items)
 		// assert.Equal(t, "", gr.HashCode) //TODO: create a object to compare this
 
-		assert.Equal(t, "1", gr.Resources[0].ID)
-		assert.Equal(t, "2", gr.Resources[1].ID)
+		assert.Equal(t, "1", gr.Resources[0].SCIMID)
+		assert.Equal(t, "2", gr.Resources[1].SCIMID)
 
 		assert.Equal(t, "group 1", gr.Resources[0].Name)
 		assert.Equal(t, "group 2", gr.Resources[1].Name)
@@ -189,8 +189,8 @@ func Test_SCIMProvider_GetUsers(t *testing.T) {
 		assert.Equal(t, 2, gr.Items)
 		// assert.Equal(t, "", gr.HashCode) //TODO: create a object to compare this
 
-		assert.Equal(t, "1", gr.Resources[0].ID)
-		assert.Equal(t, "2", gr.Resources[1].ID)
+		assert.Equal(t, "1", gr.Resources[0].SCIMID)
+		assert.Equal(t, "2", gr.Resources[1].SCIMID)
 
 		assert.Equal(t, "1", gr.Resources[0].Name.FamilyName)
 		assert.Equal(t, "user", gr.Resources[0].Name.GivenName)
@@ -234,9 +234,9 @@ func Test_SCIMProvider_CreateGroups(t *testing.T) {
 			Items: 1,
 			Resources: []model.Group{
 				{
-					ID:    "1",
-					Name:  "group 1",
-					Email: "group.1@mail.com",
+					SCIMID: "1",
+					Name:   "group 1",
+					Email:  "group.1@mail.com",
 				},
 			},
 		}
@@ -261,9 +261,9 @@ func Test_SCIMProvider_CreateGroups(t *testing.T) {
 			Items: 1,
 			Resources: []model.Group{
 				{
-					ID:    "1",
-					Name:  "group 1",
-					Email: "group.1@mail.com",
+					SCIMID: "1",
+					Name:   "group 1",
+					Email:  "group.1@mail.com",
 				},
 			},
 		}
@@ -293,7 +293,6 @@ func Test_SCIMProvider_CreateUsers(t *testing.T) {
 		mockSCIM := mocks.NewMockAWSSCIMProvider(mockCtrl)
 		cur := &aws.CreateUserRequest{
 			DisplayName: "user 1",
-			ExternalId:  "1",
 			Name:        aws.Name{FamilyName: "1", GivenName: "user"},
 			Emails: []aws.Email{
 				{Value: "user.1@mail.com", Type: "work"},
@@ -309,7 +308,7 @@ func Test_SCIMProvider_CreateUsers(t *testing.T) {
 			Items: 1,
 			Resources: []model.User{
 				{
-					ID:          "1",
+					SCIMID:      "1",
 					Name:        model.Name{FamilyName: "1", GivenName: "user"},
 					DisplayName: "user 1",
 					Email:       "user.1@mail.com",
@@ -328,7 +327,6 @@ func Test_SCIMProvider_CreateUsers(t *testing.T) {
 		mockSCIM := mocks.NewMockAWSSCIMProvider(mockCtrl)
 		cur := &aws.CreateUserRequest{
 			DisplayName: "user 1",
-			ExternalId:  "1",
 			Name:        aws.Name{FamilyName: "1", GivenName: "user"},
 			Emails: []aws.Email{
 				{Value: "user.1@mail.com", Type: "work"},
@@ -344,7 +342,7 @@ func Test_SCIMProvider_CreateUsers(t *testing.T) {
 			Items: 1,
 			Resources: []model.User{
 				{
-					ID:          "1",
+					SCIMID:      "1",
 					Name:        model.Name{FamilyName: "1", GivenName: "user"},
 					DisplayName: "user 1",
 					Email:       "user.1@mail.com",

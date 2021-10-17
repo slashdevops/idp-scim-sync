@@ -54,7 +54,8 @@ func Test_State_MarshalJSON(t *testing.T) {
 						HashCode: "hashCode",
 						Resources: []Group{
 							{
-								ID:       "id",
+								IPID:     "ipid",
+								SCIMID:   "scimid",
 								Name:     "name",
 								Email:    "email",
 								HashCode: "hashCode",
@@ -66,7 +67,8 @@ func Test_State_MarshalJSON(t *testing.T) {
 						HashCode: "hashCode",
 						Resources: []User{
 							{
-								ID:       "id",
+								IPID:     "ipid",
+								SCIMID:   "scimid",
 								Name:     Name{FamilyName: "lastName", GivenName: "name"},
 								Email:    "email",
 								HashCode: "hashCode",
@@ -81,14 +83,15 @@ func Test_State_MarshalJSON(t *testing.T) {
 								Items:    1,
 								HashCode: "hashCode",
 								Group: Group{
-									ID:       "id",
+									IPID:     "ipid",
 									Name:     "name",
 									Email:    "email",
 									HashCode: "hashCode",
 								},
 								Resources: []User{
 									{
-										ID:       "id",
+										IPID:     "ipid",
+										SCIMID:   "scimid",
 										Name:     Name{FamilyName: "lastName", GivenName: "name"},
 										Email:    "email",
 										HashCode: "hashCode",
@@ -110,7 +113,8 @@ func Test_State_MarshalJSON(t *testing.T) {
       "hashCode": "hashCode",
       "resources": [
         {
-          "id": "id",
+          "ipid": "ipid",
+          "scimid": "scimid",
           "name": "name",
           "email": "email",
           "hashCode": "hashCode"
@@ -122,7 +126,8 @@ func Test_State_MarshalJSON(t *testing.T) {
       "hashCode": "hashCode",
       "resources": [
         {
-          "id": "id",
+          "ipid": "ipid",
+          "scimid": "scimid",
           "name": {
             "familyName": "lastName",
             "givenName": "name"
@@ -142,14 +147,16 @@ func Test_State_MarshalJSON(t *testing.T) {
           "items": 1,
           "hashCode": "hashCode",
           "group": {
-            "id": "id",
+            "ipid": "ipid",
+            "scimid": "",
             "name": "name",
             "email": "email",
             "hashCode": "hashCode"
           },
           "resources": [
             {
-              "id": "id",
+              "ipid": "ipid",
+              "scimid": "scimid",
               "name": {
                 "familyName": "lastName",
                 "givenName": "name"

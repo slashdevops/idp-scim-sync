@@ -34,7 +34,8 @@ func Test_UsersResult_MarshalJSON(t *testing.T) {
 				HashCode: "test",
 				Resources: []User{
 					{
-						ID: "1",
+						IPID:   "1",
+						SCIMID: "1",
 						Name: Name{
 							GivenName:  "user",
 							FamilyName: "1",
@@ -51,7 +52,8 @@ func Test_UsersResult_MarshalJSON(t *testing.T) {
   "hashCode": "test",
   "resources": [
     {
-      "id": "1",
+      "ipid": "1",
+      "scimid": "1",
       "name": {
         "familyName": "1",
         "givenName": "user"
@@ -114,7 +116,8 @@ func Test_GroupsResult_MarshalJSON(t *testing.T) {
 				HashCode: "test",
 				Resources: []Group{
 					{
-						ID:       "1",
+						IPID:     "1",
+						SCIMID:   "1",
 						Name:     "group",
 						HashCode: "1111",
 					},
@@ -125,7 +128,8 @@ func Test_GroupsResult_MarshalJSON(t *testing.T) {
   "hashCode": "test",
   "resources": [
     {
-      "id": "1",
+      "ipid": "1",
+      "scimid": "1",
       "name": "group",
       "email": "",
       "hashCode": "1111"
@@ -185,7 +189,8 @@ func Test_GroupsUsersResult_MarshalJSON(t *testing.T) {
 					{
 						Items: 1,
 						Group: Group{
-							ID:       "1",
+							IPID:     "1",
+							SCIMID:   "1",
 							Name:     "group 1",
 							Email:    "group.1@mail.com",
 							HashCode: "test",
@@ -193,7 +198,8 @@ func Test_GroupsUsersResult_MarshalJSON(t *testing.T) {
 						HashCode: "test",
 						Resources: []User{
 							{
-								ID: "1",
+								IPID:   "1",
+								SCIMID: "1",
 								Name: Name{
 									GivenName:  "user",
 									FamilyName: "1",
@@ -215,14 +221,16 @@ func Test_GroupsUsersResult_MarshalJSON(t *testing.T) {
       "items": 1,
       "hashCode": "test",
       "group": {
-        "id": "1",
+        "ipid": "1",
+        "scimid": "1",
         "name": "group 1",
         "email": "group.1@mail.com",
         "hashCode": "test"
       },
       "resources": [
         {
-          "id": "1",
+          "ipid": "1",
+          "scimid": "1",
           "name": {
             "familyName": "1",
             "givenName": "user"

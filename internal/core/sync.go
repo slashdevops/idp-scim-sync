@@ -89,7 +89,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 		// of the users and groups in the SCIM side, just no recreate, keep the existing ones.
 		//
 		// During this check the groups could be empty, but we need to check if users exist
-		// even if there are not groups.  Becuase the users, groups their members in the scim needs to be
+		// even if there are not groups. Becuase the users, groups their members in the scim needs to be
 		// controlled by the sync process.
 		sUsersResult, sGroupsResult, sGroupsUsersResult, err := getSCIMData(ss.ctx, ss.scim)
 		if err != nil {

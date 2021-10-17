@@ -59,7 +59,7 @@ func (i *IdentityProvider) GetGroups(ctx context.Context, filter []string) (*mod
 	for _, grp := range googleGroups {
 
 		e := model.Group{
-			ID:    grp.Id,
+			IPID:  grp.Id,
 			Name:  grp.Name,
 			Email: grp.Email,
 		}
@@ -93,7 +93,7 @@ func (i *IdentityProvider) GetUsers(ctx context.Context, filter []string) (*mode
 	for _, usr := range googleUsers {
 
 		e := model.User{
-			ID:          usr.Id,
+			IPID:        usr.Id,
 			Name:        model.Name{FamilyName: usr.Name.FamilyName, GivenName: usr.Name.GivenName},
 			DisplayName: fmt.Sprintf("%s %s", usr.Name.GivenName, usr.Name.FamilyName),
 			Active:      !usr.Suspended,
@@ -150,7 +150,7 @@ func (i *IdentityProvider) GetUsersFromGroupMembers(ctx context.Context, mbr *mo
 		}
 
 		e := model.User{
-			ID:          u.Id,
+			IPID:        u.Id,
 			Name:        model.Name{FamilyName: u.Name.FamilyName, GivenName: u.Name.GivenName},
 			DisplayName: fmt.Sprintf("%s %s", u.Name.GivenName, u.Name.FamilyName),
 			Active:      !u.Suspended,
@@ -180,7 +180,7 @@ func (i *IdentityProvider) GetUsersAndGroupsUsers(ctx context.Context, groups *m
 
 	for _, pGroup := range groups.Resources {
 
-		pMembers, err := i.GetGroupMembers(ctx, pGroup.ID)
+		pMembers, err := i.GetGroupMembers(ctx, pGroup.IPID)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -191,16 +191,16 @@ func (i *IdentityProvider) GetUsersAndGroupsUsers(ctx context.Context, groups *m
 		}
 
 		for _, pUser := range pUsersFromMembers.Resources {
-			if _, ok := userSet[pUser.ID]; !ok {
+			if _, ok := userSet[pUser.IPID]; !ok {
 				pUsers = append(pUsers, pUser)
-				userSet[pUser.ID] = struct{}{}
+				userSet[pUser.IPID] = struct{}{}
 			}
 		}
 
 		pGroupUsers := model.GroupUsers{
 			Items: len(pMembers.Resources),
 			Group: model.Group{
-				ID:    pGroup.ID,
+				IPID:  pGroup.IPID,
 				Name:  pGroup.Name,
 				Email: pGroup.Email,
 			},

@@ -98,17 +98,17 @@ func Test_syncService_getIdentityProviderData(t *testing.T) {
 		grpr := &model.GroupsResult{
 			Items:     1,
 			HashCode:  "",
-			Resources: []model.Group{{ID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: "123456789"}},
+			Resources: []model.Group{{IPID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: "123456789"}},
 		}
 		usrs := &model.UsersResult{
 			Items:     1,
 			HashCode:  "",
-			Resources: []model.User{{ID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com"}},
+			Resources: []model.User{{IPID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com"}},
 		}
 		grpsUsrs := &model.GroupsUsersResult{
 			Items:     1,
 			HashCode:  "",
-			Resources: []model.GroupUsers{{Items: 1, Group: model.Group{ID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: "123456789"}, Resources: []model.User{{ID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com"}}}},
+			Resources: []model.GroupUsers{{Items: 1, Group: model.Group{IPID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: "123456789"}, Resources: []model.User{{IPID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com"}}}},
 		}
 
 		mockProviderService.EXPECT().GetGroups(ctx, filters).Return(grpr, nil).Times(1)
@@ -124,16 +124,16 @@ func Test_syncService_getIdentityProviderData(t *testing.T) {
 		assert.Equal(t, len(groups.Resources), 1)
 		assert.Equal(t, len(groupsUsers.Resources), 1)
 
-		assert.Equal(t, users.Resources[0].ID, "1")
+		assert.Equal(t, users.Resources[0].IPID, "1")
 		assert.Equal(t, users.Resources[0].Name.GivenName, "user")
 		assert.Equal(t, users.Resources[0].Name.FamilyName, "1")
 		assert.Equal(t, users.Resources[0].Email, "user.1@mail.com")
 
-		assert.Equal(t, groups.Resources[0].ID, "1")
+		assert.Equal(t, groups.Resources[0].IPID, "1")
 		assert.Equal(t, groups.Resources[0].Name, "group 1")
 		assert.Equal(t, groups.Resources[0].Email, "group.1@mail.com")
 
-		assert.Equal(t, groupsUsers.Resources[0].Group.ID, "1")
+		assert.Equal(t, groupsUsers.Resources[0].Group.IPID, "1")
 		assert.Equal(t, groupsUsers.Resources[0].Group.Name, "group 1")
 		assert.Equal(t, groupsUsers.Resources[0].Group.Email, "group.1@mail.com")
 	})
@@ -158,7 +158,7 @@ func Test_syncService_getIdentityProviderData(t *testing.T) {
 		grpr := &model.GroupsResult{
 			Items:     1,
 			HashCode:  "",
-			Resources: []model.Group{{ID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: "123456789"}},
+			Resources: []model.Group{{IPID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: "123456789"}},
 		}
 
 		mockProviderService.EXPECT().GetGroups(ctx, filters).Return(grpr, nil).Times(1)
@@ -201,10 +201,10 @@ func Test_syncService_getSCIMData(t *testing.T) {
 		grpr := &model.GroupsResult{
 			Items:     1,
 			HashCode:  "",
-			Resources: []model.Group{{ID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: "123456789"}},
+			Resources: []model.Group{{IPID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: "123456789"}},
 		}
-		usrs := &model.UsersResult{Items: 1, Resources: []model.User{{ID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com"}}}
-		grpsUsrs := &model.GroupsUsersResult{Items: 1, Resources: []model.GroupUsers{{Items: 1, Group: model.Group{ID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: "123456789"}, Resources: []model.User{{ID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com"}}}}}
+		usrs := &model.UsersResult{Items: 1, Resources: []model.User{{IPID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com"}}}
+		grpsUsrs := &model.GroupsUsersResult{Items: 1, Resources: []model.GroupUsers{{Items: 1, Group: model.Group{IPID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: "123456789"}, Resources: []model.User{{IPID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com"}}}}}
 
 		mockSCIMService.EXPECT().GetGroups(ctx).Return(grpr, nil).Times(1)
 		mockSCIMService.EXPECT().GetUsersAndGroupsUsers(ctx).Return(usrs, grpsUsrs, nil).Times(1)
@@ -219,16 +219,16 @@ func Test_syncService_getSCIMData(t *testing.T) {
 		assert.Equal(t, len(groups.Resources), 1)
 		assert.Equal(t, len(groupsUsers.Resources), 1)
 
-		assert.Equal(t, users.Resources[0].ID, "1")
+		assert.Equal(t, users.Resources[0].IPID, "1")
 		assert.Equal(t, users.Resources[0].Name.GivenName, "user")
 		assert.Equal(t, users.Resources[0].Name.FamilyName, "1")
 		assert.Equal(t, users.Resources[0].Email, "user.1@mail.com")
 
-		assert.Equal(t, groups.Resources[0].ID, "1")
+		assert.Equal(t, groups.Resources[0].IPID, "1")
 		assert.Equal(t, groups.Resources[0].Name, "group 1")
 		assert.Equal(t, groups.Resources[0].Email, "group.1@mail.com")
 
-		assert.Equal(t, groupsUsers.Resources[0].Group.ID, "1")
+		assert.Equal(t, groupsUsers.Resources[0].Group.IPID, "1")
 		assert.Equal(t, groupsUsers.Resources[0].Group.Name, "group 1")
 		assert.Equal(t, groupsUsers.Resources[0].Group.Email, "group.1@mail.com")
 	})
@@ -251,7 +251,7 @@ func Test_syncService_getSCIMData(t *testing.T) {
 		grpr := &model.GroupsResult{
 			Items:     1,
 			HashCode:  "",
-			Resources: []model.Group{{ID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: "123456789"}},
+			Resources: []model.Group{{IPID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: "123456789"}},
 		}
 
 		mockProviderService.EXPECT().GetGroups(ctx).Return(grpr, nil).Times(1)
@@ -290,9 +290,9 @@ func Test_syncService_reconcilingSCIMGroups(t *testing.T) {
 	t.Run("Should call all the methods one time each and no error", func(t *testing.T) {
 		mockSCIMService := mocks.NewMockSCIMService(mockCtrl)
 
-		create := &model.GroupsResult{Items: 1, Resources: []model.Group{{ID: "1", Name: "group 1", Email: "group.1@mail.com"}}}
-		update := &model.GroupsResult{Items: 1, Resources: []model.Group{{ID: "2", Name: "group 2", Email: "group.2@mail.com"}}}
-		delete := &model.GroupsResult{Items: 1, Resources: []model.Group{{ID: "3", Name: "group 3", Email: "group.3@mail.com"}}}
+		create := &model.GroupsResult{Items: 1, Resources: []model.Group{{IPID: "1", Name: "group 1", Email: "group.1@mail.com"}}}
+		update := &model.GroupsResult{Items: 1, Resources: []model.Group{{IPID: "2", Name: "group 2", Email: "group.2@mail.com"}}}
+		delete := &model.GroupsResult{Items: 1, Resources: []model.Group{{IPID: "3", Name: "group 3", Email: "group.3@mail.com"}}}
 
 		mockSCIMService.EXPECT().CreateGroups(ctx, create).Return(nil).Times(1)
 		mockSCIMService.EXPECT().UpdateGroups(ctx, update).Return(nil).Times(1)
@@ -305,9 +305,9 @@ func Test_syncService_reconcilingSCIMGroups(t *testing.T) {
 	t.Run("Should return error when CreateGroups return error", func(t *testing.T) {
 		mockSCIMService := mocks.NewMockSCIMService(mockCtrl)
 
-		create := &model.GroupsResult{Items: 1, Resources: []model.Group{{ID: "1", Name: "group 1", Email: "group.1@mail.com"}}}
-		update := &model.GroupsResult{Items: 1, Resources: []model.Group{{ID: "2", Name: "group 2", Email: "group.2@mail.com"}}}
-		delete := &model.GroupsResult{Items: 1, Resources: []model.Group{{ID: "3", Name: "group 3", Email: "group.3@mail.com"}}}
+		create := &model.GroupsResult{Items: 1, Resources: []model.Group{{IPID: "1", Name: "group 1", Email: "group.1@mail.com"}}}
+		update := &model.GroupsResult{Items: 1, Resources: []model.Group{{IPID: "2", Name: "group 2", Email: "group.2@mail.com"}}}
+		delete := &model.GroupsResult{Items: 1, Resources: []model.Group{{IPID: "3", Name: "group 3", Email: "group.3@mail.com"}}}
 
 		mockSCIMService.EXPECT().CreateGroups(ctx, create).Return(errors.New("test error")).Times(1)
 
@@ -318,9 +318,9 @@ func Test_syncService_reconcilingSCIMGroups(t *testing.T) {
 	t.Run("Should return error when UpdateGroups return error", func(t *testing.T) {
 		mockSCIMService := mocks.NewMockSCIMService(mockCtrl)
 
-		create := &model.GroupsResult{Items: 1, Resources: []model.Group{{ID: "1", Name: "group 1", Email: "group.1@mail.com"}}}
-		update := &model.GroupsResult{Items: 1, Resources: []model.Group{{ID: "2", Name: "group 2", Email: "group.2@mail.com"}}}
-		delete := &model.GroupsResult{Items: 1, Resources: []model.Group{{ID: "3", Name: "group 3", Email: "group.3@mail.com"}}}
+		create := &model.GroupsResult{Items: 1, Resources: []model.Group{{IPID: "1", Name: "group 1", Email: "group.1@mail.com"}}}
+		update := &model.GroupsResult{Items: 1, Resources: []model.Group{{IPID: "2", Name: "group 2", Email: "group.2@mail.com"}}}
+		delete := &model.GroupsResult{Items: 1, Resources: []model.Group{{IPID: "3", Name: "group 3", Email: "group.3@mail.com"}}}
 
 		mockSCIMService.EXPECT().CreateGroups(ctx, create).Return(nil).Times(1)
 		mockSCIMService.EXPECT().UpdateGroups(ctx, update).Return(errors.New("test error")).Times(1)
@@ -332,9 +332,9 @@ func Test_syncService_reconcilingSCIMGroups(t *testing.T) {
 	t.Run("Should return error when DeleteGroups return error", func(t *testing.T) {
 		mockSCIMService := mocks.NewMockSCIMService(mockCtrl)
 
-		create := &model.GroupsResult{Items: 1, Resources: []model.Group{{ID: "1", Name: "group 1", Email: "group.1@mail.com"}}}
-		update := &model.GroupsResult{Items: 1, Resources: []model.Group{{ID: "2", Name: "group 2", Email: "group.2@mail.com"}}}
-		delete := &model.GroupsResult{Items: 1, Resources: []model.Group{{ID: "3", Name: "group 3", Email: "group.3@mail.com"}}}
+		create := &model.GroupsResult{Items: 1, Resources: []model.Group{{IPID: "1", Name: "group 1", Email: "group.1@mail.com"}}}
+		update := &model.GroupsResult{Items: 1, Resources: []model.Group{{IPID: "2", Name: "group 2", Email: "group.2@mail.com"}}}
+		delete := &model.GroupsResult{Items: 1, Resources: []model.Group{{IPID: "3", Name: "group 3", Email: "group.3@mail.com"}}}
 
 		mockSCIMService.EXPECT().CreateGroups(ctx, create).Return(nil).Times(1)
 		mockSCIMService.EXPECT().UpdateGroups(ctx, update).Return(nil).Times(1)
@@ -368,9 +368,9 @@ func Test_syncService_reconcilingSCIMUsers(t *testing.T) {
 	t.Run("Should call all the methods one time each and no error", func(t *testing.T) {
 		mockSCIMService := mocks.NewMockSCIMService(mockCtrl)
 
-		create := &model.UsersResult{Items: 1, Resources: []model.User{{ID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com"}}}
-		update := &model.UsersResult{Items: 1, Resources: []model.User{{ID: "2", Name: model.Name{GivenName: "user", FamilyName: "2"}, Email: "user.2@mail.com"}}}
-		delete := &model.UsersResult{Items: 1, Resources: []model.User{{ID: "3", Name: model.Name{GivenName: "user", FamilyName: "3"}, Email: "user.3@mail.com"}}}
+		create := &model.UsersResult{Items: 1, Resources: []model.User{{IPID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com"}}}
+		update := &model.UsersResult{Items: 1, Resources: []model.User{{IPID: "2", Name: model.Name{GivenName: "user", FamilyName: "2"}, Email: "user.2@mail.com"}}}
+		delete := &model.UsersResult{Items: 1, Resources: []model.User{{IPID: "3", Name: model.Name{GivenName: "user", FamilyName: "3"}, Email: "user.3@mail.com"}}}
 
 		mockSCIMService.EXPECT().CreateUsers(ctx, create).Return(nil).Times(1)
 		mockSCIMService.EXPECT().UpdateUsers(ctx, update).Return(nil).Times(1)
@@ -383,9 +383,9 @@ func Test_syncService_reconcilingSCIMUsers(t *testing.T) {
 	t.Run("Should return error when CreateUsers return error", func(t *testing.T) {
 		mockSCIMService := mocks.NewMockSCIMService(mockCtrl)
 
-		create := &model.UsersResult{Items: 1, Resources: []model.User{{ID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com"}}}
-		update := &model.UsersResult{Items: 1, Resources: []model.User{{ID: "2", Name: model.Name{GivenName: "user", FamilyName: "2"}, Email: "user.2@mail.com"}}}
-		delete := &model.UsersResult{Items: 1, Resources: []model.User{{ID: "3", Name: model.Name{GivenName: "user", FamilyName: "3"}, Email: "user.3@mail.com"}}}
+		create := &model.UsersResult{Items: 1, Resources: []model.User{{IPID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com"}}}
+		update := &model.UsersResult{Items: 1, Resources: []model.User{{IPID: "2", Name: model.Name{GivenName: "user", FamilyName: "2"}, Email: "user.2@mail.com"}}}
+		delete := &model.UsersResult{Items: 1, Resources: []model.User{{IPID: "3", Name: model.Name{GivenName: "user", FamilyName: "3"}, Email: "user.3@mail.com"}}}
 
 		mockSCIMService.EXPECT().CreateUsers(ctx, create).Return(errors.New("test error")).Times(1)
 
@@ -396,9 +396,9 @@ func Test_syncService_reconcilingSCIMUsers(t *testing.T) {
 	t.Run("Should return error when UpdateUsers return error", func(t *testing.T) {
 		mockSCIMService := mocks.NewMockSCIMService(mockCtrl)
 
-		create := &model.UsersResult{Items: 1, Resources: []model.User{{ID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com"}}}
-		update := &model.UsersResult{Items: 1, Resources: []model.User{{ID: "2", Name: model.Name{GivenName: "user", FamilyName: "2"}, Email: "user.2@mail.com"}}}
-		delete := &model.UsersResult{Items: 1, Resources: []model.User{{ID: "3", Name: model.Name{GivenName: "user", FamilyName: "3"}, Email: "user.3@mail.com"}}}
+		create := &model.UsersResult{Items: 1, Resources: []model.User{{IPID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com"}}}
+		update := &model.UsersResult{Items: 1, Resources: []model.User{{IPID: "2", Name: model.Name{GivenName: "user", FamilyName: "2"}, Email: "user.2@mail.com"}}}
+		delete := &model.UsersResult{Items: 1, Resources: []model.User{{IPID: "3", Name: model.Name{GivenName: "user", FamilyName: "3"}, Email: "user.3@mail.com"}}}
 
 		mockSCIMService.EXPECT().CreateUsers(ctx, create).Return(nil).Times(1)
 		mockSCIMService.EXPECT().UpdateUsers(ctx, update).Return(errors.New("test error")).Times(1)
@@ -410,9 +410,9 @@ func Test_syncService_reconcilingSCIMUsers(t *testing.T) {
 	t.Run("Should return error when DeleteUsers return error", func(t *testing.T) {
 		mockSCIMService := mocks.NewMockSCIMService(mockCtrl)
 
-		create := &model.UsersResult{Items: 1, Resources: []model.User{{ID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com"}}}
-		update := &model.UsersResult{Items: 1, Resources: []model.User{{ID: "2", Name: model.Name{GivenName: "user", FamilyName: "2"}, Email: "user.2@mail.com"}}}
-		delete := &model.UsersResult{Items: 1, Resources: []model.User{{ID: "3", Name: model.Name{GivenName: "user", FamilyName: "3"}, Email: "user.3@mail.com"}}}
+		create := &model.UsersResult{Items: 1, Resources: []model.User{{IPID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com"}}}
+		update := &model.UsersResult{Items: 1, Resources: []model.User{{IPID: "2", Name: model.Name{GivenName: "user", FamilyName: "2"}, Email: "user.2@mail.com"}}}
+		delete := &model.UsersResult{Items: 1, Resources: []model.User{{IPID: "3", Name: model.Name{GivenName: "user", FamilyName: "3"}, Email: "user.3@mail.com"}}}
 
 		mockSCIMService.EXPECT().CreateUsers(ctx, create).Return(nil).Times(1)
 		mockSCIMService.EXPECT().UpdateUsers(ctx, update).Return(nil).Times(1)
@@ -446,8 +446,8 @@ func Test_syncService_reconcilingSCIMGroupsUsers(t *testing.T) {
 	t.Run("Should call all the methods one time each and no error", func(t *testing.T) {
 		mockSCIMService := mocks.NewMockSCIMService(mockCtrl)
 
-		create := &model.GroupsUsersResult{Items: 1, Resources: []model.GroupUsers{{Items: 1, Group: model.Group{ID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: "123456789"}, Resources: []model.User{{ID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com"}}}}}
-		delete := &model.GroupsUsersResult{Items: 1, Resources: []model.GroupUsers{{Items: 1, Group: model.Group{ID: "2", Name: "group 2", Email: "group.2@mail.com", HashCode: "123456789"}, Resources: []model.User{{ID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com"}}}}}
+		create := &model.GroupsUsersResult{Items: 1, Resources: []model.GroupUsers{{Items: 1, Group: model.Group{IPID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: "123456789"}, Resources: []model.User{{IPID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com"}}}}}
+		delete := &model.GroupsUsersResult{Items: 1, Resources: []model.GroupUsers{{Items: 1, Group: model.Group{IPID: "2", Name: "group 2", Email: "group.2@mail.com", HashCode: "123456789"}, Resources: []model.User{{IPID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com"}}}}}
 
 		mockSCIMService.EXPECT().CreateMembers(ctx, create).Return(nil).Times(1)
 		mockSCIMService.EXPECT().DeleteMembers(ctx, delete).Return(nil).Times(1)
@@ -459,8 +459,8 @@ func Test_syncService_reconcilingSCIMGroupsUsers(t *testing.T) {
 	t.Run("Should return error when CreateMembers return error", func(t *testing.T) {
 		mockSCIMService := mocks.NewMockSCIMService(mockCtrl)
 
-		create := &model.GroupsUsersResult{Items: 1, Resources: []model.GroupUsers{{Items: 1, Group: model.Group{ID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: "123456789"}, Resources: []model.User{{ID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com"}}}}}
-		delete := &model.GroupsUsersResult{Items: 1, Resources: []model.GroupUsers{{Items: 1, Group: model.Group{ID: "2", Name: "group 2", Email: "group.2@mail.com", HashCode: "123456789"}, Resources: []model.User{{ID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com"}}}}}
+		create := &model.GroupsUsersResult{Items: 1, Resources: []model.GroupUsers{{Items: 1, Group: model.Group{IPID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: "123456789"}, Resources: []model.User{{IPID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com"}}}}}
+		delete := &model.GroupsUsersResult{Items: 1, Resources: []model.GroupUsers{{Items: 1, Group: model.Group{IPID: "2", Name: "group 2", Email: "group.2@mail.com", HashCode: "123456789"}, Resources: []model.User{{IPID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com"}}}}}
 
 		mockSCIMService.EXPECT().CreateMembers(ctx, create).Return(errors.New("test error")).Times(1)
 
@@ -471,8 +471,8 @@ func Test_syncService_reconcilingSCIMGroupsUsers(t *testing.T) {
 	t.Run("Should return error when DeleteMembers return error", func(t *testing.T) {
 		mockSCIMService := mocks.NewMockSCIMService(mockCtrl)
 
-		create := &model.GroupsUsersResult{Items: 1, Resources: []model.GroupUsers{{Items: 1, Group: model.Group{ID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: "123456789"}, Resources: []model.User{{ID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com"}}}}}
-		delete := &model.GroupsUsersResult{Items: 1, Resources: []model.GroupUsers{{Items: 1, Group: model.Group{ID: "2", Name: "group 2", Email: "group.2@mail.com", HashCode: "123456789"}, Resources: []model.User{{ID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com"}}}}}
+		create := &model.GroupsUsersResult{Items: 1, Resources: []model.GroupUsers{{Items: 1, Group: model.Group{IPID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: "123456789"}, Resources: []model.User{{IPID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com"}}}}}
+		delete := &model.GroupsUsersResult{Items: 1, Resources: []model.GroupUsers{{Items: 1, Group: model.Group{IPID: "2", Name: "group 2", Email: "group.2@mail.com", HashCode: "123456789"}, Resources: []model.User{{IPID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com"}}}}}
 
 		mockSCIMService.EXPECT().CreateMembers(ctx, create).Return(nil).Times(1)
 		mockSCIMService.EXPECT().DeleteMembers(ctx, delete).Return(errors.New("test error")).Times(1)

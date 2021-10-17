@@ -36,7 +36,7 @@ func groupsOperations(idp, state *model.GroupsResult) (create *model.GroupsResul
 		} else {
 			// Check if the group email or ID changed
 			// Id changed happen when the group delete and create again with the same name and email I guest
-			if gr.Email != stateGroups[gr.Name].Email || gr.ID != stateGroups[gr.Name].ID {
+			if gr.Email != stateGroups[gr.Name].Email || gr.IPID != stateGroups[gr.Name].IPID {
 				toUpdate = append(toUpdate, gr)
 			} else {
 				toEqual = append(toEqual, gr)
@@ -106,7 +106,7 @@ func usersOperations(idp, state *model.UsersResult) (create *model.UsersResult, 
 			if usr.Name.FamilyName != stateUsers[usr.Email].Name.FamilyName ||
 				usr.Name.GivenName != stateUsers[usr.Email].Name.GivenName ||
 				usr.Active != stateUsers[usr.Email].Active ||
-				usr.ID != stateUsers[usr.Email].ID {
+				usr.IPID != stateUsers[usr.Email].IPID {
 				toUpdate = append(toUpdate, usr)
 			} else {
 				toEqual = append(toEqual, usr)
@@ -158,16 +158,16 @@ func groupsUsersOperations(idp, state *model.GroupsUsersResult) (create *model.G
 	toDelete := make([]model.GroupUsers, 0)
 
 	for _, grpUsrs := range idp.Resources {
-		idpUsers[grpUsrs.Group.ID] = make(map[string]model.User)
+		idpUsers[grpUsrs.Group.IPID] = make(map[string]model.User)
 		for _, usr := range grpUsrs.Resources {
-			idpUsers[grpUsrs.Group.ID][usr.ID] = usr
+			idpUsers[grpUsrs.Group.IPID][usr.IPID] = usr
 		}
 	}
 
 	for _, grpUsrs := range state.Resources {
-		stateUsers[grpUsrs.Group.ID] = make(map[string]model.User)
+		stateUsers[grpUsrs.Group.IPID] = make(map[string]model.User)
 		for _, usr := range grpUsrs.Resources {
-			stateUsers[grpUsrs.Group.ID][usr.ID] = usr
+			stateUsers[grpUsrs.Group.IPID][usr.IPID] = usr
 		}
 	}
 
@@ -177,48 +177,48 @@ func groupsUsersOperations(idp, state *model.GroupsUsersResult) (create *model.G
 	toD := make(map[string][]model.User)
 
 	for _, grpUsrs := range idp.Resources {
-		toC[grpUsrs.Group.ID] = make([]model.User, 0)
-		toE[grpUsrs.Group.ID] = make([]model.User, 0)
+		toC[grpUsrs.Group.IPID] = make([]model.User, 0)
+		toE[grpUsrs.Group.IPID] = make([]model.User, 0)
 
 		for _, usr := range grpUsrs.Resources {
-			if _, ok := stateUsers[grpUsrs.Group.ID][usr.ID]; !ok {
-				toC[grpUsrs.Group.ID] = append(toC[grpUsrs.Group.ID], usr)
+			if _, ok := stateUsers[grpUsrs.Group.IPID][usr.IPID]; !ok {
+				toC[grpUsrs.Group.IPID] = append(toC[grpUsrs.Group.IPID], usr)
 			} else {
-				toE[grpUsrs.Group.ID] = append(toE[grpUsrs.Group.ID], usr)
+				toE[grpUsrs.Group.IPID] = append(toE[grpUsrs.Group.IPID], usr)
 			}
 		}
 
-		if len(toC[grpUsrs.Group.ID]) > 0 {
+		if len(toC[grpUsrs.Group.IPID]) > 0 {
 			toCreate = append(toCreate, model.GroupUsers{
-				Items:     len(toC[grpUsrs.Group.ID]),
+				Items:     len(toC[grpUsrs.Group.IPID]),
 				Group:     grpUsrs.Group,
-				Resources: toC[grpUsrs.Group.ID],
+				Resources: toC[grpUsrs.Group.IPID],
 			})
 		}
 
-		if len(toE[grpUsrs.Group.ID]) > 0 {
+		if len(toE[grpUsrs.Group.IPID]) > 0 {
 			toEqual = append(toEqual, model.GroupUsers{
-				Items:     len(toE[grpUsrs.Group.ID]),
+				Items:     len(toE[grpUsrs.Group.IPID]),
 				Group:     grpUsrs.Group,
-				Resources: toE[grpUsrs.Group.ID],
+				Resources: toE[grpUsrs.Group.IPID],
 			})
 		}
 	}
 
 	for _, grpUsrs := range state.Resources {
-		toD[grpUsrs.Group.ID] = make([]model.User, 0)
+		toD[grpUsrs.Group.IPID] = make([]model.User, 0)
 
 		for _, usr := range grpUsrs.Resources {
-			if _, ok := idpUsers[grpUsrs.Group.ID][usr.ID]; !ok {
-				toD[grpUsrs.Group.ID] = append(toD[grpUsrs.Group.ID], usr)
+			if _, ok := idpUsers[grpUsrs.Group.IPID][usr.IPID]; !ok {
+				toD[grpUsrs.Group.IPID] = append(toD[grpUsrs.Group.IPID], usr)
 			}
 		}
 
-		if len(toD[grpUsrs.Group.ID]) > 0 {
+		if len(toD[grpUsrs.Group.IPID]) > 0 {
 			toDelete = append(toDelete, model.GroupUsers{
-				Items:     len(toD[grpUsrs.Group.ID]),
+				Items:     len(toD[grpUsrs.Group.IPID]),
 				Group:     grpUsrs.Group,
-				Resources: toD[grpUsrs.Group.ID],
+				Resources: toD[grpUsrs.Group.IPID],
 			})
 		}
 	}

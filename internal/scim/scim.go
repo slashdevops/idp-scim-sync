@@ -47,8 +47,8 @@ func (s *SCIMProvider) GetGroups(ctx context.Context) (*model.GroupsResult, erro
 	groups := make([]model.Group, 0)
 	for _, group := range sGroupsResponse.Resources {
 		e := model.Group{
-			ID:   group.ID,
-			Name: group.DisplayName,
+			SCIMID: group.ID,
+			Name:   group.DisplayName,
 		}
 		e.HashCode = hash.Get(e)
 
@@ -73,7 +73,7 @@ func (s *SCIMProvider) GetUsers(ctx context.Context) (*model.UsersResult, error)
 	users := make([]model.User, 0)
 	for _, user := range UsersResponse.Resources {
 		e := model.User{
-			ID: user.ID,
+			SCIMID: user.ID,
 			Name: model.Name{
 				FamilyName: user.Name.FamilyName,
 				GivenName:  user.Name.GivenName,
@@ -112,7 +112,7 @@ func (s *SCIMProvider) GetUsersAndGroupsUsers(ctx context.Context) (*model.Users
 	for _, user := range usersResult.Resources {
 
 		// https://docs.aws.amazon.com/singlesignon/latest/developerguide/listgroups.html
-		f := fmt.Sprintf("members eq \"%s\"", user.ID)
+		f := fmt.Sprintf("members eq \"%s\"", user.SCIMID)
 		sGroupsResponse, err := s.scim.ListGroups(ctx, f)
 		if err != nil {
 			return nil, nil, err
@@ -124,8 +124,8 @@ func (s *SCIMProvider) GetUsersAndGroupsUsers(ctx context.Context) (*model.Users
 			// only one time assignment
 			if _, ok := groupsData[grp.ID]; !ok {
 				e := model.Group{
-					ID:   grp.ID,
-					Name: grp.DisplayName,
+					SCIMID: grp.ID,
+					Name:   grp.DisplayName,
 				}
 				e.HashCode = hash.Get(e)
 
@@ -176,7 +176,7 @@ func (s *SCIMProvider) CreateUsers(ctx context.Context, usrs *model.UsersResult)
 
 		sUserRequest := &aws.CreateUserRequest{
 			DisplayName: user.DisplayName,
-			ExternalId:  user.ID,
+			ExternalId:  user.IPID,
 			Name: aws.Name{
 				FamilyName: user.Name.FamilyName,
 				GivenName:  user.Name.GivenName,
@@ -209,7 +209,7 @@ func (s *SCIMProvider) CreateMembers(ctx context.Context, gur *model.GroupsUsers
 	// 	}
 
 	// 	for _, user := range groupUsers.Resources {
-	// 		sGroupRequest.ExternalIds = append(sGroupRequest.ExternalIds, user.ID)
+	// 		sGroupRequest.ExternalIds = append(sGroupRequest.ExternalIds, user.IPID)
 	// 	}
 
 	// 	err := s.scim.PatchGroup(ctx, patchGroupRequest)

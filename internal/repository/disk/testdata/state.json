@@ -9,7 +9,7 @@
       "hashCode": "123456789",
       "resources": [
         {
-          "id": "1",
+          "ipid": "1",
           "name": "group 1",
           "email": "group.1@mail.com",
           "hashCode": "123456789"
@@ -21,7 +21,7 @@
       "hashCode": "hashCode",
       "resources": [
         {
-          "id": "1",
+          "ipid": "1",
           "name": {
             "familyName": "1",
             "givenName": "user"
@@ -41,14 +41,14 @@
           "items": 1,
           "hashCode": "123456789",
           "group": {
-            "id": "1",
+            "ipid": "1",
             "name": "group 1",
             "email": "group.1@mail.com",
             "hashCode": "123456789"
           },
           "resources": [
             {
-              "id": "1",
+              "ipid": "1",
               "name": {
                 "familyName": "1",
                 "givenName": "user"

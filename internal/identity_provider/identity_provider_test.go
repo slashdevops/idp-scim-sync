@@ -65,15 +65,15 @@ func Test_GoogleProvider_GetGroups(t *testing.T) {
 			want: &model.GroupsResult{
 				Items: 2,
 				Resources: []model.Group{
-					{ID: "1", Name: "group1", Email: "group1@mail.com", HashCode: hash.Get(model.Group{ID: "1", Name: "group1", Email: "group1@mail.com"})},
-					{ID: "2", Name: "group2", Email: "group2@mail.com", HashCode: hash.Get(model.Group{ID: "2", Name: "group2", Email: "group2@mail.com"})},
+					{IPID: "1", Name: "group1", Email: "group1@mail.com", HashCode: hash.Get(model.Group{IPID: "1", Name: "group1", Email: "group1@mail.com"})},
+					{IPID: "2", Name: "group2", Email: "group2@mail.com", HashCode: hash.Get(model.Group{IPID: "2", Name: "group2", Email: "group2@mail.com"})},
 				},
 				HashCode: hash.Get(
 					&model.GroupsResult{
 						Items: 2,
 						Resources: []model.Group{
-							{ID: "1", Name: "group1", Email: "group1@mail.com", HashCode: hash.Get(model.Group{ID: "1", Name: "group1", Email: "group1@mail.com"})},
-							{ID: "2", Name: "group2", Email: "group2@mail.com", HashCode: hash.Get(model.Group{ID: "2", Name: "group2", Email: "group2@mail.com"})},
+							{IPID: "1", Name: "group1", Email: "group1@mail.com", HashCode: hash.Get(model.Group{IPID: "1", Name: "group1", Email: "group1@mail.com"})},
+							{IPID: "2", Name: "group2", Email: "group2@mail.com", HashCode: hash.Get(model.Group{IPID: "2", Name: "group2", Email: "group2@mail.com"})},
 						},
 					},
 				),
@@ -150,15 +150,15 @@ func Test_GoogleProvider_GetUsers(t *testing.T) {
 			want: &model.UsersResult{
 				Items: 2,
 				Resources: []model.User{
-					{ID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com", DisplayName: "user 1", Active: true, HashCode: hash.Get(model.User{ID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com", DisplayName: "user 1", Active: true})},
-					{ID: "2", Name: model.Name{GivenName: "user", FamilyName: "2"}, Email: "user.2@mail.com", DisplayName: "user 2", Active: false, HashCode: hash.Get(model.User{ID: "2", Name: model.Name{GivenName: "user", FamilyName: "2"}, Email: "user.2@mail.com", DisplayName: "user 2", Active: false})},
+					{IPID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com", DisplayName: "user 1", Active: true, HashCode: hash.Get(model.User{IPID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com", DisplayName: "user 1", Active: true})},
+					{IPID: "2", Name: model.Name{GivenName: "user", FamilyName: "2"}, Email: "user.2@mail.com", DisplayName: "user 2", Active: false, HashCode: hash.Get(model.User{IPID: "2", Name: model.Name{GivenName: "user", FamilyName: "2"}, Email: "user.2@mail.com", DisplayName: "user 2", Active: false})},
 				},
 				HashCode: hash.Get(
 					&model.UsersResult{
 						Items: 2,
 						Resources: []model.User{
-							{ID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com", DisplayName: "user 1", Active: true, HashCode: hash.Get(model.User{ID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com", DisplayName: "user 1", Active: true})},
-							{ID: "2", Name: model.Name{GivenName: "user", FamilyName: "2"}, Email: "user.2@mail.com", DisplayName: "user 2", Active: false, HashCode: hash.Get(model.User{ID: "2", Name: model.Name{GivenName: "user", FamilyName: "2"}, Email: "user.2@mail.com", DisplayName: "user 2", Active: false})},
+							{IPID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com", DisplayName: "user 1", Active: true, HashCode: hash.Get(model.User{IPID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com", DisplayName: "user 1", Active: true})},
+							{IPID: "2", Name: model.Name{GivenName: "user", FamilyName: "2"}, Email: "user.2@mail.com", DisplayName: "user 2", Active: false, HashCode: hash.Get(model.User{IPID: "2", Name: model.Name{GivenName: "user", FamilyName: "2"}, Email: "user.2@mail.com", DisplayName: "user 2", Active: false})},
 						},
 					},
 				),
@@ -331,15 +331,15 @@ func Test_GoogleProvider_GetUsersFromGroupMembers(t *testing.T) {
 			want: &model.UsersResult{
 				Items: 2,
 				Resources: []model.User{
-					{ID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com", DisplayName: "user 1", Active: true, HashCode: hash.Get(&model.User{ID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com", DisplayName: "user 1", Active: true})},
-					{ID: "2", Name: model.Name{GivenName: "user", FamilyName: "2"}, Email: "user.2@mail.com", DisplayName: "user 2", Active: false, HashCode: hash.Get(&model.User{ID: "2", Name: model.Name{GivenName: "user", FamilyName: "2"}, Email: "user.2@mail.com", DisplayName: "user 2", Active: false})},
+					{IPID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com", DisplayName: "user 1", Active: true, HashCode: hash.Get(&model.User{IPID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com", DisplayName: "user 1", Active: true})},
+					{IPID: "2", Name: model.Name{GivenName: "user", FamilyName: "2"}, Email: "user.2@mail.com", DisplayName: "user 2", Active: false, HashCode: hash.Get(&model.User{IPID: "2", Name: model.Name{GivenName: "user", FamilyName: "2"}, Email: "user.2@mail.com", DisplayName: "user 2", Active: false})},
 				},
 				HashCode: hash.Get(
 					&model.UsersResult{
 						Items: 2,
 						Resources: []model.User{
-							{ID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com", DisplayName: "user 1", Active: true, HashCode: hash.Get(&model.User{ID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com", DisplayName: "user 1", Active: true})},
-							{ID: "2", Name: model.Name{GivenName: "user", FamilyName: "2"}, Email: "user.2@mail.com", DisplayName: "user 2", Active: false, HashCode: hash.Get(&model.User{ID: "2", Name: model.Name{GivenName: "user", FamilyName: "2"}, Email: "user.2@mail.com", DisplayName: "user 2", Active: false})},
+							{IPID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com", DisplayName: "user 1", Active: true, HashCode: hash.Get(&model.User{IPID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com", DisplayName: "user 1", Active: true})},
+							{IPID: "2", Name: model.Name{GivenName: "user", FamilyName: "2"}, Email: "user.2@mail.com", DisplayName: "user 2", Active: false, HashCode: hash.Get(&model.User{IPID: "2", Name: model.Name{GivenName: "user", FamilyName: "2"}, Email: "user.2@mail.com", DisplayName: "user 2", Active: false})},
 						},
 					},
 				),
@@ -431,21 +431,21 @@ func Test_GoogleProvider_GetUsersAndGroupsUsers(t *testing.T) {
 				groups: &model.GroupsResult{
 					Items: 2,
 					Resources: []model.Group{
-						{ID: "1", Name: "group 1", Email: "group.1@mail.com"},
-						{ID: "2", Name: "group 2", Email: "group.2@mail.com"},
+						{IPID: "1", Name: "group 1", Email: "group.1@mail.com"},
+						{IPID: "2", Name: "group 2", Email: "group.2@mail.com"},
 					},
 				},
 			},
 			wantUsers: &model.UsersResult{
 				Items: 1,
 				Resources: []model.User{
-					{ID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com", DisplayName: "user 1", Active: true, HashCode: hash.Get(&model.User{ID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com", DisplayName: "user 1", Active: true})},
+					{IPID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com", DisplayName: "user 1", Active: true, HashCode: hash.Get(&model.User{IPID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com", DisplayName: "user 1", Active: true})},
 				},
 				HashCode: hash.Get(
 					&model.UsersResult{
 						Items: 1,
 						Resources: []model.User{
-							{ID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com", DisplayName: "user 1", Active: true, HashCode: hash.Get(&model.User{ID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com", DisplayName: "user 1", Active: true})},
+							{IPID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com", DisplayName: "user 1", Active: true, HashCode: hash.Get(&model.User{IPID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com", DisplayName: "user 1", Active: true})},
 						},
 					},
 				),
@@ -453,15 +453,15 @@ func Test_GoogleProvider_GetUsersAndGroupsUsers(t *testing.T) {
 			wantGroupsUsers: &model.GroupsUsersResult{
 				Items: 2,
 				Resources: []model.GroupUsers{
-					{Items: 1, HashCode: hash.Get(model.GroupUsers{Items: 1, Group: model.Group{ID: "1", Name: "group 1", Email: "group.1@mail.com"}, Resources: []model.User{{ID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com", DisplayName: "user 1", Active: true, HashCode: hash.Get(&model.User{ID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com", DisplayName: "user 1", Active: true})}}}), Group: model.Group{ID: "1", Name: "group 1", Email: "group.1@mail.com"}, Resources: []model.User{{ID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com", DisplayName: "user 1", Active: true, HashCode: hash.Get(&model.User{ID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com", DisplayName: "user 1", Active: true})}}},
-					{Items: 1, HashCode: hash.Get(model.GroupUsers{Items: 1, Group: model.Group{ID: "2", Name: "group 2", Email: "group.2@mail.com"}, Resources: []model.User{{ID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com", DisplayName: "user 1", Active: true, HashCode: hash.Get(&model.User{ID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com", DisplayName: "user 1", Active: true})}}}), Group: model.Group{ID: "2", Name: "group 2", Email: "group.2@mail.com"}, Resources: []model.User{{ID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com", DisplayName: "user 1", Active: true, HashCode: hash.Get(&model.User{ID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com", DisplayName: "user 1", Active: true})}}},
+					{Items: 1, HashCode: hash.Get(model.GroupUsers{Items: 1, Group: model.Group{IPID: "1", Name: "group 1", Email: "group.1@mail.com"}, Resources: []model.User{{IPID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com", DisplayName: "user 1", Active: true, HashCode: hash.Get(&model.User{IPID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com", DisplayName: "user 1", Active: true})}}}), Group: model.Group{IPID: "1", Name: "group 1", Email: "group.1@mail.com"}, Resources: []model.User{{IPID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com", DisplayName: "user 1", Active: true, HashCode: hash.Get(&model.User{IPID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com", DisplayName: "user 1", Active: true})}}},
+					{Items: 1, HashCode: hash.Get(model.GroupUsers{Items: 1, Group: model.Group{IPID: "2", Name: "group 2", Email: "group.2@mail.com"}, Resources: []model.User{{IPID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com", DisplayName: "user 1", Active: true, HashCode: hash.Get(&model.User{IPID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com", DisplayName: "user 1", Active: true})}}}), Group: model.Group{IPID: "2", Name: "group 2", Email: "group.2@mail.com"}, Resources: []model.User{{IPID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com", DisplayName: "user 1", Active: true, HashCode: hash.Get(&model.User{IPID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com", DisplayName: "user 1", Active: true})}}},
 				},
 				HashCode: hash.Get(
 					&model.GroupsUsersResult{
 						Items: 2,
 						Resources: []model.GroupUsers{
-							{Items: 1, HashCode: hash.Get(model.GroupUsers{Items: 1, Group: model.Group{ID: "1", Name: "group 1", Email: "group.1@mail.com"}, Resources: []model.User{{ID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com", DisplayName: "user 1", Active: true, HashCode: hash.Get(&model.User{ID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com", DisplayName: "user 1", Active: true})}}}), Group: model.Group{ID: "1", Name: "group 1", Email: "group.1@mail.com"}, Resources: []model.User{{ID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com", DisplayName: "user 1", Active: true, HashCode: hash.Get(&model.User{ID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com", DisplayName: "user 1", Active: true})}}},
-							{Items: 1, HashCode: hash.Get(model.GroupUsers{Items: 1, Group: model.Group{ID: "2", Name: "group 2", Email: "group.2@mail.com"}, Resources: []model.User{{ID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com", DisplayName: "user 1", Active: true, HashCode: hash.Get(&model.User{ID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com", DisplayName: "user 1", Active: true})}}}), Group: model.Group{ID: "2", Name: "group 2", Email: "group.2@mail.com"}, Resources: []model.User{{ID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com", DisplayName: "user 1", Active: true, HashCode: hash.Get(&model.User{ID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com", DisplayName: "user 1", Active: true})}}},
+							{Items: 1, HashCode: hash.Get(model.GroupUsers{Items: 1, Group: model.Group{IPID: "1", Name: "group 1", Email: "group.1@mail.com"}, Resources: []model.User{{IPID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com", DisplayName: "user 1", Active: true, HashCode: hash.Get(&model.User{IPID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com", DisplayName: "user 1", Active: true})}}}), Group: model.Group{IPID: "1", Name: "group 1", Email: "group.1@mail.com"}, Resources: []model.User{{IPID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com", DisplayName: "user 1", Active: true, HashCode: hash.Get(&model.User{IPID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com", DisplayName: "user 1", Active: true})}}},
+							{Items: 1, HashCode: hash.Get(model.GroupUsers{Items: 1, Group: model.Group{IPID: "2", Name: "group 2", Email: "group.2@mail.com"}, Resources: []model.User{{IPID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com", DisplayName: "user 1", Active: true, HashCode: hash.Get(&model.User{IPID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com", DisplayName: "user 1", Active: true})}}}), Group: model.Group{IPID: "2", Name: "group 2", Email: "group.2@mail.com"}, Resources: []model.User{{IPID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com", DisplayName: "user 1", Active: true, HashCode: hash.Get(&model.User{IPID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com", DisplayName: "user 1", Active: true})}}},
 						},
 					},
 				),
