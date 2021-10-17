@@ -14,14 +14,14 @@ type SCIMService interface {
 	GetUsers(ctx context.Context) (*model.UsersResult, error)
 	GetUsersAndGroupsUsers(ctx context.Context) (*model.UsersResult, *model.GroupsUsersResult, error)
 
-	CreateGroups(ctx context.Context, gr *model.GroupsResult) error
-	CreateUsers(ctx context.Context, ur *model.UsersResult) error
-	CreateMembers(ctx context.Context, ur *model.GroupsUsersResult) error
+	CreateGroups(ctx context.Context, gr *model.GroupsResult) (*model.GroupsResult, error)
+	CreateUsers(ctx context.Context, ur *model.UsersResult) (*model.UsersResult, error)
+	CreateMembers(ctx context.Context, ur *model.GroupsUsersResult) (*model.GroupsUsersResult, error)
 
-	UpdateGroups(ctx context.Context, gr *model.GroupsResult) error
-	UpdateUsers(ctx context.Context, ur *model.UsersResult) error
+	UpdateGroups(ctx context.Context, gr *model.GroupsResult) (*model.GroupsResult, error)
+	UpdateUsers(ctx context.Context, ur *model.UsersResult) (*model.UsersResult, error)
 
-	DeleteGroups(ctx context.Context, gr *model.GroupsResult) error
-	DeleteUsers(ctx context.Context, ur *model.UsersResult) error
-	DeleteMembers(ctx context.Context, ur *model.GroupsUsersResult) error
+	DeleteGroups(ctx context.Context, gr *model.GroupsResult) (*model.GroupsResult, error)
+	DeleteUsers(ctx context.Context, ur *model.UsersResult) (*model.UsersResult, error)
+	DeleteMembers(ctx context.Context, ur *model.GroupsUsersResult) (*model.GroupsUsersResult, error)
 }

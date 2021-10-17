@@ -2,6 +2,7 @@ package scim
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/slashdevops/idp-scim-sync/internal/hash"
@@ -156,22 +157,38 @@ func (s *SCIMProvider) GetUsersAndGroupsUsers(ctx context.Context) (*model.Users
 	return usersResult, groupsUsersResult, nil
 }
 
-func (s *SCIMProvider) CreateGroups(ctx context.Context, gr *model.GroupsResult) error {
+func (s *SCIMProvider) CreateGroups(ctx context.Context, gr *model.GroupsResult) (*model.GroupsResult, error) {
+	groups := make([]model.Group, 0)
+
 	for _, group := range gr.Resources {
 
 		sGroupRequest := &aws.CreateGroupRequest{
 			DisplayName: group.Name,
 		}
 
-		_, err := s.scim.CreateGroup(ctx, sGroupRequest)
+		r, err := s.scim.CreateGroup(ctx, sGroupRequest)
 		if err != nil {
-			return err
+			return nil, err
 		}
+
+		e := group
+		e.SCIMID = r.ID
+		e.HashCode = hash.Get(e)
+		groups = append(groups, e)
 	}
-	return nil
+
+	ret := &model.GroupsResult{
+		Items:     len(groups),
+		Resources: groups,
+	}
+	ret.HashCode = hash.Get(ret)
+
+	return ret, nil
 }
 
-func (s *SCIMProvider) CreateUsers(ctx context.Context, usrs *model.UsersResult) error {
+func (s *SCIMProvider) CreateUsers(ctx context.Context, usrs *model.UsersResult) (*model.UsersResult, error) {
+	users := make([]model.User, 0)
+
 	for _, user := range usrs.Resources {
 
 		sUserRequest := &aws.CreateUserRequest{
@@ -190,15 +207,27 @@ func (s *SCIMProvider) CreateUsers(ctx context.Context, usrs *model.UsersResult)
 			Active: user.Active,
 		}
 
-		_, err := s.scim.CreateUser(ctx, sUserRequest)
+		r, err := s.scim.CreateUser(ctx, sUserRequest)
 		if err != nil {
-			return err
+			return nil, err
 		}
+
+		e := user
+		e.SCIMID = r.ID
+		e.HashCode = hash.Get(e)
+		users = append(users, e)
 	}
-	return nil
+
+	ret := &model.UsersResult{
+		Items:     len(users),
+		Resources: users,
+	}
+	ret.HashCode = hash.Get(ret)
+
+	return ret, nil
 }
 
-func (s *SCIMProvider) CreateMembers(ctx context.Context, gur *model.GroupsUsersResult) error {
+func (s *SCIMProvider) CreateMembers(ctx context.Context, gur *model.GroupsUsersResult) (*model.GroupsUsersResult, error) {
 	// for _, groupUsers := range gur.Resources {
 
 	// 	patchGroupRequest := &aws.PatchGroupRequest{
@@ -218,25 +247,25 @@ func (s *SCIMProvider) CreateMembers(ctx context.Context, gur *model.GroupsUsers
 	// 	}
 	// }
 
-	return nil
+	return nil, errors.New("not implemented")
 }
 
-func (s *SCIMProvider) UpdateGroups(ctx context.Context, gr *model.GroupsResult) error {
-	return nil
+func (s *SCIMProvider) UpdateGroups(ctx context.Context, gr *model.GroupsResult) (*model.GroupsResult, error) {
+	return nil, errors.New("not implemented")
 }
 
-func (s *SCIMProvider) UpdateUsers(ctx context.Context, ur *model.UsersResult) error {
-	return nil
+func (s *SCIMProvider) UpdateUsers(ctx context.Context, ur *model.UsersResult) (*model.UsersResult, error) {
+	return nil, errors.New("not implemented")
 }
 
-func (s *SCIMProvider) DeleteGroups(ctx context.Context, gr *model.GroupsResult) error {
-	return nil
+func (s *SCIMProvider) DeleteGroups(ctx context.Context, gr *model.GroupsResult) (*model.GroupsResult, error) {
+	return nil, errors.New("not implemented")
 }
 
-func (s *SCIMProvider) DeleteUsers(ctx context.Context, ur *model.UsersResult) error {
-	return nil
+func (s *SCIMProvider) DeleteUsers(ctx context.Context, ur *model.UsersResult) (*model.UsersResult, error) {
+	return nil, errors.New("not implemented")
 }
 
-func (s *SCIMProvider) DeleteMembers(ctx context.Context, ur *model.GroupsUsersResult) error {
-	return nil
+func (s *SCIMProvider) DeleteMembers(ctx context.Context, ur *model.GroupsUsersResult) (*model.GroupsUsersResult, error) {
+	return nil, errors.New("not implemented")
 }

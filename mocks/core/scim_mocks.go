@@ -36,11 +36,12 @@ func (m *MockSCIMService) EXPECT() *MockSCIMServiceMockRecorder {
 }
 
 // CreateGroups mocks base method.
-func (m *MockSCIMService) CreateGroups(ctx context.Context, gr *model.GroupsResult) error {
+func (m *MockSCIMService) CreateGroups(ctx context.Context, gr *model.GroupsResult) (*model.GroupsResult, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreateGroups", ctx, gr)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret0, _ := ret[0].(*model.GroupsResult)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // CreateGroups indicates an expected call of CreateGroups.
@@ -50,11 +51,12 @@ func (mr *MockSCIMServiceMockRecorder) CreateGroups(ctx, gr interface{}) *gomock
 }
 
 // CreateMembers mocks base method.
-func (m *MockSCIMService) CreateMembers(ctx context.Context, ur *model.GroupsUsersResult) error {
+func (m *MockSCIMService) CreateMembers(ctx context.Context, ur *model.GroupsUsersResult) (*model.GroupsUsersResult, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreateMembers", ctx, ur)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret0, _ := ret[0].(*model.GroupsUsersResult)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // CreateMembers indicates an expected call of CreateMembers.
@@ -64,11 +66,12 @@ func (mr *MockSCIMServiceMockRecorder) CreateMembers(ctx, ur interface{}) *gomoc
 }
 
 // CreateUsers mocks base method.
-func (m *MockSCIMService) CreateUsers(ctx context.Context, ur *model.UsersResult) error {
+func (m *MockSCIMService) CreateUsers(ctx context.Context, ur *model.UsersResult) (*model.UsersResult, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreateUsers", ctx, ur)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret0, _ := ret[0].(*model.UsersResult)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // CreateUsers indicates an expected call of CreateUsers.
@@ -78,11 +81,12 @@ func (mr *MockSCIMServiceMockRecorder) CreateUsers(ctx, ur interface{}) *gomock.
 }
 
 // DeleteGroups mocks base method.
-func (m *MockSCIMService) DeleteGroups(ctx context.Context, gr *model.GroupsResult) error {
+func (m *MockSCIMService) DeleteGroups(ctx context.Context, gr *model.GroupsResult) (*model.GroupsResult, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "DeleteGroups", ctx, gr)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret0, _ := ret[0].(*model.GroupsResult)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // DeleteGroups indicates an expected call of DeleteGroups.
@@ -92,11 +96,12 @@ func (mr *MockSCIMServiceMockRecorder) DeleteGroups(ctx, gr interface{}) *gomock
 }
 
 // DeleteMembers mocks base method.
-func (m *MockSCIMService) DeleteMembers(ctx context.Context, ur *model.GroupsUsersResult) error {
+func (m *MockSCIMService) DeleteMembers(ctx context.Context, ur *model.GroupsUsersResult) (*model.GroupsUsersResult, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "DeleteMembers", ctx, ur)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret0, _ := ret[0].(*model.GroupsUsersResult)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // DeleteMembers indicates an expected call of DeleteMembers.
@@ -106,11 +111,12 @@ func (mr *MockSCIMServiceMockRecorder) DeleteMembers(ctx, ur interface{}) *gomoc
 }
 
 // DeleteUsers mocks base method.
-func (m *MockSCIMService) DeleteUsers(ctx context.Context, ur *model.UsersResult) error {
+func (m *MockSCIMService) DeleteUsers(ctx context.Context, ur *model.UsersResult) (*model.UsersResult, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "DeleteUsers", ctx, ur)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret0, _ := ret[0].(*model.UsersResult)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // DeleteUsers indicates an expected call of DeleteUsers.
@@ -166,11 +172,12 @@ func (mr *MockSCIMServiceMockRecorder) GetUsersAndGroupsUsers(ctx interface{}) *
 }
 
 // UpdateGroups mocks base method.
-func (m *MockSCIMService) UpdateGroups(ctx context.Context, gr *model.GroupsResult) error {
+func (m *MockSCIMService) UpdateGroups(ctx context.Context, gr *model.GroupsResult) (*model.GroupsResult, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "UpdateGroups", ctx, gr)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret0, _ := ret[0].(*model.GroupsResult)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // UpdateGroups indicates an expected call of UpdateGroups.
@@ -180,11 +187,12 @@ func (mr *MockSCIMServiceMockRecorder) UpdateGroups(ctx, gr interface{}) *gomock
 }
 
 // UpdateUsers mocks base method.
-func (m *MockSCIMService) UpdateUsers(ctx context.Context, ur *model.UsersResult) error {
+func (m *MockSCIMService) UpdateUsers(ctx context.Context, ur *model.UsersResult) (*model.UsersResult, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "UpdateUsers", ctx, ur)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret0, _ := ret[0].(*model.UsersResult)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // UpdateUsers indicates an expected call of UpdateUsers.
