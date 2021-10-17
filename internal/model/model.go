@@ -54,7 +54,8 @@ func (gr *GroupsResult) MarshalJSON() ([]byte, error) {
 }
 
 type Member struct {
-	ID       string `json:"id"`
+	IPID     string `json:"ipid"`
+	SCIMID   string `json:"scimid"`
 	Email    string `json:"email"`
 	HashCode string `json:"hashCode"`
 }

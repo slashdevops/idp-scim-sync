@@ -235,15 +235,15 @@ func Test_GoogleProvider_GetGroupMembers(t *testing.T) {
 			want: &model.MembersResult{
 				Items: 2,
 				Resources: []model.Member{
-					{ID: "1", Email: "user.1@mail.com", HashCode: hash.Get(model.Member{ID: "1", Email: "user.1@mail.com"})},
-					{ID: "2", Email: "user.2@mail.com", HashCode: hash.Get(model.Member{ID: "2", Email: "user.2@mail.com"})},
+					{IPID: "1", Email: "user.1@mail.com", HashCode: hash.Get(model.Member{IPID: "1", Email: "user.1@mail.com"})},
+					{IPID: "2", Email: "user.2@mail.com", HashCode: hash.Get(model.Member{IPID: "2", Email: "user.2@mail.com"})},
 				},
 				HashCode: hash.Get(
 					&model.MembersResult{
 						Items: 2,
 						Resources: []model.Member{
-							{ID: "1", Email: "user.1@mail.com", HashCode: hash.Get(model.Member{ID: "1", Email: "user.1@mail.com"})},
-							{ID: "2", Email: "user.2@mail.com", HashCode: hash.Get(model.Member{ID: "2", Email: "user.2@mail.com"})},
+							{IPID: "1", Email: "user.1@mail.com", HashCode: hash.Get(model.Member{IPID: "1", Email: "user.1@mail.com"})},
+							{IPID: "2", Email: "user.2@mail.com", HashCode: hash.Get(model.Member{IPID: "2", Email: "user.2@mail.com"})},
 						},
 					},
 				),
@@ -323,8 +323,8 @@ func Test_GoogleProvider_GetUsersFromGroupMembers(t *testing.T) {
 				mbr: &model.MembersResult{
 					Items: 2,
 					Resources: []model.Member{
-						{ID: "1", Email: "user.1@mail.com"},
-						{ID: "2", Email: "user.2@mail.com"},
+						{IPID: "1", Email: "user.1@mail.com"},
+						{IPID: "2", Email: "user.2@mail.com"},
 					},
 				},
 			},
@@ -357,7 +357,7 @@ func Test_GoogleProvider_GetUsersFromGroupMembers(t *testing.T) {
 				mbr: &model.MembersResult{
 					Items: 0,
 					Resources: []model.Member{
-						{ID: "", Email: "user.1@mail.com"},
+						{IPID: "", Email: "user.1@mail.com"},
 					},
 				},
 			},

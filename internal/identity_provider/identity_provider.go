@@ -123,7 +123,7 @@ func (i *IdentityProvider) GetGroupMembers(ctx context.Context, id string) (*mod
 
 	for _, member := range googleMembers {
 		e := model.Member{
-			ID:    member.Id,
+			IPID:  member.Id,
 			Email: member.Email,
 		}
 		e.HashCode = hash.Get(e)
@@ -144,7 +144,7 @@ func (i *IdentityProvider) GetUsersFromGroupMembers(ctx context.Context, mbr *mo
 	syncUsers := make([]model.User, 0)
 
 	for _, member := range mbr.Resources {
-		u, err := i.ps.GetUser(ctx, member.ID)
+		u, err := i.ps.GetUser(ctx, member.IPID)
 		if err != nil {
 			return nil, ErrGettingUser
 		}
