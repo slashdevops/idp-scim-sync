@@ -136,58 +136,62 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 
 		if pGroupsResult.HashCode == state.Resources.Groups.HashCode {
 			log.Info("provider groups and state groups are the same, nothing to do with groups")
-		}
+		} else {
+			log.Info("provider groups and state groups are diferent")
+			// now here we have the google fresh data and the last sync data state
+			// we need to compare the data and decide what to do
+			// see differences between the two data sets
 
-		log.Info("provider groups and state groups are diferent")
-		// now here we have the google fresh data and the last sync data state
-		// we need to compare the data and decide what to do
-		// see differences between the two data sets
+			// syncing groups
+			gCreate, gUpdate, _, gDelete := groupsOperations(pGroupsResult, &state.Resources.Groups)
 
-		// syncing groups
-		gCreate, gUpdate, _, gDelete := groupsOperations(pGroupsResult, &state.Resources.Groups)
+			rgrc, rgru, rgrd, err := reconcilingSCIMGroups(ss.ctx, ss.scim, gCreate, gUpdate, gDelete)
+			if err != nil {
+				return fmt.Errorf("error reconciling groups: %w", err)
+			}
 
-		rgrc, rgru, rgrd, err := reconcilingSCIMGroups(ss.ctx, ss.scim, gCreate, gUpdate, gDelete)
-		if err != nil {
-			return fmt.Errorf("error reconciling groups: %w", err)
+			// WIP
+			_ = rgrc
+			_ = rgrd
+			_ = rgru
 		}
 
 		if pUsersResult.HashCode == state.Resources.Users.HashCode {
 			log.Info("provider users and state users are the same, nothing to do with users")
-		}
+		} else {
+			log.Info("provider users and state users are diferent")
 
-		log.Info("provider users and state users are diferent")
+			// syncing users
+			uCreate, uUpdate, _, uDelete := usersOperations(pUsersResult, &state.Resources.Users)
 
-		// syncing users
-		uCreate, uUpdate, _, uDelete := usersOperations(pUsersResult, &state.Resources.Users)
+			rurc, ruru, rurd, err := reconcilingSCIMUsers(ss.ctx, ss.scim, uCreate, uUpdate, uDelete)
+			if err != nil {
+				return fmt.Errorf("error reconciling users: %w", err)
+			}
 
-		rurc, ruru, rurd, err := reconcilingSCIMUsers(ss.ctx, ss.scim, uCreate, uUpdate, uDelete)
-		if err != nil {
-			return fmt.Errorf("error reconciling users: %w", err)
+			// WIP
+			_ = rurc
+			_ = ruru
+			_ = rurd
 		}
 
 		if pGroupsUsersResult.HashCode == state.Resources.GroupsUsers.HashCode {
 			log.Info("provider groups-members and state groups-members are the same, nothing to do with groups-members")
+		} else {
+			log.Info("provider groups-members and state groups-members are diferent")
+
+			// syncing groups-users --> groups members
+			ugCreate, _, ugDelete := groupsUsersOperations(pGroupsUsersResult, &state.Resources.GroupsUsers)
+
+			rgurc, rgurd, err := reconcilingSCIMGroupsUsers(ss.ctx, ss.scim, ugCreate, ugDelete)
+			if err != nil {
+				return fmt.Errorf("error reconciling groups users: %w", err)
+			}
+
+			// WIP
+			_ = rgurc
+			_ = rgurd
 		}
-		log.Info("provider groups-members and state groups-members are diferent")
-
-		// syncing groups-users --> groups members
-		ugCreate, _, ugDelete := groupsUsersOperations(pGroupsUsersResult, &state.Resources.GroupsUsers)
-
-		rgurc, rgurd, err := reconcilingSCIMGroupsUsers(ss.ctx, ss.scim, ugCreate, ugDelete)
-		if err != nil {
-			return fmt.Errorf("error reconciling groups users: %w", err)
-		}
-
-		// WIP
-		_ = rgrc
-		_ = rgrd
-		_ = rurc
-		_ = ruru
-		_ = rurd
-		_ = rgru
-		_ = rgurd
-		_ = rgurc
-		_ = rgurd
 
 	}
 
