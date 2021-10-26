@@ -130,7 +130,7 @@ func Test_S3Repository_GetState(t *testing.T) {
 	})
 }
 
-func Test_S3Repository_SaveState(t *testing.T) {
+func Test_S3Repository_SetState(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
@@ -141,7 +141,7 @@ func Test_S3Repository_SaveState(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, svc)
 
-		err = svc.SaveState(context.TODO(), nil)
+		err = svc.SetState(context.TODO(), nil)
 		assert.Error(t, err)
 		assert.ErrorIs(t, err, ErrStateNil)
 	})
@@ -167,7 +167,7 @@ func Test_S3Repository_SaveState(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, svc)
 
-		err = svc.SaveState(context.TODO(), sObj)
+		err = svc.SetState(context.TODO(), sObj)
 		assert.NoError(t, err)
 	})
 
@@ -182,7 +182,7 @@ func Test_S3Repository_SaveState(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, svc)
 
-		err = svc.SaveState(context.TODO(), sObj)
+		err = svc.SetState(context.TODO(), sObj)
 		assert.Error(t, err)
 	})
 }

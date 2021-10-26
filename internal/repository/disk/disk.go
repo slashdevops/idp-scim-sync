@@ -48,7 +48,7 @@ func (dr *DiskRepository) GetState(ctx context.Context) (*model.State, error) {
 	return &state, nil
 }
 
-func (dr *DiskRepository) SaveState(ctx context.Context, state *model.State) error {
+func (dr *DiskRepository) SetState(ctx context.Context, state *model.State) error {
 	dr.mu.Lock()
 	defer dr.mu.Unlock()
 

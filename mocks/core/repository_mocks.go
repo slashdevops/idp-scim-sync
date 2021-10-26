@@ -50,16 +50,16 @@ func (mr *MockStateRepositoryMockRecorder) GetState(ctx interface{}) *gomock.Cal
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetState", reflect.TypeOf((*MockStateRepository)(nil).GetState), ctx)
 }
 
-// SaveState mocks base method.
-func (m *MockStateRepository) SaveState(ctx context.Context, state *model.State) error {
+// SetState mocks base method.
+func (m *MockStateRepository) SetState(ctx context.Context, state *model.State) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SaveState", ctx, state)
+	ret := m.ctrl.Call(m, "SetState", ctx, state)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// SaveState indicates an expected call of SaveState.
-func (mr *MockStateRepositoryMockRecorder) SaveState(ctx, state interface{}) *gomock.Call {
+// SetState indicates an expected call of SetState.
+func (mr *MockStateRepositoryMockRecorder) SetState(ctx, state interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SaveState", reflect.TypeOf((*MockStateRepository)(nil).SaveState), ctx, state)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetState", reflect.TypeOf((*MockStateRepository)(nil).SetState), ctx, state)
 }

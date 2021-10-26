@@ -89,7 +89,7 @@ func (r *S3Repository) GetState(ctx context.Context) (*model.State, error) {
 	return &state, nil
 }
 
-func (r *S3Repository) SaveState(ctx context.Context, state *model.State) error {
+func (r *S3Repository) SetState(ctx context.Context, state *model.State) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 

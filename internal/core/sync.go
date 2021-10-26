@@ -208,7 +208,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 		},
 	}
 
-	if err := ss.repo.SaveState(ss.ctx, newState); err != nil {
+	if err := ss.repo.SetState(ss.ctx, newState); err != nil {
 		return fmt.Errorf("sync: error saving state: %w", err)
 	}
 
