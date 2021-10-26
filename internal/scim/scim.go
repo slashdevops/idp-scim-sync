@@ -40,13 +40,13 @@ func NewSCIMProvider(scim AWSSCIMProvider) (*SCIMProvider, error) {
 }
 
 func (s *SCIMProvider) GetGroups(ctx context.Context) (*model.GroupsResult, error) {
-	sGroupsResponse, err := s.scim.ListGroups(ctx, "")
+	groupsResponse, err := s.scim.ListGroups(ctx, "")
 	if err != nil {
 		return nil, fmt.Errorf("scim: error listing groups: %w", err)
 	}
 
 	groups := make([]model.Group, 0)
-	for _, group := range sGroupsResponse.Resources {
+	for _, group := range groupsResponse.Resources {
 		e := model.Group{
 			SCIMID: group.ID,
 			Name:   group.DisplayName,
@@ -66,13 +66,13 @@ func (s *SCIMProvider) GetGroups(ctx context.Context) (*model.GroupsResult, erro
 }
 
 func (s *SCIMProvider) GetUsers(ctx context.Context) (*model.UsersResult, error) {
-	UsersResponse, err := s.scim.ListUsers(ctx, "")
+	usersResponse, err := s.scim.ListUsers(ctx, "")
 	if err != nil {
 		return nil, fmt.Errorf("scim: error listing users: %w", err)
 	}
 
 	users := make([]model.User, 0)
-	for _, user := range UsersResponse.Resources {
+	for _, user := range usersResponse.Resources {
 		e := model.User{
 			SCIMID: user.ID,
 			Name: model.Name{
@@ -122,7 +122,7 @@ func (s *SCIMProvider) GetUsersAndGroupsUsers(ctx context.Context) (*model.Users
 		for _, grp := range sGroupsResponse.Resources {
 			groupsIDUsers[grp.ID] = append(groupsIDUsers[grp.ID], user)
 
-			// only one time assignment
+			// only one time assignment for users in different groups
 			if _, ok := groupsData[grp.ID]; !ok {
 				e := model.Group{
 					SCIMID: grp.ID,
@@ -162,11 +162,11 @@ func (s *SCIMProvider) CreateGroups(ctx context.Context, gr *model.GroupsResult)
 
 	for _, group := range gr.Resources {
 
-		sGroupRequest := &aws.CreateGroupRequest{
+		groupRequest := &aws.CreateGroupRequest{
 			DisplayName: group.Name,
 		}
 
-		r, err := s.scim.CreateGroup(ctx, sGroupRequest)
+		r, err := s.scim.CreateGroup(ctx, groupRequest)
 		if err != nil {
 			return nil, fmt.Errorf("scim: error creating group: %w", err)
 		}
@@ -191,7 +191,7 @@ func (s *SCIMProvider) CreateUsers(ctx context.Context, usrs *model.UsersResult)
 
 	for _, user := range usrs.Resources {
 
-		sUserRequest := &aws.CreateUserRequest{
+		userRequest := &aws.CreateUserRequest{
 			DisplayName: user.DisplayName,
 			ExternalId:  user.IPID,
 			Name: aws.Name{
@@ -207,7 +207,7 @@ func (s *SCIMProvider) CreateUsers(ctx context.Context, usrs *model.UsersResult)
 			Active: user.Active,
 		}
 
-		r, err := s.scim.CreateUser(ctx, sUserRequest)
+		r, err := s.scim.CreateUser(ctx, userRequest)
 		if err != nil {
 			return nil, fmt.Errorf("scim: error creating user: %w", err)
 		}
