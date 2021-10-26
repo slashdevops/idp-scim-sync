@@ -8,7 +8,8 @@ import (
 
 //go:generate go run github.com/golang/mock/mockgen@v1.6.0 -package=mocks -destination=../../mocks/core/scim_mocks.go -source=scim.go
 
-// ScimService is the interface that needs to be implemented by the SCIM service.
+// SCIMService is the interface for SCIM service.
+// This inteface needs to be implemented by the SCIM service ports.
 type SCIMService interface {
 	GetGroups(ctx context.Context) (*model.GroupsResult, error)
 	GetUsers(ctx context.Context) (*model.UsersResult, error)
