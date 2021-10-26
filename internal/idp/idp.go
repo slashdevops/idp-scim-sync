@@ -45,12 +45,12 @@ func NewIdentityProvider(gps GoogleProviderService) (*IdentityProvider, error) {
 func (i *IdentityProvider) GetGroups(ctx context.Context, filter []string) (*model.GroupsResult, error) {
 	syncGroups := make([]model.Group, 0)
 
-	googleGroups, err := i.ps.ListGroups(ctx, filter)
+	pGroups, err := i.ps.ListGroups(ctx, filter)
 	if err != nil {
-		return nil, fmt.Errorf("provider: error listing groups: %w", err)
+		return nil, fmt.Errorf("idp: error listing groups: %w", err)
 	}
 
-	for _, grp := range googleGroups {
+	for _, grp := range pGroups {
 
 		e := model.Group{
 			IPID:  grp.Id,
@@ -63,7 +63,7 @@ func (i *IdentityProvider) GetGroups(ctx context.Context, filter []string) (*mod
 	}
 
 	syncResult := &model.GroupsResult{
-		Items:     len(googleGroups),
+		Items:     len(pGroups),
 		Resources: syncGroups,
 	}
 
@@ -79,12 +79,12 @@ func (i *IdentityProvider) GetGroups(ctx context.Context, filter []string) (*mod
 func (i *IdentityProvider) GetUsers(ctx context.Context, filter []string) (*model.UsersResult, error) {
 	syncUsers := make([]model.User, 0)
 
-	googleUsers, err := i.ps.ListUsers(ctx, filter)
+	pUsers, err := i.ps.ListUsers(ctx, filter)
 	if err != nil {
-		return nil, fmt.Errorf("provider: error listing users: %w", err)
+		return nil, fmt.Errorf("idp: error listing users: %w", err)
 	}
 
-	for _, usr := range googleUsers {
+	for _, usr := range pUsers {
 
 		e := model.User{
 			IPID:        usr.Id,
@@ -99,7 +99,7 @@ func (i *IdentityProvider) GetUsers(ctx context.Context, filter []string) (*mode
 	}
 
 	uResult := &model.UsersResult{
-		Items:     len(googleUsers),
+		Items:     len(pUsers),
 		Resources: syncUsers,
 	}
 	uResult.HashCode = hash.Get(uResult)
@@ -111,12 +111,12 @@ func (i *IdentityProvider) GetUsers(ctx context.Context, filter []string) (*mode
 func (i *IdentityProvider) GetGroupMembers(ctx context.Context, id string) (*model.MembersResult, error) {
 	syncMembers := make([]model.Member, 0)
 
-	googleMembers, err := i.ps.ListGroupMembers(ctx, id)
+	pMembers, err := i.ps.ListGroupMembers(ctx, id)
 	if err != nil {
-		return nil, fmt.Errorf("provider: error listing group members: %w", err)
+		return nil, fmt.Errorf("idp: error listing group members: %w", err)
 	}
 
-	for _, member := range googleMembers {
+	for _, member := range pMembers {
 		e := model.Member{
 			IPID:  member.Id,
 			Email: member.Email,
@@ -127,7 +127,7 @@ func (i *IdentityProvider) GetGroupMembers(ctx context.Context, id string) (*mod
 	}
 
 	syncMembersResult := &model.MembersResult{
-		Items:     len(googleMembers),
+		Items:     len(pMembers),
 		Resources: syncMembers,
 	}
 	syncMembersResult.HashCode = hash.Get(syncMembersResult)
@@ -137,12 +137,12 @@ func (i *IdentityProvider) GetGroupMembers(ctx context.Context, id string) (*mod
 
 // GetUsersFromGroupMembers returns a list of users from the Identity Provider API.
 func (i *IdentityProvider) GetUsersFromGroupMembers(ctx context.Context, mbr *model.MembersResult) (*model.UsersResult, error) {
-	syncUsers := make([]model.User, 0)
+	pUsers := make([]model.User, 0)
 
 	for _, member := range mbr.Resources {
 		u, err := i.ps.GetUser(ctx, member.IPID)
 		if err != nil {
-			return nil, fmt.Errorf("provider: error getting user: %w", err)
+			return nil, fmt.Errorf("idp: error getting user: %w", err)
 		}
 
 		e := model.User{
@@ -154,19 +154,19 @@ func (i *IdentityProvider) GetUsersFromGroupMembers(ctx context.Context, mbr *mo
 		}
 		e.HashCode = hash.Get(e)
 
-		syncUsers = append(syncUsers, e)
+		pUsers = append(pUsers, e)
 	}
 
-	syncUsersResult := &model.UsersResult{
-		Items:     len(syncUsers),
-		Resources: syncUsers,
+	pUsersResult := &model.UsersResult{
+		Items:     len(pUsers),
+		Resources: pUsers,
 	}
-	syncUsersResult.HashCode = hash.Get(syncUsersResult)
+	pUsersResult.HashCode = hash.Get(pUsersResult)
 
-	return syncUsersResult, nil
+	return pUsersResult, nil
 }
 
-// GetUsersAndGroupsUsers returns a model.UsersResult and model.GroupsUsersResult data structures with the users and groups
+// GetUsersAndGroupsUsers returnpUserss a model.UsersResult and model.GroupsUsersResult data structures with the users and groups
 func (i *IdentityProvider) GetUsersAndGroupsUsers(ctx context.Context, groups *model.GroupsResult) (*model.UsersResult, *model.GroupsUsersResult, error) {
 	// make pUsers unique
 	userSet := make(map[string]struct{})
@@ -178,12 +178,12 @@ func (i *IdentityProvider) GetUsersAndGroupsUsers(ctx context.Context, groups *m
 
 		pMembers, err := i.GetGroupMembers(ctx, pGroup.IPID)
 		if err != nil {
-			return nil, nil, fmt.Errorf("provider: error getting group members: %w", err)
+			return nil, nil, fmt.Errorf("idp: error getting group members: %w", err)
 		}
 
 		pUsersFromMembers, err := i.GetUsersFromGroupMembers(ctx, pMembers)
 		if err != nil {
-			return nil, nil, fmt.Errorf("provider: error getting users from group members: %w", err)
+			return nil, nil, fmt.Errorf("idp: error getting users from group members: %w", err)
 		}
 
 		for _, pUser := range pUsersFromMembers.Resources {
