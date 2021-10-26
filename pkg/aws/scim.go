@@ -58,7 +58,7 @@ func NewSCIMService(httpClient HTTPClient, urlStr string, token string) (*AWSSCI
 
 	url, err := url.Parse(urlStr)
 	if err != nil {
-		return nil, fmt.Errorf("aws: error parsing url: %v", err)
+		return nil, fmt.Errorf("aws: error parsing url: %w", err)
 	}
 
 	return &AWSSCIMProvider{
@@ -77,13 +77,13 @@ func (s *AWSSCIMProvider) newRequest(method string, u *url.URL, body interface{}
 
 		err := enc.Encode(body)
 		if err != nil {
-			return nil, fmt.Errorf("aws: error encoding request body: %v", err)
+			return nil, fmt.Errorf("aws: error encoding request body: %w", err)
 		}
 	}
 
 	req, err := http.NewRequest(method, u.String(), buf)
 	if err != nil {
-		return nil, fmt.Errorf("aws: error creating request: %v", err)
+		return nil, fmt.Errorf("aws: error creating request: %w", err)
 	}
 
 	if body != nil {
@@ -103,7 +103,7 @@ func (s *AWSSCIMProvider) checkHTTPResponse(r *http.Response) error {
 		var errResp APIErrorResponse
 		if err := json.NewDecoder(r.Body).Decode(&errResp); err != nil {
 			defer r.Body.Close()
-			return fmt.Errorf("aws: error decoding response body: %v", err)
+			return fmt.Errorf("aws: error decoding response body: %w", err)
 		}
 		return fmt.Errorf("aws: error, code %s, response %s", r.Status, utils.ToJSON(errResp))
 	}
@@ -119,7 +119,7 @@ func (s *AWSSCIMProvider) do(ctx context.Context, req *http.Request, body interf
 
 	resp, err := s.httpClient.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("aws: error sending request: %v", err)
+		return nil, fmt.Errorf("aws: error sending request: %w", err)
 	}
 
 	if err := s.checkHTTPResponse(resp); err != nil {
@@ -133,7 +133,7 @@ func (s *AWSSCIMProvider) do(ctx context.Context, req *http.Request, body interf
 func (s *AWSSCIMProvider) ListUsers(ctx context.Context, filter string) (*ListUsersResponse, error) {
 	reqUrl, err := url.Parse(s.url.String())
 	if err != nil {
-		return nil, fmt.Errorf("aws: error parsing url: %v", err)
+		return nil, fmt.Errorf("aws: error parsing url: %w", err)
 	}
 
 	reqUrl.Path = path.Join(reqUrl.Path, "/Users")
@@ -146,18 +146,18 @@ func (s *AWSSCIMProvider) ListUsers(ctx context.Context, filter string) (*ListUs
 
 	req, err := s.newRequest(http.MethodGet, reqUrl, nil)
 	if err != nil {
-		return nil, fmt.Errorf("aws: error creating request, http method: %s, url: %v, error: %v", http.MethodGet, reqUrl.String(), err)
+		return nil, fmt.Errorf("aws: error creating request, http method: %s, url: %v, error: %w", http.MethodGet, reqUrl.String(), err)
 	}
 
 	resp, err := s.do(ctx, req, nil)
 	if err != nil {
-		return nil, fmt.Errorf("aws: error sending request, http method: %s, url: %v, error: %v", http.MethodGet, reqUrl.String(), err)
+		return nil, fmt.Errorf("aws: error sending request, http method: %s, url: %v, error: %w", http.MethodGet, reqUrl.String(), err)
 	}
 	defer resp.Body.Close()
 
 	var response ListUsersResponse
 	if err = json.NewDecoder(resp.Body).Decode(&response); err != nil {
-		return nil, fmt.Errorf("aws: error decoding response body: %v", err)
+		return nil, fmt.Errorf("aws: error decoding response body: %w", err)
 	}
 
 	return &response, nil
@@ -167,7 +167,7 @@ func (s *AWSSCIMProvider) ListUsers(ctx context.Context, filter string) (*ListUs
 func (s *AWSSCIMProvider) ListGroups(ctx context.Context, filter string) (*ListGroupsResponse, error) {
 	reqUrl, err := url.Parse(s.url.String())
 	if err != nil {
-		return nil, fmt.Errorf("aws: error parsing url: %v", err)
+		return nil, fmt.Errorf("aws: error parsing url: %w", err)
 	}
 
 	reqUrl.Path = path.Join(reqUrl.Path, "/Groups")
@@ -180,18 +180,18 @@ func (s *AWSSCIMProvider) ListGroups(ctx context.Context, filter string) (*ListG
 
 	req, err := s.newRequest(http.MethodGet, reqUrl, nil)
 	if err != nil {
-		return nil, fmt.Errorf("aws: error creating request, http method: %s, url: %v, error: %v", http.MethodGet, reqUrl.String(), err)
+		return nil, fmt.Errorf("aws: error creating request, http method: %s, url: %v, error: %w", http.MethodGet, reqUrl.String(), err)
 	}
 
 	resp, err := s.do(ctx, req, nil)
 	if err != nil {
-		return nil, fmt.Errorf("aws: error sending request, http method: %s, url: %v, error: %v", http.MethodGet, reqUrl.String(), err)
+		return nil, fmt.Errorf("aws: error sending request, http method: %s, url: %v, error: %w", http.MethodGet, reqUrl.String(), err)
 	}
 	defer resp.Body.Close()
 
 	var response ListGroupsResponse
 	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
-		return nil, fmt.Errorf("aws: error decoding response body: %v", err)
+		return nil, fmt.Errorf("aws: error decoding response body: %w", err)
 	}
 
 	return &response, nil
@@ -203,25 +203,25 @@ func (s *AWSSCIMProvider) ListGroups(ctx context.Context, filter string) (*ListG
 func (s *AWSSCIMProvider) ServiceProviderConfig(ctx context.Context) (*ServiceProviderConfig, error) {
 	reqUrl, err := url.Parse(s.url.String())
 	if err != nil {
-		return nil, fmt.Errorf("aws: error parsing url: %v", err)
+		return nil, fmt.Errorf("aws: error parsing url: %w", err)
 	}
 
 	reqUrl.Path = path.Join(reqUrl.Path, "/ServiceProviderConfig")
 
 	req, err := s.newRequest(http.MethodGet, reqUrl, nil)
 	if err != nil {
-		return nil, fmt.Errorf("aws: error creating request, http method: %s, url: %v, error: %v", http.MethodGet, reqUrl.String(), err)
+		return nil, fmt.Errorf("aws: error creating request, http method: %s, url: %v, error: %w", http.MethodGet, reqUrl.String(), err)
 	}
 
 	resp, err := s.do(ctx, req, nil)
 	if err != nil {
-		return nil, fmt.Errorf("aws: error sending request, http method: %s, url: %v, error: %v", http.MethodGet, reqUrl.String(), err)
+		return nil, fmt.Errorf("aws: error sending request, http method: %s, url: %v, error: %w", http.MethodGet, reqUrl.String(), err)
 	}
 	defer resp.Body.Close()
 
 	var response ServiceProviderConfig
 	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
-		return nil, fmt.Errorf("aws: error decoding response body: %v", err)
+		return nil, fmt.Errorf("aws: error decoding response body: %w", err)
 	}
 
 	return &response, nil
@@ -240,19 +240,19 @@ func (s *AWSSCIMProvider) CreateGroup(ctx context.Context, g *CreateGroupRequest
 
 	reqUrl, err := url.Parse(s.url.String())
 	if err != nil {
-		return nil, fmt.Errorf("aws: error parsing url: %v", err)
+		return nil, fmt.Errorf("aws: error parsing url: %w", err)
 	}
 
 	reqUrl.Path = path.Join(reqUrl.Path, "/Groups")
 
 	req, err := s.newRequest(http.MethodPost, reqUrl, *g)
 	if err != nil {
-		return nil, fmt.Errorf("aws: error creating request, http method: %s, url: %v, error: %v", http.MethodPost, reqUrl.String(), err)
+		return nil, fmt.Errorf("aws: error creating request, http method: %s, url: %v, error: %w", http.MethodPost, reqUrl.String(), err)
 	}
 
 	resp, err := s.do(ctx, req, nil)
 	if err != nil {
-		return nil, fmt.Errorf("aws: error sending request, http method: %s, url: %v, error: %v", http.MethodPost, reqUrl.String(), err)
+		return nil, fmt.Errorf("aws: error sending request, http method: %s, url: %v, error: %w", http.MethodPost, reqUrl.String(), err)
 	}
 	defer resp.Body.Close()
 
@@ -289,25 +289,25 @@ func (s *AWSSCIMProvider) CreateUser(ctx context.Context, usr *CreateUserRequest
 
 	reqUrl, err := url.Parse(s.url.String())
 	if err != nil {
-		return nil, fmt.Errorf("aws: error parsing url: %v", err)
+		return nil, fmt.Errorf("aws: error parsing url: %w", err)
 	}
 
 	reqUrl.Path = path.Join(reqUrl.Path, "/Users")
 
 	req, err := s.newRequest(http.MethodPost, reqUrl, *usr)
 	if err != nil {
-		return nil, fmt.Errorf("aws: error creating request, http method: %s, url: %v, error: %v", http.MethodPost, reqUrl.String(), err)
+		return nil, fmt.Errorf("aws: error creating request, http method: %s, url: %v, error: %w", http.MethodPost, reqUrl.String(), err)
 	}
 
 	resp, err := s.do(ctx, req, nil)
 	if err != nil {
-		return nil, fmt.Errorf("aws: error sending request, http method: %s, url: %v, error: %v", http.MethodPost, reqUrl.String(), err)
+		return nil, fmt.Errorf("aws: error sending request, http method: %s, url: %v, error: %w", http.MethodPost, reqUrl.String(), err)
 	}
 	defer resp.Body.Close()
 
 	var response CreateUserResponse
 	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
-		return nil, fmt.Errorf("aws: error decoding response body: %v", err)
+		return nil, fmt.Errorf("aws: error decoding response body: %w", err)
 	}
 
 	return &response, nil
@@ -323,19 +323,19 @@ func (s *AWSSCIMProvider) PatchGroup(ctx context.Context, pgr *PatchGroupRequest
 
 	reqUrl, err := url.Parse(s.url.String())
 	if err != nil {
-		return fmt.Errorf("aws: error parsing url: %v", err)
+		return fmt.Errorf("aws: error parsing url: %w", err)
 	}
 
 	reqUrl.Path = path.Join(reqUrl.Path, fmt.Sprintf("/Groups/%s", pgr.Group.ID))
 
 	req, err := s.newRequest(http.MethodPatch, reqUrl, pgr.Patch)
 	if err != nil {
-		return fmt.Errorf("aws: error creating request, http method: %s, url: %v, error: %v", http.MethodPatch, reqUrl.String(), err)
+		return fmt.Errorf("aws: error creating request, http method: %s, url: %v, error: %w", http.MethodPatch, reqUrl.String(), err)
 	}
 
 	resp, err := s.do(ctx, req, nil)
 	if err != nil {
-		return fmt.Errorf("aws: error sending request, http method: %s, url: %v, error: %v", http.MethodPatch, reqUrl.String(), err)
+		return fmt.Errorf("aws: error sending request, http method: %s, url: %v, error: %w", http.MethodPatch, reqUrl.String(), err)
 	}
 	defer resp.Body.Close()
 
