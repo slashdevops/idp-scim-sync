@@ -23,6 +23,6 @@ type SCIMService interface {
 
 	GetUsersAndGroupsUsers(ctx context.Context) (*model.UsersResult, *model.GroupsUsersResult, error)
 
-	CreateMembers(ctx context.Context, gur *model.GroupsUsersResult) error
-	DeleteMembers(ctx context.Context, gur *model.GroupsUsersResult) error
+	CreateGroupsMembers(ctx context.Context, gur *model.GroupsUsersResult) error
+	DeleteGroupsMembers(ctx context.Context, gur *model.GroupsUsersResult) error
 }

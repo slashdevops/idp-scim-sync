@@ -340,7 +340,7 @@ func reconcilingSCIMGroupsUsers(ctx context.Context, scim SCIMService, create *m
 	}
 
 	log.WithField("quantity", create.Items).Info("joining users to groups")
-	if err := scim.CreateMembers(ctx, create); err != nil {
+	if err := scim.CreateGroupsMembers(ctx, create); err != nil {
 		return fmt.Errorf("sync: error creating groups members in SCIM Provider: %w", err)
 	}
 
@@ -349,7 +349,7 @@ func reconcilingSCIMGroupsUsers(ctx context.Context, scim SCIMService, create *m
 	}
 
 	log.WithField("quantity", delete.Items).Info("removing users to groups")
-	if err := scim.DeleteMembers(ctx, delete); err != nil {
+	if err := scim.DeleteGroupsMembers(ctx, delete); err != nil {
 		return fmt.Errorf("sync: error removing users from groups in SCIM Provider: %w", err)
 	}
 
