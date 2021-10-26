@@ -136,3 +136,18 @@ func (mr *MockAWSSCIMProviderMockRecorder) PatchGroup(ctx, pgr interface{}) *gom
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PatchGroup", reflect.TypeOf((*MockAWSSCIMProvider)(nil).PatchGroup), ctx, pgr)
 }
+
+// PutUser mocks base method.
+func (m *MockAWSSCIMProvider) PutUser(ctx context.Context, usr *aws.PutUserRequest) (*aws.PutUserResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PutUser", ctx, usr)
+	ret0, _ := ret[0].(*aws.PutUserResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PutUser indicates an expected call of PutUser.
+func (mr *MockAWSSCIMProviderMockRecorder) PutUser(ctx, usr interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PutUser", reflect.TypeOf((*MockAWSSCIMProvider)(nil).PutUser), ctx, usr)
+}

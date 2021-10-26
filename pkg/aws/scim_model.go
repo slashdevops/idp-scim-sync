@@ -138,7 +138,31 @@ type CreateUserRequest struct {
 	Emails      []Email `json:"emails"`
 }
 
+type PutUserRequest struct {
+	ID          string  `json:"id"`
+	ExternalId  string  `json:"externalId"`
+	UserName    string  `json:"userName"`
+	Name        Name    `json:"name"`
+	DisplayName string  `json:"displayName"`
+	NickName    string  `json:"nickName"`
+	ProfileURL  string  `json:"profileURL"`
+	Active      bool    `json:"active"`
+	Emails      []Email `json:"emails"`
+}
+
 type CreateUserResponse struct {
+	ID          string   `json:"id"`
+	ExternalId  string   `json:"externalId"`
+	Meta        Meta     `json:"meta"`
+	Schemas     []string `json:"schemas"`
+	UserName    string   `json:"userName"`
+	Name        Name     `json:"name"`
+	DisplayName string   `json:"displayName"`
+	Active      bool     `json:"active"`
+	Emails      []Email  `json:"emails"`
+}
+
+type PutUserResponse struct {
 	ID          string   `json:"id"`
 	ExternalId  string   `json:"externalId"`
 	Meta        Meta     `json:"meta"`
@@ -152,5 +176,10 @@ type CreateUserResponse struct {
 
 type PatchGroupRequest struct {
 	Group Group `json:"group"`
+	Patch Patch `json:"patch"`
+}
+
+type PatchUserRequest struct {
+	User  User  `json:"user"`
 	Patch Patch `json:"patch"`
 }

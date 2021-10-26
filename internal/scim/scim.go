@@ -18,6 +18,7 @@ import (
 type AWSSCIMProvider interface {
 	ListUsers(ctx context.Context, filter string) (*aws.ListUsersResponse, error)
 	CreateUser(ctx context.Context, u *aws.CreateUserRequest) (*aws.CreateUserResponse, error)
+	PutUser(ctx context.Context, usr *aws.PutUserRequest) (*aws.PutUserResponse, error)
 	DeleteUser(ctx context.Context, id string) error
 
 	ListGroups(ctx context.Context, filter string) (*aws.ListGroupsResponse, error)
@@ -38,6 +39,32 @@ func NewSCIMProvider(scim AWSSCIMProvider) (*SCIMProvider, error) {
 	}
 
 	return &SCIMProvider{scim: scim}, nil
+}
+
+func (s *SCIMProvider) GetGroups(ctx context.Context) (*model.GroupsResult, error) {
+	groupsResponse, err := s.scim.ListGroups(ctx, "")
+	if err != nil {
+		return nil, fmt.Errorf("scim: error listing groups: %w", err)
+	}
+
+	groups := make([]model.Group, 0)
+	for _, group := range groupsResponse.Resources {
+		e := model.Group{
+			SCIMID: group.ID,
+			Name:   group.DisplayName,
+		}
+		e.HashCode = hash.Get(e)
+
+		groups = append(groups, e)
+	}
+
+	groupsResult := &model.GroupsResult{
+		Items:     len(groups),
+		Resources: groups,
+	}
+	groupsResult.HashCode = hash.Get(groupsResult)
+
+	return groupsResult, nil
 }
 
 func (s *SCIMProvider) CreateGroups(ctx context.Context, gr *model.GroupsResult) (*model.GroupsResult, error) {
@@ -69,39 +96,12 @@ func (s *SCIMProvider) CreateGroups(ctx context.Context, gr *model.GroupsResult)
 	return ret, nil
 }
 
-func (s *SCIMProvider) GetGroups(ctx context.Context) (*model.GroupsResult, error) {
-	groupsResponse, err := s.scim.ListGroups(ctx, "")
-	if err != nil {
-		return nil, fmt.Errorf("scim: error listing groups: %w", err)
-	}
-
-	groups := make([]model.Group, 0)
-	for _, group := range groupsResponse.Resources {
-		e := model.Group{
-			SCIMID: group.ID,
-			Name:   group.DisplayName,
-		}
-		e.HashCode = hash.Get(e)
-
-		groups = append(groups, e)
-	}
-
-	groupsResult := &model.GroupsResult{
-		Items:     len(groups),
-		Resources: groups,
-	}
-	groupsResult.HashCode = hash.Get(groupsResult)
-
-	return groupsResult, nil
-}
-
 func (s *SCIMProvider) UpdateGroups(ctx context.Context, gr *model.GroupsResult) (*model.GroupsResult, error) {
 	return nil, errors.New("not implemented")
 }
 
 func (s *SCIMProvider) DeleteGroups(ctx context.Context, gr *model.GroupsResult) error {
 	for _, group := range gr.Resources {
-		// TODO: implement a delay to avoid AWS throttling
 		if err := s.scim.DeleteGroup(ctx, group.SCIMID); err != nil {
 			return fmt.Errorf("scim: error deleting group: %s, %w", group.SCIMID, err)
 		}
@@ -182,13 +182,49 @@ func (s *SCIMProvider) CreateUsers(ctx context.Context, usrs *model.UsersResult)
 	return ret, nil
 }
 
-func (s *SCIMProvider) UpdateUsers(ctx context.Context, ur *model.UsersResult) (*model.UsersResult, error) {
-	return nil, errors.New("not implemented")
+func (s *SCIMProvider) UpdateUsers(ctx context.Context, usrs *model.UsersResult) (*model.UsersResult, error) {
+	users := make([]model.User, 0)
+
+	for _, user := range usrs.Resources {
+
+		userRequest := &aws.PutUserRequest{
+			DisplayName: user.DisplayName,
+			ExternalId:  user.IPID,
+			Name: aws.Name{
+				FamilyName: user.Name.FamilyName,
+				GivenName:  user.Name.GivenName,
+			},
+			Emails: []aws.Email{
+				{
+					Value: user.Email,
+					Type:  "work",
+				},
+			},
+			Active: user.Active,
+		}
+
+		r, err := s.scim.PutUser(ctx, userRequest)
+		if err != nil {
+			return nil, fmt.Errorf("scim: error updating user: %w", err)
+		}
+
+		e := user
+		e.SCIMID = r.ID
+		e.HashCode = hash.Get(e)
+		users = append(users, e)
+	}
+
+	ret := &model.UsersResult{
+		Items:     len(users),
+		Resources: users,
+	}
+	ret.HashCode = hash.Get(ret)
+
+	return ret, nil
 }
 
 func (s *SCIMProvider) DeleteUsers(ctx context.Context, ur *model.UsersResult) error {
 	for _, user := range ur.Resources {
-		// TODO: implement a delay to avoid AWS throttling
 		if err := s.scim.DeleteUser(ctx, user.SCIMID); err != nil {
 			return fmt.Errorf("scim: error deleting user: %s, %w", user.SCIMID, err)
 		}
