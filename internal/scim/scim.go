@@ -25,7 +25,7 @@ type AWSSCIMProvider interface {
 	PatchGroup(ctx context.Context, pgr *aws.PatchGroupRequest) error
 }
 
-var ErrAWSSCIMProviderNil = fmt.Errorf("AWSSCIMProvider is nil")
+var ErrAWSSCIMProviderNil = fmt.Errorf("scim: AWS SCIM Provider is nil")
 
 type SCIMProvider struct {
 	scim AWSSCIMProvider
@@ -42,7 +42,7 @@ func NewSCIMProvider(scim AWSSCIMProvider) (*SCIMProvider, error) {
 func (s *SCIMProvider) GetGroups(ctx context.Context) (*model.GroupsResult, error) {
 	sGroupsResponse, err := s.scim.ListGroups(ctx, "")
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("scim: error listing groups: %w", err)
 	}
 
 	groups := make([]model.Group, 0)
@@ -68,7 +68,7 @@ func (s *SCIMProvider) GetGroups(ctx context.Context) (*model.GroupsResult, erro
 func (s *SCIMProvider) GetUsers(ctx context.Context) (*model.UsersResult, error) {
 	UsersResponse, err := s.scim.ListUsers(ctx, "")
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("scim: error listing users: %w", err)
 	}
 
 	users := make([]model.User, 0)
@@ -101,7 +101,7 @@ func (s *SCIMProvider) GetUsers(ctx context.Context) (*model.UsersResult, error)
 func (s *SCIMProvider) GetUsersAndGroupsUsers(ctx context.Context) (*model.UsersResult, *model.GroupsUsersResult, error) {
 	usersResult, err := s.GetUsers(ctx)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("scim: error getting users: %w", err)
 	}
 	usersResult.HashCode = hash.Get(usersResult)
 
@@ -116,7 +116,7 @@ func (s *SCIMProvider) GetUsersAndGroupsUsers(ctx context.Context) (*model.Users
 		f := fmt.Sprintf("members eq \"%s\"", user.SCIMID)
 		sGroupsResponse, err := s.scim.ListGroups(ctx, f)
 		if err != nil {
-			return nil, nil, err
+			return nil, nil, fmt.Errorf("scim: error listing groups: %w", err)
 		}
 
 		for _, grp := range sGroupsResponse.Resources {
@@ -168,7 +168,7 @@ func (s *SCIMProvider) CreateGroups(ctx context.Context, gr *model.GroupsResult)
 
 		r, err := s.scim.CreateGroup(ctx, sGroupRequest)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("scim: error creating group: %w", err)
 		}
 
 		e := group
@@ -209,7 +209,7 @@ func (s *SCIMProvider) CreateUsers(ctx context.Context, usrs *model.UsersResult)
 
 		r, err := s.scim.CreateUser(ctx, sUserRequest)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("scim: error creating user: %w", err)
 		}
 
 		e := user

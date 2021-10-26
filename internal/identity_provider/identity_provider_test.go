@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"errors"
 	"reflect"
 	"testing"
 
@@ -84,7 +85,7 @@ func Test_GoogleProvider_GetGroups(t *testing.T) {
 			name: "Should return error",
 			prepare: func(f *fields) {
 				ctx := context.Background()
-				f.ds.EXPECT().ListGroups(ctx, gomock.Eq([]string{""})).Return(nil, ErrListingGroups).Times(1)
+				f.ds.EXPECT().ListGroups(ctx, gomock.Eq([]string{""})).Return(nil, errors.New("test error")).Times(1)
 			},
 			args:    args{ctx: context.TODO(), filter: []string{""}},
 			want:    nil,
@@ -169,7 +170,7 @@ func Test_GoogleProvider_GetUsers(t *testing.T) {
 			name: "Should return error",
 			prepare: func(f *fields) {
 				ctx := context.Background()
-				f.ds.EXPECT().ListUsers(ctx, gomock.Eq([]string{""})).Return(nil, ErrListingUsers).Times(1)
+				f.ds.EXPECT().ListUsers(ctx, gomock.Eq([]string{""})).Return(nil, errors.New("test error")).Times(1)
 			},
 			args:    args{ctx: context.TODO(), filter: []string{""}},
 			want:    nil,
@@ -254,7 +255,7 @@ func Test_GoogleProvider_GetGroupMembers(t *testing.T) {
 			name: "Should return error",
 			prepare: func(f *fields) {
 				ctx := context.Background()
-				f.ds.EXPECT().ListGroupMembers(ctx, gomock.Eq("")).Return(nil, ErrListingGroupMembers).Times(1)
+				f.ds.EXPECT().ListGroupMembers(ctx, gomock.Eq("")).Return(nil, errors.New("test error")).Times(1)
 			},
 			args:    args{ctx: context.TODO(), id: ""},
 			want:    nil,
@@ -350,7 +351,7 @@ func Test_GoogleProvider_GetUsersFromGroupMembers(t *testing.T) {
 			name: "Should return error",
 			prepare: func(f *fields) {
 				ctx := context.Background()
-				f.ds.EXPECT().GetUser(ctx, gomock.Eq("")).Return(nil, ErrGettingUser).Times(1)
+				f.ds.EXPECT().GetUser(ctx, gomock.Eq("")).Return(nil, errors.New("test error")).Times(1)
 			},
 			args: args{
 				ctx: context.TODO(),

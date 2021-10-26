@@ -113,7 +113,6 @@ func Test_S3Repository_GetState(t *testing.T) {
 		state, err := svc.GetState(context.TODO())
 		assert.Error(t, err)
 		assert.Nil(t, state)
-		assert.ErrorIs(t, err, ErrDecodingS3Object)
 	})
 
 	t.Run("Should not return valid state and error instead", func(t *testing.T) {
@@ -128,7 +127,6 @@ func Test_S3Repository_GetState(t *testing.T) {
 		state, err := svc.GetState(context.TODO())
 		assert.Error(t, err)
 		assert.Nil(t, state)
-		assert.ErrorIs(t, err, ErrGettingS3Object)
 	})
 }
 
@@ -186,6 +184,5 @@ func Test_S3Repository_SaveState(t *testing.T) {
 
 		err = svc.SaveState(context.TODO(), sObj)
 		assert.Error(t, err)
-		assert.ErrorIs(t, err, ErrPuttingS3Object)
 	})
 }

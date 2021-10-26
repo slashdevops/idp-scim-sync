@@ -3,6 +3,7 @@ package disk
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"sync"
 
@@ -15,7 +16,7 @@ import (
 
 // consume io.ReadWriter
 
-var ErrStateFileNil = errors.New("state file is nil")
+var ErrStateFileNil = errors.New("disk: state file is nil")
 
 type DiskRepository struct {
 	mu        *sync.RWMutex
@@ -24,7 +25,7 @@ type DiskRepository struct {
 
 func NewDiskRepository(stateFile io.ReadWriter) (*DiskRepository, error) {
 	if stateFile == nil {
-		return nil, errors.Wrapf(ErrStateFileNil, "NewDiskRepository")
+		return nil, ErrStateFileNil
 	}
 
 	return &DiskRepository{
@@ -41,7 +42,7 @@ func (dr *DiskRepository) GetState(ctx context.Context) (*model.State, error) {
 	var state model.State
 	if err = json.NewDecoder(dr.stateFile).Decode(&state); err == io.EOF {
 	} else if err != nil {
-		return nil, errors.Wrapf(err, "GetState")
+		return nil, fmt.Errorf("disk: error decoding state: %w", err)
 	}
 
 	return &state, nil
@@ -55,7 +56,7 @@ func (dr *DiskRepository) SaveState(ctx context.Context, state *model.State) err
 	enc.SetIndent("", "  ")
 	err := enc.Encode(state)
 	if err != nil {
-		return errors.Wrapf(err, "SaveState")
+		return fmt.Errorf("disk: error encoding state: %w", err)
 	}
 
 	return nil

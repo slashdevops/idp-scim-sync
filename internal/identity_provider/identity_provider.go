@@ -10,13 +10,7 @@ import (
 	admin "google.golang.org/api/admin/directory/v1"
 )
 
-var (
-	ErrDirectoryServiceNil = errors.New("directory service is nil")
-	ErrListingGroups       = errors.New("error listing groups")
-	ErrListingUsers        = errors.New("error listing users")
-	ErrListingGroupMembers = errors.New("error listing group members")
-	ErrGettingUser         = errors.New("error getting user")
-)
+var ErrDirectoryServiceNil = errors.New("provoder: directory service is nil")
 
 //go:generate go run github.com/golang/mock/mockgen@v1.6.0 -package=mocks -destination=../../mocks/identity_provider/identity_provider_mocks.go -source=identity_provider.go GoogleProviderService
 
@@ -53,7 +47,7 @@ func (i *IdentityProvider) GetGroups(ctx context.Context, filter []string) (*mod
 
 	googleGroups, err := i.ps.ListGroups(ctx, filter)
 	if err != nil {
-		return nil, ErrListingGroups
+		return nil, fmt.Errorf("provider: error listing groups: %w", err)
 	}
 
 	for _, grp := range googleGroups {
@@ -87,7 +81,7 @@ func (i *IdentityProvider) GetUsers(ctx context.Context, filter []string) (*mode
 
 	googleUsers, err := i.ps.ListUsers(ctx, filter)
 	if err != nil {
-		return nil, ErrListingUsers
+		return nil, fmt.Errorf("provider: error listing users: %w", err)
 	}
 
 	for _, usr := range googleUsers {
@@ -118,7 +112,7 @@ func (i *IdentityProvider) GetGroupMembers(ctx context.Context, id string) (*mod
 
 	googleMembers, err := i.ps.ListGroupMembers(ctx, id)
 	if err != nil {
-		return nil, ErrListingGroupMembers
+		return nil, fmt.Errorf("provider: error listing group members: %w", err)
 	}
 
 	for _, member := range googleMembers {
@@ -146,7 +140,7 @@ func (i *IdentityProvider) GetUsersFromGroupMembers(ctx context.Context, mbr *mo
 	for _, member := range mbr.Resources {
 		u, err := i.ps.GetUser(ctx, member.IPID)
 		if err != nil {
-			return nil, ErrGettingUser
+			return nil, fmt.Errorf("provider: error getting user: %w", err)
 		}
 
 		e := model.User{
@@ -182,12 +176,12 @@ func (i *IdentityProvider) GetUsersAndGroupsUsers(ctx context.Context, groups *m
 
 		pMembers, err := i.GetGroupMembers(ctx, pGroup.IPID)
 		if err != nil {
-			return nil, nil, err
+			return nil, nil, fmt.Errorf("provider: error getting group members: %w", err)
 		}
 
 		pUsersFromMembers, err := i.GetUsersFromGroupMembers(ctx, pMembers)
 		if err != nil {
-			return nil, nil, err
+			return nil, nil, fmt.Errorf("provider: error getting users from group members: %w", err)
 		}
 
 		for _, pUser := range pUsersFromMembers.Resources {
