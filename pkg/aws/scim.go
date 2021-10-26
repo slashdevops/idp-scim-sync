@@ -26,6 +26,12 @@ var (
 	ErrGivenNameEmpty   = errors.Errorf("aws: given name may not be empty")
 	ErrFamilyNameEmpty  = errors.Errorf("aws: family name may not be empty")
 	ErrEmailsTooMany    = errors.Errorf("aws: emails may not be more than 1")
+
+	ErrCreateGroupRequestEmpty = errors.Errorf("aws: create group request may not be empty")
+	ErrCreateUserRequestEmpty  = errors.Errorf("aws: create user request may not be empty")
+
+	ErrPatchGroupRequestEmpty = errors.Errorf("aws: patch group request may not be empty")
+	ErrGroupIDEmpty           = errors.Errorf("aws: group id may not be empty")
 )
 
 //go:generate go run github.com/golang/mock/mockgen@v1.6.0 -package=mocks -destination=../../mocks/aws/scim_mocks.go -source=scim.go HTTPClient
@@ -226,7 +232,7 @@ func (s *AWSSCIMProvider) ServiceProviderConfig(ctx context.Context) (*ServicePr
 // + https://docs.aws.amazon.com/singlesignon/latest/developerguide/creategroup.html
 func (s *AWSSCIMProvider) CreateGroup(ctx context.Context, g *CreateGroupRequest) (*CreateGroupResponse, error) {
 	if g == nil {
-		return nil, fmt.Errorf("aws: error creating group, group is nil")
+		return nil, ErrCreateGroupRequestEmpty
 	}
 	if g.DisplayName == "" {
 		return nil, ErrDisplayNameEmpty
@@ -263,9 +269,8 @@ func (s *AWSSCIMProvider) CreateGroup(ctx context.Context, g *CreateGroupRequest
 // + https://docs.aws.amazon.com/singlesignon/latest/developerguide/createuser.html
 func (s *AWSSCIMProvider) CreateUser(ctx context.Context, usr *CreateUserRequest) (*CreateUserResponse, error) {
 	if usr == nil {
-		return nil, fmt.Errorf("aws: error creating user, user is nil")
+		return nil, ErrCreateUserRequestEmpty
 	}
-
 	// Check constraints in the reference document
 	if usr.DisplayName == "" {
 		return nil, ErrDisplayNameEmpty
@@ -310,10 +315,10 @@ func (s *AWSSCIMProvider) CreateUser(ctx context.Context, usr *CreateUserRequest
 
 func (s *AWSSCIMProvider) PatchGroup(ctx context.Context, pgr *PatchGroupRequest) error {
 	if pgr == nil {
-		return fmt.Errorf("aws: error patching group, group is nil")
+		return ErrPatchGroupRequestEmpty
 	}
 	if pgr.Group.ID == "" {
-		return fmt.Errorf("aws: error patching group, group id is empty")
+		return ErrGroupIDEmpty
 	}
 
 	reqUrl, err := url.Parse(s.url.String())
