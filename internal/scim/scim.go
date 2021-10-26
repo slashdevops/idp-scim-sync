@@ -227,29 +227,6 @@ func (s *SCIMProvider) CreateUsers(ctx context.Context, usrs *model.UsersResult)
 	return ret, nil
 }
 
-func (s *SCIMProvider) CreateMembers(ctx context.Context, gur *model.GroupsUsersResult) (*model.GroupsUsersResult, error) {
-	// for _, groupUsers := range gur.Resources {
-
-	// 	patchGroupRequest := &aws.PatchGroupRequest{
-	// 		Group: aws.Group{
-	// 			ID:          groupUsers.Group.ID,
-	// 			DisplayName: groupUsers.Group.Name,
-	// 		},
-	// 	}
-
-	// 	for _, user := range groupUsers.Resources {
-	// 		sGroupRequest.ExternalIds = append(sGroupRequest.ExternalIds, user.IPID)
-	// 	}
-
-	// 	err := s.scim.PatchGroup(ctx, patchGroupRequest)
-	// 	if err != nil {
-	// 		return err
-	// 	}
-	// }
-
-	return nil, errors.New("not implemented")
-}
-
 func (s *SCIMProvider) UpdateGroups(ctx context.Context, gr *model.GroupsResult) (*model.GroupsResult, error) {
 	return nil, errors.New("not implemented")
 }
@@ -266,6 +243,66 @@ func (s *SCIMProvider) DeleteUsers(ctx context.Context, ur *model.UsersResult) (
 	return nil, errors.New("not implemented")
 }
 
-func (s *SCIMProvider) DeleteMembers(ctx context.Context, ur *model.GroupsUsersResult) (*model.GroupsUsersResult, error) {
-	return nil, errors.New("not implemented")
+func (s *SCIMProvider) CreateMembers(ctx context.Context, gur *model.GroupsUsersResult) error {
+	for _, groupUsers := range gur.Resources {
+		usersID := make([]string, 0)
+		for _, user := range groupUsers.Resources {
+			usersID = append(usersID, user.SCIMID)
+		}
+
+		patchGroupRequest := &aws.PatchGroupRequest{
+			Group: aws.Group{
+				ID:          groupUsers.Group.SCIMID,
+				DisplayName: groupUsers.Group.Name,
+			},
+			Patch: aws.Patch{
+				Schemas: []string{"urn:ietf:params:scim:api:messages:2.0:PatchOp"},
+				Operations: []aws.Operation{
+					{
+						OP:    "add",
+						Path:  "members",
+						Value: usersID,
+					},
+				},
+			},
+		}
+
+		if err := s.scim.PatchGroup(ctx, patchGroupRequest); err != nil {
+			return fmt.Errorf("scim: error patching group: %w", err)
+		}
+	}
+
+	return nil
+}
+
+func (s *SCIMProvider) DeleteMembers(ctx context.Context, gur *model.GroupsUsersResult) error {
+	for _, groupUsers := range gur.Resources {
+		usersID := make([]string, 0)
+		for _, user := range groupUsers.Resources {
+			usersID = append(usersID, user.SCIMID)
+		}
+
+		patchGroupRequest := &aws.PatchGroupRequest{
+			Group: aws.Group{
+				ID:          groupUsers.Group.SCIMID,
+				DisplayName: groupUsers.Group.Name,
+			},
+			Patch: aws.Patch{
+				Schemas: []string{"urn:ietf:params:scim:api:messages:2.0:PatchOp"},
+				Operations: []aws.Operation{
+					{
+						OP:    "remove",
+						Path:  "members",
+						Value: usersID,
+					},
+				},
+			},
+		}
+
+		if err := s.scim.PatchGroup(ctx, patchGroupRequest); err != nil {
+			return fmt.Errorf("scim: error patching group: %w", err)
+		}
+	}
+
+	return nil
 }

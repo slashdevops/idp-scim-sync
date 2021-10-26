@@ -17,12 +17,13 @@ type SCIMService interface {
 
 	CreateGroups(ctx context.Context, gr *model.GroupsResult) (*model.GroupsResult, error)
 	CreateUsers(ctx context.Context, ur *model.UsersResult) (*model.UsersResult, error)
-	CreateMembers(ctx context.Context, ur *model.GroupsUsersResult) (*model.GroupsUsersResult, error)
 
 	UpdateGroups(ctx context.Context, gr *model.GroupsResult) (*model.GroupsResult, error)
 	UpdateUsers(ctx context.Context, ur *model.UsersResult) (*model.UsersResult, error)
 
 	DeleteGroups(ctx context.Context, gr *model.GroupsResult) (*model.GroupsResult, error)
 	DeleteUsers(ctx context.Context, ur *model.UsersResult) (*model.UsersResult, error)
-	DeleteMembers(ctx context.Context, ur *model.GroupsUsersResult) (*model.GroupsUsersResult, error)
+
+	CreateMembers(ctx context.Context, gur *model.GroupsUsersResult) error
+	DeleteMembers(ctx context.Context, gur *model.GroupsUsersResult) error
 }
