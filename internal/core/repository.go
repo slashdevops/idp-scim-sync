@@ -10,7 +10,7 @@ import (
 
 // StateRepository is an interface for a repository that stores the state of the
 // synchronization process.
-// This interface needs to be implemented by the repository that stores the state
+// This interface needs to be implemented by the repository service.
 type StateRepository interface {
 	// GetState returns the state of the synchronization process.
 	GetState(ctx context.Context) (*model.State, error)
