@@ -18,6 +18,7 @@ import (
 type AWSSCIMProvider interface {
 	ListUsers(ctx context.Context, filter string) (*aws.ListUsersResponse, error)
 	CreateUser(ctx context.Context, u *aws.CreateUserRequest) (*aws.CreateUserResponse, error)
+	DeleteUser(ctx context.Context, id string) error
 
 	ListGroups(ctx context.Context, filter string) (*aws.ListGroupsResponse, error)
 	CreateGroup(ctx context.Context, g *aws.CreateGroupRequest) (*aws.CreateGroupResponse, error)
@@ -239,14 +240,20 @@ func (s *SCIMProvider) DeleteGroups(ctx context.Context, gr *model.GroupsResult)
 	for _, group := range gr.Resources {
 		// TODO: implement a delay to avoid AWS throttling
 		if err := s.scim.DeleteGroup(ctx, group.SCIMID); err != nil {
-			return fmt.Errorf("scim: error creating group: %w", err)
+			return fmt.Errorf("scim: error deleting group: %s, %w", group.SCIMID, err)
 		}
 	}
 	return nil
 }
 
 func (s *SCIMProvider) DeleteUsers(ctx context.Context, ur *model.UsersResult) error {
-	return errors.New("not implemented")
+	for _, user := range ur.Resources {
+		// TODO: implement a delay to avoid AWS throttling
+		if err := s.scim.DeleteUser(ctx, user.SCIMID); err != nil {
+			return fmt.Errorf("scim: error deleting user: %s, %w", user.SCIMID, err)
+		}
+	}
+	return nil
 }
 
 func (s *SCIMProvider) CreateMembers(ctx context.Context, gur *model.GroupsUsersResult) error {

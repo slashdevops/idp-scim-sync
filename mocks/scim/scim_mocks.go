@@ -79,6 +79,20 @@ func (mr *MockAWSSCIMProviderMockRecorder) DeleteGroup(ctx, id interface{}) *gom
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteGroup", reflect.TypeOf((*MockAWSSCIMProvider)(nil).DeleteGroup), ctx, id)
 }
 
+// DeleteUser mocks base method.
+func (m *MockAWSSCIMProvider) DeleteUser(ctx context.Context, id string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteUser", ctx, id)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteUser indicates an expected call of DeleteUser.
+func (mr *MockAWSSCIMProviderMockRecorder) DeleteUser(ctx, id interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteUser", reflect.TypeOf((*MockAWSSCIMProvider)(nil).DeleteUser), ctx, id)
+}
+
 // ListGroups mocks base method.
 func (m *MockAWSSCIMProvider) ListGroups(ctx context.Context, filter string) (*aws.ListGroupsResponse, error) {
 	m.ctrl.T.Helper()
