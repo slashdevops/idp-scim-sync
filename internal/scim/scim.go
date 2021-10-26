@@ -141,10 +141,10 @@ func (s *SCIMProvider) GetUsers(ctx context.Context) (*model.UsersResult, error)
 	return usersResult, nil
 }
 
-func (s *SCIMProvider) CreateUsers(ctx context.Context, usrs *model.UsersResult) (*model.UsersResult, error) {
+func (s *SCIMProvider) CreateUsers(ctx context.Context, ur *model.UsersResult) (*model.UsersResult, error) {
 	users := make([]model.User, 0)
 
-	for _, user := range usrs.Resources {
+	for _, user := range ur.Resources {
 
 		userRequest := &aws.CreateUserRequest{
 			DisplayName: user.DisplayName,
@@ -182,10 +182,10 @@ func (s *SCIMProvider) CreateUsers(ctx context.Context, usrs *model.UsersResult)
 	return ret, nil
 }
 
-func (s *SCIMProvider) UpdateUsers(ctx context.Context, usrs *model.UsersResult) (*model.UsersResult, error) {
+func (s *SCIMProvider) UpdateUsers(ctx context.Context, ur *model.UsersResult) (*model.UsersResult, error) {
 	users := make([]model.User, 0)
 
-	for _, user := range usrs.Resources {
+	for _, user := range ur.Resources {
 
 		userRequest := &aws.PutUserRequest{
 			DisplayName: user.DisplayName,
