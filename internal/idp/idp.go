@@ -15,7 +15,7 @@ var ErrDirectoryServiceNil = errors.New("provoder: directory service is nil")
 //go:generate go run github.com/golang/mock/mockgen@v1.6.0 -package=mocks -destination=../../mocks/idp/idp_mocks.go -source=idp.go GoogleProviderService
 
 // This implement core.IdentityProviderService interface
-// and as a consumer define GoogleProviderService to use pkg.google methods
+// and as a consumer define GoogleProviderService to use pkg/google methods
 
 type GoogleProviderService interface {
 	ListUsers(ctx context.Context, query []string) ([]*admin.User, error)
@@ -38,10 +38,10 @@ func NewIdentityProvider(gps GoogleProviderService) (*IdentityProvider, error) {
 	}, nil
 }
 
-// GetGroups returns a list of groups from the Google Directory API.
+// GetGroups returns a list of groups from the Identity Provider API.
 //
 // The filter parameter is a list of strings that can be used to filter the groups
-// according to the Google Directory API.
+// according to the Identity Provider API.
 func (i *IdentityProvider) GetGroups(ctx context.Context, filter []string) (*model.GroupsResult, error) {
 	syncGroups := make([]model.Group, 0)
 
@@ -72,10 +72,10 @@ func (i *IdentityProvider) GetGroups(ctx context.Context, filter []string) (*mod
 	return syncResult, nil
 }
 
-// GetUsers returns a list of users from the Google Directory API.
+// GetUsers returns a list of users from the Identity Provider API.
 //
 // The filter parameter is a list of strings that can be used to filter the users
-// according to the Google Directory API.
+// according to the Identity Provider API.
 func (i *IdentityProvider) GetUsers(ctx context.Context, filter []string) (*model.UsersResult, error) {
 	syncUsers := make([]model.User, 0)
 
@@ -107,6 +107,7 @@ func (i *IdentityProvider) GetUsers(ctx context.Context, filter []string) (*mode
 	return uResult, nil
 }
 
+// GetGroupMembers returns a list of members from the Identity Provider API.
 func (i *IdentityProvider) GetGroupMembers(ctx context.Context, id string) (*model.MembersResult, error) {
 	syncMembers := make([]model.Member, 0)
 
@@ -134,6 +135,7 @@ func (i *IdentityProvider) GetGroupMembers(ctx context.Context, id string) (*mod
 	return syncMembersResult, nil
 }
 
+// GetUsersFromGroupMembers returns a list of users from the Identity Provider API.
 func (i *IdentityProvider) GetUsersFromGroupMembers(ctx context.Context, mbr *model.MembersResult) (*model.UsersResult, error) {
 	syncUsers := make([]model.User, 0)
 
