@@ -80,12 +80,11 @@ func (mr *MockSCIMServiceMockRecorder) CreateUsers(ctx, ur interface{}) *gomock.
 }
 
 // DeleteGroups mocks base method.
-func (m *MockSCIMService) DeleteGroups(ctx context.Context, gr *model.GroupsResult) (*model.GroupsResult, error) {
+func (m *MockSCIMService) DeleteGroups(ctx context.Context, gr *model.GroupsResult) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "DeleteGroups", ctx, gr)
-	ret0, _ := ret[0].(*model.GroupsResult)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
+	ret0, _ := ret[0].(error)
+	return ret0
 }
 
 // DeleteGroups indicates an expected call of DeleteGroups.
@@ -109,12 +108,11 @@ func (mr *MockSCIMServiceMockRecorder) DeleteMembers(ctx, gur interface{}) *gomo
 }
 
 // DeleteUsers mocks base method.
-func (m *MockSCIMService) DeleteUsers(ctx context.Context, ur *model.UsersResult) (*model.UsersResult, error) {
+func (m *MockSCIMService) DeleteUsers(ctx context.Context, ur *model.UsersResult) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "DeleteUsers", ctx, ur)
-	ret0, _ := ret[0].(*model.UsersResult)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
+	ret0, _ := ret[0].(error)
+	return ret0
 }
 
 // DeleteUsers indicates an expected call of DeleteUsers.

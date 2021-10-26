@@ -313,6 +313,32 @@ func (s *AWSSCIMProvider) CreateUser(ctx context.Context, usr *CreateUserRequest
 	return &response, nil
 }
 
+func (s *AWSSCIMProvider) DeleteGroup(ctx context.Context, id string) error {
+	if id == "" {
+		return ErrGroupIDEmpty
+	}
+
+	reqUrl, err := url.Parse(s.url.String())
+	if err != nil {
+		return fmt.Errorf("aws: error parsing url: %w", err)
+	}
+
+	reqUrl.Path = path.Join(reqUrl.Path, fmt.Sprintf("/Groups/%s", id))
+
+	req, err := s.newRequest(http.MethodPatch, reqUrl, nil)
+	if err != nil {
+		return fmt.Errorf("aws: error creating request, http method: %s, url: %v, error: %w", http.MethodPatch, reqUrl.String(), err)
+	}
+
+	resp, err := s.do(ctx, req, nil)
+	if err != nil {
+		return fmt.Errorf("aws: error sending request, http method: %s, url: %v, error: %w", http.MethodPatch, reqUrl.String(), err)
+	}
+	defer resp.Body.Close()
+
+	return nil
+}
+
 func (s *AWSSCIMProvider) PatchGroup(ctx context.Context, pgr *PatchGroupRequest) error {
 	if pgr == nil {
 		return ErrPatchGroupRequestEmpty

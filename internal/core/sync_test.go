@@ -275,11 +275,10 @@ func Test_syncService_reconcilingSCIMGroups(t *testing.T) {
 		mockSCIMService.EXPECT().UpdateGroups(ctx, update).Return(update, nil).Times(1)
 		mockSCIMService.EXPECT().DeleteGroups(ctx, delete).Return(delete, nil).Times(1)
 
-		grc, gru, grd, err := reconcilingSCIMGroups(ctx, mockSCIMService, create, update, delete)
+		grc, gru, err := reconcilingSCIMGroups(ctx, mockSCIMService, create, update, delete)
 		assert.NoError(t, err)
 		assert.NotNil(t, grc)
 		assert.NotNil(t, gru)
-		assert.NotNil(t, grd)
 	})
 
 	t.Run("Should return error when CreateGroups return error", func(t *testing.T) {
@@ -291,11 +290,10 @@ func Test_syncService_reconcilingSCIMGroups(t *testing.T) {
 
 		mockSCIMService.EXPECT().CreateGroups(ctx, create).Return(nil, errors.New("test error")).Times(1)
 
-		grc, gru, grd, err := reconcilingSCIMGroups(ctx, mockSCIMService, create, update, delete)
+		grc, gru, err := reconcilingSCIMGroups(ctx, mockSCIMService, create, update, delete)
 		assert.Error(t, err)
 		assert.Nil(t, grc)
 		assert.Nil(t, gru)
-		assert.Nil(t, grd)
 	})
 
 	t.Run("Should return error when UpdateGroups return error", func(t *testing.T) {
@@ -308,11 +306,10 @@ func Test_syncService_reconcilingSCIMGroups(t *testing.T) {
 		mockSCIMService.EXPECT().CreateGroups(ctx, create).Return(create, nil).Times(1)
 		mockSCIMService.EXPECT().UpdateGroups(ctx, update).Return(nil, errors.New("test error")).Times(1)
 
-		grc, gru, grd, err := reconcilingSCIMGroups(ctx, mockSCIMService, create, update, delete)
+		grc, gru, err := reconcilingSCIMGroups(ctx, mockSCIMService, create, update, delete)
 		assert.Error(t, err)
 		assert.Nil(t, grc)
 		assert.Nil(t, gru)
-		assert.Nil(t, grd)
 	})
 
 	t.Run("Should return error when DeleteGroups return error", func(t *testing.T) {
@@ -326,11 +323,10 @@ func Test_syncService_reconcilingSCIMGroups(t *testing.T) {
 		mockSCIMService.EXPECT().UpdateGroups(ctx, update).Return(update, nil).Times(1)
 		mockSCIMService.EXPECT().DeleteGroups(ctx, delete).Return(nil, errors.New("test error")).Times(1)
 
-		grc, gru, grd, err := reconcilingSCIMGroups(ctx, mockSCIMService, create, update, delete)
+		grc, gru, err := reconcilingSCIMGroups(ctx, mockSCIMService, create, update, delete)
 		assert.Error(t, err)
 		assert.Nil(t, grc)
 		assert.Nil(t, gru)
-		assert.Nil(t, grd)
 	})
 
 	t.Run("Should call all the methods one time each and no error when resources are empty", func(t *testing.T) {
@@ -344,11 +340,10 @@ func Test_syncService_reconcilingSCIMGroups(t *testing.T) {
 		mockSCIMService.EXPECT().UpdateGroups(ctx, update).Return(update, nil).Times(1)
 		mockSCIMService.EXPECT().DeleteGroups(ctx, delete).Return(delete, nil).Times(1)
 
-		grc, gru, grd, err := reconcilingSCIMGroups(ctx, mockSCIMService, create, update, delete)
+		grc, gru, err := reconcilingSCIMGroups(ctx, mockSCIMService, create, update, delete)
 		assert.NoError(t, err)
 		assert.NotNil(t, grc)
 		assert.NotNil(t, gru)
-		assert.NotNil(t, grd)
 	})
 }
 
@@ -368,11 +363,10 @@ func Test_syncService_reconcilingSCIMUsers(t *testing.T) {
 		mockSCIMService.EXPECT().UpdateUsers(ctx, update).Return(update, nil).Times(1)
 		mockSCIMService.EXPECT().DeleteUsers(ctx, delete).Return(delete, nil).Times(1)
 
-		urc, uru, urd, err := reconcilingSCIMUsers(ctx, mockSCIMService, create, update, delete)
+		urc, uru, err := reconcilingSCIMUsers(ctx, mockSCIMService, create, update, delete)
 		assert.NoError(t, err)
 		assert.NotNil(t, urc)
 		assert.NotNil(t, uru)
-		assert.NotNil(t, urd)
 	})
 
 	t.Run("Should return error when CreateUsers return error", func(t *testing.T) {
@@ -384,11 +378,10 @@ func Test_syncService_reconcilingSCIMUsers(t *testing.T) {
 
 		mockSCIMService.EXPECT().CreateUsers(ctx, create).Return(nil, errors.New("test error")).Times(1)
 
-		urc, uru, urd, err := reconcilingSCIMUsers(ctx, mockSCIMService, create, update, delete)
+		urc, uru, err := reconcilingSCIMUsers(ctx, mockSCIMService, create, update, delete)
 		assert.Error(t, err)
 		assert.Nil(t, urc)
 		assert.Nil(t, uru)
-		assert.Nil(t, urd)
 	})
 
 	t.Run("Should return error when UpdateUsers return error", func(t *testing.T) {
@@ -401,11 +394,10 @@ func Test_syncService_reconcilingSCIMUsers(t *testing.T) {
 		mockSCIMService.EXPECT().CreateUsers(ctx, create).Return(create, nil).Times(1)
 		mockSCIMService.EXPECT().UpdateUsers(ctx, update).Return(nil, errors.New("test error")).Times(1)
 
-		urc, uru, urd, err := reconcilingSCIMUsers(ctx, mockSCIMService, create, update, delete)
+		urc, uru, err := reconcilingSCIMUsers(ctx, mockSCIMService, create, update, delete)
 		assert.Error(t, err)
 		assert.Nil(t, urc)
 		assert.Nil(t, uru)
-		assert.Nil(t, urd)
 	})
 
 	t.Run("Should return error when DeleteUsers return error", func(t *testing.T) {
@@ -419,11 +411,10 @@ func Test_syncService_reconcilingSCIMUsers(t *testing.T) {
 		mockSCIMService.EXPECT().UpdateUsers(ctx, update).Return(update, nil).Times(1)
 		mockSCIMService.EXPECT().DeleteUsers(ctx, delete).Return(nil, errors.New("test error")).Times(1)
 
-		urc, uru, urd, err := reconcilingSCIMUsers(ctx, mockSCIMService, create, update, delete)
+		urc, uru, err := reconcilingSCIMUsers(ctx, mockSCIMService, create, update, delete)
 		assert.Error(t, err)
 		assert.Nil(t, urc)
 		assert.Nil(t, uru)
-		assert.Nil(t, urd)
 	})
 
 	t.Run("Should call all the methods one time each and no error when resources are empty", func(t *testing.T) {
@@ -437,11 +428,10 @@ func Test_syncService_reconcilingSCIMUsers(t *testing.T) {
 		mockSCIMService.EXPECT().UpdateUsers(ctx, update).Return(update, nil).Times(1)
 		mockSCIMService.EXPECT().DeleteUsers(ctx, delete).Return(delete, nil).Times(1)
 
-		urc, uru, urd, err := reconcilingSCIMUsers(ctx, mockSCIMService, create, update, delete)
+		urc, uru, err := reconcilingSCIMUsers(ctx, mockSCIMService, create, update, delete)
 		assert.NoError(t, err)
 		assert.NotNil(t, urc)
 		assert.NotNil(t, uru)
-		assert.NotNil(t, urd)
 	})
 }
 

@@ -30,7 +30,7 @@ vet:
 generate:
 	go generate $(GO_FILES)
 
-test: tidy fmt vet generate
+test: generate tidy fmt vet
 	go test -race -covermode=atomic -coverprofile coverage.out -tags=unit $(GO_FILES)
 
 test-coverage: test
