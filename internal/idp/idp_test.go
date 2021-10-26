@@ -1,4 +1,4 @@
-package provider
+package idp
 
 import (
 	"context"
@@ -10,7 +10,7 @@ import (
 	"github.com/slashdevops/idp-scim-sync/internal/hash"
 	"github.com/slashdevops/idp-scim-sync/internal/model"
 	"github.com/slashdevops/idp-scim-sync/internal/utils"
-	mocks "github.com/slashdevops/idp-scim-sync/mocks/identity_provider"
+	mocks "github.com/slashdevops/idp-scim-sync/mocks/idp"
 	"github.com/stretchr/testify/assert"
 	admin "google.golang.org/api/admin/directory/v1"
 )
