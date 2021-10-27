@@ -34,7 +34,7 @@ func groupsOperations(idp, state *model.GroupsResult) (create *model.GroupsResul
 		if _, ok := stateGroups[gr.Name]; !ok {
 			toCreate = append(toCreate, gr)
 		} else {
-			// Check if the group email or ID changed
+			// Check if the group email, name or ID changed
 			// Id changed happen when the group delete and create again with the same name and email I guest
 			if gr.Email != stateGroups[gr.Name].Email || gr.IPID != stateGroups[gr.Name].IPID {
 				toUpdate = append(toUpdate, gr)

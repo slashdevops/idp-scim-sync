@@ -2,7 +2,6 @@ package scim
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/slashdevops/idp-scim-sync/internal/hash"
@@ -100,8 +99,39 @@ func (s *SCIMProvider) CreateGroups(ctx context.Context, gr *model.GroupsResult)
 	return ret, nil
 }
 
+// UpdateGroups updates groups in AWS SCIM
 func (s *SCIMProvider) UpdateGroups(ctx context.Context, gr *model.GroupsResult) (*model.GroupsResult, error) {
-	return nil, errors.New("not implemented")
+	groups := make([]model.Group, 0)
+
+	for _, group := range gr.Resources {
+
+		groupRequest := &aws.PatchGroupRequest{
+			Group: aws.Group{
+				ID:          group.SCIMID,
+				DisplayName: group.Name,
+			},
+			Patch: aws.Patch{},
+		}
+
+		if err := s.scim.PatchGroup(ctx, groupRequest); err != nil {
+			return nil, fmt.Errorf("scim: error updating groups: %w", err)
+		}
+
+		// return the same group
+		e := group
+		e.HashCode = hash.Get(e)
+		groups = append(groups, e)
+	}
+
+	ret := &model.GroupsResult{
+		Items:     len(groups),
+		Resources: groups,
+	}
+	if len(groups) > 0 {
+		ret.HashCode = hash.Get(ret)
+	}
+
+	return ret, nil
 }
 
 func (s *SCIMProvider) DeleteGroups(ctx context.Context, gr *model.GroupsResult) error {

@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestsyncService_NewSyncService(t *testing.T) {
+func TestSyncService_NewSyncService(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
@@ -63,7 +63,7 @@ func TestsyncService_NewSyncService(t *testing.T) {
 	})
 }
 
-func TestsyncService_getIdentityProviderData(t *testing.T) {
+func TestSyncService_getIdentityProviderData(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 	ctx := context.TODO()
@@ -167,7 +167,7 @@ func TestsyncService_getIdentityProviderData(t *testing.T) {
 	})
 }
 
-func TestsyncService_getSCIMData(t *testing.T) {
+func TestSyncService_getSCIMData(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 	ctx := context.TODO()
@@ -259,7 +259,7 @@ func TestsyncService_getSCIMData(t *testing.T) {
 	})
 }
 
-func TestsyncService_reconcilingSCIMGroups(t *testing.T) {
+func TestSyncService_reconcilingSCIMGroups(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 	ctx := context.TODO()
@@ -347,7 +347,7 @@ func TestsyncService_reconcilingSCIMGroups(t *testing.T) {
 	})
 }
 
-func TestsyncService_reconcilingSCIMUsers(t *testing.T) {
+func TestSyncService_reconcilingSCIMUsers(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 	ctx := context.TODO()
@@ -435,7 +435,7 @@ func TestsyncService_reconcilingSCIMUsers(t *testing.T) {
 	})
 }
 
-func TestsyncService_reconcilingSCIMGroupsUsers(t *testing.T) {
+func TestSyncService_reconcilingSCIMGroupsUsers(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 	ctx := context.TODO()

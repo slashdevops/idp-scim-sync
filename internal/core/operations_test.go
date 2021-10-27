@@ -8,7 +8,7 @@ import (
 	"github.com/slashdevops/idp-scim-sync/internal/utils"
 )
 
-func TestgroupsOperations(t *testing.T) {
+func TestGroupsOperations(t *testing.T) {
 	type args struct {
 		idp   *model.GroupsResult
 		state *model.GroupsResult
@@ -269,7 +269,7 @@ func TestgroupsOperations(t *testing.T) {
 	}
 }
 
-func TestusersOperations(t *testing.T) {
+func TestUsersOperations(t *testing.T) {
 	type args struct {
 		idp   *model.UsersResult
 		state *model.UsersResult
@@ -495,7 +495,7 @@ func TestusersOperations(t *testing.T) {
 	}
 }
 
-func TestgroupsUsersOperations(t *testing.T) {
+func TestGroupsUsersOperations(t *testing.T) {
 	type args struct {
 		idp   *model.GroupsUsersResult
 		state *model.GroupsUsersResult
