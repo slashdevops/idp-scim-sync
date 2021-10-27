@@ -84,6 +84,12 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 		return fmt.Errorf("sync: error getting state data from the repository: %w", err)
 	}
 
+	// these variables are used to store the data that will be used to create or delete users and groups in SCIM
+	// the differents between the data in the identity provider and these is that these have already set the SCIMID
+	// after the creation of the element in SCIM
+	var createdGroupsResult model.GroupsResult
+	var createdUsersResult model.UsersResult
+
 	// first time syncing
 	if state.LastSync == "" {
 		// Check SCIM side to see if there are elelemnts to be
@@ -112,6 +118,9 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 			return fmt.Errorf("sync: error reconciling groups: %w", err)
 		}
 
+		// merge in only one data structure the groups created and updated who has the SCIMID
+		createdGroupsResult = mergeGroupsResult(rgrc, rgru)
+
 		log.WithFields(log.Fields{
 			"idp_quantity":  idpUsersResult.Items,
 			"scim_quantity": scimUsersResult.Items,
@@ -123,6 +132,9 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 			return fmt.Errorf("sync: error reconciling users: %w", err)
 		}
 
+		// merge in only one data structure the users created and updated who has the SCIMID
+		createdUsersResult = mergeUsersResult(rurc, ruru)
+
 		log.WithFields(log.Fields{
 			"idp_quantity":  idpGroupsUsersResult.Items,
 			"scim_quantity": scimGroupsUsersResult.Items,
@@ -132,13 +144,6 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 		if err := reconcilingSCIMGroupsUsers(ss.ctx, ss.scim, ugCreate, ugDelete); err != nil {
 			return fmt.Errorf("sync: error reconciling groups users: %w", err)
 		}
-
-		// WIP
-		_ = rgrc
-		_ = rgru
-
-		_ = rurc
-		_ = ruru
 
 	} else { // This is not the first time syncing
 		log.WithField("lastsync", state.LastSync).Info("state with lastsync time, it is not first time syncing")
@@ -162,9 +167,8 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 				return fmt.Errorf("sync: error reconciling groups: %w", err)
 			}
 
-			// WIP
-			_ = rgrc
-			_ = rgru
+			// merge in only one data structure the groups created and updated who has the SCIMID
+			createdGroupsResult = mergeGroupsResult(rgrc, rgru)
 		}
 
 		if idpUsersResult.HashCode == state.Resources.Users.HashCode {
@@ -183,9 +187,8 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 				return fmt.Errorf("sync: error reconciling users: %w", err)
 			}
 
-			// WIP
-			_ = rurc
-			_ = ruru
+			// merge in only one data structure the users created and updated who has the SCIMID
+			createdUsersResult = mergeUsersResult(rurc, ruru)
 		}
 
 		if idpGroupsUsersResult.HashCode == state.Resources.GroupsUsers.HashCode {
@@ -213,8 +216,8 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 		CodeVersion:   "0.0.1",
 		LastSync:      time.Now().Format(time.RFC3339),
 		Resources: model.StateResources{
-			Groups:      *idpGroupsResult,
-			Users:       *idpUsersResult,
+			Groups:      createdGroupsResult,
+			Users:       createdUsersResult,
 			GroupsUsers: *idpGroupsUsersResult,
 		},
 	}
@@ -353,7 +356,6 @@ func reconcilingSCIMGroupsUsers(ctx context.Context, scim SCIMService, create *m
 	if delete.Items == 0 {
 		log.Info("no users to be removed from groups")
 	} else {
-
 		log.WithField("quantity", delete.Items).Info("removing users to groups")
 		if err := scim.DeleteGroupsMembers(ctx, delete); err != nil {
 			return fmt.Errorf("sync: error removing users from groups in SCIM Provider: %w", err)
