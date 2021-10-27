@@ -478,14 +478,11 @@ func Test_syncService_reconcilingSCIMGroupsUsers(t *testing.T) {
 		assert.Error(t, err)
 	})
 
-	t.Run("Should call all the methods one time each and no error when resources are empty", func(t *testing.T) {
+	t.Run("Should not call all the methods and no error when resources are empty", func(t *testing.T) {
 		mockSCIMService := mocks.NewMockSCIMService(mockCtrl)
 
 		create := &model.GroupsUsersResult{Items: 0, Resources: []model.GroupUsers{}}
 		delete := &model.GroupsUsersResult{Items: 0, Resources: []model.GroupUsers{}}
-
-		mockSCIMService.EXPECT().CreateGroupsMembers(ctx, create).Return(nil).Times(1)
-		mockSCIMService.EXPECT().DeleteGroupsMembers(ctx, delete).Return(nil).Times(1)
 
 		err := reconcilingSCIMGroupsUsers(ctx, mockSCIMService, create, delete)
 		assert.NoError(t, err)

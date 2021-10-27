@@ -62,7 +62,9 @@ func (s *SCIMProvider) GetGroups(ctx context.Context) (*model.GroupsResult, erro
 		Items:     len(groups),
 		Resources: groups,
 	}
-	groupsResult.HashCode = hash.Get(groupsResult)
+	if len(groups) > 0 {
+		groupsResult.HashCode = hash.Get(groupsResult)
+	}
 
 	return groupsResult, nil
 }
@@ -91,7 +93,9 @@ func (s *SCIMProvider) CreateGroups(ctx context.Context, gr *model.GroupsResult)
 		Items:     len(groups),
 		Resources: groups,
 	}
-	ret.HashCode = hash.Get(ret)
+	if len(groups) > 0 {
+		ret.HashCode = hash.Get(ret)
+	}
 
 	return ret, nil
 }
@@ -136,7 +140,9 @@ func (s *SCIMProvider) GetUsers(ctx context.Context) (*model.UsersResult, error)
 		Items:     len(users),
 		Resources: users,
 	}
-	usersResult.HashCode = hash.Get(usersResult)
+	if len(users) > 0 {
+		usersResult.HashCode = hash.Get(usersResult)
+	}
 
 	return usersResult, nil
 }
@@ -177,7 +183,9 @@ func (s *SCIMProvider) CreateUsers(ctx context.Context, ur *model.UsersResult) (
 		Items:     len(users),
 		Resources: users,
 	}
-	ret.HashCode = hash.Get(ret)
+	if len(users) > 0 {
+		ret.HashCode = hash.Get(ret)
+	}
 
 	return ret, nil
 }
@@ -218,7 +226,9 @@ func (s *SCIMProvider) UpdateUsers(ctx context.Context, ur *model.UsersResult) (
 		Items:     len(users),
 		Resources: users,
 	}
-	ret.HashCode = hash.Get(ret)
+	if len(users) > 0 {
+		ret.HashCode = hash.Get(ret)
+	}
 
 	return ret, nil
 }
@@ -301,7 +311,9 @@ func (s *SCIMProvider) GetUsersAndGroupsUsers(ctx context.Context) (*model.Users
 	if err != nil {
 		return nil, nil, fmt.Errorf("scim: error getting users: %w", err)
 	}
-	usersResult.HashCode = hash.Get(usersResult)
+	if usersResult.Items > 0 {
+		usersResult.HashCode = hash.Get(usersResult)
+	}
 
 	groupsIDUsers := make(map[string][]model.User)
 	groupsData := make(map[string]model.Group)
@@ -350,7 +362,9 @@ func (s *SCIMProvider) GetUsersAndGroupsUsers(ctx context.Context) (*model.Users
 		Items:     len(groupsUsers),
 		Resources: groupsUsers,
 	}
-	groupsUsersResult.HashCode = hash.Get(groupsUsersResult)
+	if len(groupsUsers) > 0 {
+		groupsUsersResult.HashCode = hash.Get(groupsUsersResult)
+	}
 
 	return usersResult, groupsUsersResult, nil
 }
