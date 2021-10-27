@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func Test_NewSecretsManagerService(t *testing.T) {
+func TestNewSecretsManagerService(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
@@ -33,7 +33,7 @@ func Test_NewSecretsManagerService(t *testing.T) {
 	})
 }
 
-func Test_SecretsManager_GetSecretValue(t *testing.T) {
+func TestSecretsManager_GetSecretValue(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 

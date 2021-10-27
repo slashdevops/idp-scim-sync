@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func Test_NewSCIMProvider(t *testing.T) {
+func TestNewSCIMProvider(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
@@ -33,7 +33,7 @@ func Test_NewSCIMProvider(t *testing.T) {
 	})
 }
 
-func Test_SCIMProvider_GetGroups(t *testing.T) {
+func TestSCIMProvider_GetGroups(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
@@ -117,7 +117,7 @@ func Test_SCIMProvider_GetGroups(t *testing.T) {
 	// TODO: test with a list of groups passing filter
 }
 
-func Test_SCIMProvider_GetUsers(t *testing.T) {
+func TestSCIMProvider_GetUsers(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
@@ -206,7 +206,7 @@ func Test_SCIMProvider_GetUsers(t *testing.T) {
 	})
 }
 
-func Test_SCIMProvider_CreateGroups(t *testing.T) {
+func TestSCIMProvider_CreateGroups(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
@@ -339,7 +339,7 @@ func Test_SCIMProvider_CreateGroups(t *testing.T) {
 	})
 }
 
-func Test_SCIMProvider_CreateUsers(t *testing.T) {
+func TestSCIMProvider_CreateUsers(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 

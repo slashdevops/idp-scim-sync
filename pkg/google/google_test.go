@@ -9,7 +9,7 @@ import (
 	admin "google.golang.org/api/admin/directory/v1"
 )
 
-func Test_NewService(t *testing.T) {
+func TestNewService(t *testing.T) {
 	t.Run("Should return a new Service with mocked parameters", func(t *testing.T) {
 		ctx := context.TODO()
 		userEmail := "mock-email@mock-project.iam.gserviceaccount.com"
@@ -37,7 +37,7 @@ func Test_NewService(t *testing.T) {
 	})
 }
 
-func Test_NewDirectoryService(t *testing.T) {
+func TestNewDirectoryService(t *testing.T) {
 	t.Run("Should return a new Directory Service Client with mocked parameters", func(t *testing.T) {
 		ctx := context.TODO()
 		userEmail := "mock-email@mock-project.iam.gserviceaccount.com"

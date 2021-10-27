@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func Test_StateRepository_NewDiskRepository(t *testing.T) {
+func TestStateRepository_NewDiskRepository(t *testing.T) {
 	t.Run("Call with nil parameters", func(t *testing.T) {
 		repo, err := NewDiskRepository(nil)
 		assert.Error(t, err)
@@ -19,7 +19,7 @@ func Test_StateRepository_NewDiskRepository(t *testing.T) {
 	})
 }
 
-func Test_StateRepository_GetState(t *testing.T) {
+func TestStateRepository_GetState(t *testing.T) {
 	t.Run("Empty file", func(t *testing.T) {
 		tmpDir := os.TempDir()
 		defer os.Remove(tmpDir)
@@ -85,7 +85,7 @@ func Test_StateRepository_GetState(t *testing.T) {
 	})
 }
 
-func Test_StateRepository_SetState(t *testing.T) {
+func TestStateRepository_SetState(t *testing.T) {
 	t.Run("Empty file", func(t *testing.T) {
 		tmpDir := os.TempDir()
 

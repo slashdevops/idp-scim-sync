@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func Test_State_MarshalJSON(t *testing.T) {
+func TestState_MarshalJSON(t *testing.T) {
 	type fields struct {
 		LastSync  string
 		Resources StateResources

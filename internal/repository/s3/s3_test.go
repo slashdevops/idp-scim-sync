@@ -14,7 +14,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func Test_NewS3Repository(t *testing.T) {
+func TestNewS3Repository(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
@@ -52,7 +52,7 @@ func Test_NewS3Repository(t *testing.T) {
 	})
 }
 
-func Test_S3Repository_GetState(t *testing.T) {
+func TestS3Repository_GetState(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
@@ -130,7 +130,7 @@ func Test_S3Repository_GetState(t *testing.T) {
 	})
 }
 
-func Test_S3Repository_SetState(t *testing.T) {
+func TestS3Repository_SetState(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 

@@ -15,7 +15,7 @@ import (
 	admin "google.golang.org/api/admin/directory/v1"
 )
 
-func Test_NewGoogleIdentityProvider(t *testing.T) {
+func TestNewGoogleIdentityProvider(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
@@ -35,7 +35,7 @@ func Test_NewGoogleIdentityProvider(t *testing.T) {
 	})
 }
 
-func Test_GoogleProvider_GetGroups(t *testing.T) {
+func TestGoogleProvider_GetGroups(t *testing.T) {
 	type fields struct {
 		ds *mocks.MockGoogleProviderService
 	}
@@ -135,7 +135,7 @@ func Test_GoogleProvider_GetGroups(t *testing.T) {
 	}
 }
 
-func Test_GoogleProvider_GetUsers(t *testing.T) {
+func TestGoogleProvider_GetUsers(t *testing.T) {
 	type fields struct {
 		ds *mocks.MockGoogleProviderService
 	}
@@ -236,7 +236,7 @@ func Test_GoogleProvider_GetUsers(t *testing.T) {
 	}
 }
 
-func Test_GoogleProvider_GetGroupMembers(t *testing.T) {
+func TestGoogleProvider_GetGroupMembers(t *testing.T) {
 	type fields struct {
 		ds *mocks.MockGoogleProviderService
 	}
@@ -337,7 +337,7 @@ func Test_GoogleProvider_GetGroupMembers(t *testing.T) {
 	}
 }
 
-func Test_GoogleProvider_GetUsersFromGroupMembers(t *testing.T) {
+func TestGoogleProvider_GetUsersFromGroupMembers(t *testing.T) {
 	type fields struct {
 		ds *mocks.MockGoogleProviderService
 	}
@@ -455,7 +455,7 @@ func Test_GoogleProvider_GetUsersFromGroupMembers(t *testing.T) {
 	}
 }
 
-func Test_GoogleProvider_GetUsersAndGroupsUsers(t *testing.T) {
+func TestGoogleProvider_GetUsersAndGroupsUsers(t *testing.T) {
 	type fields struct {
 		ds *mocks.MockGoogleProviderService
 	}

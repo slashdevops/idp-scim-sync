@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func Test_UsersResult_MarshalJSON(t *testing.T) {
+func TestUsersResult_MarshalJSON(t *testing.T) {
 	type fields struct {
 		Items     int
 		Resources []User
@@ -87,7 +87,7 @@ func Test_UsersResult_MarshalJSON(t *testing.T) {
 	}
 }
 
-func Test_GroupsResult_MarshalJSON(t *testing.T) {
+func TestGroupsResult_MarshalJSON(t *testing.T) {
 	type fields struct {
 		Items     int
 		HashCode  string
@@ -158,7 +158,7 @@ func Test_GroupsResult_MarshalJSON(t *testing.T) {
 	}
 }
 
-func Test_GroupsUsersResult_MarshalJSON(t *testing.T) {
+func TestGroupsUsersResult_MarshalJSON(t *testing.T) {
 	type fields struct {
 		Items     int
 		HashCode  string

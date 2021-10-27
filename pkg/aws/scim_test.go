@@ -14,7 +14,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func Test_NewSCIMService(t *testing.T) {
+func TestNewSCIMService(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
@@ -50,7 +50,7 @@ func Test_NewSCIMService(t *testing.T) {
 	})
 }
 
-func Test_AWSSCIMProvider_request(t *testing.T) {
+func TestAWSSCIMProvider_request(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
