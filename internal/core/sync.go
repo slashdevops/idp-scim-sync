@@ -227,6 +227,10 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 		},
 	}
 
+	log.WithFields(log.Fields{
+		"groups_quantity": createdGroupsResult.Items,
+		"users_quantity":  createdUsersResult.Items,
+	}).Info("setting the new state")
 	if err := ss.repo.SetState(ss.ctx, newState); err != nil {
 		return fmt.Errorf("sync: error saving state: %w", err)
 	}
