@@ -4,8 +4,10 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 
 	gomock "github.com/golang/mock/gomock"
+	"github.com/slashdevops/idp-scim-sync/internal/hash"
 	"github.com/slashdevops/idp-scim-sync/internal/model"
 	mocks "github.com/slashdevops/idp-scim-sync/mocks/core"
 	"github.com/stretchr/testify/assert"
@@ -336,10 +338,6 @@ func TestSyncService_reconcilingSCIMGroups(t *testing.T) {
 		update := &model.GroupsResult{Items: 0, Resources: []model.Group{}}
 		delete := &model.GroupsResult{Items: 0, Resources: []model.Group{}}
 
-		mockSCIMService.EXPECT().CreateGroups(ctx, create).Return(create, nil).Times(1)
-		mockSCIMService.EXPECT().UpdateGroups(ctx, update).Return(update, nil).Times(1)
-		mockSCIMService.EXPECT().DeleteGroups(ctx, delete).Return(nil).Times(1)
-
 		grc, gru, err := reconcilingSCIMGroups(ctx, mockSCIMService, create, update, delete)
 		assert.NoError(t, err)
 		assert.NotNil(t, grc)
@@ -424,10 +422,6 @@ func TestSyncService_reconcilingSCIMUsers(t *testing.T) {
 		update := &model.UsersResult{Items: 0, Resources: []model.User{}}
 		delete := &model.UsersResult{Items: 0, Resources: []model.User{}}
 
-		mockSCIMService.EXPECT().CreateUsers(ctx, create).Return(create, nil).Times(1)
-		mockSCIMService.EXPECT().UpdateUsers(ctx, update).Return(update, nil).Times(1)
-		mockSCIMService.EXPECT().DeleteUsers(ctx, delete).Return(nil).Times(1)
-
 		urc, uru, err := reconcilingSCIMUsers(ctx, mockSCIMService, create, update, delete)
 		assert.NoError(t, err)
 		assert.NotNil(t, urc)
@@ -487,4 +481,110 @@ func TestSyncService_reconcilingSCIMGroupsUsers(t *testing.T) {
 		err := reconcilingSCIMGroupsUsers(ctx, mockSCIMService, create, delete)
 		assert.NoError(t, err)
 	})
+}
+
+func TestSyncService_SyncGroupsAndTheirMembers_FirstTimeSyncing_NoSCIMData(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	ctx := context.Background()
+
+	mockProviderService := mocks.NewMockIdentityProviderService(mockCtrl)
+	mockSCIMService := mocks.NewMockSCIMService(mockCtrl)
+	mockStateRepository := mocks.NewMockStateRepository(mockCtrl)
+	filters := []string{""}
+
+	svc, err := NewSyncService(ctx, mockProviderService, mockSCIMService, mockStateRepository, WithIdentityProviderGroupsFilter(filters))
+	assert.NoError(t, err)
+	assert.NotNil(t, svc)
+
+	// Create a mock for the provider service
+	idpGroups := &model.GroupsResult{
+		Items:     1,
+		Resources: []model.Group{{IPID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: "123456789"}},
+		HashCode:  "",
+	}
+	idpUsers := &model.UsersResult{
+		Items:     1,
+		Resources: []model.User{{IPID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, DisplayName: "user 1", Email: "user.1@mail.com"}},
+		HashCode:  "",
+	}
+	idpGroupsUsers := &model.GroupsUsersResult{
+		Items: 1,
+		Resources: []model.GroupUsers{
+			{
+				Items: 1,
+				Group: model.Group{
+					IPID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: "123456789",
+				},
+				Resources: []model.User{
+					{IPID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, DisplayName: "user 1", Email: "user.1@mail.com"},
+				},
+			},
+		},
+		HashCode: "",
+	}
+
+	// // called by getIdentityProviderData
+	mockProviderService.EXPECT().GetGroups(ctx, filters).Return(idpGroups, nil).Times(1)
+	mockProviderService.EXPECT().GetUsersAndGroupsUsers(ctx, idpGroups).Return(idpUsers, idpGroupsUsers, nil).Times(1)
+
+	// Create a mock for the state storage service
+	stateEmpty := &model.State{LastSync: ""}
+	mockStateRepository.EXPECT().GetState(ctx).Return(stateEmpty, nil).Times(1)
+
+	// Create a mock for the SCIM service
+	scimGroupsEmpty := &model.GroupsResult{}
+	scimUsersEmpty := &model.UsersResult{}
+	scimGroupsUsersEmpty := &model.GroupsUsersResult{}
+
+	// called by getSCIMData
+	mockSCIMService.EXPECT().GetGroups(ctx).Return(scimGroupsEmpty, nil).Times(1)
+	mockSCIMService.EXPECT().GetUsersAndGroupsUsers(ctx).Return(scimUsersEmpty, scimGroupsUsersEmpty, nil).Times(1)
+
+	// called by reconcilingSCIMGroups
+	scimGroups := &model.GroupsResult{
+		Items:     1,
+		Resources: []model.Group{{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: "123456789"}},
+		HashCode: hash.Get(
+			model.GroupsResult{
+				Items:     1,
+				Resources: []model.Group{{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: "123456789"}},
+			},
+		),
+	}
+	mockSCIMService.EXPECT().CreateGroups(ctx, idpGroups).Return(scimGroups, nil).Times(1)
+
+	// called by reconcilingSCIMUsers
+	scimUsers := &model.UsersResult{
+		Items:     1,
+		Resources: []model.User{{IPID: "1", SCIMID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, DisplayName: "user 1", Email: "user.1@mail.com"}},
+		HashCode: hash.Get(
+			model.UsersResult{
+				Items:     1,
+				Resources: []model.User{{IPID: "1", SCIMID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, DisplayName: "user 1", Email: "user.1@mail.com"}},
+			},
+		),
+	}
+	mockSCIMService.EXPECT().CreateUsers(ctx, idpUsers).Return(scimUsers, nil).Times(1)
+
+	// called by reconcilingSCIMGroupsUsers
+	mockSCIMService.EXPECT().CreateGroupsMembers(ctx, idpGroupsUsers).Return(nil).Times(1)
+
+	// called by setState
+	state := &model.State{
+		LastSync:      time.Now().Format(time.RFC3339),
+		SchemaVersion: "1.0.0",
+		CodeVersion:   "0.0.1",
+		HashCode:      "",
+		Resources: model.StateResources{
+			Groups:      *scimGroups,
+			Users:       *scimUsers,
+			GroupsUsers: *idpGroupsUsers,
+		},
+	}
+
+	mockStateRepository.EXPECT().SetState(ctx, state).Return(nil).Times(1)
+
+	err = svc.SyncGroupsAndTheirMembers()
+	assert.NoError(t, err)
 }
