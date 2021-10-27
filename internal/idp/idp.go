@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"github.com/slashdevops/idp-scim-sync/internal/hash"
 	"github.com/slashdevops/idp-scim-sync/internal/model"
 	admin "google.golang.org/api/admin/directory/v1"
@@ -42,7 +44,10 @@ func NewIdentityProvider(gps GoogleProviderService) (*IdentityProvider, error) {
 //
 // The filter parameter is a list of strings that can be used to filter the groups
 // according to the Identity Provider API.
+//
+// This method checks the names of the groups and avoid the second, third, etc repetion of the same group name.
 func (i *IdentityProvider) GetGroups(ctx context.Context, filter []string) (*model.GroupsResult, error) {
+	uniqueGroups := make(map[string]struct{})
 	syncGroups := make([]model.Group, 0)
 
 	pGroups, err := i.ps.ListGroups(ctx, filter)
@@ -51,19 +56,29 @@ func (i *IdentityProvider) GetGroups(ctx context.Context, filter []string) (*mod
 	}
 
 	for _, grp := range pGroups {
+		// this is a hack to avoid the second, third, etc repetion of the same group name
+		if _, ok := uniqueGroups[grp.Name]; !ok {
+			uniqueGroups[grp.Name] = struct{}{}
 
-		e := model.Group{
-			IPID:  grp.Id,
-			Name:  grp.Name,
-			Email: grp.Email,
+			e := model.Group{
+				IPID:  grp.Id,
+				Name:  grp.Name,
+				Email: grp.Email,
+			}
+			e.HashCode = hash.Get(e)
+
+			syncGroups = append(syncGroups, e)
+		} else {
+			log.WithFields(logrus.Fields{
+				"group_id":    grp.Id,
+				"group_name":  grp.Name,
+				"group_email": grp.Email,
+			}).Warning("idp: group already exists with the same name, this group will be avoided, please make your groups uniques by name!")
 		}
-		e.HashCode = hash.Get(e)
-
-		syncGroups = append(syncGroups, e)
 	}
 
 	syncResult := &model.GroupsResult{
-		Items:     len(pGroups),
+		Items:     len(syncGroups),
 		Resources: syncGroups,
 	}
 	if len(pGroups) > 0 {

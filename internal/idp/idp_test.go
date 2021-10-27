@@ -97,6 +97,38 @@ func TestGoogleProvider_GetGroups(t *testing.T) {
 			wantErr: false,
 		},
 		{
+			name: "Should keep only one of the repeated groups name",
+			prepare: func(f *fields) {
+				ctx := context.Background()
+				googleGroups := make([]*admin.Group, 0)
+				googleGroups = append(googleGroups, &admin.Group{Email: "group1@mail.com", Id: "1", Name: "group1"})
+				googleGroups = append(googleGroups, &admin.Group{Email: "group2@mail.com", Id: "2", Name: "group1"})
+
+				googleGroups = append(googleGroups, &admin.Group{Email: "group3@mail.com", Id: "3", Name: "group2"})
+				googleGroups = append(googleGroups, &admin.Group{Email: "group4@mail.com", Id: "4", Name: "group2"})
+
+				f.ds.EXPECT().ListGroups(ctx, gomock.Eq([]string{""})).Return(googleGroups, nil).Times(1)
+			},
+			args: args{ctx: context.Background(), filter: []string{""}},
+			want: &model.GroupsResult{
+				Items: 2,
+				Resources: []model.Group{
+					{IPID: "1", Name: "group1", Email: "group1@mail.com", HashCode: hash.Get(model.Group{IPID: "1", Name: "group1", Email: "group1@mail.com"})},
+					{IPID: "3", Name: "group2", Email: "group3@mail.com", HashCode: hash.Get(model.Group{IPID: "3", Name: "group2", Email: "group3@mail.com"})},
+				},
+				HashCode: hash.Get(
+					&model.GroupsResult{
+						Items: 2,
+						Resources: []model.Group{
+							{IPID: "1", Name: "group1", Email: "group1@mail.com", HashCode: hash.Get(model.Group{IPID: "1", Name: "group1", Email: "group1@mail.com"})},
+							{IPID: "3", Name: "group2", Email: "group3@mail.com", HashCode: hash.Get(model.Group{IPID: "3", Name: "group2", Email: "group3@mail.com"})},
+						},
+					},
+				),
+			},
+			wantErr: false,
+		},
+		{
 			name: "Should return error",
 			prepare: func(f *fields) {
 				ctx := context.Background()
