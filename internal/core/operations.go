@@ -1,6 +1,7 @@
 package core
 
 import (
+	"github.com/slashdevops/idp-scim-sync/internal/hash"
 	"github.com/slashdevops/idp-scim-sync/internal/model"
 )
 
@@ -236,6 +237,42 @@ func groupsUsersOperations(idp, state *model.GroupsUsersResult) (create *model.G
 	delete = &model.GroupsUsersResult{
 		Items:     len(toDelete),
 		Resources: toDelete,
+	}
+
+	return
+}
+
+func mergeGroupsResult(grs ...*model.GroupsResult) (merged model.GroupsResult) {
+	groups := make([]model.Group, 0)
+
+	for _, gr := range grs {
+		groups = append(groups, gr.Resources...)
+	}
+
+	merged = model.GroupsResult{
+		Items:     len(groups),
+		Resources: groups,
+	}
+	if len(merged.Resources) > 0 {
+		merged.HashCode = hash.Get(merged)
+	}
+
+	return
+}
+
+func mergeUsersResult(urs ...*model.UsersResult) (merged model.UsersResult) {
+	users := make([]model.User, 0)
+
+	for _, u := range urs {
+		users = append(users, u.Resources...)
+	}
+
+	merged = model.UsersResult{
+		Items:     len(users),
+		Resources: users,
+	}
+	if len(merged.Resources) > 0 {
+		merged.HashCode = hash.Get(merged)
 	}
 
 	return
