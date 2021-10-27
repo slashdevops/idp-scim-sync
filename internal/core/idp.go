@@ -15,5 +15,5 @@ type IdentityProviderService interface {
 	GetUsers(ctx context.Context, filter []string) (*model.UsersResult, error)
 	GetGroupMembers(ctx context.Context, id string) (*model.MembersResult, error)
 	GetUsersFromGroupMembers(ctx context.Context, mbr *model.MembersResult) (*model.UsersResult, error)
-	GetUsersAndGroupsUsers(ctx context.Context, groups *model.GroupsResult) (*model.UsersResult, *model.GroupsUsersResult, error)
+	GetUsersAndGroupsUsers(ctx context.Context, gr *model.GroupsResult) (*model.UsersResult, *model.GroupsUsersResult, error)
 }

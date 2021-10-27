@@ -66,8 +66,9 @@ func (i *IdentityProvider) GetGroups(ctx context.Context, filter []string) (*mod
 		Items:     len(pGroups),
 		Resources: syncGroups,
 	}
-
-	syncResult.HashCode = hash.Get(syncResult)
+	if len(pGroups) > 0 {
+		syncResult.HashCode = hash.Get(syncResult)
+	}
 
 	return syncResult, nil
 }
@@ -102,7 +103,9 @@ func (i *IdentityProvider) GetUsers(ctx context.Context, filter []string) (*mode
 		Items:     len(pUsers),
 		Resources: syncUsers,
 	}
-	uResult.HashCode = hash.Get(uResult)
+	if len(pUsers) > 0 {
+		uResult.HashCode = hash.Get(uResult)
+	}
 
 	return uResult, nil
 }
@@ -130,7 +133,9 @@ func (i *IdentityProvider) GetGroupMembers(ctx context.Context, id string) (*mod
 		Items:     len(pMembers),
 		Resources: syncMembers,
 	}
-	syncMembersResult.HashCode = hash.Get(syncMembersResult)
+	if len(pMembers) > 0 {
+		syncMembersResult.HashCode = hash.Get(syncMembersResult)
+	}
 
 	return syncMembersResult, nil
 }
@@ -161,20 +166,22 @@ func (i *IdentityProvider) GetUsersFromGroupMembers(ctx context.Context, mbr *mo
 		Items:     len(pUsers),
 		Resources: pUsers,
 	}
-	pUsersResult.HashCode = hash.Get(pUsersResult)
+	if len(pUsers) > 0 {
+		pUsersResult.HashCode = hash.Get(pUsersResult)
+	}
 
 	return pUsersResult, nil
 }
 
 // GetUsersAndGroupsUsers returnpUserss a model.UsersResult and model.GroupsUsersResult data structures with the users and groups
-func (i *IdentityProvider) GetUsersAndGroupsUsers(ctx context.Context, groups *model.GroupsResult) (*model.UsersResult, *model.GroupsUsersResult, error) {
+func (i *IdentityProvider) GetUsersAndGroupsUsers(ctx context.Context, gr *model.GroupsResult) (*model.UsersResult, *model.GroupsUsersResult, error) {
 	// make pUsers unique
 	userSet := make(map[string]struct{})
 
 	pUsers := make([]model.User, 0)
 	pGroupsUsers := make([]model.GroupUsers, 0)
 
-	for _, pGroup := range groups.Resources {
+	for _, pGroup := range gr.Resources {
 
 		pMembers, err := i.GetGroupMembers(ctx, pGroup.IPID)
 		if err != nil {
@@ -211,13 +218,17 @@ func (i *IdentityProvider) GetUsersAndGroupsUsers(ctx context.Context, groups *m
 		Items:     len(pUsers),
 		Resources: pUsers,
 	}
-	usersResult.HashCode = hash.Get(usersResult)
+	if len(pUsers) > 0 {
+		usersResult.HashCode = hash.Get(usersResult)
+	}
 
 	groupsUsersResult := &model.GroupsUsersResult{
 		Items:     len(pGroupsUsers),
 		Resources: pGroupsUsers,
 	}
-	groupsUsersResult.HashCode = hash.Get(groupsUsersResult)
+	if len(pGroupsUsers) > 0 {
+		groupsUsersResult.HashCode = hash.Get(groupsUsersResult)
+	}
 
 	return usersResult, groupsUsersResult, nil
 }

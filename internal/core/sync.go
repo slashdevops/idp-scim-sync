@@ -12,9 +12,9 @@ import (
 )
 
 var (
-	ErrProviderServiceNil = errors.New("sync: identity provider service cannot be nil")
-	ErrSCIMServiceNil     = errors.New("sync: SCIM service cannot be nil")
-	ErrRepositoryNil      = errors.New("sync: repository cannot be nil")
+	ErrIdentiyProviderServiceNil = errors.New("sync: identity provider service cannot be nil")
+	ErrSCIMServiceNil            = errors.New("sync: SCIM service cannot be nil")
+	ErrStateRepositoryNil        = errors.New("sync: state repository cannot be nil")
 )
 
 type SyncService struct {
@@ -30,13 +30,13 @@ type SyncService struct {
 // NewSyncService creates a new sync service.
 func NewSyncService(ctx context.Context, prov IdentityProviderService, scim SCIMService, repo StateRepository, opts ...SyncServiceOption) (*SyncService, error) {
 	if prov == nil {
-		return nil, ErrProviderServiceNil
+		return nil, ErrIdentiyProviderServiceNil
 	}
 	if scim == nil {
 		return nil, ErrSCIMServiceNil
 	}
 	if repo == nil {
-		return nil, ErrRepositoryNil
+		return nil, ErrStateRepositoryNil
 	}
 
 	ss := &SyncService{
@@ -211,15 +211,13 @@ func (ss *SyncService) SyncGroupsAndUsers() error {
 
 // getIdentityProviderData return the users, groups and groups and their users from Identity Provider Service
 func getIdentityProviderData(ctx context.Context, ip IdentityProviderService, groupFilter []string) (*model.UsersResult, *model.GroupsResult, *model.GroupsUsersResult, error) {
-	// retrive data from the identity provider
-	// always theses steps are necessary
 	groupsResult, err := ip.GetGroups(ctx, groupFilter)
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("sync: error getting groups from the identity provider: %w", err)
 	}
 
 	if groupsResult.Items == 0 {
-		log.Warnf("there are no groups in the identity provider that match with this filter: %s", groupFilter)
+		log.Warnf("sync: there are no groups in the identity provider that match with this filter: %s", groupFilter)
 	}
 
 	usersResult, groupsUsersResult, err := ip.GetUsersAndGroupsUsers(ctx, groupsResult)
@@ -228,11 +226,11 @@ func getIdentityProviderData(ctx context.Context, ip IdentityProviderService, gr
 	}
 
 	if groupsUsersResult.Items == 0 {
-		log.Warn("there are no group users in the identity provider")
+		log.Warn("sync: there are no group users in the identity provider")
 	}
 
 	if usersResult.Items == 0 {
-		log.Warn("there are no users in the identity provider")
+		log.Warn("sync: there are no users in the identity provider")
 	}
 
 	return usersResult, groupsResult, groupsUsersResult, nil

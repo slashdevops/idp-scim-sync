@@ -53,6 +53,21 @@ func Test_GoogleProvider_GetGroups(t *testing.T) {
 		wantErr bool
 	}{
 		{
+			name: "Should return empty GroupsResult and no error",
+			prepare: func(f *fields) {
+				ctx := context.Background()
+				googleGroups := make([]*admin.Group, 0)
+
+				f.ds.EXPECT().ListGroups(ctx, gomock.Eq([]string{""})).Return(googleGroups, nil).Times(1)
+			},
+			args: args{ctx: context.Background(), filter: []string{""}},
+			want: &model.GroupsResult{
+				Items:     0,
+				Resources: make([]model.Group, 0),
+			},
+			wantErr: false,
+		},
+		{
 			name: "Should return GroupsResult and no error",
 			prepare: func(f *fields) {
 				ctx := context.Background()
@@ -62,7 +77,7 @@ func Test_GoogleProvider_GetGroups(t *testing.T) {
 
 				f.ds.EXPECT().ListGroups(ctx, gomock.Eq([]string{""})).Return(googleGroups, nil).Times(1)
 			},
-			args: args{ctx: context.TODO(), filter: []string{""}},
+			args: args{ctx: context.Background(), filter: []string{""}},
 			want: &model.GroupsResult{
 				Items: 2,
 				Resources: []model.Group{
@@ -87,7 +102,7 @@ func Test_GoogleProvider_GetGroups(t *testing.T) {
 				ctx := context.Background()
 				f.ds.EXPECT().ListGroups(ctx, gomock.Eq([]string{""})).Return(nil, errors.New("test error")).Times(1)
 			},
-			args:    args{ctx: context.TODO(), filter: []string{""}},
+			args:    args{ctx: context.Background(), filter: []string{""}},
 			want:    nil,
 			wantErr: true,
 		},
@@ -138,6 +153,22 @@ func Test_GoogleProvider_GetUsers(t *testing.T) {
 		wantErr bool
 	}{
 		{
+			name: "Should return empty UsersResult and no error",
+			prepare: func(f *fields) {
+				ctx := context.Background()
+				googleUsers := make([]*admin.User, 0)
+
+				f.ds.EXPECT().ListUsers(ctx, gomock.Eq([]string{""})).Return(googleUsers, nil).Times(1)
+			},
+			args: args{ctx: context.Background(), filter: []string{""}},
+			want: &model.UsersResult{
+				Items:     0,
+				HashCode:  "",
+				Resources: make([]model.User, 0),
+			},
+			wantErr: false,
+		},
+		{
 			name: "Should return UsersResult and no error",
 			prepare: func(f *fields) {
 				ctx := context.Background()
@@ -147,7 +178,7 @@ func Test_GoogleProvider_GetUsers(t *testing.T) {
 
 				f.ds.EXPECT().ListUsers(ctx, gomock.Eq([]string{""})).Return(googleUsers, nil).Times(1)
 			},
-			args: args{ctx: context.TODO(), filter: []string{""}},
+			args: args{ctx: context.Background(), filter: []string{""}},
 			want: &model.UsersResult{
 				Items: 2,
 				Resources: []model.User{
@@ -172,7 +203,7 @@ func Test_GoogleProvider_GetUsers(t *testing.T) {
 				ctx := context.Background()
 				f.ds.EXPECT().ListUsers(ctx, gomock.Eq([]string{""})).Return(nil, errors.New("test error")).Times(1)
 			},
-			args:    args{ctx: context.TODO(), filter: []string{""}},
+			args:    args{ctx: context.Background(), filter: []string{""}},
 			want:    nil,
 			wantErr: true,
 		},
@@ -223,6 +254,22 @@ func Test_GoogleProvider_GetGroupMembers(t *testing.T) {
 		wantErr bool
 	}{
 		{
+			name: "Should return empty MembersResult and no error",
+			prepare: func(f *fields) {
+				ctx := context.Background()
+				googleGroupMembers := make([]*admin.Member, 0)
+
+				f.ds.EXPECT().ListGroupMembers(ctx, gomock.Eq("")).Return(googleGroupMembers, nil).Times(1)
+			},
+			args: args{ctx: context.Background(), id: ""},
+			want: &model.MembersResult{
+				Items:     0,
+				HashCode:  "",
+				Resources: make([]model.Member, 0),
+			},
+			wantErr: false,
+		},
+		{
 			name: "Should return MembersResult and no error",
 			prepare: func(f *fields) {
 				ctx := context.Background()
@@ -232,7 +279,7 @@ func Test_GoogleProvider_GetGroupMembers(t *testing.T) {
 
 				f.ds.EXPECT().ListGroupMembers(ctx, gomock.Eq("")).Return(googleGroupMembers, nil).Times(1)
 			},
-			args: args{ctx: context.TODO(), id: ""},
+			args: args{ctx: context.Background(), id: ""},
 			want: &model.MembersResult{
 				Items: 2,
 				Resources: []model.Member{
@@ -257,7 +304,7 @@ func Test_GoogleProvider_GetGroupMembers(t *testing.T) {
 				ctx := context.Background()
 				f.ds.EXPECT().ListGroupMembers(ctx, gomock.Eq("")).Return(nil, errors.New("test error")).Times(1)
 			},
-			args:    args{ctx: context.TODO(), id: ""},
+			args:    args{ctx: context.Background(), id: ""},
 			want:    nil,
 			wantErr: true,
 		},
@@ -308,6 +355,20 @@ func Test_GoogleProvider_GetUsersFromGroupMembers(t *testing.T) {
 		wantErr bool
 	}{
 		{
+			name:    "empty mbr argument",
+			prepare: func(f *fields) {},
+			args: args{
+				ctx: context.Background(),
+				mbr: &model.MembersResult{},
+			},
+			want: &model.UsersResult{
+				Items:     0,
+				HashCode:  "",
+				Resources: make([]model.User, 0),
+			},
+			wantErr: false,
+		},
+		{
 			name: "Should return UsersResult and no error",
 			prepare: func(f *fields) {
 				ctx := context.Background()
@@ -320,7 +381,7 @@ func Test_GoogleProvider_GetUsersFromGroupMembers(t *testing.T) {
 				)
 			},
 			args: args{
-				ctx: context.TODO(),
+				ctx: context.Background(),
 				mbr: &model.MembersResult{
 					Items: 2,
 					Resources: []model.Member{
@@ -354,7 +415,7 @@ func Test_GoogleProvider_GetUsersFromGroupMembers(t *testing.T) {
 				f.ds.EXPECT().GetUser(ctx, gomock.Eq("")).Return(nil, errors.New("test error")).Times(1)
 			},
 			args: args{
-				ctx: context.TODO(),
+				ctx: context.Background(),
 				mbr: &model.MembersResult{
 					Items: 0,
 					Resources: []model.Member{
@@ -413,6 +474,25 @@ func Test_GoogleProvider_GetUsersAndGroupsUsers(t *testing.T) {
 		wantErr         bool
 	}{
 		{
+			name:    "empty gr argument",
+			prepare: func(f *fields) {},
+			args: args{
+				ctx:    context.Background(),
+				groups: &model.GroupsResult{},
+			},
+			wantUsers: &model.UsersResult{
+				Items:     0,
+				HashCode:  "",
+				Resources: make([]model.User, 0),
+			},
+			wantGroupsUsers: &model.GroupsUsersResult{
+				Items:     0,
+				HashCode:  "",
+				Resources: make([]model.GroupUsers, 0),
+			},
+			wantErr: false,
+		},
+		{
 			name: "same user in two groups",
 			prepare: func(f *fields) {
 				ctx := context.Background()
@@ -428,7 +508,7 @@ func Test_GoogleProvider_GetUsersAndGroupsUsers(t *testing.T) {
 				)
 			},
 			args: args{
-				ctx: context.TODO(),
+				ctx: context.Background(),
 				groups: &model.GroupsResult{
 					Items: 2,
 					Resources: []model.Group{
@@ -493,11 +573,11 @@ func Test_GoogleProvider_GetUsersAndGroupsUsers(t *testing.T) {
 			}
 
 			if !reflect.DeepEqual(gotUsers, tt.wantUsers) {
-				t.Errorf("GoogleProvider.GetUsersAndGroupsUsers() -> Users = %s, want %s", utils.ToJSON(gotUsers), utils.ToJSON(tt.wantUsers))
+				t.Errorf("GoogleProvider.GetUsersAndGroupsUsers() -> got Users = %s, want %s", utils.ToJSON(gotUsers), utils.ToJSON(tt.wantUsers))
 			}
 
 			if !reflect.DeepEqual(gotGroupsUsers, tt.wantGroupsUsers) {
-				t.Errorf("GoogleProvider.GetUsersAndGroupsUsers() -> GroupsUsers = %s, want %s", utils.ToJSON(gotGroupsUsers), utils.ToJSON(tt.wantGroupsUsers))
+				t.Errorf("GoogleProvider.GetUsersAndGroupsUsers() -> got GroupsUsers = %s, want %s", utils.ToJSON(gotGroupsUsers), utils.ToJSON(tt.wantGroupsUsers))
 			}
 		})
 	}

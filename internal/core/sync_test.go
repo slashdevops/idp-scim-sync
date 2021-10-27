@@ -38,7 +38,7 @@ func Test_syncService_NewSyncService(t *testing.T) {
 
 		assert.Error(t, err)
 		assert.Nil(t, svc)
-		assert.Equal(t, err, ErrProviderServiceNil)
+		assert.Equal(t, err, ErrIdentiyProviderServiceNil)
 	})
 
 	t.Run("New Service without SCIMServoce, return context specific error", func(t *testing.T) {
@@ -59,7 +59,7 @@ func Test_syncService_NewSyncService(t *testing.T) {
 
 		assert.Error(t, err)
 		assert.Nil(t, svc)
-		assert.Equal(t, err, ErrRepositoryNil)
+		assert.Equal(t, err, ErrStateRepositoryNil)
 	})
 }
 
