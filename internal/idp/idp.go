@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 	"github.com/slashdevops/idp-scim-sync/internal/hash"
 	"github.com/slashdevops/idp-scim-sync/internal/model"
@@ -69,7 +68,7 @@ func (i *IdentityProvider) GetGroups(ctx context.Context, filter []string) (*mod
 
 			syncGroups = append(syncGroups, e)
 		} else {
-			log.WithFields(logrus.Fields{
+			log.WithFields(log.Fields{
 				"group_id":    grp.Id,
 				"group_name":  grp.Name,
 				"group_email": grp.Email,
