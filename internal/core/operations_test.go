@@ -868,7 +868,131 @@ func Test_mergeUsersResult(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if gotMerged := mergeUsersResult(tt.args.urs...); !reflect.DeepEqual(gotMerged, tt.wantMerged) {
-				t.Errorf("mergeUsersResult() = %v, want %v", gotMerged, tt.wantMerged)
+				t.Errorf("mergeUsersResult() = %s, want %s", utils.ToJSON(gotMerged), utils.ToJSON(tt.wantMerged))
+			}
+		})
+	}
+}
+
+func Test_mergeGroupsUsersResult(t *testing.T) {
+	type args struct {
+		gurs []*model.GroupsUsersResult
+	}
+	tests := []struct {
+		name       string
+		args       args
+		wantMerged model.GroupsUsersResult
+	}{
+		{
+			name: "merge empty",
+			args: args{
+				gurs: []*model.GroupsUsersResult{},
+			},
+			wantMerged: model.GroupsUsersResult{
+				Items:     0,
+				Resources: []model.GroupUsers{},
+				HashCode:  "",
+			},
+		},
+		{
+			name: "nil args",
+			args: args{
+				gurs: nil,
+			},
+			wantMerged: model.GroupsUsersResult{
+				Items:     0,
+				Resources: []model.GroupUsers{},
+				HashCode:  "",
+			},
+		},
+		{
+			name: "2 groups, three users",
+			args: args{
+				gurs: []*model.GroupsUsersResult{
+					{
+						Items: 1,
+						Resources: []model.GroupUsers{
+							{
+								Items: 1,
+								Group: model.Group{IPID: "1", SCIMID: "1", Name: "group 1", HashCode: "1234567890"},
+								Resources: []model.User{
+									{IPID: "1", SCIMID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@gmail.com", HashCode: "1234567890"},
+								},
+								HashCode: "123",
+							},
+						},
+						HashCode: "456",
+					},
+					{
+						Items: 2,
+						Resources: []model.GroupUsers{
+							{
+								Items: 2,
+								Group: model.Group{IPID: "2", SCIMID: "2", Name: "group 2", HashCode: "9876543210"},
+								Resources: []model.User{
+									{IPID: "2", SCIMID: "2", Name: model.Name{GivenName: "user", FamilyName: "2"}, Email: "user.2@gmail.com", HashCode: "0987654321"},
+									{IPID: "3", SCIMID: "3", Name: model.Name{GivenName: "user", FamilyName: "3"}, Email: "user.3@gmail.com", HashCode: "1234509876"},
+								},
+								HashCode: "321",
+							},
+						},
+						HashCode: "654",
+					},
+				},
+			},
+			wantMerged: model.GroupsUsersResult{
+				Items: 2,
+				Resources: []model.GroupUsers{
+					{
+						Items: 1,
+						Group: model.Group{IPID: "1", SCIMID: "1", Name: "group 1", HashCode: "1234567890"},
+						Resources: []model.User{
+							{IPID: "1", SCIMID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@gmail.com", HashCode: "1234567890"},
+						},
+						HashCode: "123",
+					},
+					{
+						Items: 2,
+						Group: model.Group{IPID: "2", SCIMID: "2", Name: "group 2", HashCode: "9876543210"},
+						Resources: []model.User{
+							{IPID: "2", SCIMID: "2", Name: model.Name{GivenName: "user", FamilyName: "2"}, Email: "user.2@gmail.com", HashCode: "0987654321"},
+							{IPID: "3", SCIMID: "3", Name: model.Name{GivenName: "user", FamilyName: "3"}, Email: "user.3@gmail.com", HashCode: "1234509876"},
+						},
+						HashCode: "321",
+					},
+				},
+				HashCode: hash.Get(
+					model.GroupsUsersResult{
+						Items: 2,
+						Resources: []model.GroupUsers{
+							{
+								Items: 1,
+								Group: model.Group{IPID: "1", SCIMID: "1", Name: "group 1", HashCode: "1234567890"},
+								Resources: []model.User{
+									{IPID: "1", SCIMID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@gmail.com", HashCode: "1234567890"},
+								},
+								HashCode: "123",
+							},
+							{
+								Items: 2,
+								Group: model.Group{IPID: "2", SCIMID: "2", Name: "group 2", HashCode: "9876543210"},
+								Resources: []model.User{
+									{IPID: "2", SCIMID: "2", Name: model.Name{GivenName: "user", FamilyName: "2"}, Email: "user.2@gmail.com", HashCode: "0987654321"},
+									{IPID: "3", SCIMID: "3", Name: model.Name{GivenName: "user", FamilyName: "3"}, Email: "user.3@gmail.com", HashCode: "1234509876"},
+								},
+								HashCode: "321",
+							},
+						},
+					},
+				),
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if gotMerged := mergeGroupsUsersResult(tt.args.gurs...); !reflect.DeepEqual(gotMerged, tt.wantMerged) {
+				t.Errorf("mergeGroupsUsersResult() = %s, want %s", utils.ToJSON(gotMerged), utils.ToJSON(tt.wantMerged))
 			}
 		})
 	}

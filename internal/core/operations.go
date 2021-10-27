@@ -277,3 +277,21 @@ func mergeUsersResult(urs ...*model.UsersResult) (merged model.UsersResult) {
 
 	return
 }
+
+func mergeGroupsUsersResult(gurs ...*model.GroupsUsersResult) (merged model.GroupsUsersResult) {
+	groupsUsers := make([]model.GroupUsers, 0)
+
+	for _, gu := range gurs {
+		groupsUsers = append(groupsUsers, gu.Resources...)
+	}
+
+	merged = model.GroupsUsersResult{
+		Items:     len(groupsUsers),
+		Resources: groupsUsers,
+	}
+	if len(merged.Resources) > 0 {
+		merged.HashCode = hash.Get(merged)
+	}
+
+	return
+}

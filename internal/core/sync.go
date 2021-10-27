@@ -89,6 +89,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 	// after the creation of the element in SCIM
 	var createdGroupsResult model.GroupsResult
 	var createdUsersResult model.UsersResult
+	var createdGroupsUsersResult model.GroupsUsersResult
 
 	// first time syncing
 	if state.LastSync == "" {
@@ -140,6 +141,8 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 			"scim_quantity": scimGroupsUsersResult.Items,
 		}).Info("starting reconciling groups members")
 		ugCreate, _, ugDelete := groupsUsersOperations(idpGroupsUsersResult, scimGroupsUsersResult)
+
+		createdGroupsUsersResult = *ugCreate
 
 		if err := reconcilingSCIMGroupsUsers(ss.ctx, ss.scim, ugCreate, ugDelete); err != nil {
 			return fmt.Errorf("sync: error reconciling groups users: %w", err)
@@ -202,6 +205,8 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 			}).Info("starting reconciling groups members")
 			ugCreate, _, ugDelete := groupsUsersOperations(idpGroupsUsersResult, &state.Resources.GroupsUsers)
 
+			createdGroupsUsersResult = *ugCreate
+
 			if err := reconcilingSCIMGroupsUsers(ss.ctx, ss.scim, ugCreate, ugDelete); err != nil {
 				return fmt.Errorf("sync: error reconciling groups users: %w", err)
 			}
@@ -218,7 +223,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 		Resources: model.StateResources{
 			Groups:      createdGroupsResult,
 			Users:       createdUsersResult,
-			GroupsUsers: *idpGroupsUsersResult,
+			GroupsUsers: createdGroupsUsersResult,
 		},
 	}
 
