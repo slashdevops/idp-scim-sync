@@ -25,6 +25,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/secretsmanager"
 	"github.com/pkg/errors"
 	"github.com/slashdevops/idp-scim-sync/internal/config"
+	"github.com/slashdevops/idp-scim-sync/internal/version"
 	"github.com/slashdevops/idp-scim-sync/pkg/aws"
 	"github.com/spf13/cobra"
 
@@ -37,8 +38,9 @@ var cfg config.Config
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "ssolambda",
-	Short: "A brief description of your application",
+	Use:     "ssolambda",
+	Version: version.Version,
+	Short:   "A brief description of your application",
 	Long: `A longer description that spans multiple lines and likely contains
 examples and usage of using your application. For example:
 

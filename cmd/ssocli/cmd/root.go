@@ -19,6 +19,7 @@ import (
 	"time"
 
 	"github.com/slashdevops/idp-scim-sync/internal/config"
+	"github.com/slashdevops/idp-scim-sync/internal/version"
 	"github.com/spf13/cobra"
 
 	log "github.com/sirupsen/logrus"
@@ -32,8 +33,9 @@ var (
 // commands root
 var (
 	rootCmd = &cobra.Command{
-		Use:   "ssocli",
-		Short: "Check your Google Workspace Groups/Users and AWS Single Sing-On Groups/Users",
+		Use:     "ssocli",
+		Version: version.Version,
+		Short:   "Check your Google Workspace Groups/Users and AWS Single Sing-On Groups/Users",
 		Long: `This is a Commad Line Interfaced (cli) to help you validate and checks your source and target Single Sing-On endpoints.
 
 Keep your AWS Single Sign-On (SSO) users synchronized with your Google Workspace Groups

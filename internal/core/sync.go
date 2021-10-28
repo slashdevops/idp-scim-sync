@@ -9,6 +9,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"github.com/slashdevops/idp-scim-sync/internal/model"
+	"github.com/slashdevops/idp-scim-sync/internal/version"
 )
 
 const (
@@ -222,7 +223,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 	// we can update the state with the identity provider data
 	newState := &model.State{
 		SchemaVersion: SchemaVersion,
-		CodeVersion:   "0.0.1",
+		CodeVersion:   version.Version,
 		LastSync:      time.Now().Format(time.RFC3339),
 		Resources: model.StateResources{
 			Groups:      createdGroupsResult,

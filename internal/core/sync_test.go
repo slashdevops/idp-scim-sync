@@ -9,6 +9,7 @@ import (
 	gomock "github.com/golang/mock/gomock"
 	"github.com/slashdevops/idp-scim-sync/internal/hash"
 	"github.com/slashdevops/idp-scim-sync/internal/model"
+	"github.com/slashdevops/idp-scim-sync/internal/version"
 	mocks "github.com/slashdevops/idp-scim-sync/mocks/core"
 	"github.com/stretchr/testify/assert"
 )
@@ -573,8 +574,8 @@ func TestSyncService_SyncGroupsAndTheirMembers_FirstTimeSyncing_NoSCIMData(t *te
 	// called by setState
 	state := &model.State{
 		LastSync:      time.Now().Format(time.RFC3339),
-		SchemaVersion: "1.0.0",
-		CodeVersion:   "0.0.1",
+		SchemaVersion: SchemaVersion,
+		CodeVersion:   version.Version,
 		HashCode:      "",
 		Resources: model.StateResources{
 			Groups:      *scimGroups,
