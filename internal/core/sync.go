@@ -11,6 +11,10 @@ import (
 	"github.com/slashdevops/idp-scim-sync/internal/model"
 )
 
+const (
+	SchemaVersion = "1.0.0"
+)
+
 var (
 	ErrIdentiyProviderServiceNil = errors.New("sync: identity provider service cannot be nil")
 	ErrSCIMServiceNil            = errors.New("sync: SCIM service cannot be nil")
@@ -217,7 +221,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 	// after be sure all the SCIM side is aligned with the Identity Provider side
 	// we can update the state with the identity provider data
 	newState := &model.State{
-		SchemaVersion: "1.0.0",
+		SchemaVersion: SchemaVersion,
 		CodeVersion:   "0.0.1",
 		LastSync:      time.Now().Format(time.RFC3339),
 		Resources: model.StateResources{
