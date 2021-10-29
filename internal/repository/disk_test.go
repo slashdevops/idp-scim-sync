@@ -23,7 +23,7 @@ func TestStateRepository_GetState(t *testing.T) {
 		tmpDir := os.TempDir()
 		defer os.Remove(tmpDir)
 
-		stateFile, err := ioutil.TempFile(tmpDir, StateFileName)
+		stateFile, err := ioutil.TempFile(tmpDir, stateFileName)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -52,7 +52,7 @@ func TestStateRepository_GetState(t *testing.T) {
 	})
 
 	t.Run("Golden files", func(t *testing.T) {
-		stateFile, err := os.OpenFile("testdata/"+StateFileName, os.O_RDWR, 0644)
+		stateFile, err := os.OpenFile("testdata/"+stateFileName, os.O_RDWR, 0644)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -88,7 +88,7 @@ func TestStateRepository_SetState(t *testing.T) {
 	t.Run("Empty file", func(t *testing.T) {
 		tmpDir := os.TempDir()
 
-		stateFile, err := ioutil.TempFile(tmpDir, StateFileName)
+		stateFile, err := ioutil.TempFile(tmpDir, stateFileName)
 		if err != nil {
 			t.Fatal(err)
 		}

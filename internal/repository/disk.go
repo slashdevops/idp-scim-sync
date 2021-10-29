@@ -16,6 +16,10 @@ import (
 
 // consume io.ReadWriter
 
+const (
+	stateFileName = "state.json"
+)
+
 var ErrStateFileNil = errors.New("disk: state file is nil")
 
 type DiskRepository struct {
