@@ -15,7 +15,7 @@ limitations under the License.
 */
 package main
 
-import "github.com/slashdevops/idp-scim-sync/cmd/ssolambda/cmd"
+import "github.com/slashdevops/idp-scim-sync/cmd/idpscim/cmd"
 
 func main() {
 	cmd.Execute()

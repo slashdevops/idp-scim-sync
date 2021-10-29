@@ -15,7 +15,7 @@ limitations under the License.
 */
 package main
 
-import "github.com/slashdevops/idp-scim-sync/cmd/ssocli/cmd"
+import "github.com/slashdevops/idp-scim-sync/cmd/idpscimcli/cmd"
 
 func main() {
 	cmd.Execute()

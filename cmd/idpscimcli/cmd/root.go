@@ -31,19 +31,14 @@ var (
 )
 
 // commands root
-var (
-	rootCmd = &cobra.Command{
-		Use:     "ssocli",
-		Version: version.Version,
-		Short:   "Check your Google Workspace Groups/Users and AWS Single Sing-On Groups/Users",
-		Long: `This is a Commad Line Interfaced (cli) to help you validate and checks your source and target Single Sing-On endpoints.
-
-Keep your AWS Single Sign-On (SSO) users synchronized with your Google Workspace Groups
-Sync your Google Workspace Groups and Users to AWS Single Sing-On using
-AWS SSO SCIM API (https://docs.aws.amazon.com/singlesignon/latest/developerguide/what-is-scim.html).`,
-		// Run: func(cmd *cobra.Command, args []string) {},
-	}
-)
+var rootCmd = &cobra.Command{
+	Use:     "idpscimcli",
+	Version: version.Version,
+	Short:   "Check your  AWS Single Sing-On (SSO) / Google Workspace Groups/Users",
+	Long: `
+This is a Command-Line Interfaced (CLI) to help you validate and check your source and target Single Sing-On endpoints.
+Check your AWS Single Sign-On (SSO) / Google Workspace Groups users and groups and validate your filters over Google Worspace users and groups.`,
+}
 
 func Execute() {
 	cobra.CheckErr(rootCmd.Execute())
