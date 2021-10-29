@@ -32,9 +32,9 @@ func ToYAML(stc interface{}) []byte {
 		return []byte("")
 	}
 
-	JSON, err := yaml.Marshal(stc)
+	YAML, err := yaml.Marshal(stc)
 	if err != nil {
 		log.Fatalf(err.Error())
 	}
-	return JSON
+	return YAML
 }

@@ -45,7 +45,7 @@ func Execute() {
 }
 
 func init() {
-	cfg = config.NewConfig()
+	cfg = config.New()
 
 	cobra.OnInitialize(initConfig)
 
