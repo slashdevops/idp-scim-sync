@@ -1,4 +1,4 @@
-package disk
+package repository
 
 import (
 	"context"
@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	"github.com/slashdevops/idp-scim-sync/internal/model"
-	"github.com/slashdevops/idp-scim-sync/internal/repository"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -24,7 +23,7 @@ func TestStateRepository_GetState(t *testing.T) {
 		tmpDir := os.TempDir()
 		defer os.Remove(tmpDir)
 
-		stateFile, err := ioutil.TempFile(tmpDir, repository.StateFileName)
+		stateFile, err := ioutil.TempFile(tmpDir, StateFileName)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -53,7 +52,7 @@ func TestStateRepository_GetState(t *testing.T) {
 	})
 
 	t.Run("Golden files", func(t *testing.T) {
-		stateFile, err := os.OpenFile("testdata/"+repository.StateFileName, os.O_RDWR, 0644)
+		stateFile, err := os.OpenFile("testdata/"+StateFileName, os.O_RDWR, 0644)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -89,7 +88,7 @@ func TestStateRepository_SetState(t *testing.T) {
 	t.Run("Empty file", func(t *testing.T) {
 		tmpDir := os.TempDir()
 
-		stateFile, err := ioutil.TempFile(tmpDir, repository.StateFileName)
+		stateFile, err := ioutil.TempFile(tmpDir, StateFileName)
 		if err != nil {
 			t.Fatal(err)
 		}
