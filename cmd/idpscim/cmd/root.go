@@ -71,20 +71,45 @@ func init() {
 	rootCmd.PersistentFlags().StringVarP(&cfg.SCIMEndpoint, "aws-scim-endpoint", "e", "", "AWS SSO SCIM API Endpoint")
 	rootCmd.MarkPersistentFlagRequired("aws-scim-endpoint")
 
-	rootCmd.PersistentFlags().StringVarP(&cfg.ServiceAccountFile, "gws-service-account-file", "s", config.DefaultServiceAccountFile, "path to Google Workspace service account file")
+	rootCmd.PersistentFlags().StringVarP(&cfg.GWSServiceAccountFile, "gws-service-account-file", "s", config.DefaultGWSServiceAccountFile, "path to Google Workspace service account file")
 	rootCmd.MarkPersistentFlagRequired("gws-service-account-file")
 
-	rootCmd.PersistentFlags().StringVarP(&cfg.UserEmail, "gws-user-email", "u", "", "Google Workspace user email with allowed access to the Google Workspace Service Account")
+	rootCmd.PersistentFlags().StringVarP(&cfg.GWSUserEmail, "gws-user-email", "u", "", "Google Workspace user email with allowed access to the Google Workspace Service Account")
 	rootCmd.MarkPersistentFlagRequired("gws-user-email")
 }
 
 // initConfig reads in config file and ENV variables if set.
 func initConfig() {
-	viper.AutomaticEnv() // read in environment variables that match
+	viper.SetEnvPrefix("idpscim") // allow to read in from environment
+	viper.AutomaticEnv()          // read in environment variables that match
+
+	envVars := []string{
+		"gws_user_email",
+		"gws_service_account_file",
+		"scim_access_token",
+		"scim_endpoint",
+		"log_level",
+		"log_format",
+		"sync_method",
+		"gws_service_account_file_secret_name",
+		"gws_user_email_secret_name",
+		"scim_endpoint_secret_name",
+		"scim_access_token_secret_name",
+	}
+
+	for _, e := range envVars {
+		if err := viper.BindEnv(e); err != nil {
+			log.Fatalf(errors.Wrap(err, "cannot bind environment variable").Error())
+		}
+	}
 
 	// If a config file is found, read it in.
 	if err := viper.ReadInConfig(); err == nil {
-		fmt.Fprintln(os.Stderr, "Using config file:", viper.ConfigFileUsed())
+		fmt.Fprintln(os.Stderr, "using config file:", viper.ConfigFileUsed())
+	}
+
+	if err := viper.Unmarshal(&cfg); err != nil {
+		log.Fatalf(errors.Wrap(err, "cannot unmarshal config").Error())
 	}
 
 	switch cfg.LogFormat {
@@ -93,7 +118,8 @@ func initConfig() {
 	case "text":
 		log.SetFormatter(&log.TextFormatter{})
 	default:
-		log.Fatal("Unsupported log format")
+		log.Warnf("unknown log format: %s, using text", cfg.LogFormat)
+		log.SetFormatter(&log.TextFormatter{})
 	}
 
 	if cfg.Debug {
@@ -106,12 +132,12 @@ func initConfig() {
 	}
 
 	if cfg.IsLambda {
-		configLambda()
+		getSecrets()
 	}
 }
 
-func configLambda() {
-	awsconf, err := awsconf.LoadDefaultConfig(context.TODO())
+func getSecrets() {
+	awsconf, err := awsconf.LoadDefaultConfig(context.Background())
 	if err != nil {
 		log.Fatalf(errors.Wrap(err, "cannot load aws config").Error())
 	}
@@ -120,28 +146,28 @@ func configLambda() {
 
 	secrets, err := aws.NewSecretsManagerService(svc)
 	if err != nil {
-		log.Fatalf(errors.Wrap(err, "cannot create secrets manager service").Error())
+		log.Fatalf(errors.Wrap(err, "cannot create aws secrets manager service").Error())
 	}
 
-	unwrap, err := secrets.GetSecretValue(context.TODO(), "SSOLambdaGoogleUserEmail")
+	unwrap, err := secrets.GetSecretValue(context.Background(), cfg.GWSUserEmailSecretName)
 	if err != nil {
 		log.Fatalf(errors.Wrap(err, "cannot get secretmanager value").Error())
 	}
-	cfg.UserEmail = unwrap
+	cfg.GWSUserEmail = unwrap
 
-	unwrap, err = secrets.GetSecretValue(context.TODO(), "SSOLambdaGoogleCredentialsFile")
+	unwrap, err = secrets.GetSecretValue(context.Background(), cfg.GWSServiceAccountFileSecretName)
 	if err != nil {
 		log.Fatalf(errors.Wrap(err, "cannot get secretmanager value").Error())
 	}
-	cfg.ServiceAccountFile = unwrap
+	cfg.GWSServiceAccountFile = unwrap
 
-	unwrap, err = secrets.GetSecretValue(context.TODO(), "SCIMAccessToken")
+	unwrap, err = secrets.GetSecretValue(context.Background(), cfg.SCIMAccessTokenSecretName)
 	if err != nil {
 		log.Fatalf(errors.Wrap(err, "cannot get secretmanager value").Error())
 	}
 	cfg.SCIMAccessToken = unwrap
 
-	unwrap, err = secrets.GetSecretValue(context.TODO(), "SCIMEndpoint")
+	unwrap, err = secrets.GetSecretValue(context.Background(), cfg.SCIMEndpointSecretName)
 	if err != nil {
 		log.Fatalf(errors.Wrap(err, "cannot get secretmanager value").Error())
 	}

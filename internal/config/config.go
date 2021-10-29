@@ -14,14 +14,20 @@ type Config struct {
 	LogLevel  string `mapstructure:"log_level"`
 	LogFormat string `mapstructure:"log_format"`
 
-	ServiceAccountFile string `mapstructure:"service_account_file"`
-	UserEmail          string `mapstructure:"user_email"`
+	GWSServiceAccountFile string `mapstructure:"gws_service_account_file"`
+	GWSUserEmail          string `mapstructure:"gws_user_email"`
 
 	SCIMEndpoint    string `mapstructure:"scim_endpoint"`
 	SCIMAccessToken string `mapstructure:"scim_access_token"`
 
 	// SyncMethod allow to defined the sync method used to get the user and groups from Google Workspace
 	SyncMethod string `mapstructure:"sync_method"`
+
+	GWSServiceAccountFileSecretName string `mapstructure:"gws_service_account_file_secret_name"`
+	GWSUserEmailSecretName          string `mapstructure:"gws_user_email_secret_name"`
+
+	SCIMEndpointSecretName    string `mapstructure:"scim_endpoint_secret_name"`
+	SCIMAccessTokenSecretName string `mapstructure:"scim_access_token_secret_name"`
 }
 
 const (
@@ -40,21 +46,32 @@ const (
 	DefaultDebug = false
 
 	// DefaultGoogleCredentials is the default credentials path
-	DefaultServiceAccountFile = "credentials.json"
+	DefaultGWSServiceAccountFile = "credentials.json"
 
 	// DefaultSyncMethod is the default sync method to use.
 	DefaultSyncMethod = "groups"
+
+	//
+	DefaultGWSServiceAccountFileSecretName = "IDPSCIM_GWSServiceAccountFile"
+	DefaultGWSUserEmailSecretName          = "IDPSCIM_GWSUserEmail"
+
+	DefaultSCIMEndpointSecretName    = "IDPSCIM_SCIMEndpoint"
+	DefaultSCIMAccessTokenSecretName = "IDPSCIM_SCIMAccessToken"
 )
 
 // New returns a new Config
 func New() Config {
 	return Config{
-		IsLambda:           DefaultIsLambda,
-		Debug:              DefaultDebug,
-		LogLevel:           DefaultLogLevel,
-		LogFormat:          DefaultLogFormat,
-		ServiceAccountFile: DefaultServiceAccountFile,
-		SyncMethod:         DefaultSyncMethod,
+		IsLambda:                        DefaultIsLambda,
+		Debug:                           DefaultDebug,
+		LogLevel:                        DefaultLogLevel,
+		LogFormat:                       DefaultLogFormat,
+		GWSServiceAccountFile:           DefaultGWSServiceAccountFile,
+		SyncMethod:                      DefaultSyncMethod,
+		GWSServiceAccountFileSecretName: DefaultGWSServiceAccountFileSecretName,
+		GWSUserEmailSecretName:          DefaultGWSUserEmailSecretName,
+		SCIMEndpointSecretName:          DefaultSCIMEndpointSecretName,
+		SCIMAccessTokenSecretName:       DefaultSCIMAccessTokenSecretName,
 	}
 }
 

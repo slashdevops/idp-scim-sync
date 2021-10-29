@@ -17,15 +17,20 @@ func TestNew(t *testing.T) {
 	assert.NotNil(DefaultLogLevel)
 	assert.NotNil(DefaultLogFormat)
 	assert.NotNil(DefaultDebug)
-	assert.NotNil(DefaultServiceAccountFile)
+	assert.NotNil(DefaultGWSServiceAccountFile)
 	assert.NotNil(DefaultSyncMethod)
 
 	assert.Equal(cfg.IsLambda, false)
 	assert.Equal(cfg.Debug, DefaultDebug)
 	assert.Equal(cfg.LogLevel, DefaultLogLevel)
 	assert.Equal(cfg.LogFormat, DefaultLogFormat)
-	assert.Equal(cfg.ServiceAccountFile, DefaultServiceAccountFile)
+	assert.Equal(cfg.GWSServiceAccountFile, DefaultGWSServiceAccountFile)
 	assert.Equal(cfg.SyncMethod, "groups")
+
+	assert.Equal(cfg.GWSServiceAccountFileSecretName, DefaultGWSServiceAccountFileSecretName)
+	assert.Equal(cfg.GWSUserEmailSecretName, DefaultGWSUserEmailSecretName)
+	assert.Equal(cfg.SCIMEndpointSecretName, DefaultSCIMEndpointSecretName)
+	assert.Equal(cfg.SCIMAccessTokenSecretName, DefaultSCIMAccessTokenSecretName)
 }
 
 func TestConfig_toJSON(t *testing.T) {
@@ -42,11 +47,15 @@ func TestConfig_toJSON(t *testing.T) {
   "Debug": false,
   "LogLevel": "info",
   "LogFormat": "text",
-  "ServiceAccountFile": "credentials.json",
-  "UserEmail": "",
+  "GWSServiceAccountFile": "credentials.json",
+  "GWSUserEmail": "",
   "SCIMEndpoint": "",
   "SCIMAccessToken": "",
-  "SyncMethod": "groups"
+  "SyncMethod": "groups",
+  "GWSServiceAccountFileSecretName": "IDPSCIM_GWSServiceAccountFile",
+  "GWSUserEmailSecretName": "IDPSCIM_GWSUserEmail",
+  "SCIMEndpointSecretName": "IDPSCIM_SCIMEndpoint",
+  "SCIMAccessTokenSecretName": "IDPSCIM_SCIMAccessToken"
 }`),
 		},
 	}
@@ -72,11 +81,15 @@ func TestConfig_toYAML(t *testing.T) {
 debug: false
 loglevel: info
 logformat: text
-serviceaccountfile: credentials.json
-useremail: ""
+gwsserviceaccountfile: credentials.json
+gwsuseremail: ""
 scimendpoint: ""
 scimaccesstoken: ""
 syncmethod: groups
+gwsserviceaccountfilesecretname: IDPSCIM_GWSServiceAccountFile
+gwsuseremailsecretname: IDPSCIM_GWSUserEmail
+scimendpointsecretname: IDPSCIM_SCIMEndpoint
+scimaccesstokensecretname: IDPSCIM_SCIMAccessToken
 `),
 		},
 	}

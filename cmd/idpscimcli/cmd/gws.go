@@ -79,10 +79,10 @@ func init() {
 	gwsCmd.AddCommand(gwsGroupsCmd)
 	gwsCmd.AddCommand(gwsUsersCmd)
 
-	gwsCmd.PersistentFlags().StringVarP(&cfg.ServiceAccountFile, "gws-service-account-file", "s", config.DefaultServiceAccountFile, "path to Google Workspace service account file")
+	gwsCmd.PersistentFlags().StringVarP(&cfg.GWSServiceAccountFile, "gws-service-account-file", "s", config.DefaultGWSServiceAccountFile, "path to Google Workspace service account file")
 	gwsCmd.MarkPersistentFlagRequired("gws-service-account-file")
 
-	gwsCmd.PersistentFlags().StringVarP(&cfg.UserEmail, "gws-user-email", "u", "", "Google Workspace user email with allowed access to the Google Workspace Service Account")
+	gwsCmd.PersistentFlags().StringVarP(&cfg.GWSUserEmail, "gws-user-email", "u", "", "Google Workspace user email with allowed access to the Google Workspace service account")
 	gwsCmd.MarkPersistentFlagRequired("gws-user-email")
 
 	// groups command
@@ -95,9 +95,9 @@ func init() {
 }
 
 func getGWSDirectoryService(ctx context.Context) *google.DirectoryService {
-	gCreds, err := ioutil.ReadFile(cfg.ServiceAccountFile)
+	gCreds, err := ioutil.ReadFile(cfg.GWSServiceAccountFile)
 	if err != nil {
-		log.Fatalf("Error reading the credentials: %s", err)
+		log.Fatalf("error reading the credentials: %s", err)
 	}
 
 	gScopes := []string{
@@ -106,14 +106,14 @@ func getGWSDirectoryService(ctx context.Context) *google.DirectoryService {
 		"https://www.googleapis.com/auth/admin.directory.user.readonly",
 	}
 
-	gService, err := google.NewService(ctx, cfg.UserEmail, gCreds, gScopes...)
+	gService, err := google.NewService(ctx, cfg.GWSUserEmail, gCreds, gScopes...)
 	if err != nil {
-		log.Fatalf("Error creating service: %s", err)
+		log.Fatalf("error creating service: %s", err)
 	}
 
 	gDirService, err := google.NewDirectoryService(gService)
 	if err != nil {
-		log.Fatalf("Error creating directory service: %s", err)
+		log.Fatalf("error creating directory service: %s", err)
 	}
 
 	return gDirService
@@ -127,7 +127,7 @@ func execGWSGroupsList(cmd *cobra.Command, args []string) error {
 
 	gGroups, err := gDirService.ListGroups(ctx, groupsQuery)
 	if err != nil {
-		log.Errorf("Error listing groups: %s", err)
+		log.Errorf("error listing groups: %s", err)
 		return err
 	}
 	log.Infof("%d groups found", len(gGroups))
@@ -150,7 +150,7 @@ func execGWSUsersList(cmd *cobra.Command, args []string) error {
 
 	gUsers, err := gDirService.ListUsers(ctx, usersQuery)
 	if err != nil {
-		log.Errorf("Error listing users: %s", err)
+		log.Errorf("error listing users: %s", err)
 		return err
 	}
 	log.Infof("%d users found", len(gUsers))
