@@ -87,11 +87,11 @@ func init() {
 
 	// groups command
 	gwsGroupsCmd.AddCommand(gwsGroupsListCmd)
-	gwsGroupsListCmd.Flags().StringSliceVarP(&groupsQuery, "query", "q", []string{""}, "Google Workspace Groups query parameter, example: --query 'name:Admin* email:admin*' --query 'name:Power* email:power*', see: https://developers.google.com/admin-sdk/directory/v1/guides/search-groups")
+	gwsGroupsListCmd.Flags().StringSliceVarP(&groupsQuery, "query-groups", "q", []string{""}, "Google Workspace Groups query parameter, example: --query-groups 'name:Admin* email:admin*' --query-groups 'name:Power* email:power*', see: https://developers.google.com/admin-sdk/directory/v1/guides/search-groups")
 
 	// users command
 	gwsUsersCmd.AddCommand(gwsUsersListCmd)
-	gwsUsersListCmd.Flags().StringSliceVarP(&usersQuery, "query", "q", []string{""}, "Google Workspace Users query parameter, example: --query 'name:Admin* email:admin*' --query 'name:Power* email:power*', see: https://developers.google.com/admin-sdk/directory/v1/guides/search-users")
+	gwsUsersListCmd.Flags().StringSliceVarP(&usersQuery, "query-users", "r", []string{""}, "Google Workspace Users query parameter, example: --query-users 'name:Admin* email:admin*' --query-users 'name:Power* email:power*', see: https://developers.google.com/admin-sdk/directory/v1/guides/search-users")
 }
 
 func getGWSDirectoryService(ctx context.Context) *google.DirectoryService {

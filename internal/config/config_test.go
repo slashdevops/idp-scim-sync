@@ -13,20 +13,13 @@ func TestNew(t *testing.T) {
 	cfg := New()
 
 	assert.NotNil(cfg)
-	assert.False(cfg.IsLambda)
-	assert.NotNil(DefaultLogLevel)
-	assert.NotNil(DefaultLogFormat)
-	assert.NotNil(DefaultDebug)
-	assert.NotNil(DefaultGWSServiceAccountFile)
-	assert.NotNil(DefaultSyncMethod)
 
-	assert.Equal(cfg.IsLambda, false)
+	assert.False(cfg.IsLambda)
 	assert.Equal(cfg.Debug, DefaultDebug)
 	assert.Equal(cfg.LogLevel, DefaultLogLevel)
 	assert.Equal(cfg.LogFormat, DefaultLogFormat)
 	assert.Equal(cfg.GWSServiceAccountFile, DefaultGWSServiceAccountFile)
-	assert.Equal(cfg.SyncMethod, "groups")
-
+	assert.Equal(cfg.SyncMethod, DefaultSyncMethod)
 	assert.Equal(cfg.GWSServiceAccountFileSecretName, DefaultGWSServiceAccountFileSecretName)
 	assert.Equal(cfg.GWSUserEmailSecretName, DefaultGWSUserEmailSecretName)
 	assert.Equal(cfg.SCIMEndpointSecretName, DefaultSCIMEndpointSecretName)
@@ -49,13 +42,17 @@ func TestConfig_toJSON(t *testing.T) {
   "LogFormat": "text",
   "GWSServiceAccountFile": "credentials.json",
   "GWSUserEmail": "",
-  "SCIMEndpoint": "",
-  "SCIMAccessToken": "",
-  "SyncMethod": "groups",
   "GWSServiceAccountFileSecretName": "IDPSCIM_GWSServiceAccountFile",
   "GWSUserEmailSecretName": "IDPSCIM_GWSUserEmail",
+  "GWSGroupsFilter": null,
+  "GWSUsersFilter": null,
+  "SCIMEndpoint": "",
+  "SCIMAccessToken": "",
   "SCIMEndpointSecretName": "IDPSCIM_SCIMEndpoint",
-  "SCIMAccessTokenSecretName": "IDPSCIM_SCIMAccessToken"
+  "SCIMAccessTokenSecretName": "IDPSCIM_SCIMAccessToken",
+  "AWSS3BucketName": "",
+  "AWSS3BucketKey": "",
+  "SyncMethod": "groups"
 }`),
 		},
 	}
@@ -83,13 +80,17 @@ loglevel: info
 logformat: text
 gwsserviceaccountfile: credentials.json
 gwsuseremail: ""
-scimendpoint: ""
-scimaccesstoken: ""
-syncmethod: groups
 gwsserviceaccountfilesecretname: IDPSCIM_GWSServiceAccountFile
 gwsuseremailsecretname: IDPSCIM_GWSUserEmail
+gwsgroupsfilter: []
+gwsusersfilter: []
+scimendpoint: ""
+scimaccesstoken: ""
 scimendpointsecretname: IDPSCIM_SCIMEndpoint
 scimaccesstokensecretname: IDPSCIM_SCIMAccessToken
+awss3bucketname: ""
+awss3bucketkey: ""
+syncmethod: groups
 `),
 		},
 	}

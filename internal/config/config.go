@@ -14,20 +14,23 @@ type Config struct {
 	LogLevel  string `mapstructure:"log_level"`
 	LogFormat string `mapstructure:"log_format"`
 
-	GWSServiceAccountFile string `mapstructure:"gws_service_account_file"`
-	GWSUserEmail          string `mapstructure:"gws_user_email"`
+	GWSServiceAccountFile           string   `mapstructure:"gws_service_account_file"`
+	GWSUserEmail                    string   `mapstructure:"gws_user_email"`
+	GWSServiceAccountFileSecretName string   `mapstructure:"gws_service_account_file_secret_name"`
+	GWSUserEmailSecretName          string   `mapstructure:"gws_user_email_secret_name"`
+	GWSGroupsFilter                 []string `mapstructure:"gws_groups_filter"`
+	GWSUsersFilter                  []string `mapstructure:"gws_users_filter"`
 
-	SCIMEndpoint    string `mapstructure:"scim_endpoint"`
-	SCIMAccessToken string `mapstructure:"scim_access_token"`
+	SCIMEndpoint              string `mapstructure:"scim_endpoint"`
+	SCIMAccessToken           string `mapstructure:"scim_access_token"`
+	SCIMEndpointSecretName    string `mapstructure:"scim_endpoint_secret_name"`
+	SCIMAccessTokenSecretName string `mapstructure:"scim_access_token_secret_name"`
+
+	AWSS3BucketName string `mapstructure:"aws_s3_bucket_name"`
+	AWSS3BucketKey  string `mapstructure:"aws_s3_bucket_key"`
 
 	// SyncMethod allow to defined the sync method used to get the user and groups from Google Workspace
 	SyncMethod string `mapstructure:"sync_method"`
-
-	GWSServiceAccountFileSecretName string `mapstructure:"gws_service_account_file_secret_name"`
-	GWSUserEmailSecretName          string `mapstructure:"gws_user_email_secret_name"`
-
-	SCIMEndpointSecretName    string `mapstructure:"scim_endpoint_secret_name"`
-	SCIMAccessTokenSecretName string `mapstructure:"scim_access_token_secret_name"`
 }
 
 const (
