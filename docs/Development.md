@@ -57,11 +57,4 @@ For better integration I use [go:generate](https://pkg.go.dev/cmd/go/internal/ge
 ## Practices
 
 - [Accept interfaces, return structs](https://bryanftan.medium.com/accept-interfaces-return-structs-in-go-d4cab29a301b)
-- [Always use interfaces](https://medium.com/@bryanftan/always-use-interfaces-in-go-d8f9f8f8f9c0)
-
-# Storage
-
-```text
-groups.ndjson -> store the `model.Group` structure
-users.ndjson -> store the `model.User` structure
-```
+- [CodeReviewComments#interfaces](https://github.com/golang/go/wiki/CodeReviewComments#interfaces)
