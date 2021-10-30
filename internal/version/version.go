@@ -21,6 +21,7 @@ var (
 	GoVersion = runtime.Version()
 )
 
+// GetVersion returns the version string.
 func GetVersion() string {
 	if Version == "" {
 		Version = "0.0.0"
@@ -29,6 +30,7 @@ func GetVersion() string {
 	return Version
 }
 
+// GetVersionInfo returns the version string.
 func GetVersionInfo() string {
 	if Version == "" {
 		Version = "0.0.0"
@@ -47,6 +49,7 @@ func GetVersionInfo() string {
 	)
 }
 
+// GetVersionInfoExtended returns the version string.
 func GetVersionInfoExtended() string {
 	if Version == "" {
 		Version = "0.0.0"

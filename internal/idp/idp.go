@@ -11,13 +11,12 @@ import (
 	admin "google.golang.org/api/admin/directory/v1"
 )
 
+// ErrDirectoryServiceNil is returned when the GoogleProviderService is nil.
 var ErrDirectoryServiceNil = errors.New("provoder: directory service is nil")
 
 //go:generate go run github.com/golang/mock/mockgen@v1.6.0 -package=mocks -destination=../../mocks/idp/idp_mocks.go -source=idp.go GoogleProviderService
 
-// This implement core.IdentityProviderService interface
-// and as a consumer define GoogleProviderService to use pkg/google methods
-
+// GoogleProviderService is the interface that wraps the Google Provider Service methods.
 type GoogleProviderService interface {
 	ListUsers(ctx context.Context, query []string) ([]*admin.User, error)
 	ListGroups(ctx context.Context, query []string) ([]*admin.Group, error)
@@ -25,10 +24,12 @@ type GoogleProviderService interface {
 	GetUser(ctx context.Context, userID string) (*admin.User, error)
 }
 
+// IdentityProvider is the Identity Provider service that implements the core.IdentityProvider interface and consumes the pkg.google methods.
 type IdentityProvider struct {
 	ps GoogleProviderService
 }
 
+// NewIdentityProvider returns a new instance of the Identity Provider service.
 func NewIdentityProvider(gps GoogleProviderService) (*IdentityProvider, error) {
 	if gps == nil {
 		return nil, ErrDirectoryServiceNil
@@ -154,8 +155,8 @@ func (i *IdentityProvider) GetGroupMembers(ctx context.Context, id string) (*mod
 	return syncMembersResult, nil
 }
 
-// GetUsersFromGroupMembers returns a list of users from the Identity Provider API.
-func (i *IdentityProvider) GetUsersFromGroupMembers(ctx context.Context, mbr *model.MembersResult) (*model.UsersResult, error) {
+// GetUsersByGroupMembers returns a list of users from the Identity Provider API.
+func (i *IdentityProvider) GetUsersByGroupMembers(ctx context.Context, mbr *model.MembersResult) (*model.UsersResult, error) {
 	pUsers := make([]model.User, 0)
 
 	for _, member := range mbr.Resources {
@@ -202,7 +203,7 @@ func (i *IdentityProvider) GetUsersAndGroupsUsers(ctx context.Context, gr *model
 			return nil, nil, fmt.Errorf("idp: error getting group members: %w", err)
 		}
 
-		pUsersFromMembers, err := i.GetUsersFromGroupMembers(ctx, pMembers)
+		pUsersFromMembers, err := i.GetUsersByGroupMembers(ctx, pMembers)
 		if err != nil {
 			return nil, nil, fmt.Errorf("idp: error getting users from group members: %w", err)
 		}

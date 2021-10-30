@@ -11,9 +11,18 @@ import (
 // IdentityProviderService is the interface that needs to be implemented by the
 // Identity Provider service.
 type IdentityProviderService interface {
+	// GetGroups returns the groups filtered by the given filter in the Identity provider side.
 	GetGroups(ctx context.Context, filter []string) (*model.GroupsResult, error)
+
+	// GetUsers returns the users filtered by the given filter in the Identity provider side.
 	GetUsers(ctx context.Context, filter []string) (*model.UsersResult, error)
+
+	// GetGroupMembers returns the members of the given group in the Identity provider side.
 	GetGroupMembers(ctx context.Context, id string) (*model.MembersResult, error)
-	GetUsersFromGroupMembers(ctx context.Context, mbr *model.MembersResult) (*model.UsersResult, error)
+
+	// GetUsersByGroupMembers returns the users belongs to the given group in the Identity provider side.
+	GetUsersByGroupMembers(ctx context.Context, mbr *model.MembersResult) (*model.UsersResult, error)
+
+	// GetUsersAndGroupsUsers returns the users and the groups and their users of the given groups in the Identity provider side.
 	GetUsersAndGroupsUsers(ctx context.Context, gr *model.GroupsResult) (*model.UsersResult, *model.GroupsUsersResult, error)
 }

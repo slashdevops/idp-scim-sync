@@ -13,33 +13,51 @@ import (
 
 //go:generate go run github.com/golang/mock/mockgen@v1.6.0 -package=mocks -destination=../../mocks/scim/scim_mocks.go -source=scim.go AWSSCIMProvider
 
-// Define AWSSCIMProvider interface to use aws.aws methods
+// AWSSCIMProvider interface to consume aws.aws methods
 type AWSSCIMProvider interface {
+	// ListUsers lists users in SCIM Provider
 	ListUsers(ctx context.Context, filter string) (*aws.ListUsersResponse, error)
+
+	// CreateUser creates a user in SCIM Provider
 	CreateUser(ctx context.Context, u *aws.CreateUserRequest) (*aws.CreateUserResponse, error)
+
+	// PutUser updates a user in SCIM Provider
 	PutUser(ctx context.Context, usr *aws.PutUserRequest) (*aws.PutUserResponse, error)
+
+	// DeleteUser deletes a user in SCIM Provider
 	DeleteUser(ctx context.Context, id string) error
 
+	// ListGroups lists groups in SCIM Provider
 	ListGroups(ctx context.Context, filter string) (*aws.ListGroupsResponse, error)
+
+	// CreateGroup creates a group in SCIM Provider
 	CreateGroup(ctx context.Context, g *aws.CreateGroupRequest) (*aws.CreateGroupResponse, error)
+
+	// DeleteGroup deletes a group in SCIM Provider
 	DeleteGroup(ctx context.Context, id string) error
+
+	// PatchGroup patches a group in SCIM Provider
 	PatchGroup(ctx context.Context, pgr *aws.PatchGroupRequest) error
 }
 
-var ErrAWSSCIMProviderNil = fmt.Errorf("scim: AWS SCIM Provider is nil")
+// ErrSCIMProviderNil is returned when the SCIMProvider is nil
+var ErrSCIMProviderNil = fmt.Errorf("scim: SCIM Provider is nil")
 
+// SCIMProvider represents a SCIM provider
 type SCIMProvider struct {
 	scim AWSSCIMProvider
 }
 
+// NewSCIMProvider creates a new SCIM provider
 func NewSCIMProvider(scim AWSSCIMProvider) (*SCIMProvider, error) {
 	if scim == nil {
-		return nil, ErrAWSSCIMProviderNil
+		return nil, ErrSCIMProviderNil
 	}
 
 	return &SCIMProvider{scim: scim}, nil
 }
 
+// GetGroups returns groups from SCIM Provider
 func (s *SCIMProvider) GetGroups(ctx context.Context) (*model.GroupsResult, error) {
 	groupsResponse, err := s.scim.ListGroups(ctx, "")
 	if err != nil {
@@ -68,6 +86,7 @@ func (s *SCIMProvider) GetGroups(ctx context.Context) (*model.GroupsResult, erro
 	return groupsResult, nil
 }
 
+// CreateGroups creates groups in SCIM Provider
 func (s *SCIMProvider) CreateGroups(ctx context.Context, gr *model.GroupsResult) (*model.GroupsResult, error) {
 	groups := make([]model.Group, 0)
 
@@ -99,7 +118,7 @@ func (s *SCIMProvider) CreateGroups(ctx context.Context, gr *model.GroupsResult)
 	return ret, nil
 }
 
-// UpdateGroups updates groups in AWS SCIM
+// UpdateGroups updates groups in SCIM Provider
 func (s *SCIMProvider) UpdateGroups(ctx context.Context, gr *model.GroupsResult) (*model.GroupsResult, error) {
 	groups := make([]model.Group, 0)
 
@@ -134,6 +153,7 @@ func (s *SCIMProvider) UpdateGroups(ctx context.Context, gr *model.GroupsResult)
 	return ret, nil
 }
 
+// DeleteGroups deletes groups in SCIM Provider
 func (s *SCIMProvider) DeleteGroups(ctx context.Context, gr *model.GroupsResult) error {
 	for _, group := range gr.Resources {
 		if err := s.scim.DeleteGroup(ctx, group.SCIMID); err != nil {
@@ -143,6 +163,7 @@ func (s *SCIMProvider) DeleteGroups(ctx context.Context, gr *model.GroupsResult)
 	return nil
 }
 
+// GetUsers returns users from SCIM Provider
 func (s *SCIMProvider) GetUsers(ctx context.Context) (*model.UsersResult, error) {
 	usersResponse, err := s.scim.ListUsers(ctx, "")
 	if err != nil {
@@ -177,6 +198,7 @@ func (s *SCIMProvider) GetUsers(ctx context.Context) (*model.UsersResult, error)
 	return usersResult, nil
 }
 
+// CreateUsers creates users in SCIM Provider
 func (s *SCIMProvider) CreateUsers(ctx context.Context, ur *model.UsersResult) (*model.UsersResult, error) {
 	users := make([]model.User, 0)
 
@@ -220,6 +242,7 @@ func (s *SCIMProvider) CreateUsers(ctx context.Context, ur *model.UsersResult) (
 	return ret, nil
 }
 
+// UpdateUsers updates users in SCIM Provider given a list of users
 func (s *SCIMProvider) UpdateUsers(ctx context.Context, ur *model.UsersResult) (*model.UsersResult, error) {
 	users := make([]model.User, 0)
 
@@ -263,6 +286,7 @@ func (s *SCIMProvider) UpdateUsers(ctx context.Context, ur *model.UsersResult) (
 	return ret, nil
 }
 
+// DeleteUsers deletes users in SCIM Provider given a list of users
 func (s *SCIMProvider) DeleteUsers(ctx context.Context, ur *model.UsersResult) error {
 	for _, user := range ur.Resources {
 		if err := s.scim.DeleteUser(ctx, user.SCIMID); err != nil {
@@ -272,6 +296,7 @@ func (s *SCIMProvider) DeleteUsers(ctx context.Context, ur *model.UsersResult) e
 	return nil
 }
 
+// CreateGroupsMembers creates groups members in SCIM Provider given a list of groups members
 func (s *SCIMProvider) CreateGroupsMembers(ctx context.Context, gur *model.GroupsUsersResult) error {
 	for _, groupUsers := range gur.Resources {
 		usersID := make([]string, 0)
@@ -304,6 +329,7 @@ func (s *SCIMProvider) CreateGroupsMembers(ctx context.Context, gur *model.Group
 	return nil
 }
 
+// DeleteGroupsMembers deletes groups members in SCIM Provider given a list of groups members
 func (s *SCIMProvider) DeleteGroupsMembers(ctx context.Context, gur *model.GroupsUsersResult) error {
 	for _, groupUsers := range gur.Resources {
 		usersID := make([]string, 0)
@@ -336,6 +362,7 @@ func (s *SCIMProvider) DeleteGroupsMembers(ctx context.Context, gur *model.Group
 	return nil
 }
 
+// GetUsersAndGroupsUsers returns a list of users and groups and their users from the SCIM Provider
 func (s *SCIMProvider) GetUsersAndGroupsUsers(ctx context.Context) (*model.UsersResult, *model.GroupsUsersResult, error) {
 	usersResult, err := s.GetUsers(ctx)
 	if err != nil {

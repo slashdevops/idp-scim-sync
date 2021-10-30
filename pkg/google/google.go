@@ -17,6 +17,7 @@ const (
 	usersRequiredFields   googleapi.Field = "users(id,name,primaryEmail,suspended)"
 )
 
+// DirectoryService represent the  Google Directory API client.
 type DirectoryService struct {
 	svc *admin.Service
 }
@@ -98,7 +99,7 @@ func (ds *DirectoryService) ListGroups(ctx context.Context, query []string) ([]*
 	return g, err
 }
 
-// ListGroupMembers list all members in a Google Directory group filtered by query.
+// ListGroupMembers return a list of all members given a group ID.
 func (ds *DirectoryService) ListGroupMembers(ctx context.Context, groupID string) ([]*admin.Member, error) {
 	m := make([]*admin.Member, 0)
 
@@ -110,14 +111,14 @@ func (ds *DirectoryService) ListGroupMembers(ctx context.Context, groupID string
 	return m, err
 }
 
-// GetUser get a user in a Google Directory filtered by query.
+// GetUser return a user given a user ID.
 func (ds *DirectoryService) GetUser(ctx context.Context, userID string) (*admin.User, error) {
 	u, err := ds.svc.Users.Get(userID).Fields(usersRequiredFields).Context(ctx).Do()
 
 	return u, fmt.Errorf("google: error getting user %s: %v", userID, err)
 }
 
-// GetGroups get a group in a Google Directory filtered by query.
+// GetGroup return a group given a group ID.
 func (ds *DirectoryService) GetGroup(ctx context.Context, groupID string) (*admin.Group, error) {
 	g, err := ds.svc.Groups.Get(groupID).Fields(groupsRequiredFields).Context(ctx).Do()
 

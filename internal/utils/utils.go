@@ -7,7 +7,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// toJSON return a json pretty of the stc
+// ToJSON return a json pretty of the given stc argument
 func ToJSON(stc interface{}) []byte {
 	if stc == nil {
 		return []byte("")
@@ -23,7 +23,7 @@ func ToJSON(stc interface{}) []byte {
 	return JSON
 }
 
-// toYAML return a yaml pretty of the stc
+// ToYAML return a yaml pretty of the given stc argument
 func ToYAML(stc interface{}) []byte {
 	if stc == nil {
 		return []byte("")

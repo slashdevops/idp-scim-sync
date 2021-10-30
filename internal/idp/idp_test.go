@@ -369,7 +369,7 @@ func TestGoogleProvider_GetGroupMembers(t *testing.T) {
 	}
 }
 
-func TestGoogleProvider_GetUsersFromGroupMembers(t *testing.T) {
+func TestGoogleProvider_GetUsersByGroupMembers(t *testing.T) {
 	type fields struct {
 		ds *mocks.MockGoogleProviderService
 	}
@@ -475,7 +475,7 @@ func TestGoogleProvider_GetUsersFromGroupMembers(t *testing.T) {
 				ps: f.ds,
 			}
 
-			got, err := g.GetUsersFromGroupMembers(tt.args.ctx, tt.args.mbr)
+			got, err := g.GetUsersByGroupMembers(tt.args.ctx, tt.args.mbr)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("GoogleProvider.GetUsersFromGroupMembers() error = %v, wantErr %v", err, tt.wantErr)
 				return

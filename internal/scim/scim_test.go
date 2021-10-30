@@ -29,7 +29,7 @@ func TestNewSCIMProvider(t *testing.T) {
 
 		assert.Error(t, err)
 		assert.Nil(t, svc)
-		assert.ErrorIs(t, err, ErrAWSSCIMProviderNil)
+		assert.ErrorIs(t, err, ErrSCIMProviderNil)
 	})
 }
 

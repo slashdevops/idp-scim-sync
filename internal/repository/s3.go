@@ -15,23 +15,31 @@ import (
 	"github.com/slashdevops/idp-scim-sync/internal/utils"
 )
 
-// Implement model.Repository interface
 // Consume s3.Client
 
 var (
-	ErrS3ClientNil         = errors.New("s3: AWS S3 Client is nil")
+	// ErrS3ClientNil is returned when s3 client is nil
+	ErrS3ClientNil = errors.New("s3: AWS S3 Client is nil")
+
+	// ErrOptionWithBucketNil is returned when WitBucket option is nil
 	ErrOptionWithBucketNil = errors.New("s3: option WithBucket is nil")
-	ErrOptionWithKeyNil    = errors.New("s3: option WithKey is nil")
-	ErrStateNil            = errors.New("s3: state is nil")
+
+	// ErrOptionWithKeyNil is returned when WithKey option is nil
+	ErrOptionWithKeyNil = errors.New("s3: option WithKey is nil")
+
+	// ErrStateNil is returned when state is nil
+	ErrStateNil = errors.New("s3: state is nil")
 )
 
 //go:generate go run github.com/golang/mock/mockgen@v1.6.0 -package=mocks -destination=../../../mocks/repository/s3_mocks.go -source=s3.go S3ClientAPI
 
+// S3ClientAPI is an interface to consume S3 client methods
 type S3ClientAPI interface {
 	GetObject(ctx context.Context, params *s3.GetObjectInput, optFns ...func(*s3.Options)) (*s3.GetObjectOutput, error)
 	PutObject(ctx context.Context, params *s3.PutObjectInput, optFns ...func(*s3.Options)) (*s3.PutObjectOutput, error)
 }
 
+// S3Repository represent a repository that stores state in S3 and implements model.Repository interface
 type S3Repository struct {
 	mu     *sync.RWMutex
 	bucket string
@@ -39,6 +47,7 @@ type S3Repository struct {
 	client S3ClientAPI
 }
 
+// NewS3Repository returns a new S3Repository
 func NewS3Repository(client S3ClientAPI, opts ...S3RepositoryOption) (*S3Repository, error) {
 	if client == nil {
 		return nil, ErrS3ClientNil
@@ -64,6 +73,7 @@ func NewS3Repository(client S3ClientAPI, opts ...S3RepositoryOption) (*S3Reposit
 	return s3r, nil
 }
 
+// GetState returns the state from the repository
 func (r *S3Repository) GetState(ctx context.Context) (*model.State, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -89,6 +99,7 @@ func (r *S3Repository) GetState(ctx context.Context) (*model.State, error) {
 	return &state, nil
 }
 
+// SetState sets the state in the given repository
 func (r *S3Repository) SetState(ctx context.Context, state *model.State) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()

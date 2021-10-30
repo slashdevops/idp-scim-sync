@@ -12,21 +12,22 @@ import (
 	"github.com/slashdevops/idp-scim-sync/internal/model"
 )
 
-// implement core.SateRepository
-
 // consume io.ReadWriter
 
 const (
 	stateFileName = "state.json"
 )
 
+// ErrStateFileNil is returned when the state file is nil
 var ErrStateFileNil = errors.New("disk: state file is nil")
 
+// DiskRepository represents a disk based state repository and implement core.StateRepository interface
 type DiskRepository struct {
 	mu        *sync.RWMutex
 	stateFile io.ReadWriter
 }
 
+// NewDiskRepository creates a new disk based state repository
 func NewDiskRepository(stateFile io.ReadWriter) (*DiskRepository, error) {
 	if stateFile == nil {
 		return nil, ErrStateFileNil
@@ -38,6 +39,7 @@ func NewDiskRepository(stateFile io.ReadWriter) (*DiskRepository, error) {
 	}, nil
 }
 
+// GetState returns the state from the state file
 func (dr *DiskRepository) GetState(ctx context.Context) (*model.State, error) {
 	dr.mu.RLock()
 	defer dr.mu.RUnlock()
@@ -52,6 +54,7 @@ func (dr *DiskRepository) GetState(ctx context.Context) (*model.State, error) {
 	return &state, nil
 }
 
+// SetState sets the state in the state file
 func (dr *DiskRepository) SetState(ctx context.Context, state *model.State) error {
 	dr.mu.Lock()
 	defer dr.mu.Unlock()

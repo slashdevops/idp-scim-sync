@@ -7,6 +7,7 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+// Config represents the configuration of the application.
 type Config struct {
 	IsLambda bool
 	Debug    bool
@@ -48,17 +49,22 @@ const (
 	// DefaultDebug is the default debug status.
 	DefaultDebug = false
 
-	// DefaultGoogleCredentials is the default credentials path
+	// DefaultGWSServiceAccountFile is the name of the file containing the service account credentials.
 	DefaultGWSServiceAccountFile = "credentials.json"
 
 	// DefaultSyncMethod is the default sync method to use.
 	DefaultSyncMethod = "groups"
 
-	//
+	// DefaultGWSServiceAccountFileSecretName is the name of the secret containing the service account credentials.
 	DefaultGWSServiceAccountFileSecretName = "IDPSCIM_GWSServiceAccountFile"
-	DefaultGWSUserEmailSecretName          = "IDPSCIM_GWSUserEmail"
 
-	DefaultSCIMEndpointSecretName    = "IDPSCIM_SCIMEndpoint"
+	// DefaultGWSUserEmailSecretName is the name of the secret containing the user email.
+	DefaultGWSUserEmailSecretName = "IDPSCIM_GWSUserEmail"
+
+	// DefaultSCIMEndpointSecretName is the name of the secret containing the SCIM endpoint.
+	DefaultSCIMEndpointSecretName = "IDPSCIM_SCIMEndpoint"
+
+	// DefaultSCIMAccessTokenSecretName is the name of the secret containing the SCIM access token.
 	DefaultSCIMAccessTokenSecretName = "IDPSCIM_SCIMAccessToken"
 )
 

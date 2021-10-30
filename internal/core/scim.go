@@ -11,18 +11,36 @@ import (
 // SCIMService is the interface that needs to be implemented by the
 // SCIM Provider service.
 type SCIMService interface {
+	// GetGroups returns a list of all groups from the SCIM service.
 	GetGroups(ctx context.Context) (*model.GroupsResult, error)
+
+	// CreateGroups create groups in the SCIM Service given a list of groups.
 	CreateGroups(ctx context.Context, gr *model.GroupsResult) (*model.GroupsResult, error)
+
+	// UpdateGroups updates groups in the SCIM Service given a list of groups.
 	UpdateGroups(ctx context.Context, gr *model.GroupsResult) (*model.GroupsResult, error)
+
+	// DeleteGroups deletes groups in the SCIM Service given a list of groups.
 	DeleteGroups(ctx context.Context, gr *model.GroupsResult) error
 
+	// GetUsers returns a list of all users from the SCIM service.
 	GetUsers(ctx context.Context) (*model.UsersResult, error)
+
+	// CreateUsers create users in the SCIM Service given a list of users.
 	CreateUsers(ctx context.Context, ur *model.UsersResult) (*model.UsersResult, error)
+
+	// UpdateUsers updates users in the SCIM Service given a list of users.
 	UpdateUsers(ctx context.Context, ur *model.UsersResult) (*model.UsersResult, error)
+
+	// DeleteUsers deletes users in the SCIM Service given a list of users.
 	DeleteUsers(ctx context.Context, ur *model.UsersResult) error
 
+	// GetUsersAndGroupsUsers returns a list of all users and Groups and their Users from the SCIM service.
 	GetUsersAndGroupsUsers(ctx context.Context) (*model.UsersResult, *model.GroupsUsersResult, error)
 
+	// CreateGroupsMembers create groups members in the SCIM Service given a list of groups members.
 	CreateGroupsMembers(ctx context.Context, gur *model.GroupsUsersResult) error
+
+	// DeleteGroupsMembers deletes groups members in the SCIM Service given a list of groups members.
 	DeleteGroupsMembers(ctx context.Context, gur *model.GroupsUsersResult) error
 }

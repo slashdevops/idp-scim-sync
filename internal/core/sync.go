@@ -13,11 +13,17 @@ import (
 )
 
 var (
+	// ErrIdentiyProviderServiceNil is returned when the Identity Provider Service is nil
 	ErrIdentiyProviderServiceNil = errors.New("sync: identity provider service cannot be nil")
-	ErrSCIMServiceNil            = errors.New("sync: SCIM service cannot be nil")
-	ErrStateRepositoryNil        = errors.New("sync: state repository cannot be nil")
+
+	// ErrSCIMServiceNil is returned when the SCIM Service is nil
+	ErrSCIMServiceNil = errors.New("sync: SCIM service cannot be nil")
+
+	// ErrStateRepositoryNil is returned when the State Repository is nil
+	ErrStateRepositoryNil = errors.New("sync: state repository cannot be nil")
 )
 
+// SyncService represent the sync service and the core of the sync process
 type SyncService struct {
 	ctx              context.Context
 	mu               *sync.RWMutex
@@ -57,6 +63,7 @@ func NewSyncService(ctx context.Context, prov IdentityProviderService, scim SCIM
 	return ss, nil
 }
 
+// SyncGroupsAndTheirMembers the default sync method tha syncs groups and their members
 func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 	ss.mu.Lock()
 	defer ss.mu.Unlock()
@@ -239,6 +246,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 	return nil
 }
 
+// SyncGroupsAndUsers this method is used to sync the usersm groups and their members from the identity provider to the SCIM
 func (ss *SyncService) SyncGroupsAndUsers() error {
 	ss.mu.Lock()
 	defer ss.mu.Unlock()
