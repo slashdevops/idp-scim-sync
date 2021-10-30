@@ -62,15 +62,22 @@ func (ds *DirectoryService) ListUsers(ctx context.Context, query []string) ([]*a
 
 	if len(query) > 0 {
 		for _, q := range query {
-			err = ds.svc.Users.List().Query(q).Customer("my_customer").Fields(usersRequiredFields).Pages(ctx, func(users *admin.Users) error {
-				u = append(u, users.Users...)
-				return fmt.Errorf("google: error listing users with query %s: %v", q, err)
-			})
+			if q != "" {
+				err = ds.svc.Users.List().Query(q).Customer("my_customer").Fields(usersRequiredFields).Pages(ctx, func(users *admin.Users) error {
+					u = append(u, users.Users...)
+					return nil
+				})
+			} else {
+				err = ds.svc.Users.List().Customer("my_customer").Fields(usersRequiredFields).Pages(ctx, func(users *admin.Users) error {
+					u = append(u, users.Users...)
+					return nil
+				})
+			}
 		}
 	} else {
 		err = ds.svc.Users.List().Customer("my_customer").Fields(usersRequiredFields).Pages(ctx, func(users *admin.Users) error {
 			u = append(u, users.Users...)
-			return fmt.Errorf("google: error listing users: %v", err)
+			return nil
 		})
 	}
 	return u, err
@@ -85,15 +92,22 @@ func (ds *DirectoryService) ListGroups(ctx context.Context, query []string) ([]*
 
 	if len(query) > 0 {
 		for _, q := range query {
-			err = ds.svc.Groups.List().Customer("my_customer").Query(q).Fields(groupsRequiredFields).Pages(ctx, func(groups *admin.Groups) error {
-				g = append(g, groups.Groups...)
-				return fmt.Errorf("google: error listing groups with query %s: %v", q, err)
-			})
+			if q != "" {
+				err = ds.svc.Groups.List().Customer("my_customer").Query(q).Fields(groupsRequiredFields).Pages(ctx, func(groups *admin.Groups) error {
+					g = append(g, groups.Groups...)
+					return nil
+				})
+			} else {
+				err = ds.svc.Groups.List().Customer("my_customer").Fields(groupsRequiredFields).Pages(ctx, func(groups *admin.Groups) error {
+					g = append(g, groups.Groups...)
+					return nil
+				})
+			}
 		}
 	} else {
 		err = ds.svc.Groups.List().Customer("my_customer").Fields(groupsRequiredFields).Pages(ctx, func(groups *admin.Groups) error {
 			g = append(g, groups.Groups...)
-			return fmt.Errorf("google: error listing groups: %v", err)
+			return nil
 		})
 	}
 	return g, err
