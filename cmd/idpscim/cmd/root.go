@@ -87,21 +87,21 @@ func initConfig() {
 	viper.AutomaticEnv()          // read in environment variables that match
 
 	envVars := []string{
-		"gws_user_email",
-		"gws_service_account_file",
-		"scim_access_token",
-		"scim_endpoint",
 		"log_level",
 		"log_format",
 		"sync_method",
-		"gws_service_account_file_secret_name",
-		"gws_user_email_secret_name",
-		"scim_endpoint_secret_name",
-		"scim_access_token_secret_name",
-		"gws_groups_filter",
-		"gws_users_filter",
 		"aws_s3_bucket_name",
 		"aws_s3_bucket_key",
+		"gws_user_email",
+		"gws_service_account_file",
+		"gws_service_account_file_secret_name",
+		"gws_user_email_secret_name",
+		"gws_groups_filter",
+		"gws_users_filter",
+		"scim_access_token",
+		"scim_endpoint",
+		"scim_endpoint_secret_name",
+		"scim_access_token_secret_name",
 	}
 
 	for _, e := range envVars {
