@@ -17,6 +17,8 @@ const (
 	usersRequiredFields   googleapi.Field = "users(id,name,primaryEmail,suspended)"
 )
 
+var ErrGoogleClientScopeNil = fmt.Errorf("google: google client scope is required")
+
 // DirectoryService represent the  Google Directory API client.
 type DirectoryService struct {
 	svc *admin.Service
@@ -30,6 +32,10 @@ type DirectoryService struct {
 // - "https://www.googleapis.com/auth/admin.directory.group.member.readonly"
 // - "https://www.googleapis.com/auth/admin.directory.user.readonly"
 func NewService(ctx context.Context, UserEmail string, ServiceAccount []byte, scope ...string) (*admin.Service, error) {
+	if len(scope) == 0 {
+		return nil, ErrGoogleClientScopeNil
+	}
+
 	config, err := google.JWTConfigFromJSON(ServiceAccount, scope...)
 	if err != nil {
 		return nil, fmt.Errorf("google: error getting JWT config from Service Account: %v", err)

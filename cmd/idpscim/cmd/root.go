@@ -197,8 +197,13 @@ func syncGroups(cmd *cobra.Command, args []string) error {
 		log.Fatalf(errors.Wrap(err, "idpscim: cannot read service account file").Error())
 	}
 
+	scopes := []string{
+		"https://www.googleapis.com/auth/admin.directory.group.readonly",
+		"https://www.googleapis.com/auth/admin.directory.group.member.readonly",
+		"https://www.googleapis.com/auth/admin.directory.user.readonly",
+	}
 	// Google Client Service
-	gwsService, err := google.NewService(ctx, cfg.GWSUserEmail, serviceAccount)
+	gwsService, err := google.NewService(ctx, cfg.GWSUserEmail, serviceAccount, scopes...)
 	if err != nil {
 		return errors.Wrap(err, "idpscim: cannot create google service")
 	}

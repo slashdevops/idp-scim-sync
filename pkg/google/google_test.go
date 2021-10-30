@@ -35,6 +35,16 @@ func TestNewService(t *testing.T) {
 		assert.Error(t, err)
 		assert.Nil(t, svc)
 	})
+
+	t.Run("Should return an error when scope is nil", func(t *testing.T) {
+		ctx := context.TODO()
+		userEmail := ""
+
+		svc, err := NewService(ctx, userEmail, nil)
+		assert.Error(t, err)
+		assert.Nil(t, svc)
+		assert.ErrorIs(t, err, ErrGoogleClientScopeNil)
+	})
 }
 
 func TestNewDirectoryService(t *testing.T) {
