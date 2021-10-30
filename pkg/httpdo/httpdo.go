@@ -1,4 +1,4 @@
-// Pico HTTP Client
+// Package httpdo is Pico HTTP Client
 // this is a simple http client that retries on error
 // Thanks to:
 // + https://medium.com/@nitishkr88/http-retries-in-go-e622e51d249f
@@ -22,6 +22,7 @@ var (
 	defaultRetryWaitMax     = 20 * time.Second
 )
 
+// Client is a http client that retries on error
 type Client struct {
 	HTTPClient *http.Client
 
@@ -33,6 +34,7 @@ type Client struct {
 	Backoff       Backoff
 }
 
+// NewClient returns a new http client with default retry policy
 func NewClient() *Client {
 	return &Client{
 		HTTPClient:       &http.Client{},
@@ -44,11 +46,13 @@ func NewClient() *Client {
 	}
 }
 
+// Request is a wrapper around http.Request
 type Request struct {
 	*http.Request
 	body io.ReadSeeker
 }
 
+// NewRequest returns a new http request
 func NewRequest(method, url string, body io.ReadSeeker) (*Request, error) {
 	var rcBody io.ReadCloser
 	if body != nil {
@@ -66,6 +70,7 @@ func NewRequest(method, url string, body io.ReadSeeker) (*Request, error) {
 	}, nil
 }
 
+// Do executes the request and returns the response
 func (c *Client) Do(req *Request) (*http.Response, error) {
 	for i := 0; i < c.RetryMaxAttempts; i++ {
 
@@ -114,8 +119,10 @@ func (c *Client) Do(req *Request) (*http.Response, error) {
 	return nil, fmt.Errorf("%s %s given up after %d attempts", req.Method, req.URL, c.RetryMaxAttempts+1)
 }
 
+// CheckForRetry returns true if the request should be retried
 type CheckForRetry func(resp *http.Response, err error) (bool, error)
 
+// DefaultRetryPolicy returns true if the request should be retried
 func DefaultRetryPolicy(resp *http.Response, err error) (bool, error) {
 	if err != nil {
 		return true, err
@@ -128,8 +135,10 @@ func DefaultRetryPolicy(resp *http.Response, err error) (bool, error) {
 	return false, nil
 }
 
+// Backoff is a function that returns the duration to wait before retrying
 type Backoff func(min, max time.Duration, attemps int, resp *http.Response) time.Duration
 
+// DefaultBackoff returns a Backoff function which uses an exponential jitter algorithm
 func DefaultBackoff(min, max time.Duration, attemps int, resp *http.Response) time.Duration {
 	if resp != nil {
 		if resp.StatusCode == http.StatusTooManyRequests || resp.StatusCode == http.StatusServiceUnavailable {
@@ -178,6 +187,7 @@ func ExponentialJitterBackoff(min, max time.Duration, attemps int, resp *http.Re
 	return sleep
 }
 
+// drainBody reads all of b to memory and then returns any error encountered
 func (c *Client) drainBody(body io.ReadCloser) {
 	defer body.Close()
 	_, err := io.Copy(ioutil.Discard, io.LimitReader(body, 4096))
@@ -186,6 +196,7 @@ func (c *Client) drainBody(body io.ReadCloser) {
 	}
 }
 
+// Get returns a new http request
 func (c *Client) Get(url string) (*http.Response, error) {
 	req, err := NewRequest("GET", url, nil)
 	if err != nil {
@@ -195,6 +206,7 @@ func (c *Client) Get(url string) (*http.Response, error) {
 	return c.Do(req)
 }
 
+// Post returns a new http request
 func (c *Client) Post(url string, body io.ReadSeeker) (*http.Response, error) {
 	req, err := NewRequest("POST", url, body)
 	if err != nil {
