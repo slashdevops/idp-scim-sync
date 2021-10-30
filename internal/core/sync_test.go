@@ -574,7 +574,7 @@ func TestSyncService_SyncGroupsAndTheirMembers_FirstTimeSyncing_NoSCIMData(t *te
 	// called by setState
 	state := &model.State{
 		LastSync:      time.Now().Format(time.RFC3339),
-		SchemaVersion: SchemaVersion,
+		SchemaVersion: model.StateSchemaVersion,
 		CodeVersion:   version.Version,
 		HashCode:      "",
 		Resources: model.StateResources{

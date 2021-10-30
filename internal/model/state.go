@@ -2,6 +2,10 @@ package model
 
 import "encoding/json"
 
+const (
+	StateSchemaVersion = "1.0.0"
+)
+
 type StateResources struct {
 	Groups      GroupsResult      `json:"groups"`
 	Users       UsersResult       `json:"users"`
