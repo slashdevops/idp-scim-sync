@@ -8,6 +8,7 @@ first export the environment variables
 export AWS_PROFILE=<profile name here>
 export AWS_REGION=<region here>
 export AWS_IDPSCIM_BUNCKET_NAME=<bucket name here>
+export IDPSCIM_VERSION=<version here>
 ```
 
 ## Deployment
@@ -24,6 +25,7 @@ sam package \
   --profile $AWS_PROFILE
 
 sam publish \
+  --semantic-version $IDPSCIM_VERSION \
   --template packaged.yaml \
   --region $AWS_REGION \
   --profile $AWS_PROFILE
