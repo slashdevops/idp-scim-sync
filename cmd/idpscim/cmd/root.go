@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"os"
 
@@ -191,8 +192,13 @@ func sync(cmd *cobra.Command, args []string) error {
 func syncGroups(cmd *cobra.Command, args []string) error {
 	ctx := context.Background()
 
+	serviceAccount, err := ioutil.ReadFile(cfg.GWSServiceAccountFile)
+	if err != nil {
+		log.Fatalf(errors.Wrap(err, "idpscim: cannot read service account file").Error())
+	}
+
 	// Google Client Service
-	gwsService, err := google.NewService(ctx, cfg.GWSUserEmail, []byte(cfg.GWSServiceAccountFile))
+	gwsService, err := google.NewService(ctx, cfg.GWSUserEmail, serviceAccount)
 	if err != nil {
 		return errors.Wrap(err, "idpscim: cannot create google service")
 	}
