@@ -63,10 +63,10 @@ func init() {
 	awsCmd.AddCommand(awsGroupsCmd)
 
 	awsCmd.PersistentFlags().StringVarP(&cfg.SCIMAccessToken, "aws-scim-access-token", "t", "", "AWS SSO SCIM API Access Token")
-	awsCmd.MarkPersistentFlagRequired("aws-scim-access-token")
+	_ = awsCmd.MarkPersistentFlagRequired("aws-scim-access-token")
 
 	awsCmd.PersistentFlags().StringVarP(&cfg.SCIMEndpoint, "aws-scim-endpoint", "e", "", "AWS SSO SCIM API Endpoint")
-	awsCmd.MarkPersistentFlagRequired("aws-scim-endpoint")
+	_ = awsCmd.MarkPersistentFlagRequired("aws-scim-endpoint")
 
 	awsCmd.AddCommand(awsServiceCmd)
 

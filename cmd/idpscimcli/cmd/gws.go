@@ -65,10 +65,10 @@ func init() {
 	gwsCmd.AddCommand(gwsUsersCmd)
 
 	gwsCmd.PersistentFlags().StringVarP(&cfg.GWSServiceAccountFile, "gws-service-account-file", "s", config.DefaultGWSServiceAccountFile, "path to Google Workspace service account file")
-	gwsCmd.MarkPersistentFlagRequired("gws-service-account-file")
+	_ = gwsCmd.MarkPersistentFlagRequired("gws-service-account-file")
 
 	gwsCmd.PersistentFlags().StringVarP(&cfg.GWSUserEmail, "gws-user-email", "u", "", "Google Workspace user email with allowed access to the Google Workspace service account")
-	gwsCmd.MarkPersistentFlagRequired("gws-user-email")
+	_ = gwsCmd.MarkPersistentFlagRequired("gws-user-email")
 
 	// groups command
 	gwsGroupsCmd.AddCommand(gwsGroupsListCmd)

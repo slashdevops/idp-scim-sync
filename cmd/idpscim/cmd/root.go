@@ -58,16 +58,16 @@ func init() {
 	rootCmd.PersistentFlags().StringVarP(&cfg.LogLevel, "log-level", "l", config.DefaultLogLevel, "set the log level")
 
 	rootCmd.PersistentFlags().StringVarP(&cfg.SCIMAccessToken, "aws-scim-access-token", "t", "", "AWS SSO SCIM API Access Token")
-	rootCmd.MarkPersistentFlagRequired("aws-scim-access-token")
+	_ = rootCmd.MarkPersistentFlagRequired("aws-scim-access-token")
 
 	rootCmd.PersistentFlags().StringVarP(&cfg.SCIMEndpoint, "aws-scim-endpoint", "e", "", "AWS SSO SCIM API Endpoint")
-	rootCmd.MarkPersistentFlagRequired("aws-scim-endpoint")
+	_ = rootCmd.MarkPersistentFlagRequired("aws-scim-endpoint")
 
 	rootCmd.PersistentFlags().StringVarP(&cfg.GWSServiceAccountFile, "gws-service-account-file", "s", config.DefaultGWSServiceAccountFile, "path to Google Workspace service account file")
-	rootCmd.MarkPersistentFlagRequired("gws-service-account-file")
+	_ = rootCmd.MarkPersistentFlagRequired("gws-service-account-file")
 
 	rootCmd.PersistentFlags().StringVarP(&cfg.GWSUserEmail, "gws-user-email", "u", "", "Google Workspace user email with allowed access to the Google Workspace Service Account")
-	rootCmd.MarkPersistentFlagRequired("gws-user-email")
+	_ = rootCmd.MarkPersistentFlagRequired("gws-user-email")
 
 	rootCmd.Flags().StringSliceVarP(&cfg.GWSGroupsFilter, "query-groups", "q", []string{""}, "Google Workspace Groups query parameter, example: --query-groups 'name:Admin* email:admin*' --query-groups 'name:Power* email:power*', see: https://developers.google.com/admin-sdk/directory/v1/guides/search-groups")
 	rootCmd.Flags().StringSliceVarP(&cfg.GWSUsersFilter, "query-users", "r", []string{""}, "Google Workspace Users query parameter, example: --query-users 'name:Admin* email:admin*' --query-users 'name:Power* email:power*', see: https://developers.google.com/admin-sdk/directory/v1/guides/search-users")
@@ -75,10 +75,10 @@ func init() {
 	rootCmd.PersistentFlags().StringVarP(&cfg.SyncMethod, "sync-method", "m", config.DefaultSyncMethod, "Sync method to use (groups)")
 
 	rootCmd.PersistentFlags().StringVarP(&cfg.AWSS3BucketName, "aws-s3-bucket-name", "b", "", "AWS S3 Bucket name to store the state")
-	rootCmd.MarkPersistentFlagRequired("aws-s3-bucket-name")
+	_ = rootCmd.MarkPersistentFlagRequired("aws-s3-bucket-name")
 
 	rootCmd.PersistentFlags().StringVarP(&cfg.AWSS3BucketKey, "aws-s3-bucket-key", "k", "", "AWS S3 Bucket key to store the state")
-	rootCmd.MarkPersistentFlagRequired("aws-s3-bucket-key")
+	_ = rootCmd.MarkPersistentFlagRequired("aws-s3-bucket-key")
 }
 
 // initConfig reads in config file and ENV variables if set.
