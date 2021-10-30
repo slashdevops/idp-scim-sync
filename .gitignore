@@ -16,6 +16,7 @@
 
 # SAM
 .aws-sam/
+packaged.yaml
 
 # binaries
 bin/
