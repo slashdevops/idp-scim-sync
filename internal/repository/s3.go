@@ -83,7 +83,7 @@ func (r *S3Repository) GetState(ctx context.Context) (*model.State, error) {
 		Key:    aws.String(r.key),
 	})
 	if err != nil {
-		return nil, fmt.Errorf("s3: error getting S3 object: %w", err)
+		return nil, fmt.Errorf("s3: error getting S3 object: bucket: %s, error: %w", r.bucket, err)
 	}
 	defer resp.Body.Close()
 

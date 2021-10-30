@@ -7,6 +7,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 	log "github.com/sirupsen/logrus"
 	"github.com/slashdevops/idp-scim-sync/internal/model"
 	"github.com/slashdevops/idp-scim-sync/internal/version"
@@ -89,7 +90,13 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 	// get the state data from the repository
 	state, err := ss.repo.GetState(ss.ctx)
 	if err != nil {
-		return fmt.Errorf("sync: error getting state data from the repository: %w", err)
+		var nsk *types.NoSuchKey
+		if errors.As(err, &nsk) {
+			state = &model.State{}
+		} else {
+			return fmt.Errorf("sync: error getting state data from the repository: %w", err)
+		}
+
 	}
 
 	// these variables are used to store the data that will be used to create or delete users and groups in SCIM
