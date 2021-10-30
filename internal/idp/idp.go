@@ -162,7 +162,7 @@ func (i *IdentityProvider) GetUsersByGroupMembers(ctx context.Context, mbr *mode
 	for _, member := range mbr.Resources {
 		u, err := i.ps.GetUser(ctx, member.IPID)
 		if err != nil {
-			return nil, fmt.Errorf("idp: error getting user: %w", err)
+			return nil, fmt.Errorf("idp: error getting user: %+v, email: %s, error: %w", member.IPID, member.Email, err)
 		}
 
 		e := model.User{

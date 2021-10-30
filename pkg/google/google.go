@@ -133,14 +133,21 @@ func (ds *DirectoryService) ListGroupMembers(ctx context.Context, groupID string
 
 // GetUser return a user given a user ID.
 func (ds *DirectoryService) GetUser(ctx context.Context, userID string) (*admin.User, error) {
-	u, err := ds.svc.Users.Get(userID).Fields(usersRequiredFields).Context(ctx).Do()
+	// u, err := ds.svc.Users.Get(userID).Fields(usersRequiredFields).Context(ctx).Do()
+	u, err := ds.svc.Users.Get(userID).Context(ctx).Do()
+	if err != nil {
+		return nil, fmt.Errorf("google: error getting user %s: %v", userID, err)
+	}
 
-	return u, fmt.Errorf("google: error getting user %s: %v", userID, err)
+	return u, nil
 }
 
 // GetGroup return a group given a group ID.
 func (ds *DirectoryService) GetGroup(ctx context.Context, groupID string) (*admin.Group, error) {
 	g, err := ds.svc.Groups.Get(groupID).Fields(groupsRequiredFields).Context(ctx).Do()
+	if err != nil {
+		return nil, fmt.Errorf("google: error getting group %s: %v", groupID, err)
+	}
 
-	return g, fmt.Errorf("google: error getting group %s: %v", groupID, err)
+	return g, nil
 }
