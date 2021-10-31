@@ -11,6 +11,8 @@ import (
 	"path"
 
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
+	"github.com/slashdevops/idp-scim-sync/internal/utils"
 )
 
 // Consume http methods
@@ -468,6 +470,10 @@ func (s *AWSSCIMService) PatchGroup(ctx context.Context, pgr *PatchGroupRequest)
 	if pgr.Group.ID == "" {
 		return ErrGroupIDEmpty
 	}
+
+	log.WithFields(log.Fields{
+		"group": pgr.Group.ID,
+	}).Debugf("patching group, payload: %s", utils.ToJSON(pgr))
 
 	reqUrl, err := url.Parse(s.url.String())
 	if err != nil {

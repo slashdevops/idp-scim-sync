@@ -28,10 +28,23 @@ type Operation struct {
 	Value []string `json:"value"`
 }
 
+// OperationGroup represent an operation group entity
+type OperationGroup struct {
+	OP    string      `json:"op"`
+	Path  string      `json:"path,omitempty"`
+	Value interface{} `json:"value"`
+}
+
 // Patch represent a patch entity
 type Patch struct {
 	Schemas    []string    `json:"schemas"`
 	Operations []Operation `json:"Operations"`
+}
+
+// PatchGroup represent a path group entity
+type PatchGroup struct {
+	Schemas    []string         `json:"schemas"`
+	Operations []OperationGroup `json:"Operations"`
 }
 
 // Member represent a member entity
@@ -195,8 +208,8 @@ type PutUserResponse struct {
 
 // PatchGroupRequest represent a patch group request entity
 type PatchGroupRequest struct {
-	Group Group `json:"group"`
-	Patch Patch `json:"patch"`
+	Group Group      `json:"group"`
+	Patch PatchGroup `json:"patch"`
 }
 
 // PatchUserRequest represent a patch user request entity

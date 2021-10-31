@@ -95,15 +95,15 @@ func TestGroupsOperations(t *testing.T) {
 				idp: &model.GroupsResult{
 					Items: 2,
 					Resources: []model.Group{
-						{IPID: "1", Name: "name1", Email: "1@mail.com"},
-						{IPID: "2", Name: "name2", Email: "22@mail.com"},
+						{IPID: "1", SCIMID: "11", Name: "name1", Email: "1@mail.com"},
+						{IPID: "2", SCIMID: "22", Name: "name2", Email: "2@mail.com"},
 					},
 				},
 				state: &model.GroupsResult{
 					Items: 2,
 					Resources: []model.Group{
-						{IPID: "1", Name: "name1", Email: "1@mail.com"},
-						{IPID: "2", Name: "name2", Email: "2@mail.com"},
+						{IPID: "1", SCIMID: "11", Name: "name1", Email: "1@mail.com"},
+						{IPID: "2", SCIMID: "33", Name: "name2", Email: "2@mail.com"},
 					},
 				},
 			},
@@ -114,13 +114,13 @@ func TestGroupsOperations(t *testing.T) {
 			wantUpdate: &model.GroupsResult{
 				Items: 1,
 				Resources: []model.Group{
-					{IPID: "2", Name: "name2", Email: "22@mail.com"},
+					{IPID: "2", SCIMID: "33", Name: "name2", Email: "2@mail.com"},
 				},
 			},
 			wantEqual: &model.GroupsResult{
 				Items: 1,
 				Resources: []model.Group{
-					{IPID: "1", Name: "name1", Email: "1@mail.com"},
+					{IPID: "1", SCIMID: "11", Name: "name1", Email: "1@mail.com"},
 				},
 			},
 			wantDelete: &model.GroupsResult{
@@ -134,16 +134,16 @@ func TestGroupsOperations(t *testing.T) {
 				idp: &model.GroupsResult{
 					Items: 2,
 					Resources: []model.Group{
-						{IPID: "1", Name: "name1", Email: "1@mail.com"},
-						{IPID: "2", Name: "name2", Email: "22@mail.com"},
+						{IPID: "1", SCIMID: "11", Name: "name1", Email: "1@mail.com"},
+						{IPID: "2", SCIMID: "22", Name: "name2", Email: "2@mail.com"},
 					},
 				},
 				state: &model.GroupsResult{
 					Items: 3,
 					Resources: []model.Group{
-						{IPID: "1", Name: "name1", Email: "1@mail.com"},
-						{IPID: "2", Name: "name2", Email: "2@mail.com"},
-						{IPID: "3", Name: "name3", Email: "3@mail.com"},
+						{IPID: "1", SCIMID: "11", Name: "name1", Email: "1@mail.com"},
+						{IPID: "2", SCIMID: "44", Name: "name2", Email: "2@mail.com"},
+						{IPID: "3", SCIMID: "33", Name: "name3", Email: "3@mail.com"},
 					},
 				},
 			},
@@ -154,19 +154,19 @@ func TestGroupsOperations(t *testing.T) {
 			wantUpdate: &model.GroupsResult{
 				Items: 1,
 				Resources: []model.Group{
-					{IPID: "2", Name: "name2", Email: "22@mail.com"},
+					{IPID: "2", SCIMID: "44", Name: "name2", Email: "2@mail.com"},
 				},
 			},
 			wantEqual: &model.GroupsResult{
 				Items: 1,
 				Resources: []model.Group{
-					{IPID: "1", Name: "name1", Email: "1@mail.com"},
+					{IPID: "1", SCIMID: "11", Name: "name1", Email: "1@mail.com"},
 				},
 			},
 			wantDelete: &model.GroupsResult{
 				Items: 1,
 				Resources: []model.Group{
-					{IPID: "3", Name: "name3", Email: "3@mail.com"},
+					{IPID: "3", SCIMID: "33", Name: "name3", Email: "3@mail.com"},
 				},
 			},
 		},
@@ -176,42 +176,42 @@ func TestGroupsOperations(t *testing.T) {
 				idp: &model.GroupsResult{
 					Items: 4,
 					Resources: []model.Group{
-						{IPID: "1", Name: "name1", Email: "1@mail.com"},
-						{IPID: "2", Name: "name2", Email: "22@mail.com"},
-						{IPID: "4", Name: "name4", Email: "4@mail.com"},
+						{IPID: "1", SCIMID: "11", Name: "name1", Email: "1@mail.com"},
+						{IPID: "2", SCIMID: "55", Name: "name2", Email: "2@mail.com"},
+						{IPID: "4", SCIMID: "44", Name: "name4", Email: "4@mail.com"},
 					},
 				},
 				state: &model.GroupsResult{
 					Items: 3,
 					Resources: []model.Group{
-						{IPID: "1", Name: "name1", Email: "1@mail.com"},
-						{IPID: "2", Name: "name2", Email: "2@mail.com"},
-						{IPID: "3", Name: "name3", Email: "3@mail.com"},
+						{IPID: "1", SCIMID: "11", Name: "name1", Email: "1@mail.com"},
+						{IPID: "2", SCIMID: "22", Name: "name2", Email: "2@mail.com"},
+						{IPID: "3", SCIMID: "33", Name: "name3", Email: "3@mail.com"},
 					},
 				},
 			},
 			wantCreate: &model.GroupsResult{
 				Items: 1,
 				Resources: []model.Group{
-					{IPID: "4", Name: "name4", Email: "4@mail.com"},
+					{IPID: "4", SCIMID: "44", Name: "name4", Email: "4@mail.com"},
 				},
 			},
 			wantUpdate: &model.GroupsResult{
 				Items: 1,
 				Resources: []model.Group{
-					{IPID: "2", Name: "name2", Email: "22@mail.com"},
+					{IPID: "2", SCIMID: "22", Name: "name2", Email: "2@mail.com"},
 				},
 			},
 			wantEqual: &model.GroupsResult{
 				Items: 1,
 				Resources: []model.Group{
-					{IPID: "1", Name: "name1", Email: "1@mail.com"},
+					{IPID: "1", SCIMID: "11", Name: "name1", Email: "1@mail.com"},
 				},
 			},
 			wantDelete: &model.GroupsResult{
 				Items: 1,
 				Resources: []model.Group{
-					{IPID: "3", Name: "name3", Email: "3@mail.com"},
+					{IPID: "3", SCIMID: "33", Name: "name3", Email: "3@mail.com"},
 				},
 			},
 		},
@@ -221,13 +221,13 @@ func TestGroupsOperations(t *testing.T) {
 				idp: &model.GroupsResult{
 					Items: 1,
 					Resources: []model.Group{
-						{IPID: "11", Name: "name1", Email: "1@mail.com"},
+						{IPID: "1", SCIMID: "11", Name: "name1", Email: "1@mail.com"},
 					},
 				},
 				state: &model.GroupsResult{
 					Items: 1,
 					Resources: []model.Group{
-						{IPID: "1", Name: "name1", Email: "1@mail.com"},
+						{IPID: "1", SCIMID: "22", Name: "name1", Email: "1@mail.com"},
 					},
 				},
 			},
@@ -238,7 +238,7 @@ func TestGroupsOperations(t *testing.T) {
 			wantUpdate: &model.GroupsResult{
 				Items: 1,
 				Resources: []model.Group{
-					{IPID: "11", Name: "name1", Email: "1@mail.com"},
+					{IPID: "1", SCIMID: "22", Name: "name1", Email: "1@mail.com"},
 				},
 			},
 			wantEqual: &model.GroupsResult{

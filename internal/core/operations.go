@@ -1,8 +1,10 @@
 package core
 
 import (
+	log "github.com/sirupsen/logrus"
 	"github.com/slashdevops/idp-scim-sync/internal/hash"
 	"github.com/slashdevops/idp-scim-sync/internal/model"
+	"github.com/slashdevops/idp-scim-sync/internal/utils"
 )
 
 // groupsOperations returns the differences between the groups in the
@@ -35,10 +37,19 @@ func groupsOperations(idp, state *model.GroupsResult) (create *model.GroupsResul
 		if _, ok := stateGroups[gr.Name]; !ok {
 			toCreate = append(toCreate, gr)
 		} else {
-			// Check if the group email, name or ID changed
-			// Id changed happen when the group delete and create again with the same name and email I guest
-			if gr.Email != stateGroups[gr.Name].Email || gr.IPID != stateGroups[gr.Name].IPID {
-				toUpdate = append(toUpdate, gr)
+			// Check if the group IPID is not the same
+			if gr.SCIMID != stateGroups[gr.Name].SCIMID {
+
+				log.WithFields(log.Fields{
+					"idp":  gr.IPID,
+					"scim": gr.SCIMID,
+				}).Debugf("group to update, payload: %s", utils.ToJSON(gr))
+
+				gr.SCIMID = stateGroups[gr.Name].SCIMID
+
+				// This operation is not needed because the group only has one attribute to change which is the DisplayName
+				// and this is the key, so we can't update the group.
+				toUpdate = append(toUpdate, gr) // NOTE: check if this is necessary, look like is necessary only when we compare state and idp
 			} else {
 				toEqual = append(toEqual, gr)
 			}

@@ -129,7 +129,19 @@ func (s *SCIMProvider) UpdateGroups(ctx context.Context, gr *model.GroupsResult)
 				ID:          group.SCIMID,
 				DisplayName: group.Name,
 			},
-			Patch: aws.Patch{},
+			Patch: aws.PatchGroup{
+				Schemas: []string{"urn:ietf:params:scim:api:messages:2.0:PatchOp"},
+				Operations: []aws.OperationGroup{
+					{
+						OP: "replace",
+						Value: map[string]string{
+							"id": group.SCIMID,
+							//"displayName": group.Name,
+							"externalId": group.IPID,
+						},
+					},
+				},
+			},
 		}
 
 		if err := s.scim.PatchGroup(ctx, groupRequest); err != nil {
@@ -300,9 +312,18 @@ func (s *SCIMProvider) DeleteUsers(ctx context.Context, ur *model.UsersResult) e
 // CreateGroupsMembers creates groups members in SCIM Provider given a list of groups members
 func (s *SCIMProvider) CreateGroupsMembers(ctx context.Context, gur *model.GroupsUsersResult) error {
 	for _, groupUsers := range gur.Resources {
-		usersID := make([]string, 0)
+
+		// https://talks.golang.org/2012/10things.slide#2
+		usersIDValue := []struct {
+			Value string `json:"value"`
+		}{}
+
 		for _, user := range groupUsers.Resources {
-			usersID = append(usersID, user.SCIMID)
+			usersIDValue = append(usersIDValue, struct {
+				Value string `json:"value"`
+			}{
+				Value: user.SCIMID,
+			})
 		}
 
 		patchGroupRequest := &aws.PatchGroupRequest{
@@ -310,13 +331,13 @@ func (s *SCIMProvider) CreateGroupsMembers(ctx context.Context, gur *model.Group
 				ID:          groupUsers.Group.SCIMID,
 				DisplayName: groupUsers.Group.Name,
 			},
-			Patch: aws.Patch{
+			Patch: aws.PatchGroup{
 				Schemas: []string{"urn:ietf:params:scim:api:messages:2.0:PatchOp"},
-				Operations: []aws.Operation{
+				Operations: []aws.OperationGroup{
 					{
 						OP:    "add",
 						Path:  "members",
-						Value: usersID,
+						Value: usersIDValue,
 					},
 				},
 			},
@@ -333,9 +354,18 @@ func (s *SCIMProvider) CreateGroupsMembers(ctx context.Context, gur *model.Group
 // DeleteGroupsMembers deletes groups members in SCIM Provider given a list of groups members
 func (s *SCIMProvider) DeleteGroupsMembers(ctx context.Context, gur *model.GroupsUsersResult) error {
 	for _, groupUsers := range gur.Resources {
-		usersID := make([]string, 0)
+
+		// https://talks.golang.org/2012/10things.slide#2
+		usersIDValue := []struct {
+			Value string `json:"value"`
+		}{}
+
 		for _, user := range groupUsers.Resources {
-			usersID = append(usersID, user.SCIMID)
+			usersIDValue = append(usersIDValue, struct {
+				Value string `json:"value"`
+			}{
+				Value: user.SCIMID,
+			})
 		}
 
 		patchGroupRequest := &aws.PatchGroupRequest{
@@ -343,13 +373,13 @@ func (s *SCIMProvider) DeleteGroupsMembers(ctx context.Context, gur *model.Group
 				ID:          groupUsers.Group.SCIMID,
 				DisplayName: groupUsers.Group.Name,
 			},
-			Patch: aws.Patch{
+			Patch: aws.PatchGroup{
 				Schemas: []string{"urn:ietf:params:scim:api:messages:2.0:PatchOp"},
-				Operations: []aws.Operation{
+				Operations: []aws.OperationGroup{
 					{
 						OP:    "remove",
 						Path:  "members",
-						Value: usersID,
+						Value: usersIDValue,
 					},
 				},
 			},
