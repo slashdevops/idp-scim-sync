@@ -36,7 +36,7 @@ type SCIMService interface {
 	DeleteUsers(ctx context.Context, ur *model.UsersResult) error
 
 	// GetUsersAndGroupsUsers returns a list of all users and Groups and their Users from the SCIM service.
-	GetUsersAndGroupsUsers(ctx context.Context) (*model.UsersResult, *model.GroupsUsersResult, error)
+	GetUsersAndGroupsUsers(ctx context.Context, gr *model.GroupsResult) (*model.UsersResult, *model.GroupsUsersResult, error)
 
 	// CreateGroupsMembers create groups members in the SCIM Service given a list of groups members.
 	CreateGroupsMembers(ctx context.Context, gur *model.GroupsUsersResult) error

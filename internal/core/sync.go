@@ -10,6 +10,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 	log "github.com/sirupsen/logrus"
 	"github.com/slashdevops/idp-scim-sync/internal/model"
+	"github.com/slashdevops/idp-scim-sync/internal/utils"
 	"github.com/slashdevops/idp-scim-sync/internal/version"
 )
 
@@ -283,7 +284,7 @@ func getSCIMData(ctx context.Context, scim SCIMService) (*model.UsersResult, *mo
 		return nil, nil, nil, fmt.Errorf("sync core: error getting groups from the SCIM provider: %w", err)
 	}
 
-	usersResult, groupsUsersResult, err := scim.GetUsersAndGroupsUsers(ctx)
+	usersResult, groupsUsersResult, err := scim.GetUsersAndGroupsUsers(ctx, groupsResult)
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("sync core: error getting users and groups and their users from SCIM provider: %w", err)
 	}
@@ -378,6 +379,9 @@ func reconcilingSCIMGroupsUsers(ctx context.Context, scim SCIMService, create *m
 		log.Info("no users to be joined to groups")
 	} else {
 		log.WithField("quantity", create.Items).Info("joining users to groups")
+
+		log.Debugf("create: %s\n\n", utils.ToYAML(create))
+
 		if err := scim.CreateGroupsMembers(ctx, create); err != nil {
 			return fmt.Errorf("sync core: error creating groups members in SCIM Provider: %w", err)
 		}

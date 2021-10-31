@@ -191,6 +191,7 @@ func (s *SCIMProvider) GetUsers(ctx context.Context) (*model.UsersResult, error)
 	users := make([]model.User, 0)
 	for _, user := range usersResponse.Resources {
 		e := model.User{
+			IPID:   user.ExternalId,
 			SCIMID: user.ID,
 			Name: model.Name{
 				FamilyName: user.Name.FamilyName,
@@ -269,6 +270,7 @@ func (s *SCIMProvider) UpdateUsers(ctx context.Context, ur *model.UsersResult) (
 	for _, user := range ur.Resources {
 
 		userRequest := &aws.PutUserRequest{
+			ID:          user.SCIMID,
 			DisplayName: user.DisplayName,
 			ExternalId:  user.IPID,
 			Name: aws.Name{
@@ -401,7 +403,7 @@ func (s *SCIMProvider) DeleteGroupsMembers(ctx context.Context, gur *model.Group
 }
 
 // GetUsersAndGroupsUsers returns a list of users and groups and their users from the SCIM Provider
-func (s *SCIMProvider) GetUsersAndGroupsUsers(ctx context.Context) (*model.UsersResult, *model.GroupsUsersResult, error) {
+func (s *SCIMProvider) GetUsersAndGroupsUsers(ctx context.Context, gr *model.GroupsResult) (*model.UsersResult, *model.GroupsUsersResult, error) {
 	usersResult, err := s.GetUsers(ctx)
 	if err != nil {
 		return nil, nil, fmt.Errorf("scim: error getting users: %w", err)
@@ -415,38 +417,50 @@ func (s *SCIMProvider) GetUsersAndGroupsUsers(ctx context.Context) (*model.Users
 
 	// inefficient but it is the only way to do that because AWS API Doesn't have efficient
 	// way to get the members of groups
-	for _, user := range usersResult.Resources {
+	// groups x users = n requests to ListGroups!!! fxxk AWS SSO API!
+	for _, group := range gr.Resources {
 
-		// https://docs.aws.amazon.com/singlesignon/latest/developerguide/listgroups.html
-		f := fmt.Sprintf("members eq \"%s\"", user.SCIMID)
-		sGroupsResponse, err := s.scim.ListGroups(ctx, f)
-		if err != nil {
-			return nil, nil, fmt.Errorf("scim: error listing groups: %w", err)
+		if _, ok := groupsData[group.SCIMID]; !ok {
+			e := model.Group{
+				SCIMID: group.SCIMID,
+				IPID:   group.IPID,
+				Name:   group.Name,
+				Email:  group.Email,
+			}
+
+			groupsData[group.SCIMID] = e
 		}
 
-		for _, grp := range sGroupsResponse.Resources {
-			groupsIDUsers[grp.ID] = append(groupsIDUsers[grp.ID], user)
+		// log.Debugf("group added : %s", utils.ToJSON(groupsData[group.SCIMID]))
 
-			// only one time assignment for users in different groups
-			if _, ok := groupsData[grp.ID]; !ok {
-				e := model.Group{
-					SCIMID: grp.ID,
-					Name:   grp.DisplayName,
-				}
-				e.HashCode = hash.Get(e)
+		for _, user := range usersResult.Resources {
 
-				groupsData[grp.ID] = e
+			// https://docs.aws.amazon.com/singlesignon/latest/developerguide/listgroups.html
+			f := fmt.Sprintf("id eq \"%s\" and members eq \"%s\"", group.SCIMID, user.SCIMID)
+			sGroupsResponse, err := s.scim.ListGroups(ctx, f)
+			if err != nil {
+				return nil, nil, fmt.Errorf("scim: error listing groups: %w", err)
+			}
+
+			for _, grp := range sGroupsResponse.Resources {
+				groupsIDUsers[grp.ID] = append(groupsIDUsers[grp.ID], user)
 			}
 		}
 	}
 
 	groupsUsers := make([]model.GroupUsers, 0)
 
-	for groupID, users := range groupsIDUsers {
+	for _, group := range groupsData {
+
+		// avoid nil Resources
+		if groupsIDUsers[group.SCIMID] == nil {
+			groupsIDUsers[group.SCIMID] = make([]model.User, 0)
+		}
+
 		e := model.GroupUsers{
-			Items:     len(users),
-			Group:     groupsData[groupID],
-			Resources: users,
+			Items:     len(groupsIDUsers[group.SCIMID]),
+			Group:     group,
+			Resources: groupsIDUsers[group.SCIMID],
 		}
 		e.HashCode = hash.Get(e)
 
@@ -460,6 +474,8 @@ func (s *SCIMProvider) GetUsersAndGroupsUsers(ctx context.Context) (*model.Users
 	if len(groupsUsers) > 0 {
 		groupsUsersResult.HashCode = hash.Get(groupsUsersResult)
 	}
+
+	// log.Debugf("GetUsersAndGroupsUsers: groupsUsersResult : %s", utils.ToJSON(groupsUsersResult))
 
 	return usersResult, groupsUsersResult, nil
 }

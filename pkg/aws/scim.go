@@ -349,14 +349,18 @@ func (s *AWSSCIMService) PutUser(ctx context.Context, usr *PutUserRequest) (*Put
 
 	reqUrl.Path = path.Join(reqUrl.Path, fmt.Sprintf("/Users/%s", usr.ID))
 
+	log.WithFields(log.Fields{
+		"group": usr.ID,
+	}).Debugf("patching group, payload: %s", utils.ToJSON(usr))
+
 	req, err := s.newRequest(http.MethodPut, reqUrl, *usr)
 	if err != nil {
-		return nil, fmt.Errorf("aws PutUser: error creating request, http method: %s, url: %v, error: %w", http.MethodPost, reqUrl.String(), err)
+		return nil, fmt.Errorf("aws PutUser: error creating request, http method: %s, url: %v, error: %w", http.MethodPut, reqUrl.String(), err)
 	}
 
 	resp, err := s.do(ctx, req)
 	if err != nil {
-		return nil, fmt.Errorf("aws PutUser: error sending request, http method: %s, url: %v, error: %w", http.MethodPost, reqUrl.String(), err)
+		return nil, fmt.Errorf("aws PutUser: error sending request, http method: %s, url: %v, error: %w", http.MethodPut, reqUrl.String(), err)
 	}
 	defer resp.Body.Close()
 

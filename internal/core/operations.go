@@ -97,6 +97,8 @@ func usersOperations(idp, state *model.UsersResult) (create *model.UsersResult, 
 	toEqual := make([]model.User, 0)
 	toDelete := make([]model.User, 0)
 
+	// log.Debugf("payloads: user idp: %s, user scim: %s", utils.ToJSON(idp), utils.ToJSON(state))
+
 	for _, usr := range idp.Resources {
 		idpUsers[usr.Email] = struct{}{}
 	}
@@ -115,6 +117,14 @@ func usersOperations(idp, state *model.UsersResult) (create *model.UsersResult, 
 				usr.Name.GivenName != stateUsers[usr.Email].Name.GivenName ||
 				usr.Active != stateUsers[usr.Email].Active ||
 				usr.IPID != stateUsers[usr.Email].IPID {
+
+				// log.WithFields(log.Fields{
+				// 	"idp":  usr.IPID,
+				// 	"scim": usr.SCIMID,
+				// }).Debugf("user to update, payload: %s", utils.ToJSON(usr))
+
+				usr.SCIMID = stateUsers[usr.Email].SCIMID
+
 				toUpdate = append(toUpdate, usr)
 			} else {
 				toEqual = append(toEqual, usr)
@@ -160,6 +170,7 @@ func usersOperations(idp, state *model.UsersResult) (create *model.UsersResult, 
 func groupsUsersOperations(idp, state *model.GroupsUsersResult) (create *model.GroupsUsersResult, equal *model.GroupsUsersResult, delete *model.GroupsUsersResult) {
 	idpUsers := make(map[string]map[string]model.User)
 	stateUsers := make(map[string]map[string]model.User)
+	stateGroups := make(map[string]model.Group)
 
 	toCreate := make([]model.GroupUsers, 0)
 	toEqual := make([]model.GroupUsers, 0)
@@ -173,11 +184,16 @@ func groupsUsersOperations(idp, state *model.GroupsUsersResult) (create *model.G
 	}
 
 	for _, grpUsrs := range state.Resources {
+		stateGroups[grpUsrs.Group.IPID] = grpUsrs.Group
 		stateUsers[grpUsrs.Group.IPID] = make(map[string]model.User)
 		for _, usr := range grpUsrs.Resources {
 			stateUsers[grpUsrs.Group.IPID][usr.IPID] = usr
 		}
 	}
+
+	// log.Debugf("idpUsers: %s", utils.ToJSON(idpUsers))
+	// log.Debugf("stateUsers: %s", utils.ToJSON(stateUsers))
+	// log.Debugf("state: %s", utils.ToJSON(state))
 
 	// map[group.ID][]*model.User
 	toC := make(map[string][]model.User)
@@ -188,7 +204,11 @@ func groupsUsersOperations(idp, state *model.GroupsUsersResult) (create *model.G
 		toC[grpUsrs.Group.IPID] = make([]model.User, 0)
 		toE[grpUsrs.Group.IPID] = make([]model.User, 0)
 
+		grpUsrs.Group.SCIMID = stateGroups[grpUsrs.Group.IPID].SCIMID
+
 		for _, usr := range grpUsrs.Resources {
+			usr.SCIMID = stateUsers[grpUsrs.Group.IPID][usr.IPID].SCIMID
+
 			if _, ok := stateUsers[grpUsrs.Group.IPID][usr.IPID]; !ok {
 				toC[grpUsrs.Group.IPID] = append(toC[grpUsrs.Group.IPID], usr)
 			} else {
