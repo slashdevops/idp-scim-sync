@@ -1,8 +1,10 @@
 package core
 
 import (
+	log "github.com/sirupsen/logrus"
 	"github.com/slashdevops/idp-scim-sync/internal/hash"
 	"github.com/slashdevops/idp-scim-sync/internal/model"
+	"github.com/slashdevops/idp-scim-sync/internal/utils"
 )
 
 // groupsOperations returns the differences between the groups in the
@@ -208,6 +210,7 @@ func groupsUsersOperations(idp, state *model.GroupsUsersResult) (create *model.G
 
 		for _, usr := range grpUsrs.Resources {
 			usr.SCIMID = stateUsers[grpUsrs.Group.IPID][usr.IPID].SCIMID
+			log.Debugf("scim user: %s,idp user: %s", utils.ToJSON(stateUsers[grpUsrs.Group.IPID]), utils.ToJSON(usr))
 
 			if _, ok := stateUsers[grpUsrs.Group.IPID][usr.IPID]; !ok {
 				toC[grpUsrs.Group.IPID] = append(toC[grpUsrs.Group.IPID], usr)
