@@ -113,7 +113,7 @@ func (r *S3Repository) SetState(ctx context.Context, state *model.State) error {
 		return fmt.Errorf("s3: error marshalling state: %w", err)
 	}
 
-	output, err := r.client.PutObject(ctx, &s3.PutObjectInput{
+	_, err = r.client.PutObject(ctx, &s3.PutObjectInput{
 		Bucket: aws.String(r.bucket),
 		Key:    aws.String(r.key),
 		Body:   bytes.NewReader(jsonPayload),
@@ -122,7 +122,7 @@ func (r *S3Repository) SetState(ctx context.Context, state *model.State) error {
 		return fmt.Errorf("s3: error putting S3 object: %w", err)
 	}
 
-	log.Debugf("PutObjectOutput: %s", utils.ToJSON(output))
+	// log.Debugf("SetState: %s", utils.ToJSON(output))
 
 	return nil
 }

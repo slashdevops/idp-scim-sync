@@ -251,6 +251,8 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 		return fmt.Errorf("sync core: error saving state: %w", err)
 	}
 
+	log.Debugf("state: %s", utils.ToJSON(newState))
+	log.Info("sync core: sync completed")
 	return nil
 }
 
@@ -380,7 +382,7 @@ func reconcilingSCIMGroupsUsers(ctx context.Context, scim SCIMService, create *m
 	} else {
 		log.WithField("quantity", create.Items).Info("joining users to groups")
 
-		log.Debugf("create: %s\n\n", utils.ToYAML(create))
+		log.Debugf("reconcilingSCIMGroupsUsers create: %s\n\n", utils.ToYAML(create))
 
 		if err := scim.CreateGroupsMembers(ctx, create); err != nil {
 			return fmt.Errorf("sync core: error creating groups members in SCIM Provider: %w", err)

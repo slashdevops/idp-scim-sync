@@ -208,9 +208,9 @@ func (s *AWSSCIMService) CreateUser(ctx context.Context, usr *CreateUserRequest)
 
 	reqUrl.Path = path.Join(reqUrl.Path, "/Users")
 
-	log.WithFields(log.Fields{
-		"group": usr.ID,
-	}).Debugf("creating user, payload: %s", utils.ToJSON(usr))
+	// log.WithFields(log.Fields{
+	// 	"group": usr.ID,
+	// }).Debugf("creating user, payload: %s", utils.ToJSON(usr))
 
 	req, err := s.newRequest(http.MethodPost, reqUrl, *usr)
 	if err != nil {
