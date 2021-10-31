@@ -4,7 +4,7 @@ package aws
 type Name struct {
 	FamilyName string `json:"familyName"`
 	GivenName  string `json:"givenName"`
-	MiddleName string `json:"middleName"`
+	MiddleName string `json:"middleName,omitempty"`
 }
 
 // Email represent an email entity
@@ -157,13 +157,13 @@ type CreateGroupRequest struct {
 
 // CreateUserRequest represent a create user request entity
 type CreateUserRequest struct {
-	ID          string  `json:"id"`
+	ID          string  `json:"id,omitempty"`
 	ExternalId  string  `json:"externalId"`
 	UserName    string  `json:"userName"`
 	Name        Name    `json:"name"`
 	DisplayName string  `json:"displayName"`
-	NickName    string  `json:"nickName"`
-	ProfileURL  string  `json:"profileURL"`
+	NickName    string  `json:"nickName,omitempty"`
+	ProfileURL  string  `json:"profileURL,omitempty"`
 	Active      bool    `json:"active"`
 	Emails      []Email `json:"emails"`
 }

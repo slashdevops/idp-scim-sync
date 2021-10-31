@@ -223,6 +223,7 @@ func (s *SCIMProvider) CreateUsers(ctx context.Context, ur *model.UsersResult) (
 	for _, user := range ur.Resources {
 
 		userRequest := &aws.CreateUserRequest{
+			ID:          "",
 			UserName:    user.Email,
 			DisplayName: user.DisplayName,
 			ExternalId:  user.IPID,
