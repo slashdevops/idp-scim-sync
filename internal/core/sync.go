@@ -156,7 +156,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 			"idp":  idpGroupsUsersResult.Items,
 			"scim": scimGroupsUsersResult.Items,
 		}).Info("reconciling groups members")
-		ugCreate, _, ugDelete := groupsUsersOperations(idpGroupsUsersResult, scimGroupsUsersResult)
+		ugCreate, _, ugDelete := groupsUsersOperationsSCIM(idpGroupsUsersResult, scimGroupsUsersResult, scimUsersResult)
 
 		createdGroupsUsersResult = *ugCreate
 
@@ -219,7 +219,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 				"idp":   idpGroupsUsersResult.Items,
 				"state": &state.Resources.GroupsUsers.Items,
 			}).Info("reconciling groups members")
-			ugCreate, _, ugDelete := groupsUsersOperations(idpGroupsUsersResult, &state.Resources.GroupsUsers)
+			ugCreate, _, ugDelete := groupsUsersOperationsState(idpGroupsUsersResult, &state.Resources.GroupsUsers)
 
 			createdGroupsUsersResult = *ugCreate
 

@@ -496,7 +496,7 @@ func TestUsersOperations(t *testing.T) {
 	}
 }
 
-func TestGroupsUsersOperations(t *testing.T) {
+func TestGroupsUsersOperationsState(t *testing.T) {
 	type args struct {
 		idp   *model.GroupsUsersResult
 		state *model.GroupsUsersResult
@@ -698,7 +698,7 @@ func TestGroupsUsersOperations(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotCreate, gotEqual, gotDelete := groupsUsersOperations(tt.args.idp, tt.args.state)
+			gotCreate, gotEqual, gotDelete := groupsUsersOperationsState(tt.args.idp, tt.args.state)
 			if !reflect.DeepEqual(gotCreate, tt.wantCreate) {
 				t.Errorf("groupsUsersOperations() gotCreate = %s, want %s", utils.ToJSON(gotCreate), utils.ToJSON(tt.wantCreate))
 			}
