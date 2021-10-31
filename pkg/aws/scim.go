@@ -55,6 +55,9 @@ var (
 
 	// ErrPutUserRequestEmpty is returned when the put user request is empty.
 	ErrPutUserRequestEmpty = errors.Errorf("aws: put user request may not be empty")
+
+	// ErrUserNameEmpty is returned when the user name is empty.
+	ErrUserNameEmpty = errors.Errorf("aws: user name may not be empty")
 )
 
 //go:generate go run github.com/golang/mock/mockgen@v1.6.0 -package=mocks -destination=../../mocks/aws/scim_mocks.go -source=scim.go HTTPClient
@@ -114,7 +117,8 @@ func (s *AWSSCIMService) newRequest(method string, u *url.URL, body interface{})
 	}
 
 	if body != nil {
-		req.Header.Set("Content-Type", "application/json")
+		// req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("Content-Type", "application/scim+json")
 	}
 
 	req.Header.Set("Accept", "application/json")
@@ -123,6 +127,25 @@ func (s *AWSSCIMService) newRequest(method string, u *url.URL, body interface{})
 		req.Header.Set("User-Agent", s.UserAgent)
 	}
 	return req, nil
+}
+
+// do sends an HTTP request and returns an HTTP response, following policy (e.g. redirects, cookies, auth) as configured on the client.
+func (s *AWSSCIMService) do(ctx context.Context, req *http.Request) (*http.Response, error) {
+	req = req.WithContext(ctx)
+
+	// Set bearer token
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", s.bearerToken))
+
+	resp, err := s.httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("aws do: error sending request: %w", err)
+	}
+
+	if err := s.checkHTTPResponse(resp); err != nil {
+		return nil, err
+	}
+
+	return resp, nil
 }
 
 // checkHTTPResponse checks the status code of the HTTP response.
@@ -150,24 +173,6 @@ func (s *AWSSCIMService) checkHTTPResponse(r *http.Response) error {
 	return nil
 }
 
-// do sends an HTTP request and returns an HTTP response, following policy (e.g. redirects, cookies, auth) as configured on the client.
-func (s *AWSSCIMService) do(ctx context.Context, req *http.Request, body interface{}) (*http.Response, error) {
-	req = req.WithContext(ctx)
-
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", s.bearerToken))
-
-	resp, err := s.httpClient.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("aws do: error sending request: %w", err)
-	}
-
-	if err := s.checkHTTPResponse(resp); err != nil {
-		return nil, err
-	}
-
-	return resp, nil
-}
-
 // CreateUser creates a new user in the AWS SSO Using the API.
 // references:
 // + https://docs.aws.amazon.com/singlesignon/latest/developerguide/createuser.html
@@ -176,6 +181,9 @@ func (s *AWSSCIMService) CreateUser(ctx context.Context, usr *CreateUserRequest)
 		return nil, ErrCreateUserRequestEmpty
 	}
 	// Check constraints in the reference document
+	if usr.UserName == "" {
+		return nil, ErrUserNameEmpty
+	}
 	if usr.DisplayName == "" {
 		return nil, ErrDisplayNameEmpty
 	}
@@ -203,7 +211,7 @@ func (s *AWSSCIMService) CreateUser(ctx context.Context, usr *CreateUserRequest)
 		return nil, fmt.Errorf("aws CreateUser: error creating request, http method: %s, url: %v, error: %w", http.MethodPost, reqUrl.String(), err)
 	}
 
-	resp, err := s.do(ctx, req, nil)
+	resp, err := s.do(ctx, req)
 	if err != nil {
 		return nil, fmt.Errorf("aws CreateUser: error sending request, http method: %s, url: %v, error: %w", http.MethodPost, reqUrl.String(), err)
 	}
@@ -235,7 +243,7 @@ func (s *AWSSCIMService) DeleteUser(ctx context.Context, id string) error {
 		return fmt.Errorf("aws: error creating request, http method: %s, url: %v, error: %w", http.MethodPatch, reqUrl.String(), err)
 	}
 
-	resp, err := s.do(ctx, req, nil)
+	resp, err := s.do(ctx, req)
 	if err != nil {
 		return fmt.Errorf("aws: error sending request, http method: %s, url: %v, error: %w", http.MethodPatch, reqUrl.String(), err)
 	}
@@ -264,7 +272,7 @@ func (s *AWSSCIMService) ListUsers(ctx context.Context, filter string) (*ListUse
 		return nil, fmt.Errorf("aws ListUsers: error creating request, http method: %s, url: %v, error: %w", http.MethodGet, reqUrl.String(), err)
 	}
 
-	resp, err := s.do(ctx, req, nil)
+	resp, err := s.do(ctx, req)
 	if err != nil {
 		return nil, fmt.Errorf("aws ListUsers: error sending request, http method: %s, url: %v, error: %w", http.MethodGet, reqUrl.String(), err)
 	}
@@ -299,7 +307,7 @@ func (s *AWSSCIMService) PatchUser(ctx context.Context, pur *PatchUserRequest) e
 		return fmt.Errorf("aws: error creating request, http method: %s, url: %v, error: %w", http.MethodPatch, reqUrl.String(), err)
 	}
 
-	resp, err := s.do(ctx, req, nil)
+	resp, err := s.do(ctx, req)
 	if err != nil {
 		return fmt.Errorf("aws: error sending request, http method: %s, url: %v, error: %w", http.MethodPatch, reqUrl.String(), err)
 	}
@@ -340,7 +348,7 @@ func (s *AWSSCIMService) PutUser(ctx context.Context, usr *PutUserRequest) (*Put
 		return nil, fmt.Errorf("aws PutUser: error creating request, http method: %s, url: %v, error: %w", http.MethodPost, reqUrl.String(), err)
 	}
 
-	resp, err := s.do(ctx, req, nil)
+	resp, err := s.do(ctx, req)
 	if err != nil {
 		return nil, fmt.Errorf("aws PutUser: error sending request, http method: %s, url: %v, error: %w", http.MethodPost, reqUrl.String(), err)
 	}
@@ -374,7 +382,7 @@ func (s *AWSSCIMService) ListGroups(ctx context.Context, filter string) (*ListGr
 		return nil, fmt.Errorf("aws ListGroups: error creating request, http method: %s, url: %v, error: %w", http.MethodGet, reqUrl.String(), err)
 	}
 
-	resp, err := s.do(ctx, req, nil)
+	resp, err := s.do(ctx, req)
 	if err != nil {
 		return nil, fmt.Errorf("aws ListGroups: error sending request, http method: %s, url: %v, error: %w", http.MethodGet, reqUrl.String(), err)
 	}
@@ -411,7 +419,7 @@ func (s *AWSSCIMService) CreateGroup(ctx context.Context, g *CreateGroupRequest)
 		return nil, fmt.Errorf("aws CreateGroup: error creating request, http method: %s, url: %v, error: %w", http.MethodPost, reqUrl.String(), err)
 	}
 
-	resp, err := s.do(ctx, req, nil)
+	resp, err := s.do(ctx, req)
 	if err != nil {
 		return nil, fmt.Errorf("aws CreateGroup: error sending request, http method: %s, url: %v, error: %w", http.MethodPost, reqUrl.String(), err)
 	}
@@ -443,7 +451,7 @@ func (s *AWSSCIMService) DeleteGroup(ctx context.Context, id string) error {
 		return fmt.Errorf("aws DeleteGroup: error creating request, http method: %s, url: %v, error: %w", http.MethodPatch, reqUrl.String(), err)
 	}
 
-	resp, err := s.do(ctx, req, nil)
+	resp, err := s.do(ctx, req)
 	if err != nil {
 		return fmt.Errorf("aws DeleteGroup: error sending request, http method: %s, url: %v, error: %w", http.MethodPatch, reqUrl.String(), err)
 	}
@@ -473,7 +481,7 @@ func (s *AWSSCIMService) PatchGroup(ctx context.Context, pgr *PatchGroupRequest)
 		return fmt.Errorf("aws PatchGroup: error creating request, http method: %s, url: %v, error: %w", http.MethodPatch, reqUrl.String(), err)
 	}
 
-	resp, err := s.do(ctx, req, nil)
+	resp, err := s.do(ctx, req)
 	if err != nil {
 		return fmt.Errorf("aws PatchGroup: error sending request, http method: %s, url: %v, error: %w", http.MethodPatch, reqUrl.String(), err)
 	}
@@ -498,7 +506,7 @@ func (s *AWSSCIMService) ServiceProviderConfig(ctx context.Context) (*ServicePro
 		return nil, fmt.Errorf("aws ServiceProviderConfig: error creating request, http method: %s, url: %v, error: %w", http.MethodGet, reqUrl.String(), err)
 	}
 
-	resp, err := s.do(ctx, req, nil)
+	resp, err := s.do(ctx, req)
 	if err != nil {
 		return nil, fmt.Errorf("aws ServiceProviderConfig: error sending request, http method: %s, url: %v, error: %w", http.MethodGet, reqUrl.String(), err)
 	}

@@ -357,6 +357,7 @@ func TestSCIMProvider_CreateUsers(t *testing.T) {
 	t.Run("Should call CreateUser 1 time and no return error", func(t *testing.T) {
 		mockSCIM := mocks.NewMockAWSSCIMProvider(mockCtrl)
 		cur := &aws.CreateUserRequest{
+			UserName:    "user.1@mail.com",
 			DisplayName: "user 1",
 			ExternalId:  "1",
 			Name:        aws.Name{FamilyName: "1", GivenName: "user"},
@@ -393,6 +394,7 @@ func TestSCIMProvider_CreateUsers(t *testing.T) {
 	t.Run("Should call CreateUser 1 time and return error", func(t *testing.T) {
 		mockSCIM := mocks.NewMockAWSSCIMProvider(mockCtrl)
 		cur := &aws.CreateUserRequest{
+			UserName:    "user.1@mail.com",
 			DisplayName: "user 1",
 			ExternalId:  "1",
 			Name:        aws.Name{FamilyName: "1", GivenName: "user"},
@@ -428,6 +430,7 @@ func TestSCIMProvider_CreateUsers(t *testing.T) {
 	t.Run("Should call CreateUser 2 time and no return error", func(t *testing.T) {
 		mockSCIM := mocks.NewMockAWSSCIMProvider(mockCtrl)
 		cur1 := &aws.CreateUserRequest{
+			UserName:    "user.1@mail.com",
 			DisplayName: "user 1",
 			ExternalId:  "1",
 			Name:        aws.Name{FamilyName: "1", GivenName: "user"},
@@ -437,6 +440,7 @@ func TestSCIMProvider_CreateUsers(t *testing.T) {
 			Active: true,
 		}
 		cur2 := &aws.CreateUserRequest{
+			UserName:    "user.2@mail.com",
 			DisplayName: "user 2",
 			ExternalId:  "2",
 			Name:        aws.Name{FamilyName: "2", GivenName: "user"},

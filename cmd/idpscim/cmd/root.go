@@ -190,6 +190,8 @@ func sync(cmd *cobra.Command, args []string) error {
 }
 
 func syncGroups(cmd *cobra.Command, args []string) error {
+	log.Info("idpscim syncGroups: starting sync groups")
+
 	ctx := context.Background()
 
 	serviceAccount, err := ioutil.ReadFile(cfg.GWSServiceAccountFile)
@@ -205,19 +207,19 @@ func syncGroups(cmd *cobra.Command, args []string) error {
 	// Google Client Service
 	gwsService, err := google.NewService(ctx, cfg.GWSUserEmail, serviceAccount, scopes...)
 	if err != nil {
-		return errors.Wrap(err, "idpscim: cannot create google service")
+		return errors.Wrap(err, "idpscim syncGroups: cannot create google service")
 	}
 
 	// Google Directory Service
 	gds, err := google.NewDirectoryService(gwsService)
 	if err != nil {
-		return errors.Wrap(err, "idpscim: cannot create google directory service")
+		return errors.Wrap(err, "idpscim syncGroups: cannot create google directory service")
 	}
 
 	// Identity Provider Service
 	idp, err := idp.NewIdentityProvider(gds)
 	if err != nil {
-		return errors.Wrap(err, "idpscim: cannot create identity provider service")
+		return errors.Wrap(err, "idpscim syncGroups: cannot create identity provider service")
 	}
 
 	// httpClient
@@ -226,32 +228,32 @@ func syncGroups(cmd *cobra.Command, args []string) error {
 	// AWS SCIM Service
 	awsSCIM, err := aws.NewSCIMService(httpClient, cfg.SCIMEndpoint, cfg.SCIMAccessToken)
 	if err != nil {
-		return errors.Wrap(err, "idpscim: cannot create aws scim service")
+		return errors.Wrap(err, "idpscim syncGroups: cannot create aws scim service")
 	}
 
 	scim, err := scim.NewSCIMProvider(awsSCIM)
 	if err != nil {
-		return errors.Wrap(err, "idpscim: cannot create scim provider")
+		return errors.Wrap(err, "idpscim syncGroups: cannot create scim provider")
 	}
 
 	awsconf, err := awsconf.LoadDefaultConfig(context.Background())
 	if err != nil {
-		log.Fatalf(errors.Wrap(err, "idpscim: cannot load aws config").Error())
+		log.Fatalf(errors.Wrap(err, "idpscim syncGroups: cannot load aws config").Error())
 	}
 
 	s3Client := s3.NewFromConfig(awsconf)
 	repo, err := repository.NewS3Repository(s3Client, repository.WithBucket(cfg.AWSS3BucketName), repository.WithKey(cfg.AWSS3BucketKey))
 	if err != nil {
-		log.Fatalf(errors.Wrap(err, "idpscim: cannot create s3 repository").Error())
+		log.Fatalf(errors.Wrap(err, "idpscim syncGroups: cannot create s3 repository").Error())
 	}
 
 	ss, err := core.NewSyncService(ctx, idp, scim, repo, core.WithIdentityProviderGroupsFilter(cfg.GWSGroupsFilter))
 	if err != nil {
-		return errors.Wrap(err, "idpscim: cannot create sync service")
+		return errors.Wrap(err, "idpscim syncGroups: cannot create sync service")
 	}
 
 	if err := ss.SyncGroupsAndTheirMembers(); err != nil {
-		return errors.Wrap(err, "idpscim: cannot sync groups and their members")
+		return errors.Wrap(err, "idpscim syncGroups: cannot sync groups and their members")
 	}
 
 	return nil

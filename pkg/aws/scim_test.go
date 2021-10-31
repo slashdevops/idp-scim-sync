@@ -66,7 +66,7 @@ func TestAWSSCIMProvider_request(t *testing.T) {
 
 		req := httptest.NewRequest(http.MethodGet, endpoint, nil)
 
-		resp, err := got.do(context.TODO(), req, nil)
+		resp, err := got.do(context.TODO(), req)
 		assert.Error(t, err)
 		assert.Nil(t, resp)
 	})
@@ -91,7 +91,7 @@ func TestAWSSCIMProvider_request(t *testing.T) {
 
 		req := httptest.NewRequest(http.MethodGet, endpoint, nil)
 
-		resp, err := got.do(context.TODO(), req, nil)
+		resp, err := got.do(context.TODO(), req)
 		assert.NoError(t, err)
 		assert.NotNil(t, resp)
 		assert.Equal(t, mockResp, resp)

@@ -15,13 +15,13 @@ import (
 
 var (
 	// ErrIdentiyProviderServiceNil is returned when the Identity Provider Service is nil
-	ErrIdentiyProviderServiceNil = errors.New("sync: identity provider service cannot be nil")
+	ErrIdentiyProviderServiceNil = errors.New("sync core: identity provider service cannot be nil")
 
 	// ErrSCIMServiceNil is returned when the SCIM Service is nil
-	ErrSCIMServiceNil = errors.New("sync: SCIM service cannot be nil")
+	ErrSCIMServiceNil = errors.New("sync core: SCIM service cannot be nil")
 
 	// ErrStateRepositoryNil is returned when the State Repository is nil
-	ErrStateRepositoryNil = errors.New("sync: state repository cannot be nil")
+	ErrStateRepositoryNil = errors.New("sync core: state repository cannot be nil")
 )
 
 // SyncService represent the sync service and the core of the sync process
@@ -72,19 +72,19 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 	// get data from the identity provider
 	idpUsersResult, idpGroupsResult, idpGroupsUsersResult, err := getIdentityProviderData(ss.ctx, ss.prov, ss.provGroupsFilter)
 	if err != nil {
-		return fmt.Errorf("sync: error getting data from the identity provider: %w", err)
+		return fmt.Errorf("sync core: error getting data from the identity provider: %w", err)
 	}
 
 	if idpUsersResult.Items == 0 {
-		log.Warn("sync: there are no users in the identity provider")
+		log.Warn("sync core: there are no users in the identity provider")
 	}
 
 	if idpGroupsResult.Items == 0 {
-		log.Warnf("sync: there are no groups in the identity provider that match with this filter: %s", ss.provGroupsFilter)
+		log.Warnf("sync core: there are no groups in the identity provider that match with this filter: %s", ss.provGroupsFilter)
 	}
 
 	if idpGroupsUsersResult.Items == 0 {
-		log.Warn("sync: there are no group users in the identity provider")
+		log.Warn("sync core: there are no group users in the identity provider")
 	}
 
 	// get the state data from the repository
@@ -94,7 +94,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 		if errors.As(err, &nsk) {
 			state = &model.State{}
 		} else {
-			return fmt.Errorf("sync: error getting state data from the repository: %w", err)
+			return fmt.Errorf("sync core: error getting state data from the repository: %w", err)
 		}
 
 	}
@@ -120,7 +120,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 
 		scimUsersResult, scimGroupsResult, scimGroupsUsersResult, err := getSCIMData(ss.ctx, ss.scim)
 		if err != nil {
-			return fmt.Errorf("sync: error getting data from the SCIM service: %w", err)
+			return fmt.Errorf("sync core: error getting data from the SCIM service: %w", err)
 		}
 
 		log.WithFields(log.Fields{
@@ -131,7 +131,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 
 		rgrc, rgru, err := reconcilingSCIMGroups(ss.ctx, ss.scim, groupsCreate, groupsUpdate, groupsDelete)
 		if err != nil {
-			return fmt.Errorf("sync: error reconciling groups: %w", err)
+			return fmt.Errorf("sync core: error reconciling groups: %w", err)
 		}
 
 		// merge in only one data structure the groups created and updated who has the SCIMID
@@ -145,7 +145,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 
 		rurc, ruru, err := reconcilingSCIMUsers(ss.ctx, ss.scim, usersCreate, usersUpdate, usersDelete)
 		if err != nil {
-			return fmt.Errorf("sync: error reconciling users: %w", err)
+			return fmt.Errorf("sync core: error reconciling users: %w", err)
 		}
 
 		// merge in only one data structure the users created and updated who has the SCIMID
@@ -160,7 +160,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 		createdGroupsUsersResult = *ugCreate
 
 		if err := reconcilingSCIMGroupsUsers(ss.ctx, ss.scim, ugCreate, ugDelete); err != nil {
-			return fmt.Errorf("sync: error reconciling groups users: %w", err)
+			return fmt.Errorf("sync core: error reconciling groups users: %w", err)
 		}
 
 	} else { // This is not the first time syncing
@@ -182,7 +182,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 
 			rgrc, rgru, err := reconcilingSCIMGroups(ss.ctx, ss.scim, groupsCreate, groupsUpdate, groupsDelete)
 			if err != nil {
-				return fmt.Errorf("sync: error reconciling groups: %w", err)
+				return fmt.Errorf("sync core: error reconciling groups: %w", err)
 			}
 
 			// merge in only one data structure the groups created and updated who has the SCIMID
@@ -202,7 +202,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 
 			rurc, ruru, err := reconcilingSCIMUsers(ss.ctx, ss.scim, usersCreate, usersUpdate, usersDelete)
 			if err != nil {
-				return fmt.Errorf("sync: error reconciling users: %w", err)
+				return fmt.Errorf("sync core: error reconciling users: %w", err)
 			}
 
 			// merge in only one data structure the users created and updated who has the SCIMID
@@ -223,7 +223,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 			createdGroupsUsersResult = *ugCreate
 
 			if err := reconcilingSCIMGroupsUsers(ss.ctx, ss.scim, ugCreate, ugDelete); err != nil {
-				return fmt.Errorf("sync: error reconciling groups users: %w", err)
+				return fmt.Errorf("sync core: error reconciling groups users: %w", err)
 			}
 		}
 
@@ -247,7 +247,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 		"users":  createdUsersResult.Items,
 	}).Info("setting the new state")
 	if err := ss.repo.SetState(ss.ctx, newState); err != nil {
-		return fmt.Errorf("sync: error saving state: %w", err)
+		return fmt.Errorf("sync core: error saving state: %w", err)
 	}
 
 	return nil
@@ -265,12 +265,12 @@ func (ss *SyncService) SyncGroupsAndUsers() error {
 func getIdentityProviderData(ctx context.Context, ip IdentityProviderService, groupFilter []string) (*model.UsersResult, *model.GroupsResult, *model.GroupsUsersResult, error) {
 	groupsResult, err := ip.GetGroups(ctx, groupFilter)
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("sync: error getting groups from the identity provider: %w", err)
+		return nil, nil, nil, fmt.Errorf("sync core: error getting groups from the identity provider: %w", err)
 	}
 
 	usersResult, groupsUsersResult, err := ip.GetUsersAndGroupsUsers(ctx, groupsResult)
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("sync: error getting users and groups and their users: %w", err)
+		return nil, nil, nil, fmt.Errorf("sync core: error getting users and groups and their users: %w", err)
 	}
 
 	return usersResult, groupsResult, groupsUsersResult, nil
@@ -280,12 +280,12 @@ func getIdentityProviderData(ctx context.Context, ip IdentityProviderService, gr
 func getSCIMData(ctx context.Context, scim SCIMService) (*model.UsersResult, *model.GroupsResult, *model.GroupsUsersResult, error) {
 	groupsResult, err := scim.GetGroups(ctx)
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("sync: error getting groups from the SCIM provider: %w", err)
+		return nil, nil, nil, fmt.Errorf("sync core: error getting groups from the SCIM provider: %w", err)
 	}
 
 	usersResult, groupsUsersResult, err := scim.GetUsersAndGroupsUsers(ctx)
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("sync: error getting users and groups and their users from SCIM provider: %w", err)
+		return nil, nil, nil, fmt.Errorf("sync core: error getting users and groups and their users from SCIM provider: %w", err)
 	}
 
 	return usersResult, groupsResult, groupsUsersResult, nil
@@ -303,7 +303,7 @@ func reconcilingSCIMGroups(ctx context.Context, scim SCIMService, create *model.
 		log.WithField("quantity", create.Items).Info("creating groups")
 		created, err = scim.CreateGroups(ctx, create)
 		if err != nil {
-			return nil, nil, fmt.Errorf("sync: error creating groups in SCIM Provider: %w", err)
+			return nil, nil, fmt.Errorf("sync core: error creating groups in SCIM Provider: %w", err)
 		}
 
 	}
@@ -315,7 +315,7 @@ func reconcilingSCIMGroups(ctx context.Context, scim SCIMService, create *model.
 		log.WithField("quantity", update.Items).Info("updating groups")
 		updated, err = scim.UpdateGroups(ctx, update)
 		if err != nil {
-			return nil, nil, fmt.Errorf("sync: error updating groups in SCIM Provider: %w", err)
+			return nil, nil, fmt.Errorf("sync core: error updating groups in SCIM Provider: %w", err)
 		}
 
 	}
@@ -325,7 +325,7 @@ func reconcilingSCIMGroups(ctx context.Context, scim SCIMService, create *model.
 	} else {
 		log.WithField("quantity", delete.Items).Info("deleting groups")
 		if err := scim.DeleteGroups(ctx, delete); err != nil {
-			return nil, nil, fmt.Errorf("sync: error deleting groups in SCIM Provider: %w", err)
+			return nil, nil, fmt.Errorf("sync core: error deleting groups in SCIM Provider: %w", err)
 		}
 
 	}
@@ -345,7 +345,7 @@ func reconcilingSCIMUsers(ctx context.Context, scim SCIMService, create *model.U
 		log.WithField("quantity", create.Items).Info("creating users")
 		created, err = scim.CreateUsers(ctx, create)
 		if err != nil {
-			return nil, nil, fmt.Errorf("sync: error creating users in SCIM Provider: %w", err)
+			return nil, nil, fmt.Errorf("sync core: error creating users in SCIM Provider: %w", err)
 		}
 	}
 
@@ -356,7 +356,7 @@ func reconcilingSCIMUsers(ctx context.Context, scim SCIMService, create *model.U
 		log.WithField("quantity", update.Items).Info("updating users")
 		updated, err = scim.UpdateUsers(ctx, update)
 		if err != nil {
-			return nil, nil, fmt.Errorf("sync: error updating users in SCIM Provider: %w", err)
+			return nil, nil, fmt.Errorf("sync core: error updating users in SCIM Provider: %w", err)
 		}
 	}
 
@@ -365,7 +365,7 @@ func reconcilingSCIMUsers(ctx context.Context, scim SCIMService, create *model.U
 	} else {
 		log.WithField("quantity", delete.Items).Info("deleting users")
 		if err := scim.DeleteUsers(ctx, delete); err != nil {
-			return nil, nil, fmt.Errorf("sync: error deleting users in SCIM Provider: %w", err)
+			return nil, nil, fmt.Errorf("sync core: error deleting users in SCIM Provider: %w", err)
 		}
 	}
 
@@ -379,7 +379,7 @@ func reconcilingSCIMGroupsUsers(ctx context.Context, scim SCIMService, create *m
 	} else {
 		log.WithField("quantity", create.Items).Info("joining users to groups")
 		if err := scim.CreateGroupsMembers(ctx, create); err != nil {
-			return fmt.Errorf("sync: error creating groups members in SCIM Provider: %w", err)
+			return fmt.Errorf("sync core: error creating groups members in SCIM Provider: %w", err)
 		}
 	}
 
@@ -388,7 +388,7 @@ func reconcilingSCIMGroupsUsers(ctx context.Context, scim SCIMService, create *m
 	} else {
 		log.WithField("quantity", delete.Items).Info("removing users to groups")
 		if err := scim.DeleteGroupsMembers(ctx, delete); err != nil {
-			return fmt.Errorf("sync: error removing users from groups in SCIM Provider: %w", err)
+			return fmt.Errorf("sync core: error removing users from groups in SCIM Provider: %w", err)
 		}
 	}
 
