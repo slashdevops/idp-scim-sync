@@ -66,9 +66,15 @@ func (s *SCIMProvider) GetGroups(ctx context.Context) (*model.GroupsResult, erro
 
 	groups := make([]model.Group, 0)
 	for _, group := range groupsResponse.Resources {
+
+		// log.WithFields(log.Fields{
+		// 	"group": group.ID,
+		// }).Debugf("getting group, payload: %s", utils.ToJSON(group))
+
 		e := model.Group{
 			SCIMID: group.ID,
 			Name:   group.DisplayName,
+			IPID:   group.ExternalId,
 		}
 		e.HashCode = hash.Get(e)
 

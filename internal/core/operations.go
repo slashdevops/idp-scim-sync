@@ -1,10 +1,8 @@
 package core
 
 import (
-	log "github.com/sirupsen/logrus"
 	"github.com/slashdevops/idp-scim-sync/internal/hash"
 	"github.com/slashdevops/idp-scim-sync/internal/model"
-	"github.com/slashdevops/idp-scim-sync/internal/utils"
 )
 
 // groupsOperations returns the differences between the groups in the
@@ -38,18 +36,16 @@ func groupsOperations(idp, state *model.GroupsResult) (create *model.GroupsResul
 			toCreate = append(toCreate, gr)
 		} else {
 			// Check if the group IPID is not the same
-			if gr.SCIMID != stateGroups[gr.Name].SCIMID {
+			if gr.IPID != stateGroups[gr.Name].IPID {
 
-				log.WithFields(log.Fields{
-					"idp":  gr.IPID,
-					"scim": gr.SCIMID,
-				}).Debugf("group to update, payload: %s", utils.ToJSON(gr))
+				// log.WithFields(log.Fields{
+				// 	"idp":  gr.IPID,
+				// 	"scim": gr.SCIMID,
+				// }).Debugf("group to update, payload: %s", utils.ToJSON(gr))
 
 				gr.SCIMID = stateGroups[gr.Name].SCIMID
 
-				// This operation is not needed because the group only has one attribute to change which is the DisplayName
-				// and this is the key, so we can't update the group.
-				toUpdate = append(toUpdate, gr) // NOTE: check if this is necessary, look like is necessary only when we compare state and idp
+				toUpdate = append(toUpdate, gr)
 			} else {
 				toEqual = append(toEqual, gr)
 			}

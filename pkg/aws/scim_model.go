@@ -60,6 +60,7 @@ type Group struct {
 	Meta        Meta     `json:"meta"`
 	Schemas     []string `json:"schemas"`
 	DisplayName string   `json:"displayName"`
+	ExternalId  string   `json:"externalId"`
 	Members     []Member `json:"members"`
 }
 
