@@ -259,7 +259,7 @@ func TestSyncService_getIdentityProviderData(t *testing.T) {
 // 	})
 // }
 
-func TestSyncService_reconcilingSCIMGroups(t *testing.T) {
+func TestSyncService_reconcilingGroups(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 	ctx := context.TODO()
@@ -275,7 +275,7 @@ func TestSyncService_reconcilingSCIMGroups(t *testing.T) {
 		mockSCIMService.EXPECT().UpdateGroups(ctx, update).Return(update, nil).Times(1)
 		mockSCIMService.EXPECT().DeleteGroups(ctx, delete).Return(nil).Times(1)
 
-		grc, gru, err := reconcilingSCIMGroups(ctx, mockSCIMService, create, update, delete)
+		grc, gru, err := reconcilingGroups(ctx, mockSCIMService, create, update, delete)
 		assert.NoError(t, err)
 		assert.NotNil(t, grc)
 		assert.NotNil(t, gru)
@@ -290,7 +290,7 @@ func TestSyncService_reconcilingSCIMGroups(t *testing.T) {
 
 		mockSCIMService.EXPECT().CreateGroups(ctx, create).Return(nil, errors.New("test error")).Times(1)
 
-		grc, gru, err := reconcilingSCIMGroups(ctx, mockSCIMService, create, update, delete)
+		grc, gru, err := reconcilingGroups(ctx, mockSCIMService, create, update, delete)
 		assert.Error(t, err)
 		assert.Nil(t, grc)
 		assert.Nil(t, gru)
@@ -306,7 +306,7 @@ func TestSyncService_reconcilingSCIMGroups(t *testing.T) {
 		mockSCIMService.EXPECT().CreateGroups(ctx, create).Return(create, nil).Times(1)
 		mockSCIMService.EXPECT().UpdateGroups(ctx, update).Return(nil, errors.New("test error")).Times(1)
 
-		grc, gru, err := reconcilingSCIMGroups(ctx, mockSCIMService, create, update, delete)
+		grc, gru, err := reconcilingGroups(ctx, mockSCIMService, create, update, delete)
 		assert.Error(t, err)
 		assert.Nil(t, grc)
 		assert.Nil(t, gru)
@@ -323,7 +323,7 @@ func TestSyncService_reconcilingSCIMGroups(t *testing.T) {
 		mockSCIMService.EXPECT().UpdateGroups(ctx, update).Return(update, nil).Times(1)
 		mockSCIMService.EXPECT().DeleteGroups(ctx, delete).Return(errors.New("test error")).Times(1)
 
-		grc, gru, err := reconcilingSCIMGroups(ctx, mockSCIMService, create, update, delete)
+		grc, gru, err := reconcilingGroups(ctx, mockSCIMService, create, update, delete)
 		assert.Error(t, err)
 		assert.Nil(t, grc)
 		assert.Nil(t, gru)
@@ -336,14 +336,14 @@ func TestSyncService_reconcilingSCIMGroups(t *testing.T) {
 		update := &model.GroupsResult{Items: 0, Resources: []model.Group{}}
 		delete := &model.GroupsResult{Items: 0, Resources: []model.Group{}}
 
-		grc, gru, err := reconcilingSCIMGroups(ctx, mockSCIMService, create, update, delete)
+		grc, gru, err := reconcilingGroups(ctx, mockSCIMService, create, update, delete)
 		assert.NoError(t, err)
 		assert.NotNil(t, grc)
 		assert.NotNil(t, gru)
 	})
 }
 
-func TestSyncService_reconcilingSCIMUsers(t *testing.T) {
+func TestSyncService_reconcilingUsers(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 	ctx := context.TODO()
@@ -359,7 +359,7 @@ func TestSyncService_reconcilingSCIMUsers(t *testing.T) {
 		mockSCIMService.EXPECT().UpdateUsers(ctx, update).Return(update, nil).Times(1)
 		mockSCIMService.EXPECT().DeleteUsers(ctx, delete).Return(nil).Times(1)
 
-		urc, uru, err := reconcilingSCIMUsers(ctx, mockSCIMService, create, update, delete)
+		urc, uru, err := reconcilingUsers(ctx, mockSCIMService, create, update, delete)
 		assert.NoError(t, err)
 		assert.NotNil(t, urc)
 		assert.NotNil(t, uru)
@@ -374,7 +374,7 @@ func TestSyncService_reconcilingSCIMUsers(t *testing.T) {
 
 		mockSCIMService.EXPECT().CreateUsers(ctx, create).Return(nil, errors.New("test error")).Times(1)
 
-		urc, uru, err := reconcilingSCIMUsers(ctx, mockSCIMService, create, update, delete)
+		urc, uru, err := reconcilingUsers(ctx, mockSCIMService, create, update, delete)
 		assert.Error(t, err)
 		assert.Nil(t, urc)
 		assert.Nil(t, uru)
@@ -390,7 +390,7 @@ func TestSyncService_reconcilingSCIMUsers(t *testing.T) {
 		mockSCIMService.EXPECT().CreateUsers(ctx, create).Return(create, nil).Times(1)
 		mockSCIMService.EXPECT().UpdateUsers(ctx, update).Return(nil, errors.New("test error")).Times(1)
 
-		urc, uru, err := reconcilingSCIMUsers(ctx, mockSCIMService, create, update, delete)
+		urc, uru, err := reconcilingUsers(ctx, mockSCIMService, create, update, delete)
 		assert.Error(t, err)
 		assert.Nil(t, urc)
 		assert.Nil(t, uru)
@@ -407,7 +407,7 @@ func TestSyncService_reconcilingSCIMUsers(t *testing.T) {
 		mockSCIMService.EXPECT().UpdateUsers(ctx, update).Return(update, nil).Times(1)
 		mockSCIMService.EXPECT().DeleteUsers(ctx, delete).Return(errors.New("test error")).Times(1)
 
-		urc, uru, err := reconcilingSCIMUsers(ctx, mockSCIMService, create, update, delete)
+		urc, uru, err := reconcilingUsers(ctx, mockSCIMService, create, update, delete)
 		assert.Error(t, err)
 		assert.Nil(t, urc)
 		assert.Nil(t, uru)
@@ -420,14 +420,14 @@ func TestSyncService_reconcilingSCIMUsers(t *testing.T) {
 		update := &model.UsersResult{Items: 0, Resources: []model.User{}}
 		delete := &model.UsersResult{Items: 0, Resources: []model.User{}}
 
-		urc, uru, err := reconcilingSCIMUsers(ctx, mockSCIMService, create, update, delete)
+		urc, uru, err := reconcilingUsers(ctx, mockSCIMService, create, update, delete)
 		assert.NoError(t, err)
 		assert.NotNil(t, urc)
 		assert.NotNil(t, uru)
 	})
 }
 
-func TestSyncService_reconcilingSCIMGroupsUsers(t *testing.T) {
+func TestSyncService_reconcilingGroupsUsers(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 	ctx := context.TODO()
@@ -441,7 +441,7 @@ func TestSyncService_reconcilingSCIMGroupsUsers(t *testing.T) {
 		mockSCIMService.EXPECT().CreateGroupsMembers(ctx, create).Return(nil).Times(1)
 		mockSCIMService.EXPECT().DeleteGroupsMembers(ctx, delete).Return(nil).Times(1)
 
-		err := reconcilingSCIMGroupsUsers(ctx, mockSCIMService, create, delete)
+		err := reconcilingGroupsUsers(ctx, mockSCIMService, create, delete)
 		assert.NoError(t, err)
 	})
 
@@ -453,7 +453,7 @@ func TestSyncService_reconcilingSCIMGroupsUsers(t *testing.T) {
 
 		mockSCIMService.EXPECT().CreateGroupsMembers(ctx, create).Return(errors.New("test error")).Times(1)
 
-		err := reconcilingSCIMGroupsUsers(ctx, mockSCIMService, create, delete)
+		err := reconcilingGroupsUsers(ctx, mockSCIMService, create, delete)
 		assert.Error(t, err)
 	})
 
@@ -466,7 +466,7 @@ func TestSyncService_reconcilingSCIMGroupsUsers(t *testing.T) {
 		mockSCIMService.EXPECT().CreateGroupsMembers(ctx, create).Return(nil).Times(1)
 		mockSCIMService.EXPECT().DeleteGroupsMembers(ctx, delete).Return(errors.New("test error")).Times(1)
 
-		err := reconcilingSCIMGroupsUsers(ctx, mockSCIMService, create, delete)
+		err := reconcilingGroupsUsers(ctx, mockSCIMService, create, delete)
 		assert.Error(t, err)
 	})
 
@@ -476,7 +476,7 @@ func TestSyncService_reconcilingSCIMGroupsUsers(t *testing.T) {
 		create := &model.GroupsUsersResult{Items: 0, Resources: []model.GroupUsers{}}
 		delete := &model.GroupsUsersResult{Items: 0, Resources: []model.GroupUsers{}}
 
-		err := reconcilingSCIMGroupsUsers(ctx, mockSCIMService, create, delete)
+		err := reconcilingGroupsUsers(ctx, mockSCIMService, create, delete)
 		assert.NoError(t, err)
 	})
 }
@@ -539,7 +539,7 @@ func TestSyncService_reconcilingSCIMGroupsUsers(t *testing.T) {
 // 	mockSCIMService.EXPECT().GetGroups(ctx).Return(scimGroupsEmpty, nil).Times(1)
 // 	mockSCIMService.EXPECT().GetUsersAndGroupsUsers(ctx).Return(scimUsersEmpty, scimGroupsUsersEmpty, nil).Times(1)
 
-// 	// called by reconcilingSCIMGroups
+// 	// called by reconcilingGroups
 // 	scimGroups := &model.GroupsResult{
 // 		Items:     1,
 // 		Resources: []model.Group{{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: "123456789"}},
@@ -552,7 +552,7 @@ func TestSyncService_reconcilingSCIMGroupsUsers(t *testing.T) {
 // 	}
 // 	mockSCIMService.EXPECT().CreateGroups(ctx, idpGroups).Return(scimGroups, nil).Times(1)
 
-// 	// called by reconcilingSCIMUsers
+// 	// called by reconcilingUsers
 // 	scimUsers := &model.UsersResult{
 // 		Items:     1,
 // 		Resources: []model.User{{IPID: "1", SCIMID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, DisplayName: "user 1", Email: "user.1@mail.com"}},
@@ -565,7 +565,7 @@ func TestSyncService_reconcilingSCIMGroupsUsers(t *testing.T) {
 // 	}
 // 	mockSCIMService.EXPECT().CreateUsers(ctx, idpUsers).Return(scimUsers, nil).Times(1)
 
-// 	// called by reconcilingSCIMGroupsUsers
+// 	// called by reconcilingGroupsUsers
 // 	mockSCIMService.EXPECT().CreateGroupsMembers(ctx, idpGroupsUsers).Return(nil).Times(1)
 
 // 	// called by setState

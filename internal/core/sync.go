@@ -136,7 +136,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 		}).Info("reconciling groups")
 		groupsCreate, groupsUpdate, groupsEqual, groupsDelete := groupsOperations(idpGroupsResult, scimGroupsResult)
 
-		groupsCreated, groupsUpdated, err := reconcilingSCIMGroups(ss.ctx, ss.scim, groupsCreate, groupsUpdate, groupsDelete)
+		groupsCreated, groupsUpdated, err := reconcilingGroups(ss.ctx, ss.scim, groupsCreate, groupsUpdate, groupsDelete)
 		if err != nil {
 			return fmt.Errorf("error reconciling groups: %w", err)
 		}
@@ -157,13 +157,12 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 		}).Info("reconciling users")
 		usersCreate, usersUpdate, usersEqual, usersDelete := usersOperations(idpUsersResult, scimUsersResult)
 
-		usersCreated, usersUpdated, err := reconcilingSCIMUsers(ss.ctx, ss.scim, usersCreate, usersUpdate, usersDelete)
+		usersCreated, usersUpdated, err := reconcilingUsers(ss.ctx, ss.scim, usersCreate, usersUpdate, usersDelete)
 		if err != nil {
 			return fmt.Errorf("error reconciling users: %w", err)
 		}
 
-		// log.Debugf("reconciling users result: created %s\n, updated %s\n", utils.ToJSON(usersCreated), utils.ToJSON(usersUpdated))
-		// merge in only one data structure the users created and updated who has the SCIMID
+		// usersCreated + usersUpdated + usersEqual = users total
 		totalUsersResult = mergeUsersResult(usersCreated, usersUpdated, usersEqual)
 
 		// log.WithFields(log.Fields{
@@ -176,7 +175,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 		// //
 		// totalGroupsUsersResult = *ugCreate
 
-		// if err := reconcilingSCIMGroupsUsers(ss.ctx, ss.scim, ugCreate, ugDelete); err != nil {
+		// if err := reconcilingGroupsUsers(ss.ctx, ss.scim, ugCreate, ugDelete); err != nil {
 		// 	return fmt.Errorf("error reconciling groups users: %w", err)
 		// }
 
@@ -211,13 +210,13 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 			}).Info("reconciling groups")
 			groupsCreate, groupsUpdate, groupsEqual, groupsDelete := groupsOperations(idpGroupsResult, &state.Resources.Groups)
 
-			rgrc, rgru, err := reconcilingSCIMGroups(ss.ctx, ss.scim, groupsCreate, groupsUpdate, groupsDelete)
+			groupsCreated, groupsUpdated, err := reconcilingGroups(ss.ctx, ss.scim, groupsCreate, groupsUpdate, groupsDelete)
 			if err != nil {
 				return fmt.Errorf("error reconciling groups: %w", err)
 			}
 
 			// merge in only one data structure the groups created and updated who has the SCIMID
-			totalGroupsResult = mergeGroupsResult(rgrc, rgru, groupsEqual)
+			totalGroupsResult = mergeGroupsResult(groupsCreated, groupsUpdated, groupsEqual)
 		}
 
 		if idpUsersResult.HashCode == state.Resources.Users.HashCode {
@@ -231,13 +230,13 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 			}).Info("reconciling users")
 			usersCreate, usersUpdate, usersEqual, usersDelete := usersOperations(idpUsersResult, &state.Resources.Users)
 
-			rurc, ruru, err := reconcilingSCIMUsers(ss.ctx, ss.scim, usersCreate, usersUpdate, usersDelete)
+			usersCreated, usersUpdated, err := reconcilingUsers(ss.ctx, ss.scim, usersCreate, usersUpdate, usersDelete)
 			if err != nil {
 				return fmt.Errorf("error reconciling users: %w", err)
 			}
 
-			// merge in only one data structure the users created and updated who has the SCIMID
-			totalUsersResult = mergeUsersResult(rurc, ruru, usersEqual)
+			// usersCreated + usersUpdated + usersEqual = users total
+			totalUsersResult = mergeUsersResult(usersCreated, usersUpdated, usersEqual)
 		}
 
 		// if idpGroupsUsersResult.HashCode == state.Resources.GroupsUsers.HashCode {
@@ -253,7 +252,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 
 		// 	totalGroupsUsersResult = *ugCreate
 
-		// 	if err := reconcilingSCIMGroupsUsers(ss.ctx, ss.scim, ugCreate, ugDelete); err != nil {
+		// 	if err := reconcilingGroupsUsers(ss.ctx, ss.scim, ugCreate, ugDelete); err != nil {
 		// 		return fmt.Errorf("error reconciling groups users: %w", err)
 		// 	}
 		// }
@@ -326,10 +325,10 @@ func getSCIMData(ctx context.Context, scim SCIMService) (*model.UsersResult, *mo
 	return usersResult, groupsResult, groupsUsersResult, nil
 }
 
-// reconcilingSCIMGroups receives lists of groups to create, update, equals and delete in the SCIM service
+// reconcilingGroups receives lists of groups to create, update, equals and delete in the SCIM service
 // returns the lists of groups created and updated in the SCIM service with the Ids of these groups.
 //
-func reconcilingSCIMGroups(ctx context.Context, scim SCIMService, create *model.GroupsResult, update *model.GroupsResult, delete *model.GroupsResult) (created *model.GroupsResult, updated *model.GroupsResult, e error) {
+func reconcilingGroups(ctx context.Context, scim SCIMService, create *model.GroupsResult, update *model.GroupsResult, delete *model.GroupsResult) (created *model.GroupsResult, updated *model.GroupsResult, e error) {
 	var err error
 
 	if create.Items == 0 {
@@ -369,9 +368,9 @@ func reconcilingSCIMGroups(ctx context.Context, scim SCIMService, create *model.
 	return
 }
 
-// reconcilingSCIMUsers receives lists of users to create, update and delete in the SCIM service
+// reconcilingUsers receives lists of users to create, update and delete in the SCIM service
 // returns the lists of users created and updated in the SCIM service with the Ids of these users in the SCIM service
-func reconcilingSCIMUsers(ctx context.Context, scim SCIMService, create *model.UsersResult, update *model.UsersResult, delete *model.UsersResult) (created *model.UsersResult, updated *model.UsersResult, e error) {
+func reconcilingUsers(ctx context.Context, scim SCIMService, create *model.UsersResult, update *model.UsersResult, delete *model.UsersResult) (created *model.UsersResult, updated *model.UsersResult, e error) {
 	var err error
 
 	if create.Items == 0 {
@@ -408,8 +407,8 @@ func reconcilingSCIMUsers(ctx context.Context, scim SCIMService, create *model.U
 	return
 }
 
-// reconcilingSCIMGroupsUsers
-func reconcilingSCIMGroupsUsers(ctx context.Context, scim SCIMService, create *model.GroupsUsersResult, delete *model.GroupsUsersResult) error {
+// reconcilingGroupsUsers
+func reconcilingGroupsUsers(ctx context.Context, scim SCIMService, create *model.GroupsUsersResult, delete *model.GroupsUsersResult) error {
 	if create.Items == 0 {
 		log.Info("no users to be joined to groups")
 	} else {
