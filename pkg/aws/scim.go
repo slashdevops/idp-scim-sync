@@ -11,8 +11,6 @@ import (
 	"path"
 
 	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
-	"github.com/slashdevops/idp-scim-sync/internal/utils"
 )
 
 // Consume http methods
@@ -349,9 +347,9 @@ func (s *AWSSCIMService) PutUser(ctx context.Context, usr *PutUserRequest) (*Put
 
 	reqUrl.Path = path.Join(reqUrl.Path, fmt.Sprintf("/Users/%s", usr.ID))
 
-	log.WithFields(log.Fields{
-		"group": usr.ID,
-	}).Debugf("patching group, payload: %s", utils.ToJSON(usr))
+	// log.WithFields(log.Fields{
+	// 	"group": usr.ID,
+	// }).Debugf("patching group, payload: %s", utils.ToJSON(usr))
 
 	req, err := s.newRequest(http.MethodPut, reqUrl, *usr)
 	if err != nil {
@@ -479,9 +477,9 @@ func (s *AWSSCIMService) PatchGroup(ctx context.Context, pgr *PatchGroupRequest)
 		return ErrGroupIDEmpty
 	}
 
-	log.WithFields(log.Fields{
-		"group": pgr.Group.ID,
-	}).Debugf("patching group, payload: %s", utils.ToJSON(pgr))
+	// log.WithFields(log.Fields{
+	// 	"group": pgr.Group.ID,
+	// }).Debugf("patching group, payload: %s", utils.ToJSON(pgr))
 
 	reqUrl, err := url.Parse(s.url.String())
 	if err != nil {

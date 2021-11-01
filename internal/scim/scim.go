@@ -7,6 +7,8 @@ import (
 	"github.com/slashdevops/idp-scim-sync/internal/hash"
 	"github.com/slashdevops/idp-scim-sync/internal/model"
 	"github.com/slashdevops/idp-scim-sync/pkg/aws"
+
+	log "github.com/sirupsen/logrus"
 )
 
 // This implement core.SCIMService interface
@@ -69,7 +71,7 @@ func (s *SCIMProvider) GetGroups(ctx context.Context) (*model.GroupsResult, erro
 
 		// log.WithFields(log.Fields{
 		// 	"group": group.ID,
-		// }).Debugf("getting group, payload: %s", utils.ToJSON(group))
+		// }).Tracef("getting group, payload: %s", utils.ToJSON(group))
 
 		e := model.Group{
 			SCIMID: group.ID,
@@ -101,6 +103,10 @@ func (s *SCIMProvider) CreateGroups(ctx context.Context, gr *model.GroupsResult)
 		groupRequest := &aws.CreateGroupRequest{
 			DisplayName: group.Name,
 		}
+
+		log.WithFields(log.Fields{
+			"group": group.Name,
+		}).Trace("creating group")
 
 		r, err := s.scim.CreateGroup(ctx, groupRequest)
 		if err != nil {
@@ -150,6 +156,10 @@ func (s *SCIMProvider) UpdateGroups(ctx context.Context, gr *model.GroupsResult)
 			},
 		}
 
+		log.WithFields(log.Fields{
+			"group": group.Name,
+		}).Trace("updating group")
+
 		if err := s.scim.PatchGroup(ctx, groupRequest); err != nil {
 			return nil, fmt.Errorf("scim: error updating groups: %w", err)
 		}
@@ -174,6 +184,11 @@ func (s *SCIMProvider) UpdateGroups(ctx context.Context, gr *model.GroupsResult)
 // DeleteGroups deletes groups in SCIM Provider
 func (s *SCIMProvider) DeleteGroups(ctx context.Context, gr *model.GroupsResult) error {
 	for _, group := range gr.Resources {
+
+		log.WithFields(log.Fields{
+			"group": group.Name,
+		}).Trace("deleting group")
+
 		if err := s.scim.DeleteGroup(ctx, group.SCIMID); err != nil {
 			return fmt.Errorf("scim: error deleting group: %s, %w", group.SCIMID, err)
 		}
@@ -241,6 +256,11 @@ func (s *SCIMProvider) CreateUsers(ctx context.Context, ur *model.UsersResult) (
 			Active: user.Active,
 		}
 
+		log.WithFields(log.Fields{
+			"user":  user.DisplayName,
+			"email": user.Email,
+		}).Trace("creating user")
+
 		r, err := s.scim.CreateUser(ctx, userRequest)
 		if err != nil {
 			return nil, fmt.Errorf("scim: error creating user: %w", err)
@@ -285,6 +305,11 @@ func (s *SCIMProvider) UpdateUsers(ctx context.Context, ur *model.UsersResult) (
 			},
 			Active: user.Active,
 		}
+
+		log.WithFields(log.Fields{
+			"user":  user.DisplayName,
+			"email": user.Email,
+		}).Trace("updating user")
 
 		r, err := s.scim.PutUser(ctx, userRequest)
 		if err != nil {
@@ -333,6 +358,11 @@ func (s *SCIMProvider) CreateGroupsMembers(ctx context.Context, gur *model.Group
 			}{
 				Value: user.SCIMID,
 			})
+
+			log.WithFields(log.Fields{
+				"user":  user.DisplayName,
+				"email": user.Email,
+			}).Trace("deleting user")
 		}
 
 		patchGroupRequest := &aws.PatchGroupRequest{
@@ -431,7 +461,7 @@ func (s *SCIMProvider) GetUsersAndGroupsUsers(ctx context.Context, gr *model.Gro
 			groupsData[group.SCIMID] = e
 		}
 
-		// log.Debugf("group added : %s", utils.ToJSON(groupsData[group.SCIMID]))
+		// log.Tracef("group added : %s", utils.ToJSON(groupsData[group.SCIMID]))
 
 		for _, user := range usersResult.Resources {
 
@@ -475,7 +505,7 @@ func (s *SCIMProvider) GetUsersAndGroupsUsers(ctx context.Context, gr *model.Gro
 		groupsUsersResult.HashCode = hash.Get(groupsUsersResult)
 	}
 
-	// log.Debugf("GetUsersAndGroupsUsers: groupsUsersResult : %s", utils.ToJSON(groupsUsersResult))
+	// log.Tracef("GetUsersAndGroupsUsers: groupsUsersResult : %s", utils.ToJSON(groupsUsersResult))
 
 	return usersResult, groupsUsersResult, nil
 }

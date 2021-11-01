@@ -11,13 +11,15 @@ import (
 // this use the Groups Name as the key.
 // SCIM Groups cannot be updated.
 // return 4 objest of GroupsResult
-// create: groups that exist in "state" but not in "idp"
-// update: groups that exist in "idp" and in "state" but attributes changed in idp
-// equal: groups that exist in both "idp" and "state" and their attributes are equal
-// delete: groups that exist in "state" but not in "idp"
-func groupsOperations(idp, state *model.GroupsResult) (create *model.GroupsResult, update *model.GroupsResult, equal *model.GroupsResult, delete *model.GroupsResult) {
-	idpGroups := make(map[string]struct{})
-	stateGroups := make(map[string]model.Group)
+// create: groups that exist in "scim" but not in "idp"
+// update: groups that exist in "idp" and in "scim" but attributes changed in idp
+// equal: groups that exist in both "idp" and "scim" and their attributes are equal
+// delete: groups that exist in "scim" but not in "idp"
+//
+// also extract the id from scim to fill the resutls
+func groupsOperations(idp, scim *model.GroupsResult) (create *model.GroupsResult, update *model.GroupsResult, equal *model.GroupsResult, delete *model.GroupsResult) {
+	idpGroups := make(map[string]struct{})     // [idp.Group.Name ] -> struct{}{}
+	scimGroups := make(map[string]model.Group) // [scim.Group.Name] -> scim.Group
 
 	toCreate := make([]model.Group, 0)
 	toUpdate := make([]model.Group, 0)
@@ -28,35 +30,30 @@ func groupsOperations(idp, state *model.GroupsResult) (create *model.GroupsResul
 		idpGroups[gr.Name] = struct{}{}
 	}
 
-	for _, gr := range state.Resources {
-		stateGroups[gr.Name] = gr
+	for _, gr := range scim.Resources {
+		scimGroups[gr.Name] = gr
 	}
 
-	// new groups and what equal to them
-	for _, gr := range idp.Resources {
-		if _, ok := stateGroups[gr.Name]; !ok {
-			toCreate = append(toCreate, gr)
+	// loop over idp to see what to create and what to update
+	for _, group := range idp.Resources {
+		if _, ok := scimGroups[group.Name]; !ok {
+			toCreate = append(toCreate, group)
 		} else {
-			// Check if the group IPID is not the same
-			if gr.IPID != stateGroups[gr.Name].IPID {
 
-				// log.WithFields(log.Fields{
-				// 	"idp":  gr.IPID,
-				// 	"scim": gr.SCIMID,
-				// }).Debugf("group to update, payload: %s", utils.ToJSON(gr))
+			group.SCIMID = scimGroups[group.Name].SCIMID
 
-				gr.SCIMID = stateGroups[gr.Name].SCIMID
-
-				toUpdate = append(toUpdate, gr)
+			if group.IPID != scimGroups[group.Name].IPID {
+				toUpdate = append(toUpdate, group)
 			} else {
-				toEqual = append(toEqual, gr)
+				toEqual = append(toEqual, group)
 			}
 		}
 	}
 
-	for _, gr := range state.Resources {
-		if _, ok := idpGroups[gr.Name]; !ok {
-			toDelete = append(toDelete, gr)
+	// loop over scim to see what to delete
+	for _, group := range scim.Resources {
+		if _, ok := idpGroups[group.Name]; !ok {
+			toDelete = append(toDelete, group)
 		}
 	}
 
@@ -86,46 +83,39 @@ func groupsOperations(idp, state *model.GroupsResult) (create *model.GroupsResul
 // usersOperations returns the differences between the users in the
 // Users Email as the key.
 // return 4 objest of UsersResult
-// create: users that exist in "state" but not in "idp"
-// update: users that exist in "idp" and in "state" but attributes changed in idp
-// equal: users that exist in both "idp" and "state" and their attributes are equal
-// delete: users that exist in "state" but not in "idp"
-func usersOperations(idp, state *model.UsersResult) (create *model.UsersResult, update *model.UsersResult, equal *model.UsersResult, delete *model.UsersResult) {
+// create: users that exist in "scim" but not in "idp"
+// update: users that exist in "idp" and in "scim" but attributes changed in idp
+// equal: users that exist in both "idp" and "scim" and their attributes are equal
+// delete: users that exist in "scim" but not in "idp"
+func usersOperations(idp, scim *model.UsersResult) (create *model.UsersResult, update *model.UsersResult, equal *model.UsersResult, delete *model.UsersResult) {
 	idpUsers := make(map[string]struct{})
-	stateUsers := make(map[string]model.User)
+	scimUsers := make(map[string]model.User)
 
 	toCreate := make([]model.User, 0)
 	toUpdate := make([]model.User, 0)
 	toEqual := make([]model.User, 0)
 	toDelete := make([]model.User, 0)
 
-	// log.Debugf("payloads: user idp: %s, user scim: %s", utils.ToJSON(idp), utils.ToJSON(state))
-
 	for _, usr := range idp.Resources {
 		idpUsers[usr.Email] = struct{}{}
 	}
 
-	for _, usr := range state.Resources {
-		stateUsers[usr.Email] = usr
+	for _, usr := range scim.Resources {
+		scimUsers[usr.Email] = usr
 	}
 
 	// new users and what equal to them
 	for _, usr := range idp.Resources {
-		if _, ok := stateUsers[usr.Email]; !ok {
+		if _, ok := scimUsers[usr.Email]; !ok {
 			toCreate = append(toCreate, usr)
 		} else {
-			// Check if the user fields changed
-			if usr.Name.FamilyName != stateUsers[usr.Email].Name.FamilyName ||
-				usr.Name.GivenName != stateUsers[usr.Email].Name.GivenName ||
-				usr.Active != stateUsers[usr.Email].Active ||
-				usr.IPID != stateUsers[usr.Email].IPID {
 
-				// log.WithFields(log.Fields{
-				// 	"idp":  usr.IPID,
-				// 	"scim": usr.SCIMID,
-				// }).Debugf("user to update, payload: %s", utils.ToJSON(usr))
+			usr.SCIMID = scimUsers[usr.Email].SCIMID
 
-				usr.SCIMID = stateUsers[usr.Email].SCIMID
+			if usr.Name.FamilyName != scimUsers[usr.Email].Name.FamilyName ||
+				usr.Name.GivenName != scimUsers[usr.Email].Name.GivenName ||
+				usr.Active != scimUsers[usr.Email].Active ||
+				usr.IPID != scimUsers[usr.Email].IPID {
 
 				toUpdate = append(toUpdate, usr)
 			} else {
@@ -134,7 +124,7 @@ func usersOperations(idp, state *model.UsersResult) (create *model.UsersResult, 
 		}
 	}
 
-	for _, usr := range state.Resources {
+	for _, usr := range scim.Resources {
 		if _, ok := idpUsers[usr.Email]; !ok {
 			toDelete = append(toDelete, usr)
 		}
@@ -166,57 +156,58 @@ func usersOperations(idp, state *model.UsersResult) (create *model.UsersResult, 
 // groupsUsersOperationsSCIM returns the differences between the users in the
 // Users Email as the key.
 // return 3 objest of GroupsUsersResult
-// create: users that exist in "state" but not in "idp"
-// equal: users that exist in both "idp" and "state" and their attributes are equal
-// delete: users that exist in "state" but not in "idp"
+// create: users that exist in "scim" but not in "idp"
+// equal: users that exist in both "idp" and "scim" and their attributes are equal
+// delete: users that exist in "scim" but not in "idp"
 //
 // NOTE: state has the groups and the users that belong to them in the SCIM side, in case the groups doesn't have users,
 // the resources of the groups are empty.
-func groupsUsersOperationsSCIM(idp, state *model.GroupsUsersResult, ur *model.UsersResult) (create *model.GroupsUsersResult, equal *model.GroupsUsersResult, delete *model.GroupsUsersResult) {
-	idpUsers := make(map[string]map[string]model.User)
-	stateUsers := make(map[string]map[string]model.User)
-	stateGroups := make(map[string]model.Group)
+// The User Email is the key in the idp and in scim
+func groupsUsersOperationsSCIM(idp, scim *model.GroupsUsersResult, scimURS *model.UsersResult) (create *model.GroupsUsersResult, equal *model.GroupsUsersResult, delete *model.GroupsUsersResult) {
+	idpUsersMap := make(map[string]map[string]model.User)  // idp.Group.IPID -> idp.usr.IPID -> idp.user
+	scimUsersMap := make(map[string]map[string]model.User) // scim.Group.IPID -> scim.usr.IPID -> scim.user
+	scimGroupsMap := make(map[string]model.Group)          // scim.Group.IPID -> scim.Group
 
 	// This is necessary to fill the scimid of the users when the existing goups in scim side dosen't have members
 	// and we need to create these users
-	scimUsers := make(map[string]model.User)
+	scimUsersData := make(map[string]model.User) // scim.usr.Email -> scim.user
 
 	toCreate := make([]model.GroupUsers, 0)
 	toEqual := make([]model.GroupUsers, 0)
 	toDelete := make([]model.GroupUsers, 0)
 
-	// fill wilth the email of the users because id the unique identifier of the user and because
-	// at this point the IDPID is empty
-	for _, uSCIM := range ur.Resources {
-		scimUsers[uSCIM.Email] = uSCIM
+	// fill wilth the email of the users because is the unique identifier of the user in both sides
+	// scimURS has the scimid of the users, this is the reason why we need to fill the scimUsersData
+	for _, uSCIM := range scimURS.Resources {
+		scimUsersData[uSCIM.Email] = uSCIM
 	}
 
 	// log.Debugf("scimUsers: %s", utils.ToJSON(scimUsers))
 
 	for _, grpUsrs := range idp.Resources {
-		idpUsers[grpUsrs.Group.IPID] = make(map[string]model.User)
+		idpUsersMap[grpUsrs.Group.IPID] = make(map[string]model.User)
 
 		for _, usr := range grpUsrs.Resources {
 
-			if _, ok := scimUsers[usr.Email]; ok {
-				usr.SCIMID = scimUsers[usr.Email].SCIMID
+			if _, ok := scimUsersData[usr.Email]; ok {
+				usr.SCIMID = scimUsersData[usr.Email].SCIMID
 			}
 
-			idpUsers[grpUsrs.Group.IPID][usr.IPID] = usr
+			idpUsersMap[grpUsrs.Group.IPID][usr.IPID] = usr
 
 		}
 	}
 
-	for _, grpUsrs := range state.Resources {
-		stateGroups[grpUsrs.Group.IPID] = grpUsrs.Group
-		stateUsers[grpUsrs.Group.IPID] = make(map[string]model.User)
+	for _, grpUsrs := range scim.Resources {
+		scimGroupsMap[grpUsrs.Group.IPID] = grpUsrs.Group
+		scimUsersMap[grpUsrs.Group.IPID] = make(map[string]model.User)
 		for _, usr := range grpUsrs.Resources {
-			stateUsers[grpUsrs.Group.IPID][usr.IPID] = usr
+			scimUsersMap[grpUsrs.Group.IPID][usr.IPID] = usr
 		}
 	}
 
-	// log.Debugf("idpUsers: %s", utils.ToJSON(idpUsers))
-	// log.Debugf("stateUsers: %s", utils.ToJSON(stateUsers))
+	// log.Debugf("idpUsersMap: %s", utils.ToJSON(idpUsersMap))
+	// log.Debugf("scimUsersMap: %s", utils.ToJSON(scimUsersMap))
 	// log.Debugf("state: %s", utils.ToJSON(state))
 
 	// map[group.ID][]*model.User
@@ -228,12 +219,12 @@ func groupsUsersOperationsSCIM(idp, state *model.GroupsUsersResult, ur *model.Us
 		toC[grpUsrs.Group.IPID] = make([]model.User, 0)
 		toE[grpUsrs.Group.IPID] = make([]model.User, 0)
 
-		grpUsrs.Group.SCIMID = stateGroups[grpUsrs.Group.IPID].SCIMID
+		grpUsrs.Group.SCIMID = scimGroupsMap[grpUsrs.Group.IPID].SCIMID
 
 		for _, usr := range grpUsrs.Resources {
-			usr.SCIMID = idpUsers[grpUsrs.Group.IPID][usr.IPID].SCIMID
+			usr.SCIMID = idpUsersMap[grpUsrs.Group.IPID][usr.IPID].SCIMID
 
-			if _, ok := stateUsers[grpUsrs.Group.IPID][usr.IPID]; !ok {
+			if _, ok := scimUsersMap[grpUsrs.Group.IPID][usr.IPID]; !ok {
 				toC[grpUsrs.Group.IPID] = append(toC[grpUsrs.Group.IPID], usr)
 			} else {
 				toE[grpUsrs.Group.IPID] = append(toE[grpUsrs.Group.IPID], usr)
@@ -257,11 +248,11 @@ func groupsUsersOperationsSCIM(idp, state *model.GroupsUsersResult, ur *model.Us
 		}
 	}
 
-	for _, grpUsrs := range state.Resources {
+	for _, grpUsrs := range scim.Resources {
 		toD[grpUsrs.Group.IPID] = make([]model.User, 0)
 
 		for _, usr := range grpUsrs.Resources {
-			if _, ok := idpUsers[grpUsrs.Group.IPID][usr.IPID]; !ok {
+			if _, ok := idpUsersMap[grpUsrs.Group.IPID][usr.IPID]; !ok {
 				toD[grpUsrs.Group.IPID] = append(toD[grpUsrs.Group.IPID], usr)
 			}
 		}

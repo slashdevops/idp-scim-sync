@@ -10,9 +10,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
 	"github.com/slashdevops/idp-scim-sync/internal/model"
-	"github.com/slashdevops/idp-scim-sync/internal/utils"
 )
 
 // Consume s3.Client
@@ -86,8 +84,6 @@ func (r *S3Repository) GetState(ctx context.Context) (*model.State, error) {
 		return nil, fmt.Errorf("s3: error getting S3 object: bucket: %s, error: %w", r.bucket, err)
 	}
 	defer resp.Body.Close()
-
-	log.Debugf("GetObjectOutput: %s", utils.ToJSON(resp))
 
 	var state model.State
 	dec := json.NewDecoder(resp.Body)

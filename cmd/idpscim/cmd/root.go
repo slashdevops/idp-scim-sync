@@ -54,9 +54,9 @@ func init() {
 
 	cobra.OnInitialize(initConfig)
 
-	rootCmd.PersistentFlags().BoolVarP(&cfg.Debug, "debug", "d", config.DefaultDebug, "enable log debug level")
+	rootCmd.PersistentFlags().BoolVarP(&cfg.Debug, "debug", "d", config.DefaultDebug, "fast way to set the log-level to debug")
 	rootCmd.PersistentFlags().StringVarP(&cfg.LogFormat, "log-format", "f", config.DefaultLogFormat, "set the log format")
-	rootCmd.PersistentFlags().StringVarP(&cfg.LogLevel, "log-level", "l", config.DefaultLogLevel, "set the log level")
+	rootCmd.PersistentFlags().StringVarP(&cfg.LogLevel, "log-level", "l", config.DefaultLogLevel, "set the log level (panic|fatal|error|warn|info|debug|trace)")
 
 	rootCmd.PersistentFlags().StringVarP(&cfg.SCIMAccessToken, "aws-scim-access-token", "t", "", "AWS SSO SCIM API Access Token")
 	_ = rootCmd.MarkPersistentFlagRequired("aws-scim-access-token")
@@ -157,24 +157,28 @@ func getSecrets() {
 		log.Fatalf(errors.Wrap(err, "idpscim: cannot create aws secrets manager service").Error())
 	}
 
+	log.WithField("name", cfg.GWSUserEmailSecretName).Debug("idpscim: reading secret")
 	unwrap, err := secrets.GetSecretValue(context.Background(), cfg.GWSUserEmailSecretName)
 	if err != nil {
 		log.Fatalf(errors.Wrap(err, "idpscim: cannot get secretmanager value").Error())
 	}
 	cfg.GWSUserEmail = unwrap
 
+	log.WithField("name", cfg.GWSServiceAccountFileSecretName).Debug("idpscim: reading secret")
 	unwrap, err = secrets.GetSecretValue(context.Background(), cfg.GWSServiceAccountFileSecretName)
 	if err != nil {
 		log.Fatalf(errors.Wrap(err, "idpscim: cannot get secretmanager value").Error())
 	}
 	cfg.GWSServiceAccountFile = unwrap
 
+	log.WithField("name", cfg.SCIMAccessTokenSecretName).Debug("idpscim: reading secret")
 	unwrap, err = secrets.GetSecretValue(context.Background(), cfg.SCIMAccessTokenSecretName)
 	if err != nil {
 		log.Fatalf(errors.Wrap(err, "idpscim: cannot get secretmanager value").Error())
 	}
 	cfg.SCIMAccessToken = unwrap
 
+	log.WithField("name", cfg.SCIMEndpointSecretName).Debug("idpscim: reading secret")
 	unwrap, err = secrets.GetSecretValue(context.Background(), cfg.SCIMEndpointSecretName)
 	if err != nil {
 		log.Fatalf(errors.Wrap(err, "idpscim: cannot get secretmanager value").Error())
