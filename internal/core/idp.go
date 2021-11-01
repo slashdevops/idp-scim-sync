@@ -25,4 +25,7 @@ type IdentityProviderService interface {
 
 	// GetUsersAndGroupsUsers returns the users and the groups and their users of the given groups in the Identity provider side.
 	GetUsersAndGroupsUsers(ctx context.Context, gr *model.GroupsResult) (*model.UsersResult, *model.GroupsUsersResult, error)
+
+	// GetGroupsMembers returns the groups and their members from the Identity provider side.
+	GetGroupsMembers(ctx context.Context, gr *model.GroupsResult) (*model.GroupsMembersResult, error)
 }

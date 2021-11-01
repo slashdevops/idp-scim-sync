@@ -9,9 +9,9 @@ const (
 
 // StateResources is a list of resources in the state, groups, users and groups and their users.
 type StateResources struct {
-	Groups      GroupsResult      `json:"groups"`
-	Users       UsersResult       `json:"users"`
-	GroupsUsers GroupsUsersResult `json:"groupsUsers"`
+	Groups        GroupsResult        `json:"groups"`
+	Users         UsersResult         `json:"users"`
+	GroupsMembers GroupsMembersResult `json:"groupsMembers"`
 }
 
 // State is the state of the system.

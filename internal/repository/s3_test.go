@@ -65,9 +65,9 @@ func TestS3Repository_GetState(t *testing.T) {
 			LastSync:      "2020-01-01T00:00:00Z",
 			HashCode:      "123456789",
 			Resources: model.StateResources{
-				Groups:      model.GroupsResult{},
-				Users:       model.UsersResult{},
-				GroupsUsers: model.GroupsUsersResult{},
+				Groups:        model.GroupsResult{},
+				Users:         model.UsersResult{},
+				GroupsMembers: model.GroupsMembersResult{},
 			},
 		}
 
@@ -155,9 +155,9 @@ func TestS3Repository_SetState(t *testing.T) {
 			LastSync:      "2020-01-01T00:00:00Z",
 			HashCode:      "123456789",
 			Resources: model.StateResources{
-				Groups:      model.GroupsResult{},
-				Users:       model.UsersResult{},
-				GroupsUsers: model.GroupsUsersResult{},
+				Groups:        model.GroupsResult{},
+				Users:         model.UsersResult{},
+				GroupsMembers: model.GroupsMembersResult{},
 			},
 		}
 

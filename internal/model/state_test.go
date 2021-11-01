@@ -75,31 +75,6 @@ func TestState_MarshalJSON(t *testing.T) {
 							},
 						},
 					},
-					GroupsUsers: GroupsUsersResult{
-						Items:    1,
-						HashCode: "hashCode",
-						Resources: []GroupUsers{
-							{
-								Items:    1,
-								HashCode: "hashCode",
-								Group: Group{
-									IPID:     "ipid",
-									Name:     "name",
-									Email:    "email",
-									HashCode: "hashCode",
-								},
-								Resources: []User{
-									{
-										IPID:     "ipid",
-										SCIMID:   "scimid",
-										Name:     Name{FamilyName: "lastName", GivenName: "name"},
-										Email:    "email",
-										HashCode: "hashCode",
-									},
-								},
-							},
-						},
-					},
 				},
 			},
 			want: []byte(`{

@@ -93,6 +93,36 @@ func (mr *MockAWSSCIMProviderMockRecorder) DeleteUser(ctx, id interface{}) *gomo
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteUser", reflect.TypeOf((*MockAWSSCIMProvider)(nil).DeleteUser), ctx, id)
 }
 
+// GetUser mocks base method.
+func (m *MockAWSSCIMProvider) GetUser(ctx context.Context, userID string) (*aws.GetUserResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetUser", ctx, userID)
+	ret0, _ := ret[0].(*aws.GetUserResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetUser indicates an expected call of GetUser.
+func (mr *MockAWSSCIMProviderMockRecorder) GetUser(ctx, userID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUser", reflect.TypeOf((*MockAWSSCIMProvider)(nil).GetUser), ctx, userID)
+}
+
+// GetUserByUserName mocks base method.
+func (m *MockAWSSCIMProvider) GetUserByUserName(ctx context.Context, userName string) (*aws.GetUserResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetUserByUserName", ctx, userName)
+	ret0, _ := ret[0].(*aws.GetUserResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetUserByUserName indicates an expected call of GetUserByUserName.
+func (mr *MockAWSSCIMProviderMockRecorder) GetUserByUserName(ctx, userName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserByUserName", reflect.TypeOf((*MockAWSSCIMProvider)(nil).GetUserByUserName), ctx, userName)
+}
+
 // ListGroups mocks base method.
 func (m *MockAWSSCIMProvider) ListGroups(ctx context.Context, filter string) (*aws.ListGroupsResponse, error) {
 	m.ctrl.T.Helper()

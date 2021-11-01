@@ -29,6 +29,12 @@ type AWSSCIMProvider interface {
 	// DeleteUser deletes a user in SCIM Provider
 	DeleteUser(ctx context.Context, id string) error
 
+	// GetUser gets a user in SCIM Provider
+	GetUser(ctx context.Context, userID string) (*aws.GetUserResponse, error)
+
+	// GetUserByUserName gets a user in SCIM Provider
+	GetUserByUserName(ctx context.Context, userName string) (*aws.GetUserResponse, error)
+
 	// ListGroups lists groups in SCIM Provider
 	ListGroups(ctx context.Context, filter string) (*aws.ListGroupsResponse, error)
 
@@ -102,6 +108,7 @@ func (s *SCIMProvider) CreateGroups(ctx context.Context, gr *model.GroupsResult)
 
 		groupRequest := &aws.CreateGroupRequest{
 			DisplayName: group.Name,
+			ExternalId:  group.IPID,
 		}
 
 		log.WithFields(log.Fields{
@@ -147,8 +154,7 @@ func (s *SCIMProvider) UpdateGroups(ctx context.Context, gr *model.GroupsResult)
 					{
 						OP: "replace",
 						Value: map[string]string{
-							"id": group.SCIMID,
-							//"displayName": group.Name,
+							"id":         group.SCIMID,
 							"externalId": group.IPID,
 						},
 					},
@@ -344,31 +350,53 @@ func (s *SCIMProvider) DeleteUsers(ctx context.Context, ur *model.UsersResult) e
 }
 
 // CreateGroupsMembers creates groups members in SCIM Provider given a list of groups members
-func (s *SCIMProvider) CreateGroupsMembers(ctx context.Context, gur *model.GroupsUsersResult) error {
-	for _, groupUsers := range gur.Resources {
+func (s *SCIMProvider) CreateGroupsMembers(ctx context.Context, gmr *model.GroupsMembersResult) (*model.GroupsMembersResult, error) {
+	groupsMembers := make([]model.GroupMembers, 0)
+
+	for _, groupMembers := range gmr.Resources {
+
+		members := make([]model.Member, 0)
 
 		// https://talks.golang.org/2012/10things.slide#2
-		usersIDValue := []struct {
+		membersIDValue := []struct {
 			Value string `json:"value"`
 		}{}
 
-		for _, user := range groupUsers.Resources {
-			usersIDValue = append(usersIDValue, struct {
+		for _, member := range groupMembers.Resources {
+
+			if member.SCIMID == "" {
+				u, err := s.scim.GetUserByUserName(ctx, member.Email)
+				if err != nil {
+					return nil, fmt.Errorf("scim: error getting user by email: %w", err)
+				}
+				member.SCIMID = u.ID
+			}
+
+			membersIDValue = append(membersIDValue, struct {
 				Value string `json:"value"`
 			}{
-				Value: user.SCIMID,
+				Value: member.SCIMID,
 			})
 
+			e := member
+			e.HashCode = hash.Get(e)
+			members = append(members, e)
+
 			log.WithFields(log.Fields{
-				"user":  user.DisplayName,
-				"email": user.Email,
-			}).Trace("deleting user")
+				"scimid": member.SCIMID,
+				"email":  member.Email,
+			}).Trace("adding member")
 		}
+
+		e := groupMembers
+		e.HashCode = hash.Get(e)
+		e.Resources = members
+		groupsMembers = append(groupsMembers, e)
 
 		patchGroupRequest := &aws.PatchGroupRequest{
 			Group: aws.Group{
-				ID:          groupUsers.Group.SCIMID,
-				DisplayName: groupUsers.Group.Name,
+				ID:          groupMembers.Group.SCIMID,
+				DisplayName: groupMembers.Group.Name,
 			},
 			Patch: aws.PatchGroup{
 				Schemas: []string{"urn:ietf:params:scim:api:messages:2.0:PatchOp"},
@@ -376,41 +404,54 @@ func (s *SCIMProvider) CreateGroupsMembers(ctx context.Context, gur *model.Group
 					{
 						OP:    "add",
 						Path:  "members",
-						Value: usersIDValue,
+						Value: membersIDValue,
 					},
 				},
 			},
 		}
 
 		if err := s.scim.PatchGroup(ctx, patchGroupRequest); err != nil {
-			return fmt.Errorf("scim: error patching group: %w", err)
+			return nil, fmt.Errorf("scim: error patching group: %w", err)
 		}
 	}
 
-	return nil
+	ret := &model.GroupsMembersResult{
+		Items:     len(groupsMembers),
+		Resources: groupsMembers,
+	}
+	if len(groupsMembers) > 0 {
+		ret.HashCode = hash.Get(ret)
+	}
+
+	return ret, nil
 }
 
 // DeleteGroupsMembers deletes groups members in SCIM Provider given a list of groups members
-func (s *SCIMProvider) DeleteGroupsMembers(ctx context.Context, gur *model.GroupsUsersResult) error {
-	for _, groupUsers := range gur.Resources {
+func (s *SCIMProvider) DeleteGroupsMembers(ctx context.Context, gmr *model.GroupsMembersResult) error {
+	for _, groupMembers := range gmr.Resources {
 
 		// https://talks.golang.org/2012/10things.slide#2
-		usersIDValue := []struct {
+		membersIDValue := []struct {
 			Value string `json:"value"`
 		}{}
 
-		for _, user := range groupUsers.Resources {
-			usersIDValue = append(usersIDValue, struct {
+		for _, member := range groupMembers.Resources {
+			membersIDValue = append(membersIDValue, struct {
 				Value string `json:"value"`
 			}{
-				Value: user.SCIMID,
+				Value: member.SCIMID,
 			})
+
+			log.WithFields(log.Fields{
+				"scimid": member.SCIMID,
+				"email":  member.Email,
+			}).Trace("removing member")
 		}
 
 		patchGroupRequest := &aws.PatchGroupRequest{
 			Group: aws.Group{
-				ID:          groupUsers.Group.SCIMID,
-				DisplayName: groupUsers.Group.Name,
+				ID:          groupMembers.Group.SCIMID,
+				DisplayName: groupMembers.Group.Name,
 			},
 			Patch: aws.PatchGroup{
 				Schemas: []string{"urn:ietf:params:scim:api:messages:2.0:PatchOp"},
@@ -418,7 +459,7 @@ func (s *SCIMProvider) DeleteGroupsMembers(ctx context.Context, gur *model.Group
 					{
 						OP:    "remove",
 						Path:  "members",
-						Value: usersIDValue,
+						Value: membersIDValue,
 					},
 				},
 			},
@@ -432,80 +473,57 @@ func (s *SCIMProvider) DeleteGroupsMembers(ctx context.Context, gur *model.Group
 	return nil
 }
 
-// GetUsersAndGroupsUsers returns a list of users and groups and their users from the SCIM Provider
-func (s *SCIMProvider) GetUsersAndGroupsUsers(ctx context.Context, gr *model.GroupsResult) (*model.UsersResult, *model.GroupsUsersResult, error) {
-	usersResult, err := s.GetUsers(ctx)
-	if err != nil {
-		return nil, nil, fmt.Errorf("scim: error getting users: %w", err)
-	}
-	if usersResult.Items > 0 {
-		usersResult.HashCode = hash.Get(usersResult)
-	}
+// GetGroupsMembers returns a list of groups and their members from the SCIM Provider
+func (s *SCIMProvider) GetGroupsMembers(ctx context.Context, gr *model.GroupsResult) (*model.GroupsMembersResult, error) {
+	groupMembers := make([]model.GroupMembers, 0)
 
-	groupsIDUsers := make(map[string][]model.User)
-	groupsData := make(map[string]model.Group)
-
-	// inefficient but it is the only way to do that because AWS API Doesn't have efficient
-	// way to get the members of groups
-	// groups x users = n requests to ListGroups!!! fxxk AWS SSO API!
 	for _, group := range gr.Resources {
 
-		if _, ok := groupsData[group.SCIMID]; !ok {
-			e := model.Group{
-				SCIMID: group.SCIMID,
-				IPID:   group.IPID,
-				Name:   group.Name,
-				Email:  group.Email,
+		// https://docs.aws.amazon.com/singlesignon/latest/developerguide/listgroups.html
+		f := fmt.Sprintf("displayName eq \"%s\"", group.Name)
+		lgr, err := s.scim.ListGroups(ctx, f)
+		if err != nil {
+			return nil, fmt.Errorf("scim: error listing groups: %w", err)
+		}
+		// log.Tracef("lgr: lgr : %s", utils.ToJSON(lgr))
+
+		for _, gr := range lgr.Resources {
+
+			members := make([]model.Member, 0)
+
+			for _, member := range gr.Members {
+				u, err := s.scim.GetUser(ctx, member.Value)
+				if err != nil {
+					return nil, fmt.Errorf("scim: error getting user: %s, error %w", member.Value, err)
+				}
+
+				m := model.Member{
+					SCIMID: member.Value,
+					Email:  u.Emails[0].Value,
+				}
+				m.HashCode = hash.Get(m)
+
+				members = append(members, m)
 			}
 
-			groupsData[group.SCIMID] = e
-		}
-
-		// log.Tracef("group added : %s", utils.ToJSON(groupsData[group.SCIMID]))
-
-		for _, user := range usersResult.Resources {
-
-			// https://docs.aws.amazon.com/singlesignon/latest/developerguide/listgroups.html
-			f := fmt.Sprintf("id eq \"%s\" and members eq \"%s\"", group.SCIMID, user.SCIMID)
-			sGroupsResponse, err := s.scim.ListGroups(ctx, f)
-			if err != nil {
-				return nil, nil, fmt.Errorf("scim: error listing groups: %w", err)
+			e := model.GroupMembers{
+				Items:     len(members),
+				Group:     group,
+				Resources: members,
 			}
+			e.HashCode = hash.Get(e)
 
-			for _, grp := range sGroupsResponse.Resources {
-				groupsIDUsers[grp.ID] = append(groupsIDUsers[grp.ID], user)
-			}
+			groupMembers = append(groupMembers, e)
 		}
 	}
 
-	groupsUsers := make([]model.GroupUsers, 0)
-
-	for _, group := range groupsData {
-
-		// avoid nil Resources
-		if groupsIDUsers[group.SCIMID] == nil {
-			groupsIDUsers[group.SCIMID] = make([]model.User, 0)
-		}
-
-		e := model.GroupUsers{
-			Items:     len(groupsIDUsers[group.SCIMID]),
-			Group:     group,
-			Resources: groupsIDUsers[group.SCIMID],
-		}
-		e.HashCode = hash.Get(e)
-
-		groupsUsers = append(groupsUsers, e)
+	groupsMembersResult := &model.GroupsMembersResult{
+		Items:     len(groupMembers),
+		Resources: groupMembers,
+	}
+	if len(groupMembers) > 0 {
+		groupsMembersResult.HashCode = hash.Get(groupsMembersResult)
 	}
 
-	groupsUsersResult := &model.GroupsUsersResult{
-		Items:     len(groupsUsers),
-		Resources: groupsUsers,
-	}
-	if len(groupsUsers) > 0 {
-		groupsUsersResult.HashCode = hash.Get(groupsUsersResult)
-	}
-
-	// log.Tracef("GetUsersAndGroupsUsers: groupsUsersResult : %s", utils.ToJSON(groupsUsersResult))
-
-	return usersResult, groupsUsersResult, nil
+	return groupsMembersResult, nil
 }

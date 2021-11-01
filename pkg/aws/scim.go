@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/url"
 	"path"
+	"strings"
 
 	"github.com/pkg/errors"
 )
@@ -58,6 +59,9 @@ var (
 
 	// ErrUserNameEmpty is returned when the user name is empty.
 	ErrUserNameEmpty = errors.Errorf("aws: user name may not be empty")
+
+	// ErrUserUserNameEmpty is returned when the userName is empty.
+	ErrUserUserNameEmpty = errors.Errorf("aws: userName may not be empty")
 )
 
 //go:generate go run github.com/golang/mock/mockgen@v1.6.0 -package=mocks -destination=../../mocks/aws/scim_mocks.go -source=scim.go HTTPClient
@@ -254,6 +258,89 @@ func (s *AWSSCIMService) DeleteUser(ctx context.Context, id string) error {
 	defer resp.Body.Close()
 
 	return nil
+}
+
+// GetUser returns an user from the AWS SSO Using the API
+func (s *AWSSCIMService) GetUserByUserName(ctx context.Context, userName string) (*GetUserResponse, error) {
+	if userName == "" {
+		return nil, ErrUserUserNameEmpty
+	}
+
+	reqUrl, err := url.Parse(s.url.String())
+	if err != nil {
+		return nil, fmt.Errorf("aws GetUserByUserName: error parsing url: %w", err)
+	}
+
+	reqUrl.Path = path.Join(reqUrl.Path, "/Users")
+
+	filter := fmt.Sprintf("userName eq \"%s\"", userName)
+	q := reqUrl.Query()
+	q.Add("filter", filter)
+	reqUrl.RawQuery = q.Encode()
+
+	req, err := s.newRequest(http.MethodGet, reqUrl, nil)
+	if err != nil {
+		return nil, fmt.Errorf("aws GetUserByUserName: error creating request, http method: %s, url: %v, error: %w", http.MethodGet, reqUrl.String(), err)
+	}
+
+	resp, err := s.do(ctx, req)
+	if err != nil {
+		return nil, fmt.Errorf("aws GetUserByUserName: error sending request, http method: %s, url: %v, error: %w", http.MethodGet, reqUrl.String(), err)
+	}
+	defer resp.Body.Close()
+
+	var lur ListUsersResponse
+	if err = json.NewDecoder(resp.Body).Decode(&lur); err != nil {
+		return nil, fmt.Errorf("aws GetUserByUserName: error decoding response body: %w", err)
+	}
+
+	var response GetUserResponse
+
+	dataJSON := fmt.Sprintf("%v", lur.Resources[0])
+	if err != nil {
+		return nil, fmt.Errorf("aws GetUserByUserName: error decoding response body: %w", err)
+	}
+
+	data := strings.NewReader(dataJSON)
+	if len(lur.Resources) > 0 {
+		if err = json.NewDecoder(data).Decode(&response); err != nil {
+			return nil, fmt.Errorf("aws GetUserByUserName: error decoding response body: %w", err)
+		}
+	}
+
+	return &response, nil
+}
+
+// GetUser returns an user from the AWS SSO Using the API
+func (s *AWSSCIMService) GetUser(ctx context.Context, userID string) (*GetUserResponse, error) {
+	if userID == "" {
+		return nil, ErrUserIDEmpty
+	}
+
+	reqUrl, err := url.Parse(s.url.String())
+	if err != nil {
+		return nil, fmt.Errorf("aws GetUser: error parsing url: %w", err)
+	}
+
+	reqUrl.Path = path.Join(reqUrl.Path, fmt.Sprintf("/Users/%s", userID))
+
+	req, err := s.newRequest(http.MethodGet, reqUrl, nil)
+	if err != nil {
+		return nil, fmt.Errorf("aws GetUser: error creating request, http method: %s, url: %v, error: %w", http.MethodGet, reqUrl.String(), err)
+	}
+
+	resp, err := s.do(ctx, req)
+	if err != nil {
+		return nil, fmt.Errorf("aws GetUser: error sending request, http method: %s, url: %v, error: %w", http.MethodGet, reqUrl.String(), err)
+	}
+	defer resp.Body.Close()
+
+	var response GetUserResponse
+	if err = json.NewDecoder(resp.Body).Decode(&response); err != nil {
+		return nil, fmt.Errorf("aws GetUser: error decoding response body: %w", err)
+	}
+
+	return &response, nil
 }
 
 // ListUsers returns a list of users from the AWS SSO Using the API

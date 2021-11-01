@@ -1,5 +1,10 @@
 package aws
 
+import (
+	"encoding/json"
+	"log"
+)
+
 // Name represent a name entity
 type Name struct {
 	FamilyName string `json:"familyName"`
@@ -77,6 +82,25 @@ type User struct {
 	Emails      []Email  `json:"emails"`
 }
 
+func (u User) String() string {
+	return string(u.ToJSON(u))
+}
+
+func (u User) ToJSON(stc interface{}) []byte {
+	if stc == nil {
+		return []byte("")
+	}
+	if stc == "" {
+		return []byte("")
+	}
+
+	JSON, err := json.Marshal(stc)
+	if err != nil {
+		log.Fatalf(err.Error())
+	}
+	return JSON
+}
+
 // ServiceProviderConfig represent a service provider config entity
 type ServiceProviderConfig struct {
 	Schemas               []string `json:"schemas"`
@@ -152,7 +176,8 @@ type CreateGroupResponse struct {
 // CreateGroupRequest represent a create group request entity
 type CreateGroupRequest struct {
 	DisplayName string   `json:"displayName"`
-	Members     []Member `json:"members"`
+	ExternalId  string   `json:"externalId,omitempty"`
+	Members     []Member `json:"members,omitempty"`
 }
 
 // CreateUserRequest represent a create user request entity
@@ -217,4 +242,16 @@ type PatchGroupRequest struct {
 type PatchUserRequest struct {
 	User  User  `json:"user"`
 	Patch Patch `json:"patch"`
+}
+
+type GetUserResponse struct {
+	ID          string   `json:"id"`
+	ExternalId  string   `json:"externalId"`
+	Meta        Meta     `json:"meta"`
+	Schemas     []string `json:"schemas"`
+	UserName    string   `json:"userName"`
+	Name        Name     `json:"name"`
+	DisplayName string   `json:"displayName"`
+	Active      bool     `json:"active"`
+	Emails      []Email  `json:"emails"`
 }

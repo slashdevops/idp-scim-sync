@@ -11,8 +11,13 @@ import (
 	admin "google.golang.org/api/admin/directory/v1"
 )
 
-// ErrDirectoryServiceNil is returned when the GoogleProviderService is nil.
-var ErrDirectoryServiceNil = errors.New("provoder: directory service is nil")
+var (
+	// ErrDirectoryServiceNil is returned when the GoogleProviderService is nil.
+	ErrDirectoryServiceNil = errors.New("provoder: directory service is nil")
+
+	// ErrGroupIdNil is returned when the groupID is nil.
+	ErrGroupIdNil = errors.New("provoder: group id is nil")
+)
 
 //go:generate go run github.com/golang/mock/mockgen@v1.6.0 -package=mocks -destination=../../mocks/idp/idp_mocks.go -source=idp.go GoogleProviderService
 
@@ -126,10 +131,14 @@ func (i *IdentityProvider) GetUsers(ctx context.Context, filter []string) (*mode
 }
 
 // GetGroupMembers returns a list of members from the Identity Provider API.
-func (i *IdentityProvider) GetGroupMembers(ctx context.Context, id string) (*model.MembersResult, error) {
+func (i *IdentityProvider) GetGroupMembers(ctx context.Context, groupID string) (*model.MembersResult, error) {
+	if groupID == "" {
+		return nil, ErrGroupIdNil
+	}
+
 	syncMembers := make([]model.Member, 0)
 
-	pMembers, err := i.ps.ListGroupMembers(ctx, id)
+	pMembers, err := i.ps.ListGroupMembers(ctx, groupID)
 	if err != nil {
 		return nil, fmt.Errorf("idp: error listing group members: %w", err)
 	}
@@ -188,62 +197,38 @@ func (i *IdentityProvider) GetUsersByGroupMembers(ctx context.Context, mbr *mode
 	return pUsersResult, nil
 }
 
-// GetUsersAndGroupsUsers returnpUserss a model.UsersResult and model.GroupsUsersResult data structures with the users and groups
-func (i *IdentityProvider) GetUsersAndGroupsUsers(ctx context.Context, gr *model.GroupsResult) (*model.UsersResult, *model.GroupsUsersResult, error) {
-	// make pUsers unique
-	userSet := make(map[string]struct{})
+// GetGroupsMembers return the members of the groups
+func (i *IdentityProvider) GetGroupsMembers(ctx context.Context, gr *model.GroupsResult) (*model.GroupsMembersResult, error) {
+	groupMembers := make([]model.GroupMembers, 0)
 
-	pUsers := make([]model.User, 0)
-	pGroupsUsers := make([]model.GroupUsers, 0)
+	for _, group := range gr.Resources {
 
-	for _, pGroup := range gr.Resources {
-
-		pMembers, err := i.GetGroupMembers(ctx, pGroup.IPID)
+		members, err := i.GetGroupMembers(ctx, group.IPID)
 		if err != nil {
-			return nil, nil, fmt.Errorf("idp: error getting group members: %w", err)
+			return nil, fmt.Errorf("idp: error getting group members: %w", err)
 		}
 
-		pUsersFromMembers, err := i.GetUsersByGroupMembers(ctx, pMembers)
-		if err != nil {
-			return nil, nil, fmt.Errorf("idp: error getting users from group members: %w", err)
-		}
-
-		for _, pUser := range pUsersFromMembers.Resources {
-			if _, ok := userSet[pUser.IPID]; !ok {
-				pUsers = append(pUsers, pUser)
-				userSet[pUser.IPID] = struct{}{}
-			}
-		}
-
-		pGroupUsers := model.GroupUsers{
-			Items: len(pMembers.Resources),
+		groupMember := model.GroupMembers{
+			Items: len(members.Resources),
 			Group: model.Group{
-				IPID:  pGroup.IPID,
-				Name:  pGroup.Name,
-				Email: pGroup.Email,
+				IPID:  group.IPID,
+				Name:  group.Name,
+				Email: group.Email,
 			},
-			Resources: pUsers,
+			Resources: members.Resources,
 		}
-		pGroupUsers.HashCode = hash.Get(pGroupUsers)
+		groupMember.HashCode = hash.Get(groupMember)
 
-		pGroupsUsers = append(pGroupsUsers, pGroupUsers)
-	}
-
-	usersResult := &model.UsersResult{
-		Items:     len(pUsers),
-		Resources: pUsers,
-	}
-	if len(pUsers) > 0 {
-		usersResult.HashCode = hash.Get(usersResult)
+		groupMembers = append(groupMembers, groupMember)
 	}
 
-	groupsUsersResult := &model.GroupsUsersResult{
-		Items:     len(pGroupsUsers),
-		Resources: pGroupsUsers,
+	groupsMembersResult := &model.GroupsMembersResult{
+		Items:     len(groupMembers),
+		Resources: groupMembers,
 	}
-	if len(pGroupsUsers) > 0 {
-		groupsUsersResult.HashCode = hash.Get(groupsUsersResult)
+	if len(groupMembers) > 0 {
+		groupsMembersResult.HashCode = hash.Get(groupsMembersResult)
 	}
 
-	return usersResult, groupsUsersResult, nil
+	return groupsMembersResult, nil
 }

@@ -51,17 +51,18 @@ func (mr *MockSCIMServiceMockRecorder) CreateGroups(ctx, gr interface{}) *gomock
 }
 
 // CreateGroupsMembers mocks base method.
-func (m *MockSCIMService) CreateGroupsMembers(ctx context.Context, gur *model.GroupsUsersResult) error {
+func (m *MockSCIMService) CreateGroupsMembers(ctx context.Context, gmr *model.GroupsMembersResult) (*model.GroupsMembersResult, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateGroupsMembers", ctx, gur)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret := m.ctrl.Call(m, "CreateGroupsMembers", ctx, gmr)
+	ret0, _ := ret[0].(*model.GroupsMembersResult)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // CreateGroupsMembers indicates an expected call of CreateGroupsMembers.
-func (mr *MockSCIMServiceMockRecorder) CreateGroupsMembers(ctx, gur interface{}) *gomock.Call {
+func (mr *MockSCIMServiceMockRecorder) CreateGroupsMembers(ctx, gmr interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateGroupsMembers", reflect.TypeOf((*MockSCIMService)(nil).CreateGroupsMembers), ctx, gur)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateGroupsMembers", reflect.TypeOf((*MockSCIMService)(nil).CreateGroupsMembers), ctx, gmr)
 }
 
 // CreateUsers mocks base method.
@@ -94,17 +95,17 @@ func (mr *MockSCIMServiceMockRecorder) DeleteGroups(ctx, gr interface{}) *gomock
 }
 
 // DeleteGroupsMembers mocks base method.
-func (m *MockSCIMService) DeleteGroupsMembers(ctx context.Context, gur *model.GroupsUsersResult) error {
+func (m *MockSCIMService) DeleteGroupsMembers(ctx context.Context, gmr *model.GroupsMembersResult) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteGroupsMembers", ctx, gur)
+	ret := m.ctrl.Call(m, "DeleteGroupsMembers", ctx, gmr)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // DeleteGroupsMembers indicates an expected call of DeleteGroupsMembers.
-func (mr *MockSCIMServiceMockRecorder) DeleteGroupsMembers(ctx, gur interface{}) *gomock.Call {
+func (mr *MockSCIMServiceMockRecorder) DeleteGroupsMembers(ctx, gmr interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteGroupsMembers", reflect.TypeOf((*MockSCIMService)(nil).DeleteGroupsMembers), ctx, gur)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteGroupsMembers", reflect.TypeOf((*MockSCIMService)(nil).DeleteGroupsMembers), ctx, gmr)
 }
 
 // DeleteUsers mocks base method.
@@ -134,6 +135,21 @@ func (m *MockSCIMService) GetGroups(ctx context.Context) (*model.GroupsResult, e
 func (mr *MockSCIMServiceMockRecorder) GetGroups(ctx interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetGroups", reflect.TypeOf((*MockSCIMService)(nil).GetGroups), ctx)
+}
+
+// GetGroupsMembers mocks base method.
+func (m *MockSCIMService) GetGroupsMembers(ctx context.Context, gr *model.GroupsResult) (*model.GroupsMembersResult, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetGroupsMembers", ctx, gr)
+	ret0, _ := ret[0].(*model.GroupsMembersResult)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetGroupsMembers indicates an expected call of GetGroupsMembers.
+func (mr *MockSCIMServiceMockRecorder) GetGroupsMembers(ctx, gr interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetGroupsMembers", reflect.TypeOf((*MockSCIMService)(nil).GetGroupsMembers), ctx, gr)
 }
 
 // GetUsers mocks base method.

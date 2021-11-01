@@ -45,10 +45,6 @@ func TestStateRepository_GetState(t *testing.T) {
 		assert.Equal(t, 0, state.Resources.Users.Items)
 		assert.Equal(t, "", state.Resources.Users.HashCode)
 		assert.Equal(t, 0, len(state.Resources.Users.Resources))
-
-		assert.Equal(t, 0, state.Resources.GroupsUsers.Items)
-		assert.Equal(t, "", state.Resources.GroupsUsers.HashCode)
-		assert.Equal(t, 0, len(state.Resources.GroupsUsers.Resources))
 	})
 
 	t.Run("Golden files", func(t *testing.T) {
@@ -77,10 +73,6 @@ func TestStateRepository_GetState(t *testing.T) {
 		assert.Equal(t, 1, len(state.Resources.Users.Resources))
 		assert.Equal(t, "1", state.Resources.Users.Resources[0].IPID)
 		assert.Equal(t, "user 1", state.Resources.Users.Resources[0].DisplayName)
-
-		assert.Equal(t, 1, state.Resources.GroupsUsers.Items)
-		assert.Equal(t, "123456789", state.Resources.GroupsUsers.HashCode)
-		assert.Equal(t, 1, len(state.Resources.GroupsUsers.Resources))
 	})
 }
 
@@ -126,31 +118,6 @@ func TestStateRepository_SetState(t *testing.T) {
 						},
 					},
 				},
-				GroupsUsers: model.GroupsUsersResult{
-					Items:    1,
-					HashCode: "123456789",
-					Resources: []model.GroupUsers{
-						{
-							Items:    1,
-							HashCode: "123456789",
-							Group: model.Group{
-								IPID:     "1",
-								Name:     "group 1",
-								Email:    "group.1@mail.com",
-								HashCode: "123456789",
-							},
-							Resources: []model.User{
-								{
-									IPID:        "1",
-									Name:        model.Name{FamilyName: "1", GivenName: "user"},
-									DisplayName: "user 1",
-									Email:       "user.1@mail.com",
-									HashCode:    "123456789",
-								},
-							},
-						},
-					},
-				},
 			},
 		}
 
@@ -182,10 +149,6 @@ func TestStateRepository_SetState(t *testing.T) {
 		assert.Equal(t, 1, len(state.Resources.Users.Resources))
 		assert.Equal(t, "1", state.Resources.Users.Resources[0].IPID)
 		assert.Equal(t, "user 1", state.Resources.Users.Resources[0].DisplayName)
-
-		assert.Equal(t, 1, state.Resources.GroupsUsers.Items)
-		assert.Equal(t, "123456789", state.Resources.GroupsUsers.HashCode)
-		assert.Equal(t, 1, len(state.Resources.GroupsUsers.Resources))
 
 		os.Remove(tmpDir)
 		stateFile.Close()

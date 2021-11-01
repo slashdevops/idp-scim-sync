@@ -17,7 +17,11 @@ const (
 	usersRequiredFields   googleapi.Field = "users(id,name,primaryEmail,suspended)"
 )
 
-var ErrGoogleClientScopeNil = fmt.Errorf("google: google client scope is required")
+var (
+	ErrGoogleClientScopeNil = fmt.Errorf("google: google client scope is required")
+	ErrUserIdNil            = fmt.Errorf("google: user id is required")
+	ErrGroupIdNil           = fmt.Errorf("google: group id is required")
+)
 
 // DirectoryService represent the  Google Directory API client.
 type DirectoryService struct {
@@ -121,6 +125,10 @@ func (ds *DirectoryService) ListGroups(ctx context.Context, query []string) ([]*
 
 // ListGroupMembers return a list of all members given a group ID.
 func (ds *DirectoryService) ListGroupMembers(ctx context.Context, groupID string) ([]*admin.Member, error) {
+	if groupID == "" {
+		return nil, ErrGroupIdNil
+	}
+
 	m := make([]*admin.Member, 0)
 
 	err := ds.svc.Members.List(groupID).Fields(membersRequiredFields).Pages(ctx, func(members *admin.Members) error {
@@ -133,6 +141,10 @@ func (ds *DirectoryService) ListGroupMembers(ctx context.Context, groupID string
 
 // GetUser return a user given a user ID.
 func (ds *DirectoryService) GetUser(ctx context.Context, userID string) (*admin.User, error) {
+	if userID == "" {
+		return nil, ErrUserIdNil
+	}
+
 	// u, err := ds.svc.Users.Get(userID).Fields(usersRequiredFields).Context(ctx).Do()
 	u, err := ds.svc.Users.Get(userID).Context(ctx).Do()
 	if err != nil {
@@ -144,6 +156,10 @@ func (ds *DirectoryService) GetUser(ctx context.Context, userID string) (*admin.
 
 // GetGroup return a group given a group ID.
 func (ds *DirectoryService) GetGroup(ctx context.Context, groupID string) (*admin.Group, error) {
+	if groupID == "" {
+		return nil, ErrGroupIdNil
+	}
+
 	g, err := ds.svc.Groups.Get(groupID).Fields(groupsRequiredFields).Context(ctx).Do()
 	if err != nil {
 		return nil, fmt.Errorf("google: error getting group %s: %v", groupID, err)
