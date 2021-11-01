@@ -95,22 +95,6 @@ func (mr *MockIdentityProviderServiceMockRecorder) GetUsers(ctx, filter interfac
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUsers", reflect.TypeOf((*MockIdentityProviderService)(nil).GetUsers), ctx, filter)
 }
 
-// GetUsersAndGroupsUsers mocks base method.
-func (m *MockIdentityProviderService) GetUsersAndGroupsUsers(ctx context.Context, gr *model.GroupsResult) (*model.UsersResult, *model.GroupsUsersResult, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetUsersAndGroupsUsers", ctx, gr)
-	ret0, _ := ret[0].(*model.UsersResult)
-	ret1, _ := ret[1].(*model.GroupsUsersResult)
-	ret2, _ := ret[2].(error)
-	return ret0, ret1, ret2
-}
-
-// GetUsersAndGroupsUsers indicates an expected call of GetUsersAndGroupsUsers.
-func (mr *MockIdentityProviderServiceMockRecorder) GetUsersAndGroupsUsers(ctx, gr interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUsersAndGroupsUsers", reflect.TypeOf((*MockIdentityProviderService)(nil).GetUsersAndGroupsUsers), ctx, gr)
-}
-
 // GetUsersByGroupMembers mocks base method.
 func (m *MockIdentityProviderService) GetUsersByGroupMembers(ctx context.Context, mbr *model.MembersResult) (*model.UsersResult, error) {
 	m.ctrl.T.Helper()
