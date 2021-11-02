@@ -182,7 +182,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 			return fmt.Errorf("error getting groups members from the SCIM service: %w", err)
 		}
 
-		log.Tracef("scimGroupsMembersResult: %s", utils.ToJSON(scimGroupsMembersResult))
+		// log.Tracef("scimGroupsMembersResult: %s", utils.ToJSON(scimGroupsMembersResult))
 
 		log.WithFields(log.Fields{
 			"idp":  idpGroupsMembersResult.Items,

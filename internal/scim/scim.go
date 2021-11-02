@@ -110,7 +110,13 @@ func (s *SCIMProvider) CreateGroups(ctx context.Context, gr *model.GroupsResult)
 
 		log.WithFields(log.Fields{
 			"group": group.Name,
-		}).Trace("creating group")
+			"idpid": group.IPID,
+			"email": group.Email,
+		}).Trace("creating group (details)")
+
+		log.WithFields(log.Fields{
+			"group": group.Name,
+		}).Warn("creating group (details)")
 
 		r, err := s.scim.CreateGroup(ctx, groupRequest)
 		if err != nil {
@@ -160,8 +166,16 @@ func (s *SCIMProvider) UpdateGroups(ctx context.Context, gr *model.GroupsResult)
 		}
 
 		log.WithFields(log.Fields{
+			"group":  group.Name,
+			"idpid":  group.IPID,
+			"scimid": group.SCIMID,
+			"email":  group.Email,
+		}).Trace("updating group (details)")
+
+		log.WithFields(log.Fields{
 			"group": group.Name,
-		}).Trace("updating group")
+			"email": group.Email,
+		}).Warn("updating group")
 
 		if err := s.scim.PatchGroup(ctx, groupRequest); err != nil {
 			return nil, fmt.Errorf("scim: error updating groups: %w", err)
@@ -194,7 +208,15 @@ func (s *SCIMProvider) DeleteGroups(ctx context.Context, gr *model.GroupsResult)
 	for _, group := range gr.Resources {
 
 		log.WithFields(log.Fields{
+			"group":  group.Name,
+			"idpid":  group.IPID,
+			"scimid": group.SCIMID,
+			"email":  group.Email,
+		}).Trace("deleting group (details)")
+
+		log.WithFields(log.Fields{
 			"group": group.Name,
+			"email": group.Email,
 		}).Trace("deleting group")
 
 		if err := s.scim.DeleteGroup(ctx, group.SCIMID); err != nil {
@@ -267,6 +289,7 @@ func (s *SCIMProvider) CreateUsers(ctx context.Context, ur *model.UsersResult) (
 		log.WithFields(log.Fields{
 			"user":  user.DisplayName,
 			"email": user.Email,
+			"ipdid": user.IPID,
 		}).Trace("creating user")
 
 		r, err := s.scim.CreateUser(ctx, userRequest)
@@ -325,6 +348,13 @@ func (s *SCIMProvider) UpdateUsers(ctx context.Context, ur *model.UsersResult) (
 		}
 
 		log.WithFields(log.Fields{
+			"user":   user.DisplayName,
+			"email":  user.Email,
+			"ipdid":  user.IPID,
+			"scimid": user.SCIMID,
+		}).Trace("updating user (details)")
+
+		log.WithFields(log.Fields{
 			"user":  user.DisplayName,
 			"email": user.Email,
 		}).Trace("updating user")
@@ -364,6 +394,19 @@ func (s *SCIMProvider) UpdateUsers(ctx context.Context, ur *model.UsersResult) (
 // DeleteUsers deletes users in SCIM Provider given a list of users
 func (s *SCIMProvider) DeleteUsers(ctx context.Context, ur *model.UsersResult) error {
 	for _, user := range ur.Resources {
+
+		log.WithFields(log.Fields{
+			"user":   user.DisplayName,
+			"email":  user.Email,
+			"scimid": user.SCIMID,
+			"idpid":  user.IPID,
+		}).Trace("deleting user (details)")
+
+		log.WithFields(log.Fields{
+			"user":  user.DisplayName,
+			"email": user.Email,
+		}).Warn("deleting user")
+
 		if err := s.scim.DeleteUser(ctx, user.SCIMID); err != nil {
 			return fmt.Errorf("scim: error deleting user: %s, %w", user.SCIMID, err)
 		}
@@ -413,7 +456,12 @@ func (s *SCIMProvider) CreateGroupsMembers(ctx context.Context, gmr *model.Group
 				"idpid":  member.IPID,
 				"scimid": member.SCIMID,
 				"email":  member.Email,
-			}).Trace("adding member to group")
+			}).Trace("adding member to group (details)")
+
+			log.WithFields(log.Fields{
+				"group": groupMembers.Group.Name,
+				"email": member.Email,
+			}).Warn("adding member to group")
 		}
 
 		e := groupMembers
@@ -475,7 +523,12 @@ func (s *SCIMProvider) DeleteGroupsMembers(ctx context.Context, gmr *model.Group
 				"idpid":  member.IPID,
 				"scimid": member.SCIMID,
 				"email":  member.Email,
-			}).Trace("removing member from group")
+			}).Trace("removing member from group (details)")
+
+			log.WithFields(log.Fields{
+				"group": groupMembers.Group.Name,
+				"email": member.Email,
+			}).Warn("removing member from group")
 		}
 
 		patchGroupRequest := &aws.PatchGroupRequest{
