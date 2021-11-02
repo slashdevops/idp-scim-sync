@@ -6,6 +6,7 @@ import (
 
 	"github.com/slashdevops/idp-scim-sync/internal/hash"
 	"github.com/slashdevops/idp-scim-sync/internal/model"
+	"github.com/slashdevops/idp-scim-sync/internal/utils"
 	"github.com/slashdevops/idp-scim-sync/pkg/aws"
 
 	log "github.com/sirupsen/logrus"
@@ -503,6 +504,9 @@ func (s *SCIMProvider) DeleteGroupsMembers(ctx context.Context, gmr *model.Group
 }
 
 // GetGroupsMembers returns a list of groups and their members from the SCIM Provider
+// NOTE: this method doesn't work becuae unfortunately the SCIM API doesn't support
+// list the members of a group, or get a group and their members at the same time
+// reference: https://docs.aws.amazon.com/singlesignon/latest/developerguide/listgroups.html
 func (s *SCIMProvider) GetGroupsMembers(ctx context.Context, gr *model.GroupsResult) (*model.GroupsMembersResult, error) {
 	groupMembers := make([]model.GroupMembers, 0)
 
@@ -514,7 +518,7 @@ func (s *SCIMProvider) GetGroupsMembers(ctx context.Context, gr *model.GroupsRes
 		if err != nil {
 			return nil, fmt.Errorf("scim: error listing groups: %w", err)
 		}
-		// log.Tracef("lgr: lgr : %s", utils.ToJSON(lgr))
+		log.Tracef("lgr: lgr : %s", utils.ToJSON(lgr))
 
 		for _, gr := range lgr.Resources {
 
@@ -535,6 +539,58 @@ func (s *SCIMProvider) GetGroupsMembers(ctx context.Context, gr *model.GroupsRes
 				members = append(members, m)
 			}
 
+			e := model.GroupMembers{
+				Items:     len(members),
+				Group:     group,
+				Resources: members,
+			}
+			e.HashCode = hash.Get(e)
+
+			groupMembers = append(groupMembers, e)
+		}
+	}
+
+	groupsMembersResult := &model.GroupsMembersResult{
+		Items:     len(groupMembers),
+		Resources: groupMembers,
+	}
+	if len(groupMembers) > 0 {
+		groupsMembersResult.HashCode = hash.Get(groupsMembersResult)
+	}
+
+	return groupsMembersResult, nil
+}
+
+// GetGroupsMembersBruteForce returns a list of groups and their members from the SCIM Provider
+// NOTE: this is an bad alternative to the method GetGroupsMembers,  because read the note in the method.
+func (s *SCIMProvider) GetGroupsMembersBruteForce(ctx context.Context, gr *model.GroupsResult, ur *model.UsersResult) (*model.GroupsMembersResult, error) {
+	groupMembers := make([]model.GroupMembers, 0)
+
+	// brute force implemented here thanks to the fxxckin' aws sso scim api
+	for _, group := range gr.Resources {
+
+		members := make([]model.Member, 0)
+
+		for _, user := range ur.Resources {
+
+			// https://docs.aws.amazon.com/singlesignon/latest/developerguide/listgroups.html
+			f := fmt.Sprintf("id eq \"%s\" and members eq \"%s\"", group.SCIMID, user.SCIMID)
+			lgr, err := s.scim.ListGroups(ctx, f)
+			if err != nil {
+				return nil, fmt.Errorf("scim: error listing groups: %w", err)
+			}
+			// log.Tracef("lgr: lgr : %s", utils.ToJSON(lgr))
+
+			if lgr.TotalResults > 0 { // crazy thing of the AWS SSO SCIM API, it doesn't return the memnber into the Resources array
+				m := model.Member{
+					IPID:   user.IPID,
+					SCIMID: user.SCIMID,
+					Email:  user.Email,
+				}
+				m.HashCode = hash.Get(m)
+
+				members = append(members, m)
+			}
 			e := model.GroupMembers{
 				Items:     len(members),
 				Group:     group,

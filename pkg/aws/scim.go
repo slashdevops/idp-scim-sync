@@ -472,6 +472,8 @@ func (s *AWSSCIMService) ListGroups(ctx context.Context, filter string) (*ListGr
 		reqUrl.RawQuery = q.Encode()
 	}
 
+	// log.Debugf("req: %s", reqUrl.String())
+
 	req, err := s.newRequest(http.MethodGet, reqUrl, nil)
 	if err != nil {
 		return nil, fmt.Errorf("aws ListGroups: error creating request, http method: %s, url: %v, error: %w", http.MethodGet, reqUrl.String(), err)

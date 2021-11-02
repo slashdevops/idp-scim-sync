@@ -176,7 +176,8 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 		totalUsersResult = mergeUsersResult(usersCreated, usersUpdated, usersEqual)
 
 		log.Info("getting SCIM Groups Members")
-		scimGroupsMembersResult, err := ss.scim.GetGroupsMembers(ss.ctx, &totalGroupsResult)
+		// scimGroupsMembersResult, err := ss.scim.GetGroupsMembers(ss.ctx, &totalGroupsResult) // not supported yet
+		scimGroupsMembersResult, err := ss.scim.GetGroupsMembersBruteForce(ss.ctx, &totalGroupsResult, &totalUsersResult)
 		if err != nil {
 			return fmt.Errorf("error getting groups members from the SCIM service: %w", err)
 		}
@@ -300,9 +301,9 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 		"groups": totalGroupsResult.Items,
 		"users":  totalUsersResult.Items,
 	}).Info("setting the new state")
-	if err := ss.repo.SetState(ss.ctx, newState); err != nil {
-		return fmt.Errorf("error saving state: %w", err)
-	}
+	// if err := ss.repo.SetState(ss.ctx, newState); err != nil {
+	// 	return fmt.Errorf("error saving state: %w", err)
+	// }
 
 	log.Tracef("state store %s", utils.ToJSON(newState))
 	log.Info("sync completed")

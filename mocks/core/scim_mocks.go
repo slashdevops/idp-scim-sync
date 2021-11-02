@@ -152,6 +152,21 @@ func (mr *MockSCIMServiceMockRecorder) GetGroupsMembers(ctx, gr interface{}) *go
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetGroupsMembers", reflect.TypeOf((*MockSCIMService)(nil).GetGroupsMembers), ctx, gr)
 }
 
+// GetGroupsMembersBruteForce mocks base method.
+func (m *MockSCIMService) GetGroupsMembersBruteForce(ctx context.Context, gr *model.GroupsResult, ur *model.UsersResult) (*model.GroupsMembersResult, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetGroupsMembersBruteForce", ctx, gr, ur)
+	ret0, _ := ret[0].(*model.GroupsMembersResult)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetGroupsMembersBruteForce indicates an expected call of GetGroupsMembersBruteForce.
+func (mr *MockSCIMServiceMockRecorder) GetGroupsMembersBruteForce(ctx, gr, ur interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetGroupsMembersBruteForce", reflect.TypeOf((*MockSCIMService)(nil).GetGroupsMembersBruteForce), ctx, gr, ur)
+}
+
 // GetUsers mocks base method.
 func (m *MockSCIMService) GetUsers(ctx context.Context) (*model.UsersResult, error) {
 	m.ctrl.T.Helper()
