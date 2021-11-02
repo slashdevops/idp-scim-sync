@@ -68,6 +68,8 @@ func membersOperations(idp, scim *model.GroupsMembersResult) (create *model.Grou
 		if len(toC[grpMembers.Group.Name]) > 0 {
 			grpMembers.Group.HashCode = hash.Get(grpMembers.Group)
 
+			// log.Tracef("toCreate: %s", utils.ToJSON(grpMembers))
+
 			e := model.GroupMembers{
 				Items:     len(toC[grpMembers.Group.Name]),
 				Group:     grpMembers.Group,
@@ -78,18 +80,18 @@ func membersOperations(idp, scim *model.GroupsMembersResult) (create *model.Grou
 			toCreate = append(toCreate, e)
 		}
 
-		if len(toE[grpMembers.Group.Name]) > 0 {
-			grpMembers.Group.HashCode = hash.Get(grpMembers.Group)
+		// if len(toE[grpMembers.Group.Name]) > 0 { // we want to keep the resources empties and the rest of the information and not only the records with memebers
+		grpMembers.Group.HashCode = hash.Get(grpMembers.Group)
 
-			e := model.GroupMembers{
-				Items:     len(toE[grpMembers.Group.Name]),
-				Group:     grpMembers.Group,
-				Resources: toE[grpMembers.Group.Name],
-			}
-			e.HashCode = hash.Get(e)
-
-			toEqual = append(toEqual, e)
+		ee := model.GroupMembers{
+			Items:     len(toE[grpMembers.Group.Name]),
+			Group:     grpMembers.Group,
+			Resources: toE[grpMembers.Group.Name],
 		}
+		ee.HashCode = hash.Get(ee)
+
+		toEqual = append(toEqual, ee)
+		//}
 	}
 
 	for _, grpMembers := range scim.Resources {

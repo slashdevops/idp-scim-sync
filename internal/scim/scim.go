@@ -418,8 +418,6 @@ func (s *SCIMProvider) DeleteUsers(ctx context.Context, ur *model.UsersResult) e
 func (s *SCIMProvider) CreateGroupsMembers(ctx context.Context, gmr *model.GroupsMembersResult) (*model.GroupsMembersResult, error) {
 	groupsMembers := make([]model.GroupMembers, 0)
 
-	log.Tracef("gmr: %s", utils.ToJSON(gmr))
-
 	for _, groupMembers := range gmr.Resources {
 
 		members := make([]model.Member, 0)
@@ -488,8 +486,6 @@ func (s *SCIMProvider) CreateGroupsMembers(ctx context.Context, gmr *model.Group
 				},
 			},
 		}
-
-		log.Tracef("patchGroupRequest: %s", utils.ToJSON(patchGroupRequest))
 
 		if err := s.scim.PatchGroup(ctx, patchGroupRequest); err != nil {
 			return nil, fmt.Errorf("scim: error patching group: %w", err)
