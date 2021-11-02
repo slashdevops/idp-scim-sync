@@ -418,6 +418,8 @@ func (s *SCIMProvider) DeleteUsers(ctx context.Context, ur *model.UsersResult) e
 func (s *SCIMProvider) CreateGroupsMembers(ctx context.Context, gmr *model.GroupsMembersResult) (*model.GroupsMembersResult, error) {
 	groupsMembers := make([]model.GroupMembers, 0)
 
+	log.Tracef("gmr: %s", utils.ToJSON(gmr))
+
 	for _, groupMembers := range gmr.Resources {
 
 		members := make([]model.Member, 0)
