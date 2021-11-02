@@ -75,10 +75,6 @@ func (s *SCIMProvider) GetGroups(ctx context.Context) (*model.GroupsResult, erro
 	groups := make([]model.Group, 0)
 	for _, group := range groupsResponse.Resources {
 
-		// log.WithFields(log.Fields{
-		// 	"group": group.ID,
-		// }).Tracef("getting group, payload: %s", utils.ToJSON(group))
-
 		e := model.Group{
 			SCIMID: group.ID,
 			Name:   group.DisplayName,
@@ -171,7 +167,12 @@ func (s *SCIMProvider) UpdateGroups(ctx context.Context, gr *model.GroupsResult)
 		}
 
 		// return the same group
-		e := group
+		e := model.Group{
+			SCIMID: group.SCIMID,
+			Name:   group.Name,
+			IPID:   group.IPID,
+			Email:  group.Email,
+		}
 		e.HashCode = hash.Get(e)
 		groups = append(groups, e)
 	}
@@ -272,7 +273,17 @@ func (s *SCIMProvider) CreateUsers(ctx context.Context, ur *model.UsersResult) (
 			return nil, fmt.Errorf("scim: error creating user: %w", err)
 		}
 
-		e := user
+		e := model.User{
+			IPID:   user.IPID,
+			SCIMID: r.ID,
+			Name: model.Name{
+				FamilyName: user.Name.FamilyName,
+				GivenName:  user.Name.GivenName,
+			},
+			DisplayName: user.DisplayName,
+			Active:      user.Active,
+			Email:       user.Email,
+		}
 		e.SCIMID = r.ID
 		e.HashCode = hash.Get(e)
 		users = append(users, e)
@@ -322,7 +333,17 @@ func (s *SCIMProvider) UpdateUsers(ctx context.Context, ur *model.UsersResult) (
 			return nil, fmt.Errorf("scim: error updating user: %w", err)
 		}
 
-		e := user
+		e := model.User{
+			IPID:   user.IPID,
+			SCIMID: r.ID,
+			Name: model.Name{
+				FamilyName: user.Name.FamilyName,
+				GivenName:  user.Name.GivenName,
+			},
+			DisplayName: user.DisplayName,
+			Active:      user.Active,
+			Email:       user.Email,
+		}
 		e.SCIMID = r.ID
 		e.HashCode = hash.Get(e)
 		users = append(users, e)
@@ -378,14 +399,20 @@ func (s *SCIMProvider) CreateGroupsMembers(ctx context.Context, gmr *model.Group
 				Value: member.SCIMID,
 			})
 
-			e := member
+			e := model.Member{
+				IPID:   member.IPID,
+				SCIMID: member.SCIMID,
+				Email:  member.Email,
+			}
 			e.HashCode = hash.Get(e)
 			members = append(members, e)
 
 			log.WithFields(log.Fields{
+				"group":  groupMembers.Group.Name,
+				"idpid":  member.IPID,
 				"scimid": member.SCIMID,
 				"email":  member.Email,
-			}).Trace("adding member")
+			}).Trace("adding member to group")
 		}
 
 		e := groupMembers
@@ -443,9 +470,11 @@ func (s *SCIMProvider) DeleteGroupsMembers(ctx context.Context, gmr *model.Group
 			})
 
 			log.WithFields(log.Fields{
+				"group":  groupMembers.Group.Name,
+				"idpid":  member.IPID,
 				"scimid": member.SCIMID,
 				"email":  member.Email,
-			}).Trace("removing member")
+			}).Trace("removing member from group")
 		}
 
 		patchGroupRequest := &aws.PatchGroupRequest{
