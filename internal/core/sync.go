@@ -12,7 +12,6 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/slashdevops/idp-scim-sync/internal/hash"
 	"github.com/slashdevops/idp-scim-sync/internal/model"
-	"github.com/slashdevops/idp-scim-sync/internal/utils"
 	"github.com/slashdevops/idp-scim-sync/internal/version"
 )
 
@@ -300,12 +299,13 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 	log.WithFields(log.Fields{
 		"groups": totalGroupsResult.Items,
 		"users":  totalUsersResult.Items,
-	}).Info("setting the new state")
-	// if err := ss.repo.SetState(ss.ctx, newState); err != nil {
-	// 	return fmt.Errorf("error saving state: %w", err)
-	// }
+	}).Info("storing the new state")
+	// TODO: avoid this step using a cmd flag, could be a nice feature
+	if err := ss.repo.SetState(ss.ctx, newState); err != nil {
+		return fmt.Errorf("error saving state: %w", err)
+	}
 
-	log.Tracef("state store %s", utils.ToJSON(newState))
+	// log.Tracef("state store %s", utils.ToJSON(newState))
 	log.Info("sync completed")
 	return nil
 }

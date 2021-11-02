@@ -66,6 +66,8 @@ func membersOperations(idp, scim *model.GroupsMembersResult) (create *model.Grou
 		}
 
 		if len(toC[grpMembers.Group.Name]) > 0 {
+			grpMembers.Group.HashCode = hash.Get(grpMembers.Group)
+
 			e := model.GroupMembers{
 				Items:     len(toC[grpMembers.Group.Name]),
 				Group:     grpMembers.Group,
@@ -77,6 +79,8 @@ func membersOperations(idp, scim *model.GroupsMembersResult) (create *model.Grou
 		}
 
 		if len(toE[grpMembers.Group.Name]) > 0 {
+			grpMembers.Group.HashCode = hash.Get(grpMembers.Group)
+
 			e := model.GroupMembers{
 				Items:     len(toE[grpMembers.Group.Name]),
 				Group:     grpMembers.Group,
