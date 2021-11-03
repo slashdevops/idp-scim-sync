@@ -204,6 +204,59 @@ func TestUser_SetHashCode(t *testing.T) {
 	}
 }
 
+func TestUsersResult_SetHashCode(t *testing.T) {
+	u1 := User{IPID: "1", SCIMID: "1", Name: Name{GivenName: "User", FamilyName: "1"}, Email: "user.1@mail.com"}
+	u2 := User{IPID: "2", SCIMID: "2", Name: Name{GivenName: "User", FamilyName: "2"}, Email: "user.2@mail.com"}
+	u3 := User{IPID: "3", SCIMID: "3", Name: Name{GivenName: "User", FamilyName: "3"}, Email: "user.3@mail.com"}
+
+	u1.SetHashCode()
+	u2.SetHashCode()
+	u3.SetHashCode()
+
+	ur1 := UsersResult{
+		Items:     3,
+		Resources: []User{u1, u2, u3},
+	}
+	ur1.SetHashCode()
+
+	ur2 := UsersResult{
+		Items:     3,
+		Resources: []User{u2, u3, u1},
+	}
+	ur2.SetHashCode()
+
+	ur3 := UsersResult{
+		Items:     3,
+		Resources: []User{u3, u2, u1},
+	}
+	ur3.SetHashCode()
+
+	ur4 := mergeUsersResult(&ur2, &ur1, &ur3)
+	ur4.SetHashCode()
+	ur5 := mergeUsersResult(&ur3, &ur2, &ur1)
+	ur5.SetHashCode()
+
+	t.Logf("ur4: %s\n", utils.ToJSON(ur4))
+	t.Logf("ur5: %s\n", utils.ToJSON(ur5))
+
+	t.Logf("ur4.HashCode: %s\n", ur4.HashCode)
+	t.Logf("ur5.HashCode: %s\n", ur5.HashCode)
+
+	if ur1.HashCode != ur2.HashCode {
+		t.Errorf("UsersResult.HashCode should be equal")
+	}
+	if ur1.HashCode != ur3.HashCode {
+		t.Errorf("UsersResult.HashCode should be equal")
+	}
+	if ur2.HashCode != ur3.HashCode {
+		t.Errorf("UsersResult.HashCode should be equal")
+	}
+
+	if ur5.HashCode != ur4.HashCode {
+		t.Errorf("UsersResult.HashCode should be equal: ur5-> %s, ur4-> %s", ur5.HashCode, ur4.HashCode)
+	}
+}
+
 func TestGroupsResult_SetHashCode(t *testing.T) {
 	g1 := Group{IPID: "1", SCIMID: "1", Name: "group", Email: "group.1@mail.com"}
 	g2 := Group{IPID: "2", SCIMID: "2", Name: "group", Email: "group.2@mail.com"}
@@ -257,6 +310,67 @@ func TestGroupsResult_SetHashCode(t *testing.T) {
 	}
 }
 
+func TestGroupsMembersResult_SetHashCode(t *testing.T) {
+	m1 := Member{IPID: "1", SCIMID: "1", Email: "group.1@mail.com"}
+	m2 := Member{IPID: "2", SCIMID: "2", Email: "group.2@mail.com"}
+	m3 := Member{IPID: "3", SCIMID: "3", Email: "group.3@mail.com"}
+
+	m1.SetHashCode()
+	m2.SetHashCode()
+	m3.SetHashCode()
+
+	gm1 := GroupMembers{Group: Group{IPID: "1", SCIMID: "1", Name: "group", Email: "group.1@mail.com"}, Resources: []Member{m1, m2, m3}}
+	gm2 := GroupMembers{Group: Group{IPID: "2", SCIMID: "2", Name: "group", Email: "group.2@mail.com"}, Resources: []Member{m2, m1, m3}}
+	gm3 := GroupMembers{Group: Group{IPID: "3", SCIMID: "3", Name: "group", Email: "group.3@mail.com"}, Resources: []Member{m1, m3, m2}}
+
+	gm1.SetHashCode()
+	gm2.SetHashCode()
+	gm3.SetHashCode()
+
+	gmr1 := GroupsMembersResult{
+		Items:     3,
+		Resources: []GroupMembers{gm1, gm2, gm3},
+	}
+	gmr1.SetHashCode()
+
+	gmr2 := GroupsMembersResult{
+		Items:     3,
+		Resources: []GroupMembers{gm2, gm3, gm1},
+	}
+	gmr2.SetHashCode()
+
+	gmr3 := GroupsMembersResult{
+		Items:     3,
+		Resources: []GroupMembers{gm3, gm2, gm1},
+	}
+	gmr3.SetHashCode()
+
+	gmr4 := mergeGroupsMembersResult(&gmr2, &gmr1, &gmr3)
+	gmr4.SetHashCode()
+	gmr5 := mergeGroupsMembersResult(&gmr3, &gmr2, &gmr1)
+	gmr5.SetHashCode()
+
+	t.Logf("gmr4: %s\n", utils.ToJSON(gmr4))
+	t.Logf("gmr5: %s\n", utils.ToJSON(gmr5))
+
+	t.Logf("gmr4.HashCode: %s\n", gmr4.HashCode)
+	t.Logf("gmr5.HashCode: %s\n", gmr5.HashCode)
+
+	if gmr1.HashCode != gmr2.HashCode {
+		t.Errorf("GroupsMembersResult.HashCode should be equal")
+	}
+	if gmr1.HashCode != gmr3.HashCode {
+		t.Errorf("GroupsMembersResult.HashCode should be equal")
+	}
+	if gmr2.HashCode != gmr3.HashCode {
+		t.Errorf("GroupsMembersResult.HashCode should be equal")
+	}
+
+	if gmr5.HashCode != gmr4.HashCode {
+		t.Errorf("GroupsMembersResult.HashCode should be equal: gmr5-> %s, gmr4-> %s", gmr5.HashCode, gmr4.HashCode)
+	}
+}
+
 func mergeGroupsResult(grs ...*GroupsResult) (merged GroupsResult) {
 	groups := make([]Group, 0)
 
@@ -267,6 +381,42 @@ func mergeGroupsResult(grs ...*GroupsResult) (merged GroupsResult) {
 	merged = GroupsResult{
 		Items:     len(groups),
 		Resources: groups,
+	}
+	if merged.Items > 0 {
+		merged.SetHashCode()
+	}
+
+	return
+}
+
+func mergeUsersResult(urs ...*UsersResult) (merged UsersResult) {
+	users := make([]User, 0)
+
+	for _, u := range urs {
+		users = append(users, u.Resources...)
+	}
+
+	merged = UsersResult{
+		Items:     len(users),
+		Resources: users,
+	}
+	if merged.Items > 0 {
+		merged.SetHashCode()
+	}
+
+	return
+}
+
+func mergeGroupsMembersResult(gms ...*GroupsMembersResult) (merged GroupsMembersResult) {
+	groupsMembers := make([]GroupMembers, 0)
+
+	for _, gm := range gms {
+		groupsMembers = append(groupsMembers, gm.Resources...)
+	}
+
+	merged = GroupsMembersResult{
+		Items:     len(groupsMembers),
+		Resources: groupsMembers,
 	}
 	if merged.Items > 0 {
 		merged.SetHashCode()
