@@ -1,7 +1,6 @@
 package core
 
 import (
-	"github.com/slashdevops/idp-scim-sync/internal/hash"
 	"github.com/slashdevops/idp-scim-sync/internal/model"
 )
 
@@ -39,6 +38,9 @@ func membersOperations(idp, scim *model.GroupsMembersResult) (create *model.Grou
 		}
 	}
 
+	// log.Tracef("scimGroupsSet: %s", utils.ToJSON(scimGroupsSet))
+	// log.Tracef("scimMemberSet: %s", utils.ToJSON(scimMemberSet))
+
 	// map[group.Name][]*model.Member
 	toC := make(map[string][]model.Member)
 	toE := make(map[string][]model.Member)
@@ -66,8 +68,7 @@ func membersOperations(idp, scim *model.GroupsMembersResult) (create *model.Grou
 		}
 
 		if len(toC[grpMembers.Group.Name]) > 0 {
-			grpMembers.Group.HashCode = hash.Get(grpMembers.Group)
-
+			grpMembers.Group.SetHashCode()
 			// log.Tracef("toCreate: %s", utils.ToJSON(grpMembers))
 
 			e := model.GroupMembers{
@@ -75,20 +76,20 @@ func membersOperations(idp, scim *model.GroupsMembersResult) (create *model.Grou
 				Group:     grpMembers.Group,
 				Resources: toC[grpMembers.Group.Name],
 			}
-			e.HashCode = hash.Get(e)
+			e.SetHashCode()
 
 			toCreate = append(toCreate, e)
 		}
 
 		// if len(toE[grpMembers.Group.Name]) > 0 { // we want to keep the resources empties and the rest of the information and not only the records with memebers
-		grpMembers.Group.HashCode = hash.Get(grpMembers.Group)
+		grpMembers.Group.SetHashCode()
 
 		ee := model.GroupMembers{
 			Items:     len(toE[grpMembers.Group.Name]),
 			Group:     grpMembers.Group,
 			Resources: toE[grpMembers.Group.Name],
 		}
-		ee.HashCode = hash.Get(ee)
+		ee.SetHashCode()
 
 		toEqual = append(toEqual, ee)
 		//}
@@ -109,7 +110,7 @@ func membersOperations(idp, scim *model.GroupsMembersResult) (create *model.Grou
 				Group:     grpMembers.Group,
 				Resources: toD[grpMembers.Group.Name],
 			}
-			e.HashCode = hash.Get(e)
+			e.SetHashCode()
 
 			toDelete = append(toDelete, e)
 		}
@@ -120,7 +121,7 @@ func membersOperations(idp, scim *model.GroupsMembersResult) (create *model.Grou
 		Resources: toCreate,
 	}
 	if create.Items > 0 {
-		create.HashCode = hash.Get(create)
+		create.SetHashCode()
 	}
 
 	equal = &model.GroupsMembersResult{
@@ -128,7 +129,7 @@ func membersOperations(idp, scim *model.GroupsMembersResult) (create *model.Grou
 		Resources: toEqual,
 	}
 	if equal.Items > 0 {
-		equal.HashCode = hash.Get(equal)
+		equal.SetHashCode()
 	}
 
 	delete = &model.GroupsMembersResult{
@@ -136,7 +137,7 @@ func membersOperations(idp, scim *model.GroupsMembersResult) (create *model.Grou
 		Resources: toDelete,
 	}
 	if delete.Items > 0 {
-		delete.HashCode = hash.Get(delete)
+		delete.SetHashCode()
 	}
 
 	return
@@ -197,7 +198,7 @@ func groupsOperations(idp, scim *model.GroupsResult) (create *model.GroupsResult
 		Resources: toCreate,
 	}
 	if create.Items > 0 {
-		create.HashCode = hash.Get(create)
+		create.SetHashCode()
 	}
 
 	update = &model.GroupsResult{
@@ -205,7 +206,7 @@ func groupsOperations(idp, scim *model.GroupsResult) (create *model.GroupsResult
 		Resources: toUpdate,
 	}
 	if update.Items > 0 {
-		update.HashCode = hash.Get(update)
+		update.SetHashCode()
 	}
 
 	equal = &model.GroupsResult{
@@ -213,7 +214,7 @@ func groupsOperations(idp, scim *model.GroupsResult) (create *model.GroupsResult
 		Resources: toEqual,
 	}
 	if equal.Items > 0 {
-		equal.HashCode = hash.Get(equal)
+		equal.SetHashCode()
 	}
 
 	delete = &model.GroupsResult{
@@ -221,7 +222,7 @@ func groupsOperations(idp, scim *model.GroupsResult) (create *model.GroupsResult
 		Resources: toDelete,
 	}
 	if delete.Items > 0 {
-		delete.HashCode = hash.Get(delete)
+		delete.SetHashCode()
 	}
 
 	return
@@ -282,7 +283,7 @@ func usersOperations(idp, scim *model.UsersResult) (create *model.UsersResult, u
 		Resources: toCreate,
 	}
 	if create.Items > 0 {
-		create.HashCode = hash.Get(create)
+		create.SetHashCode()
 	}
 
 	update = &model.UsersResult{
@@ -290,7 +291,7 @@ func usersOperations(idp, scim *model.UsersResult) (create *model.UsersResult, u
 		Resources: toUpdate,
 	}
 	if update.Items > 0 {
-		update.HashCode = hash.Get(update)
+		update.SetHashCode()
 	}
 
 	equal = &model.UsersResult{
@@ -298,7 +299,7 @@ func usersOperations(idp, scim *model.UsersResult) (create *model.UsersResult, u
 		Resources: toEqual,
 	}
 	if equal.Items > 0 {
-		equal.HashCode = hash.Get(equal)
+		equal.SetHashCode()
 	}
 
 	delete = &model.UsersResult{
@@ -306,7 +307,7 @@ func usersOperations(idp, scim *model.UsersResult) (create *model.UsersResult, u
 		Resources: toDelete,
 	}
 	if delete.Items > 0 {
-		delete.HashCode = hash.Get(delete)
+		delete.SetHashCode()
 	}
 
 	return
@@ -324,7 +325,7 @@ func mergeGroupsResult(grs ...*model.GroupsResult) (merged model.GroupsResult) {
 		Resources: groups,
 	}
 	if merged.Items > 0 {
-		merged.HashCode = hash.Get(merged)
+		merged.SetHashCode()
 	}
 
 	return
@@ -342,7 +343,7 @@ func mergeUsersResult(urs ...*model.UsersResult) (merged model.UsersResult) {
 		Resources: users,
 	}
 	if merged.Items > 0 {
-		merged.HashCode = hash.Get(merged)
+		merged.SetHashCode()
 	}
 
 	return
@@ -360,25 +361,7 @@ func mergeGroupsMembersResult(gms ...*model.GroupsMembersResult) (merged model.G
 		Resources: groupsMembers,
 	}
 	if merged.Items > 0 {
-		merged.HashCode = hash.Get(merged)
-	}
-
-	return
-}
-
-func mergeGroupsUsersResult(gurs ...*model.GroupsUsersResult) (merged model.GroupsUsersResult) {
-	groupsUsers := make([]model.GroupUsers, 0)
-
-	for _, gu := range gurs {
-		groupsUsers = append(groupsUsers, gu.Resources...)
-	}
-
-	merged = model.GroupsUsersResult{
-		Items:     len(groupsUsers),
-		Resources: groupsUsers,
-	}
-	if merged.Items > 0 {
-		merged.HashCode = hash.Get(merged)
+		merged.SetHashCode()
 	}
 
 	return

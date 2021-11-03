@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/slashdevops/idp-scim-sync/internal/hash"
 	"github.com/slashdevops/idp-scim-sync/internal/model"
 	"github.com/slashdevops/idp-scim-sync/internal/utils"
 	"github.com/slashdevops/idp-scim-sync/pkg/aws"
@@ -81,7 +80,7 @@ func (s *SCIMProvider) GetGroups(ctx context.Context) (*model.GroupsResult, erro
 			Name:   group.DisplayName,
 			IPID:   group.ExternalId,
 		}
-		e.HashCode = hash.Get(e)
+		e.SetHashCode()
 
 		groups = append(groups, e)
 	}
@@ -91,7 +90,7 @@ func (s *SCIMProvider) GetGroups(ctx context.Context) (*model.GroupsResult, erro
 		Resources: groups,
 	}
 	if len(groups) > 0 {
-		groupsResult.HashCode = hash.Get(groupsResult)
+		groupsResult.SetHashCode()
 	}
 
 	return groupsResult, nil
@@ -116,7 +115,7 @@ func (s *SCIMProvider) CreateGroups(ctx context.Context, gr *model.GroupsResult)
 
 		log.WithFields(log.Fields{
 			"group": group.Name,
-		}).Warn("creating group (details)")
+		}).Warn("creating group")
 
 		r, err := s.scim.CreateGroup(ctx, groupRequest)
 		if err != nil {
@@ -125,7 +124,7 @@ func (s *SCIMProvider) CreateGroups(ctx context.Context, gr *model.GroupsResult)
 
 		e := group
 		e.SCIMID = r.ID
-		e.HashCode = hash.Get(e)
+		e.SetHashCode()
 		groups = append(groups, e)
 	}
 
@@ -134,7 +133,7 @@ func (s *SCIMProvider) CreateGroups(ctx context.Context, gr *model.GroupsResult)
 		Resources: groups,
 	}
 	if len(groups) > 0 {
-		ret.HashCode = hash.Get(ret)
+		ret.SetHashCode()
 	}
 
 	return ret, nil
@@ -188,7 +187,7 @@ func (s *SCIMProvider) UpdateGroups(ctx context.Context, gr *model.GroupsResult)
 			IPID:   group.IPID,
 			Email:  group.Email,
 		}
-		e.HashCode = hash.Get(e)
+		e.SetHashCode()
 		groups = append(groups, e)
 	}
 
@@ -197,7 +196,7 @@ func (s *SCIMProvider) UpdateGroups(ctx context.Context, gr *model.GroupsResult)
 		Resources: groups,
 	}
 	if len(groups) > 0 {
-		ret.HashCode = hash.Get(ret)
+		ret.SetHashCode()
 	}
 
 	return ret, nil
@@ -246,7 +245,7 @@ func (s *SCIMProvider) GetUsers(ctx context.Context) (*model.UsersResult, error)
 			Active:      user.Active,
 			Email:       user.Emails[0].Value,
 		}
-		e.HashCode = hash.Get(e)
+		e.SetHashCode()
 
 		users = append(users, e)
 	}
@@ -256,7 +255,7 @@ func (s *SCIMProvider) GetUsers(ctx context.Context) (*model.UsersResult, error)
 		Resources: users,
 	}
 	if len(users) > 0 {
-		usersResult.HashCode = hash.Get(usersResult)
+		usersResult.SetHashCode()
 	}
 
 	return usersResult, nil
@@ -309,7 +308,8 @@ func (s *SCIMProvider) CreateUsers(ctx context.Context, ur *model.UsersResult) (
 			Email:       user.Email,
 		}
 		e.SCIMID = r.ID
-		e.HashCode = hash.Get(e)
+		e.SetHashCode()
+
 		users = append(users, e)
 	}
 
@@ -318,7 +318,7 @@ func (s *SCIMProvider) CreateUsers(ctx context.Context, ur *model.UsersResult) (
 		Resources: users,
 	}
 	if len(users) > 0 {
-		ret.HashCode = hash.Get(ret)
+		ret.SetHashCode()
 	}
 
 	return ret, nil
@@ -376,7 +376,7 @@ func (s *SCIMProvider) UpdateUsers(ctx context.Context, ur *model.UsersResult) (
 			Email:       user.Email,
 		}
 		e.SCIMID = r.ID
-		e.HashCode = hash.Get(e)
+		e.SetHashCode()
 		users = append(users, e)
 	}
 
@@ -385,7 +385,7 @@ func (s *SCIMProvider) UpdateUsers(ctx context.Context, ur *model.UsersResult) (
 		Resources: users,
 	}
 	if len(users) > 0 {
-		ret.HashCode = hash.Get(ret)
+		ret.SetHashCode()
 	}
 
 	return ret, nil
@@ -448,7 +448,7 @@ func (s *SCIMProvider) CreateGroupsMembers(ctx context.Context, gmr *model.Group
 				SCIMID: member.SCIMID,
 				Email:  member.Email,
 			}
-			e.HashCode = hash.Get(e)
+			e.SetHashCode()
 			members = append(members, e)
 
 			log.WithFields(log.Fields{
@@ -465,7 +465,7 @@ func (s *SCIMProvider) CreateGroupsMembers(ctx context.Context, gmr *model.Group
 		}
 
 		e := groupMembers
-		e.HashCode = hash.Get(e)
+		e.SetHashCode()
 		e.Resources = members
 
 		groupsMembers = append(groupsMembers, e)
@@ -497,7 +497,7 @@ func (s *SCIMProvider) CreateGroupsMembers(ctx context.Context, gmr *model.Group
 		Resources: groupsMembers,
 	}
 	if len(groupsMembers) > 0 {
-		ret.HashCode = hash.Get(ret)
+		ret.SetHashCode()
 	}
 
 	return ret, nil
@@ -588,7 +588,7 @@ func (s *SCIMProvider) GetGroupsMembers(ctx context.Context, gr *model.GroupsRes
 					SCIMID: member.Value,
 					Email:  u.Emails[0].Value,
 				}
-				m.HashCode = hash.Get(m)
+				m.SetHashCode()
 
 				members = append(members, m)
 			}
@@ -598,7 +598,7 @@ func (s *SCIMProvider) GetGroupsMembers(ctx context.Context, gr *model.GroupsRes
 				Group:     group,
 				Resources: members,
 			}
-			e.HashCode = hash.Get(e)
+			e.SetHashCode()
 
 			groupMembers = append(groupMembers, e)
 		}
@@ -609,7 +609,7 @@ func (s *SCIMProvider) GetGroupsMembers(ctx context.Context, gr *model.GroupsRes
 		Resources: groupMembers,
 	}
 	if len(groupMembers) > 0 {
-		groupsMembersResult.HashCode = hash.Get(groupsMembersResult)
+		groupsMembersResult.SetHashCode()
 	}
 
 	return groupsMembersResult, nil
@@ -641,7 +641,7 @@ func (s *SCIMProvider) GetGroupsMembersBruteForce(ctx context.Context, gr *model
 					SCIMID: user.SCIMID,
 					Email:  user.Email,
 				}
-				m.HashCode = hash.Get(m)
+				m.SetHashCode()
 
 				members = append(members, m)
 			}
@@ -650,7 +650,7 @@ func (s *SCIMProvider) GetGroupsMembersBruteForce(ctx context.Context, gr *model
 				Group:     group,
 				Resources: members,
 			}
-			e.HashCode = hash.Get(e)
+			e.SetHashCode()
 
 			groupMembers = append(groupMembers, e)
 		}
@@ -661,7 +661,7 @@ func (s *SCIMProvider) GetGroupsMembersBruteForce(ctx context.Context, gr *model
 		Resources: groupMembers,
 	}
 	if len(groupMembers) > 0 {
-		groupsMembersResult.HashCode = hash.Get(groupsMembersResult)
+		groupsMembersResult.SetHashCode()
 	}
 
 	return groupsMembersResult, nil

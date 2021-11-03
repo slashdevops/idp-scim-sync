@@ -1,6 +1,10 @@
 package model
 
-import "encoding/json"
+import (
+	"encoding/json"
+
+	"github.com/slashdevops/idp-scim-sync/internal/hash"
+)
 
 const (
 	// StateSchemaVersion is the current schema version for the state file.
@@ -26,4 +30,13 @@ type State struct {
 // MarshalJSON marshals the state to JSON.
 func (s *State) MarshalJSON() ([]byte, error) {
 	return json.MarshalIndent(*s, "", "  ")
+}
+
+// SetHashCode is a helper function to avoid errors when calculating hash code.
+// this method discards fields that are not used in the hash calculation.
+// only fields comming from the Identity Provider are used.
+func (s *State) SetHashCode() {
+	s.HashCode = hash.Get(State{
+		Resources: s.Resources,
+	})
 }

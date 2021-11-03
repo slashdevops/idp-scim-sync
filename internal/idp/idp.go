@@ -70,7 +70,7 @@ func (i *IdentityProvider) GetGroups(ctx context.Context, filter []string) (*mod
 				Name:  grp.Name,
 				Email: grp.Email,
 			}
-			e.HashCode = hash.Get(e)
+			e.SetHashCode()
 
 			syncGroups = append(syncGroups, e)
 		} else {
@@ -87,7 +87,7 @@ func (i *IdentityProvider) GetGroups(ctx context.Context, filter []string) (*mod
 		Resources: syncGroups,
 	}
 	if len(pGroups) > 0 {
-		syncResult.HashCode = hash.Get(syncResult)
+		syncResult.SetHashCode()
 	}
 
 	return syncResult, nil
@@ -114,7 +114,7 @@ func (i *IdentityProvider) GetUsers(ctx context.Context, filter []string) (*mode
 			Active:      !usr.Suspended,
 			Email:       usr.PrimaryEmail,
 		}
-		e.HashCode = hash.Get(e)
+		e.SetHashCode()
 
 		syncUsers = append(syncUsers, e)
 	}
@@ -124,7 +124,7 @@ func (i *IdentityProvider) GetUsers(ctx context.Context, filter []string) (*mode
 		Resources: syncUsers,
 	}
 	if len(pUsers) > 0 {
-		uResult.HashCode = hash.Get(uResult)
+		uResult.SetHashCode()
 	}
 
 	return uResult, nil
@@ -148,7 +148,7 @@ func (i *IdentityProvider) GetGroupMembers(ctx context.Context, groupID string) 
 			IPID:  member.Id,
 			Email: member.Email,
 		}
-		e.HashCode = hash.Get(e)
+		e.SetHashCode()
 
 		syncMembers = append(syncMembers, e)
 	}
@@ -158,7 +158,7 @@ func (i *IdentityProvider) GetGroupMembers(ctx context.Context, groupID string) 
 		Resources: syncMembers,
 	}
 	if len(pMembers) > 0 {
-		syncMembersResult.HashCode = hash.Get(syncMembersResult)
+		syncMembersResult.SetHashCode()
 	}
 
 	return syncMembersResult, nil
@@ -181,7 +181,7 @@ func (i *IdentityProvider) GetUsersByGroupMembers(ctx context.Context, mbr *mode
 			Active:      !u.Suspended,
 			Email:       u.PrimaryEmail,
 		}
-		e.HashCode = hash.Get(e)
+		e.SetHashCode()
 
 		pUsers = append(pUsers, e)
 	}
@@ -191,7 +191,7 @@ func (i *IdentityProvider) GetUsersByGroupMembers(ctx context.Context, mbr *mode
 		Resources: pUsers,
 	}
 	if len(pUsers) > 0 {
-		pUsersResult.HashCode = hash.Get(pUsersResult)
+		pUsersResult.SetHashCode()
 	}
 
 	return pUsersResult, nil
@@ -217,7 +217,7 @@ func (i *IdentityProvider) GetGroupsMembers(ctx context.Context, gr *model.Group
 			},
 			Resources: members.Resources,
 		}
-		groupMember.HashCode = hash.Get(groupMember)
+		groupMember.SetHashCode()
 
 		groupMembers = append(groupMembers, groupMember)
 	}

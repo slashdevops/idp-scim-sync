@@ -10,7 +10,6 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 	log "github.com/sirupsen/logrus"
-	"github.com/slashdevops/idp-scim-sync/internal/hash"
 	"github.com/slashdevops/idp-scim-sync/internal/model"
 	"github.com/slashdevops/idp-scim-sync/internal/utils"
 	"github.com/slashdevops/idp-scim-sync/internal/version"
@@ -80,6 +79,8 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 	if err != nil {
 		return fmt.Errorf("error getting groups from the identity provider: %w", err)
 	}
+
+	log.Tracef("idpGroupsResult: %s\n", utils.ToJSON(idpGroupsResult))
 
 	idpUsersResult, err := ss.prov.GetUsers(ss.ctx, []string{""})
 	if err != nil {
@@ -222,6 +223,9 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 			"since":    deltaHours + "h, " + deltaMinutes + "m, " + deltaSeconds + "s",
 		}).Info("syncing from state")
 
+		// log.Tracef("idpGroupsResult: %s", utils.ToJSON(idpGroupsResult))
+		// log.Tracef("state.Resources.Groups: %s", utils.ToJSON(state.Resources.Groups))
+
 		if idpGroupsResult.HashCode == state.Resources.Groups.HashCode {
 			log.Info("provider groups and state groups are the same, nothing to do with groups")
 		} else {
@@ -299,7 +303,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 		},
 	}
 	// calculate the hash with the data payload
-	newState.HashCode = hash.Get(newState)
+	newState.SetHashCode()
 	newState.SchemaVersion = model.StateSchemaVersion
 	newState.CodeVersion = version.Version
 	newState.LastSync = time.Now().Format(time.RFC3339)
