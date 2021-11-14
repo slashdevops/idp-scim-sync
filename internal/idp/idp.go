@@ -207,21 +207,24 @@ func (i *IdentityProvider) GetGroupsMembers(ctx context.Context, gr *model.Group
 			return nil, fmt.Errorf("idp: error getting group members: %w", err)
 		}
 
-		e := model.Group{
-			IPID:  group.IPID,
-			Name:  group.Name,
-			Email: group.Email,
-		}
-		e.SetHashCode()
+		if members.Items > 0 {
 
-		groupMember := model.GroupMembers{
-			Items:     len(members.Resources),
-			Group:     e,
-			Resources: members.Resources,
-		}
-		groupMember.SetHashCode()
+			e := model.Group{
+				IPID:  group.IPID,
+				Name:  group.Name,
+				Email: group.Email,
+			}
+			e.SetHashCode()
 
-		groupMembers = append(groupMembers, groupMember)
+			groupMember := model.GroupMembers{
+				Items:     len(members.Resources),
+				Group:     e,
+				Resources: members.Resources,
+			}
+			groupMember.SetHashCode()
+
+			groupMembers = append(groupMembers, groupMember)
+		}
 	}
 
 	groupsMembersResult := &model.GroupsMembersResult{
