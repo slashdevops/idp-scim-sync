@@ -56,14 +56,25 @@ func (ur *UsersResult) MarshalJSON() ([]byte, error) {
 // this method discards fields that are not used in the hash calculation.
 // only fields comming from the Identity Provider are used.
 func (ur *UsersResult) SetHashCode() {
-	sort.Slice(ur.Resources, func(i, j int) bool {
-		return ur.Resources[i].HashCode < ur.Resources[j].HashCode
+	if len(ur.Resources) == 0 {
+		return
+	}
+
+	copyResources := make([]User, len(ur.Resources))
+	copy(copyResources, ur.Resources)
+
+	// only these fields are used in the hash calculation
+	copyOfStruct := UsersResult{
+		Items:     ur.Items,
+		Resources: copyResources,
+	}
+
+	// order the resources by their hash code to be consistency always
+	sort.Slice(copyOfStruct.Resources, func(i, j int) bool {
+		return copyOfStruct.Resources[i].HashCode < copyOfStruct.Resources[j].HashCode
 	})
 
-	ur.HashCode = hash.Get(UsersResult{
-		Items:     ur.Items,
-		Resources: ur.Resources,
-	})
+	ur.HashCode = hash.Get(copyOfStruct)
 }
 
 // Group represents a group entity.
@@ -105,14 +116,25 @@ func (gr *GroupsResult) MarshalJSON() ([]byte, error) {
 // this method discards fields that are not used in the hash calculation.
 // only fields comming from the Identity Provider are used.
 func (gr *GroupsResult) SetHashCode() {
-	sort.Slice(gr.Resources, func(i, j int) bool {
-		return gr.Resources[i].HashCode < gr.Resources[j].HashCode
+	if len(gr.Resources) == 0 {
+		return
+	}
+
+	copyResources := make([]Group, len(gr.Resources))
+	copy(copyResources, gr.Resources)
+
+	// only these fields are used in the hash calculation
+	copyOfStruct := GroupsResult{
+		Items:     gr.Items,
+		Resources: copyResources,
+	}
+
+	// order the resources by their hash code to be consistency always
+	sort.Slice(copyOfStruct.Resources, func(i, j int) bool {
+		return copyOfStruct.Resources[i].HashCode < copyOfStruct.Resources[j].HashCode
 	})
 
-	gr.HashCode = hash.Get(GroupsResult{
-		Items:     gr.Items,
-		Resources: gr.Resources,
-	})
+	gr.HashCode = hash.Get(copyOfStruct)
 }
 
 // Member represents a member entity.
@@ -144,20 +166,31 @@ type MembersResult struct {
 // this method discards fields that are not used in the hash calculation.
 // only fields comming from the Identity Provider are used.
 func (mr *MembersResult) SetHashCode() {
-	sort.Slice(mr.Resources, func(i, j int) bool {
-		return mr.Resources[i].HashCode < mr.Resources[j].HashCode
+	if len(mr.Resources) == 0 {
+		return
+	}
+
+	copyResources := make([]Member, len(mr.Resources))
+	copy(copyResources, mr.Resources)
+
+	// only these fields are used in the hash calculation
+	copyOfStruct := MembersResult{
+		Items:     mr.Items,
+		Resources: copyResources,
+	}
+
+	// order the resources by their hash code to be consistency always
+	sort.Slice(copyOfStruct.Resources, func(i, j int) bool {
+		return copyOfStruct.Resources[i].IPID < copyOfStruct.Resources[j].IPID
 	})
 
-	mr.HashCode = hash.Get(MembersResult{
-		Items:     mr.Items,
-		Resources: mr.Resources,
-	})
+	mr.HashCode = hash.Get(copyOfStruct)
 }
 
 // GroupMembers represents a group members entity.
 type GroupMembers struct {
 	Items     int      `json:"items"`
-	HashCode  string   `json:"hashCode"`
+	HashCode  string   `json:"hashCode,omitempty"`
 	Group     Group    `json:"group"`
 	Resources []Member `json:"resources"`
 }
@@ -166,15 +199,27 @@ type GroupMembers struct {
 // this method discards fields that are not used in the hash calculation.
 // only fields comming from the Identity Provider are used.
 func (gm *GroupMembers) SetHashCode() {
-	sort.Slice(gm.Resources, func(i, j int) bool {
-		return gm.Resources[i].HashCode < gm.Resources[j].HashCode
-	})
+	if len(gm.Resources) == 0 {
+		return
+	}
 
-	gm.HashCode = hash.Get(GroupMembers{
+	copyResources := make([]Member, len(gm.Resources))
+	copy(copyResources, gm.Resources)
+
+	// only these fields are used in the hash calculation
+	copyOfStruct := GroupMembers{
 		Items:     gm.Items,
 		Group:     gm.Group,
-		Resources: gm.Resources,
+		Resources: copyResources,
+	}
+
+	// to order the members of the group we used the email of the members
+	// because this never coulb be empty and it is unique
+	sort.Slice(copyOfStruct.Resources, func(i, j int) bool {
+		return copyOfStruct.Resources[i].Email < copyOfStruct.Resources[j].Email
 	})
+
+	gm.HashCode = hash.Get(copyOfStruct)
 }
 
 // GroupsMembersResult represents a group members result list entity.
@@ -196,12 +241,22 @@ func (gur *GroupsMembersResult) MarshalJSON() ([]byte, error) {
 // this method discards fields that are not used in the hash calculation.
 // only fields comming from the Identity Provider are used.
 func (gmr *GroupsMembersResult) SetHashCode() {
-	sort.Slice(gmr.Resources, func(i, j int) bool {
-		return gmr.Resources[i].HashCode < gmr.Resources[j].HashCode
-	})
+	if len(gmr.Resources) == 0 {
+		return
+	}
 
-	gmr.HashCode = hash.Get(GroupsMembersResult{
+	copyResources := make([]GroupMembers, len(gmr.Resources))
+	copy(copyResources, gmr.Resources)
+
+	// only these fields are used in the hash calculation
+	copyOfStruct := GroupsMembersResult{
 		Items:     gmr.Items,
-		Resources: gmr.Resources,
+		Resources: copyResources,
+	}
+
+	// to order the members of the group we used the email of the members
+	// because this never coulb be empty and it is unique
+	sort.Slice(copyOfStruct.Resources, func(i, j int) bool {
+		return copyOfStruct.Resources[i].HashCode < copyOfStruct.Resources[j].HashCode
 	})
 }

@@ -4,7 +4,6 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/slashdevops/idp-scim-sync/internal/hash"
 	"github.com/slashdevops/idp-scim-sync/internal/model"
 	"github.com/slashdevops/idp-scim-sync/internal/utils"
 )
@@ -253,6 +252,11 @@ func TestGroupsOperations(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			tt.wantCreate.SetHashCode()
+			tt.wantUpdate.SetHashCode()
+			tt.wantEqual.SetHashCode()
+			tt.wantDelete.SetHashCode()
+
 			gotCreate, gotUpdate, gotEqual, gotDelete := groupsOperations(tt.args.idp, tt.args.state)
 			if !reflect.DeepEqual(gotCreate, tt.wantCreate) {
 				t.Errorf("groupsOperations() gotCreate = %s, want %s", utils.ToJSON(gotCreate), utils.ToJSON(tt.wantCreate))
@@ -479,6 +483,11 @@ func TestUsersOperations(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			tt.wantCreate.SetHashCode()
+			tt.wantUpdate.SetHashCode()
+			tt.wantEqual.SetHashCode()
+			tt.wantDelete.SetHashCode()
+
 			gotCreate, gotUpdate, gotEqual, gotDelete := usersOperations(tt.args.idp, tt.args.state)
 			if !reflect.DeepEqual(gotCreate, tt.wantCreate) {
 				t.Errorf("usersOperations() gotCreate = %s, want %s", utils.ToJSON(gotCreate), utils.ToJSON(tt.wantCreate))
@@ -555,21 +564,13 @@ func Test_mergeGroupsResult(t *testing.T) {
 					{IPID: "2", SCIMID: "2", Name: "group 2", Email: "group.2@gmail.com", HashCode: "0987654321"},
 					{IPID: "3", SCIMID: "3", Name: "group 3", Email: "group.3@gmail.com", HashCode: "1234509876"},
 				},
-				HashCode: hash.Get(
-					model.GroupsResult{
-						Items: 3,
-						Resources: []model.Group{
-							{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@gmail.com", HashCode: "1234567890"},
-							{IPID: "2", SCIMID: "2", Name: "group 2", Email: "group.2@gmail.com", HashCode: "0987654321"},
-							{IPID: "3", SCIMID: "3", Name: "group 3", Email: "group.3@gmail.com", HashCode: "1234509876"},
-						},
-					},
-				),
 			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			tt.wantMerged.SetHashCode()
+
 			if gotMerged := mergeGroupsResult(tt.args.grs...); !reflect.DeepEqual(gotMerged, tt.wantMerged) {
 				t.Errorf("mergeGroupsResult() = %s, want %s", utils.ToJSON(gotMerged), utils.ToJSON(tt.wantMerged))
 			}
@@ -636,21 +637,13 @@ func Test_mergeUsersResult(t *testing.T) {
 					{IPID: "2", SCIMID: "2", Name: model.Name{GivenName: "user", FamilyName: "2"}, Email: "user.2@gmail.com", HashCode: "0987654321"},
 					{IPID: "3", SCIMID: "3", Name: model.Name{GivenName: "user", FamilyName: "3"}, Email: "user.3@gmail.com", HashCode: "1234509876"},
 				},
-				HashCode: hash.Get(
-					model.UsersResult{
-						Items: 3,
-						Resources: []model.User{
-							{IPID: "1", SCIMID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@gmail.com", HashCode: "1234567890"},
-							{IPID: "2", SCIMID: "2", Name: model.Name{GivenName: "user", FamilyName: "2"}, Email: "user.2@gmail.com", HashCode: "0987654321"},
-							{IPID: "3", SCIMID: "3", Name: model.Name{GivenName: "user", FamilyName: "3"}, Email: "user.3@gmail.com", HashCode: "1234509876"},
-						},
-					},
-				),
 			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			tt.wantMerged.SetHashCode()
+
 			if gotMerged := mergeUsersResult(tt.args.urs...); !reflect.DeepEqual(gotMerged, tt.wantMerged) {
 				t.Errorf("mergeUsersResult() = %s, want %s", utils.ToJSON(gotMerged), utils.ToJSON(tt.wantMerged))
 			}

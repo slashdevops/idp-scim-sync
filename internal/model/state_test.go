@@ -35,7 +35,7 @@ func TestState_MarshalJSON(t *testing.T) {
       "hashCode": "",
       "resources": null
     },
-    "groupsUsers": {
+    "groupsMembers": {
       "items": 0,
       "hashCode": "",
       "resources": null
@@ -114,36 +114,10 @@ func TestState_MarshalJSON(t *testing.T) {
         }
       ]
     },
-    "groupsUsers": {
-      "items": 1,
-      "hashCode": "hashCode",
-      "resources": [
-        {
-          "items": 1,
-          "hashCode": "hashCode",
-          "group": {
-            "ipid": "ipid",
-            "scimid": "",
-            "name": "name",
-            "email": "email",
-            "hashCode": "hashCode"
-          },
-          "resources": [
-            {
-              "ipid": "ipid",
-              "scimid": "scimid",
-              "name": {
-                "familyName": "lastName",
-                "givenName": "name"
-              },
-              "displayName": "",
-              "active": false,
-              "email": "email",
-              "hashCode": "hashCode"
-            }
-          ]
-        }
-      ]
+    "groupsMembers": {
+      "items": 0,
+      "hashCode": "",
+      "resources": null
     }
   }
 }`),

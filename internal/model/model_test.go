@@ -204,6 +204,114 @@ func TestUser_SetHashCode(t *testing.T) {
 	}
 }
 
+func TestGroup_SetHashCode(t *testing.T) {
+	tests := []struct {
+		name  string
+		group Group
+		want  string
+	}{
+		{
+			name: "success",
+			group: Group{
+				IPID:     "1",
+				SCIMID:   "1",
+				Name:     "group 1",
+				Email:    "user.1@mail.com",
+				HashCode: "test",
+			},
+			want: hash.Get(Group{
+				IPID:  "1",
+				Name:  "group 1",
+				Email: "user.1@mail.com",
+			}),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.group.SetHashCode()
+			got := tt.group.HashCode
+			if got != tt.want {
+				t.Errorf("Group.SetHashCode() = %s, want %s", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestMember_SetHashCode(t *testing.T) {
+	tests := []struct {
+		name   string
+		member Member
+		want   string
+	}{
+		{
+			name: "success",
+			member: Member{
+				IPID:     "1",
+				SCIMID:   "1",
+				Email:    "user.1@mail.com",
+				HashCode: "test",
+			},
+			want: hash.Get(Member{
+				IPID:  "1",
+				Email: "user.1@mail.com",
+			}),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.member.SetHashCode()
+			got := tt.member.HashCode
+			if got != tt.want {
+				t.Errorf("Member.SetHashCode() = %s, want %s", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestGroupMembers_SetHashCode(t *testing.T) {
+	tests := []struct {
+		name         string
+		groupMembers GroupMembers
+		want         GroupMembers
+	}{
+		{
+			name: "success",
+			groupMembers: GroupMembers{
+				Items:    3,
+				HashCode: "test",
+				Group:    Group{IPID: "1", SCIMID: "1", Name: "group", Email: "group.1@mail.com"},
+				Resources: []Member{
+					{IPID: "1", SCIMID: "1", Email: "group.1@mail.com"},
+					{IPID: "2", SCIMID: "2", Email: "group.2@mail.com"},
+					{IPID: "3", SCIMID: "3", Email: "group.3@mail.com"},
+				},
+			},
+			want: GroupMembers{
+				Items: 3,
+				Group: Group{IPID: "1", SCIMID: "1", Name: "group", Email: "group.1@mail.com"},
+				Resources: []Member{
+					{IPID: "3", SCIMID: "3", Email: "group.3@mail.com"},
+					{IPID: "1", SCIMID: "1", Email: "group.1@mail.com"},
+					{IPID: "2", SCIMID: "2", Email: "group.2@mail.com"},
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.groupMembers.SetHashCode()
+			tt.want.SetHashCode()
+
+			got := tt.groupMembers.HashCode
+
+			if got != tt.want.HashCode {
+				t.Errorf("GroupMembers.SetHashCode() = %s, want %s", got, tt.want.HashCode)
+				t.Errorf("GroupMembers.SetHashCode() = %+v, want %+v", tt.groupMembers, tt.want)
+			}
+		})
+	}
+}
+
 func TestUsersResult_SetHashCode(t *testing.T) {
 	u1 := User{IPID: "1", SCIMID: "1", Name: Name{GivenName: "User", FamilyName: "1"}, Email: "user.1@mail.com"}
 	u2 := User{IPID: "2", SCIMID: "2", Name: Name{GivenName: "User", FamilyName: "2"}, Email: "user.2@mail.com"}

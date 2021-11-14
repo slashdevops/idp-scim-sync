@@ -224,6 +224,7 @@ func TestSCIMProvider_CreateGroups(t *testing.T) {
 		mockSCIM := mocks.NewMockAWSSCIMProvider(mockCtrl)
 		cgr := &aws.CreateGroupRequest{
 			DisplayName: "group 1",
+			ExternalId:  "1",
 		}
 		resp := &aws.CreateGroupResponse{}
 		ctx := context.TODO()
@@ -251,6 +252,7 @@ func TestSCIMProvider_CreateGroups(t *testing.T) {
 		mockSCIM := mocks.NewMockAWSSCIMProvider(mockCtrl)
 		cgr := &aws.CreateGroupRequest{
 			DisplayName: "group 1",
+			ExternalId:  "1",
 		}
 		resp := &aws.CreateGroupResponse{}
 		ctx := context.TODO()
@@ -278,9 +280,11 @@ func TestSCIMProvider_CreateGroups(t *testing.T) {
 		mockSCIM := mocks.NewMockAWSSCIMProvider(mockCtrl)
 		cgr1 := &aws.CreateGroupRequest{
 			DisplayName: "group 1",
+			ExternalId:  "1",
 		}
 		cgr2 := &aws.CreateGroupRequest{
 			DisplayName: "group 2",
+			ExternalId:  "2",
 		}
 		resp1 := &aws.CreateGroupResponse{
 			ID:          "11",
@@ -473,11 +477,13 @@ func TestSCIMProvider_CreateUsers(t *testing.T) {
 		}
 		ctx := context.TODO()
 
-		mockSCIM.EXPECT().CreateUser(ctx, cur1).Return(resp1, nil).Times(1)
-		mockSCIM.EXPECT().CreateUser(ctx, cur2).Return(resp2, nil).Times(1)
+		gomock.InOrder(
+			mockSCIM.EXPECT().CreateUser(ctx, cur1).Return(resp1, nil).Times(1),
+			mockSCIM.EXPECT().CreateUser(ctx, cur2).Return(resp2, nil).Times(1),
+		)
 
 		usr := &model.UsersResult{
-			Items: 1,
+			Items: 2,
 			Resources: []model.User{
 				{
 					IPID:        "1",

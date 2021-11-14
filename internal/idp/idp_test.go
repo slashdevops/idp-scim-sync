@@ -84,15 +84,6 @@ func TestGoogleProvider_GetGroups(t *testing.T) {
 					{IPID: "1", Name: "group1", Email: "group1@mail.com", HashCode: hash.Get(model.Group{IPID: "1", Name: "group1", Email: "group1@mail.com"})},
 					{IPID: "2", Name: "group2", Email: "group2@mail.com", HashCode: hash.Get(model.Group{IPID: "2", Name: "group2", Email: "group2@mail.com"})},
 				},
-				HashCode: hash.Get(
-					&model.GroupsResult{
-						Items: 2,
-						Resources: []model.Group{
-							{IPID: "1", Name: "group1", Email: "group1@mail.com", HashCode: hash.Get(model.Group{IPID: "1", Name: "group1", Email: "group1@mail.com"})},
-							{IPID: "2", Name: "group2", Email: "group2@mail.com", HashCode: hash.Get(model.Group{IPID: "2", Name: "group2", Email: "group2@mail.com"})},
-						},
-					},
-				),
 			},
 			wantErr: false,
 		},
@@ -116,15 +107,6 @@ func TestGoogleProvider_GetGroups(t *testing.T) {
 					{IPID: "1", Name: "group1", Email: "group1@mail.com", HashCode: hash.Get(model.Group{IPID: "1", Name: "group1", Email: "group1@mail.com"})},
 					{IPID: "3", Name: "group2", Email: "group3@mail.com", HashCode: hash.Get(model.Group{IPID: "3", Name: "group2", Email: "group3@mail.com"})},
 				},
-				HashCode: hash.Get(
-					&model.GroupsResult{
-						Items: 2,
-						Resources: []model.Group{
-							{IPID: "1", Name: "group1", Email: "group1@mail.com", HashCode: hash.Get(model.Group{IPID: "1", Name: "group1", Email: "group1@mail.com"})},
-							{IPID: "3", Name: "group2", Email: "group3@mail.com", HashCode: hash.Get(model.Group{IPID: "3", Name: "group2", Email: "group3@mail.com"})},
-						},
-					},
-				),
 			},
 			wantErr: false,
 		},
@@ -153,6 +135,9 @@ func TestGoogleProvider_GetGroups(t *testing.T) {
 
 			g := &IdentityProvider{
 				ps: f.ds,
+			}
+			if !tt.wantErr {
+				tt.want.SetHashCode()
 			}
 
 			got, err := g.GetGroups(tt.args.ctx, tt.args.filter)
@@ -217,15 +202,6 @@ func TestGoogleProvider_GetUsers(t *testing.T) {
 					{IPID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com", DisplayName: "user 1", Active: true, HashCode: hash.Get(model.User{IPID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com", DisplayName: "user 1", Active: true})},
 					{IPID: "2", Name: model.Name{GivenName: "user", FamilyName: "2"}, Email: "user.2@mail.com", DisplayName: "user 2", Active: false, HashCode: hash.Get(model.User{IPID: "2", Name: model.Name{GivenName: "user", FamilyName: "2"}, Email: "user.2@mail.com", DisplayName: "user 2", Active: false})},
 				},
-				HashCode: hash.Get(
-					&model.UsersResult{
-						Items: 2,
-						Resources: []model.User{
-							{IPID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com", DisplayName: "user 1", Active: true, HashCode: hash.Get(model.User{IPID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com", DisplayName: "user 1", Active: true})},
-							{IPID: "2", Name: model.Name{GivenName: "user", FamilyName: "2"}, Email: "user.2@mail.com", DisplayName: "user 2", Active: false, HashCode: hash.Get(model.User{IPID: "2", Name: model.Name{GivenName: "user", FamilyName: "2"}, Email: "user.2@mail.com", DisplayName: "user 2", Active: false})},
-						},
-					},
-				),
 			},
 			wantErr: false,
 		},
@@ -254,6 +230,11 @@ func TestGoogleProvider_GetUsers(t *testing.T) {
 
 			g := &IdentityProvider{
 				ps: f.ds,
+			}
+
+			// trigger the call to calculate the hash
+			if !tt.wantErr {
+				tt.want.SetHashCode()
 			}
 
 			got, err := g.GetUsers(tt.args.ctx, tt.args.filter)
@@ -286,20 +267,11 @@ func TestGoogleProvider_GetGroupMembers(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "Should return empty MembersResult and no error",
-			prepare: func(f *fields) {
-				ctx := context.Background()
-				googleGroupMembers := make([]*admin.Member, 0)
-
-				f.ds.EXPECT().ListGroupMembers(ctx, gomock.Eq("")).Return(googleGroupMembers, nil).Times(1)
-			},
-			args: args{ctx: context.Background(), id: ""},
-			want: &model.MembersResult{
-				Items:     0,
-				HashCode:  "",
-				Resources: make([]model.Member, 0),
-			},
-			wantErr: false,
+			name:    "Should return a nil object and an error when id is empty",
+			prepare: func(f *fields) {},
+			args:    args{ctx: context.Background(), id: ""},
+			want:    nil,
+			wantErr: true,
 		},
 		{
 			name: "Should return MembersResult and no error",
@@ -309,36 +281,17 @@ func TestGoogleProvider_GetGroupMembers(t *testing.T) {
 				googleGroupMembers = append(googleGroupMembers, &admin.Member{Email: "user.1@mail.com", Id: "1"})
 				googleGroupMembers = append(googleGroupMembers, &admin.Member{Email: "user.2@mail.com", Id: "2"})
 
-				f.ds.EXPECT().ListGroupMembers(ctx, gomock.Eq("")).Return(googleGroupMembers, nil).Times(1)
+				f.ds.EXPECT().ListGroupMembers(ctx, gomock.Eq("1")).Return(googleGroupMembers, nil).Times(1)
 			},
-			args: args{ctx: context.Background(), id: ""},
+			args: args{ctx: context.Background(), id: "1"},
 			want: &model.MembersResult{
 				Items: 2,
 				Resources: []model.Member{
 					{IPID: "1", Email: "user.1@mail.com", HashCode: hash.Get(model.Member{IPID: "1", Email: "user.1@mail.com"})},
 					{IPID: "2", Email: "user.2@mail.com", HashCode: hash.Get(model.Member{IPID: "2", Email: "user.2@mail.com"})},
 				},
-				HashCode: hash.Get(
-					&model.MembersResult{
-						Items: 2,
-						Resources: []model.Member{
-							{IPID: "1", Email: "user.1@mail.com", HashCode: hash.Get(model.Member{IPID: "1", Email: "user.1@mail.com"})},
-							{IPID: "2", Email: "user.2@mail.com", HashCode: hash.Get(model.Member{IPID: "2", Email: "user.2@mail.com"})},
-						},
-					},
-				),
 			},
 			wantErr: false,
-		},
-		{
-			name: "Should return error",
-			prepare: func(f *fields) {
-				ctx := context.Background()
-				f.ds.EXPECT().ListGroupMembers(ctx, gomock.Eq("")).Return(nil, errors.New("test error")).Times(1)
-			},
-			args:    args{ctx: context.Background(), id: ""},
-			want:    nil,
-			wantErr: true,
 		},
 	}
 
@@ -355,6 +308,10 @@ func TestGoogleProvider_GetGroupMembers(t *testing.T) {
 
 			g := &IdentityProvider{
 				ps: f.ds,
+			}
+
+			if !tt.wantErr {
+				tt.want.SetHashCode()
 			}
 
 			got, err := g.GetGroupMembers(tt.args.ctx, tt.args.id)
@@ -428,15 +385,6 @@ func TestGoogleProvider_GetUsersByGroupMembers(t *testing.T) {
 					{IPID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com", DisplayName: "user 1", Active: true, HashCode: hash.Get(&model.User{IPID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com", DisplayName: "user 1", Active: true})},
 					{IPID: "2", Name: model.Name{GivenName: "user", FamilyName: "2"}, Email: "user.2@mail.com", DisplayName: "user 2", Active: false, HashCode: hash.Get(&model.User{IPID: "2", Name: model.Name{GivenName: "user", FamilyName: "2"}, Email: "user.2@mail.com", DisplayName: "user 2", Active: false})},
 				},
-				HashCode: hash.Get(
-					&model.UsersResult{
-						Items: 2,
-						Resources: []model.User{
-							{IPID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com", DisplayName: "user 1", Active: true, HashCode: hash.Get(&model.User{IPID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com", DisplayName: "user 1", Active: true})},
-							{IPID: "2", Name: model.Name{GivenName: "user", FamilyName: "2"}, Email: "user.2@mail.com", DisplayName: "user 2", Active: false, HashCode: hash.Get(&model.User{IPID: "2", Name: model.Name{GivenName: "user", FamilyName: "2"}, Email: "user.2@mail.com", DisplayName: "user 2", Active: false})},
-						},
-					},
-				),
 			},
 			wantErr: false,
 		},
@@ -473,6 +421,10 @@ func TestGoogleProvider_GetUsersByGroupMembers(t *testing.T) {
 
 			g := &IdentityProvider{
 				ps: f.ds,
+			}
+
+			if !tt.wantErr {
+				tt.want.SetHashCode()
 			}
 
 			got, err := g.GetUsersByGroupMembers(tt.args.ctx, tt.args.mbr)
