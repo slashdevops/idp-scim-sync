@@ -293,8 +293,6 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 			}).Info("reconciling groups members")
 			membersCreate, membersEqual, membersDelete := membersOperations(idpGroupsMembersResult, &state.Resources.GroupsMembers)
 
-			// log.Tracef("membersCreate: %s, membersEqual: %s, membersDelete: %s", utils.ToJSON(membersCreate), utils.ToJSON(membersEqual), utils.ToJSON(membersDelete))
-
 			membersCreated, err := reconcilingGroupsMembers(ss.ctx, ss.scim, membersCreate, membersDelete)
 			if err != nil {
 				return fmt.Errorf("error reconciling groups members: %w", err)
@@ -322,13 +320,15 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 	newState.LastSync = time.Now().Format(time.RFC3339)
 
 	log.WithFields(log.Fields{
-		"groups": totalGroupsResult.Items,
-		"users":  totalUsersResult.Items,
+		"lastSycn": newState.LastSync,
+		"groups":   totalGroupsResult.Items,
+		"users":    totalUsersResult.Items,
+		"members":  totalGroupsMembersResult.Items,
 	}).Info("storing the new state")
 
 	// TODO: avoid this step using a cmd flag, could be a nice feature
 	if err := ss.repo.SetState(ss.ctx, newState); err != nil {
-		return fmt.Errorf("error saving state: %w", err)
+		return fmt.Errorf("error storing the state: %w", err)
 	}
 
 	log.Tracef("state data: %s", utils.ToJSON(newState))
