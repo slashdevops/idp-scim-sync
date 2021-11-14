@@ -6,7 +6,6 @@ import (
 	"fmt"
 
 	log "github.com/sirupsen/logrus"
-	"github.com/slashdevops/idp-scim-sync/internal/hash"
 	"github.com/slashdevops/idp-scim-sync/internal/model"
 	admin "google.golang.org/api/admin/directory/v1"
 )
@@ -208,13 +207,16 @@ func (i *IdentityProvider) GetGroupsMembers(ctx context.Context, gr *model.Group
 			return nil, fmt.Errorf("idp: error getting group members: %w", err)
 		}
 
+		e := model.Group{
+			IPID:  group.IPID,
+			Name:  group.Name,
+			Email: group.Email,
+		}
+		e.SetHashCode()
+
 		groupMember := model.GroupMembers{
-			Items: len(members.Resources),
-			Group: model.Group{
-				IPID:  group.IPID,
-				Name:  group.Name,
-				Email: group.Email,
-			},
+			Items:     len(members.Resources),
+			Group:     e,
 			Resources: members.Resources,
 		}
 		groupMember.SetHashCode()
@@ -227,7 +229,7 @@ func (i *IdentityProvider) GetGroupsMembers(ctx context.Context, gr *model.Group
 		Resources: groupMembers,
 	}
 	if len(groupMembers) > 0 {
-		groupsMembersResult.HashCode = hash.Get(groupsMembersResult)
+		groupsMembersResult.SetHashCode()
 	}
 
 	return groupsMembersResult, nil

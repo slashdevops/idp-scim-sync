@@ -3,9 +3,7 @@ package model
 import (
 	"encoding/json"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/slashdevops/idp-scim-sync/internal/hash"
-	"github.com/slashdevops/idp-scim-sync/internal/utils"
 )
 
 const (
@@ -120,9 +118,4 @@ func (s *State) SetHashCode() {
 	}
 
 	s.HashCode = hash.Get(copyState)
-	log.Debugf("state hashcode structure: %s", utils.ToJSON(copyState))
-
-	// s.HashCode = hash.Get(State{
-	// 	Resources: s.Resources,
-	// })
 }

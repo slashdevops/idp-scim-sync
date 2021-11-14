@@ -87,10 +87,14 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 		return fmt.Errorf("error getting users from the identity provider: %w", err)
 	}
 
+	log.Tracef("idpUsersResult: %s\n", utils.ToJSON(idpUsersResult))
+
 	idpGroupsMembersResult, err := ss.prov.GetGroupsMembers(ss.ctx, idpGroupsResult)
 	if err != nil {
 		return fmt.Errorf("error getting groups members: %w", err)
 	}
+
+	log.Tracef("idpGroupsMembersResult: %s\n", utils.ToJSON(idpGroupsMembersResult))
 
 	if idpUsersResult.Items == 0 {
 		log.Warn("there are no users in the identity provider")
@@ -223,7 +227,6 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 			"since":    deltaHours + "h, " + deltaMinutes + "m, " + deltaSeconds + "s",
 		}).Info("syncing from state")
 
-		log.Tracef("idpGroupsResult: %s", utils.ToJSON(idpGroupsResult))
 		log.Tracef("state.Resources.Groups: %s", utils.ToJSON(state.Resources.Groups))
 
 		if idpGroupsResult.HashCode == state.Resources.Groups.HashCode {
@@ -249,6 +252,8 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 			totalGroupsResult = mergeGroupsResult(groupsCreated, groupsUpdated, groupsEqual)
 		}
 
+		log.Tracef("state.Resources.Users: %s", utils.ToJSON(state.Resources.Users))
+
 		if idpUsersResult.HashCode == state.Resources.Users.HashCode {
 			log.Info("provider users and state users are the same, nothing to do with users")
 		} else {
@@ -268,6 +273,8 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 			// usersCreated + usersUpdated + usersEqual = users total
 			totalUsersResult = mergeUsersResult(usersCreated, usersUpdated, usersEqual)
 		}
+
+		log.Tracef("state.Resources.GroupsMembers: %s", utils.ToJSON(state.Resources.GroupsMembers))
 
 		if idpGroupsMembersResult.HashCode == state.Resources.GroupsMembers.HashCode {
 			log.Info("provider groups-members and state groups-members are the same, nothing to do with groups-members")
