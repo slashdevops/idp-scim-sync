@@ -181,14 +181,27 @@ type Member struct {
 	HashCode string `json:"hashCode"`
 }
 
+// GobEncode implements the gob.GobEncoder interface for User entity.
+// This is necessary to avoid include the value in the field SCIMID until
+// the hashcode calculation is done.
+// the hash.Get function use gob to calculate the hash code.
+func (m Member) GobEncode() ([]byte, error) {
+	buf := new(bytes.Buffer)
+	enc := gob.NewEncoder(buf)
+	if err := enc.Encode(m.IPID); err != nil {
+		panic(err)
+	}
+	if err := enc.Encode(m.Email); err != nil {
+		panic(err)
+	}
+	return buf.Bytes(), nil
+}
+
 // SetHashCode is a helper function to avoid errors when calculating hash code.
 // this method discards fields that are not used in the hash calculation.
 // only fields comming from the Identity Provider are used.
 func (m *Member) SetHashCode() {
-	m.HashCode = hash.Get(Member{
-		IPID:  m.IPID,
-		Email: m.Email,
-	})
+	m.HashCode = hash.Get(m)
 }
 
 // MembersResult represents a member result list entity.

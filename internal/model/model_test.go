@@ -4,7 +4,6 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/slashdevops/idp-scim-sync/internal/hash"
 	"github.com/slashdevops/idp-scim-sync/internal/utils"
 )
 
@@ -314,7 +313,7 @@ func TestMember_SetHashCode(t *testing.T) {
 	tests := []struct {
 		name   string
 		member Member
-		want   string
+		want   Member
 	}{
 		{
 			name: "success",
@@ -324,18 +323,20 @@ func TestMember_SetHashCode(t *testing.T) {
 				Email:    "user.1@mail.com",
 				HashCode: "test",
 			},
-			want: hash.Get(Member{
+			want: Member{
 				IPID:  "1",
 				Email: "user.1@mail.com",
-			}),
+			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.member.SetHashCode()
+			tt.want.SetHashCode()
+
 			got := tt.member.HashCode
-			if got != tt.want {
-				t.Errorf("Member.SetHashCode() = %s, want %s", got, tt.want)
+			if got != tt.want.HashCode {
+				t.Errorf("Member.SetHashCode() = %s, want %s", got, tt.want.HashCode)
 			}
 		})
 	}

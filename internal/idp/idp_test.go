@@ -253,6 +253,11 @@ func TestGoogleProvider_GetUsers(t *testing.T) {
 }
 
 func TestGoogleProvider_GetGroupMembers(t *testing.T) {
+	m1 := model.Member{IPID: "1", Email: "user.1@mail.com"}
+	m1.SetHashCode()
+	m2 := model.Member{IPID: "2", Email: "user.2@mail.com"}
+	m2.SetHashCode()
+
 	type fields struct {
 		ds *mocks.MockGoogleProviderService
 	}
@@ -288,11 +293,8 @@ func TestGoogleProvider_GetGroupMembers(t *testing.T) {
 			},
 			args: args{ctx: context.Background(), id: "1"},
 			want: &model.MembersResult{
-				Items: 2,
-				Resources: []model.Member{
-					{IPID: "1", Email: "user.1@mail.com", HashCode: hash.Get(model.Member{IPID: "1", Email: "user.1@mail.com"})},
-					{IPID: "2", Email: "user.2@mail.com", HashCode: hash.Get(model.Member{IPID: "2", Email: "user.2@mail.com"})},
-				},
+				Items:     2,
+				Resources: []model.Member{m1, m2},
 			},
 			wantErr: false,
 		},
