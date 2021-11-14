@@ -231,6 +231,8 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 
 		if idpGroupsResult.HashCode == state.Resources.Groups.HashCode {
 			log.Info("provider groups and state groups are the same, nothing to do with groups")
+
+			totalGroupsResult = state.Resources.Groups
 		} else {
 			log.Info("provider groups and state groups are diferent")
 			// now here we have the google fresh data and the last sync data state
@@ -256,6 +258,8 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 
 		if idpUsersResult.HashCode == state.Resources.Users.HashCode {
 			log.Info("provider users and state users are the same, nothing to do with users")
+
+			totalUsersResult = state.Resources.Users
 		} else {
 			log.Info("provider users and state users are diferent")
 
@@ -278,6 +282,8 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 
 		if idpGroupsMembersResult.HashCode == state.Resources.GroupsMembers.HashCode {
 			log.Info("provider groups-members and state groups-members are the same, nothing to do with groups-members")
+
+			totalGroupsMembersResult = state.Resources.GroupsMembers
 		} else {
 			log.Info("provider groups-members and state groups-members are diferent")
 
