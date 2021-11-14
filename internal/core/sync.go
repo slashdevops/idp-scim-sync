@@ -180,8 +180,6 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 		// usersCreated + usersUpdated + usersEqual = users total
 		totalUsersResult = mergeUsersResult(usersCreated, usersUpdated, usersEqual)
 
-		// log.Tracef("totalGroupsResult: %s", utils.ToJSON(totalGroupsResult))
-
 		log.Info("getting SCIM Groups Members")
 		// scimGroupsMembersResult, err := ss.scim.GetGroupsMembers(ss.ctx, &totalGroupsResult) // not supported yet
 		scimGroupsMembersResult, err := ss.scim.GetGroupsMembersBruteForce(ss.ctx, &totalGroupsResult, &totalUsersResult)
@@ -189,26 +187,20 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 			return fmt.Errorf("error getting groups members from the SCIM service: %w", err)
 		}
 
-		// log.Tracef("scimGroupsMembersResult: %s", utils.ToJSON(scimGroupsMembersResult))
-
 		log.WithFields(log.Fields{
 			"idp":  idpGroupsMembersResult.Items,
 			"scim": scimGroupsMembersResult.Items,
 		}).Info("reconciling groups members")
 		membersCreate, membersEqual, membersDelete := membersOperations(idpGroupsMembersResult, scimGroupsMembersResult)
 
-		// log.Tracef("membersCreate: %s, membersEqual: %s, membersDelete: %s", utils.ToJSON(membersCreate), utils.ToJSON(membersEqual), utils.ToJSON(membersDelete))
-
 		membersCreated, err := reconcilingGroupsMembers(ss.ctx, ss.scim, membersCreate, membersDelete)
 		if err != nil {
 			return fmt.Errorf("error reconciling groups members: %w", err)
 		}
 
-		// log.Tracef("membersCreated: %s\n, membersEqual: %s\n", utils.ToJSON(membersCreated), utils.ToJSON(membersEqual))
+		log.Tracef("membersCreated: %s\n, membersEqual: %s\n", utils.ToJSON(membersCreated), utils.ToJSON(membersEqual))
 		// membersCreate + membersEqual = members total
 		totalGroupsMembersResult = mergeGroupsMembersResult(membersCreated, membersEqual)
-
-		// log.Tracef("totalGroupsMembersResult: %s", utils.ToJSON(totalGroupsMembersResult))
 
 	} else { // This is not the first time syncing
 

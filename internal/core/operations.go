@@ -23,6 +23,8 @@ func membersOperations(idp, scim *model.GroupsMembersResult) (create *model.Grou
 	toEqual := make([]model.GroupMembers, 0)
 	toDelete := make([]model.GroupMembers, 0)
 
+	// log.Tracef("idp: %s\n, scim: %s\n", utils.ToJSON(idp), utils.ToJSON(scim))
+
 	for _, grpMembers := range idp.Resources {
 		idpMemberSet[grpMembers.Group.Name] = make(map[string]model.Member)
 		for _, member := range grpMembers.Resources {
@@ -38,8 +40,7 @@ func membersOperations(idp, scim *model.GroupsMembersResult) (create *model.Grou
 		}
 	}
 
-	// log.Tracef("scimGroupsSet: %s", utils.ToJSON(scimGroupsSet))
-	// log.Tracef("scimMemberSet: %s", utils.ToJSON(scimMemberSet))
+	// log.Tracef("scimMemberSet: %s\n", utils.ToJSON(scimMemberSet))
 
 	// map[group.Name][]*model.Member
 	toC := make(map[string][]model.Member)
@@ -69,7 +70,6 @@ func membersOperations(idp, scim *model.GroupsMembersResult) (create *model.Grou
 
 		if len(toC[grpMembers.Group.Name]) > 0 {
 			grpMembers.Group.SetHashCode()
-			// log.Tracef("toCreate: %s", utils.ToJSON(grpMembers))
 
 			e := model.GroupMembers{
 				Items:     len(toC[grpMembers.Group.Name]),
@@ -81,18 +81,19 @@ func membersOperations(idp, scim *model.GroupsMembersResult) (create *model.Grou
 			toCreate = append(toCreate, e)
 		}
 
-		// if len(toE[grpMembers.Group.Name]) > 0 { // we want to keep the resources empties and the rest of the information and not only the records with memebers
-		grpMembers.Group.SetHashCode()
+		if len(toE[grpMembers.Group.Name]) > 0 {
+			grpMembers.Group.SetHashCode()
 
-		ee := model.GroupMembers{
-			Items:     len(toE[grpMembers.Group.Name]),
-			Group:     grpMembers.Group,
-			Resources: toE[grpMembers.Group.Name],
+			ee := model.GroupMembers{
+				Items:     len(toE[grpMembers.Group.Name]),
+				Group:     grpMembers.Group,
+				Resources: toE[grpMembers.Group.Name],
+			}
+			ee.SetHashCode()
+
+			toEqual = append(toEqual, ee)
 		}
-		ee.SetHashCode()
 
-		toEqual = append(toEqual, ee)
-		//}
 	}
 
 	for _, grpMembers := range scim.Resources {
@@ -102,9 +103,14 @@ func membersOperations(idp, scim *model.GroupsMembersResult) (create *model.Grou
 			if _, ok := idpMemberSet[grpMembers.Group.Name][member.Email]; !ok {
 				toD[grpMembers.Group.Name] = append(toD[grpMembers.Group.Name], member)
 			}
+			// else {
+			// 	toE[grpMembers.Group.Name] = append(toE[grpMembers.Group.Name], member)
+			// }
 		}
 
 		if len(toD[grpMembers.Group.Name]) > 0 {
+			grpMembers.Group.SetHashCode()
+
 			e := model.GroupMembers{
 				Items:     len(toD[grpMembers.Group.Name]),
 				Group:     grpMembers.Group,
@@ -114,6 +120,19 @@ func membersOperations(idp, scim *model.GroupsMembersResult) (create *model.Grou
 
 			toDelete = append(toDelete, e)
 		}
+
+		// if len(toE[grpMembers.Group.Name]) > 0 {
+		// 	grpMembers.Group.SetHashCode()
+
+		// 	ee := model.GroupMembers{
+		// 		Items:     len(toE[grpMembers.Group.Name]),
+		// 		Group:     grpMembers.Group,
+		// 		Resources: toE[grpMembers.Group.Name],
+		// 	}
+		// 	ee.SetHashCode()
+
+		// 	toEqual = append(toEqual, ee)
+		// }
 	}
 
 	create = &model.GroupsMembersResult{
