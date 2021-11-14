@@ -198,30 +198,31 @@ func syncGroups(cmd *cobra.Command, args []string) error {
 
 	ctx := context.Background()
 
-	serviceAccount, err := ioutil.ReadFile(cfg.GWSServiceAccountFile)
+	gwsServiceAccount, err := ioutil.ReadFile(cfg.GWSServiceAccountFile)
 	if err != nil {
 		log.Fatalf(errors.Wrap(err, "idpscim: cannot read service account file").Error())
 	}
 
-	scopes := []string{
+	gwsAPIScopes := []string{
 		"https://www.googleapis.com/auth/admin.directory.group.readonly",
 		"https://www.googleapis.com/auth/admin.directory.group.member.readonly",
 		"https://www.googleapis.com/auth/admin.directory.user.readonly",
 	}
+
 	// Google Client Service
-	gwsService, err := google.NewService(ctx, cfg.GWSUserEmail, serviceAccount, scopes...)
+	gwsService, err := google.NewService(ctx, cfg.GWSUserEmail, gwsServiceAccount, gwsAPIScopes...)
 	if err != nil {
 		return errors.Wrap(err, "idpscim syncGroups: cannot create google service")
 	}
 
 	// Google Directory Service
-	gds, err := google.NewDirectoryService(gwsService)
+	gwsDS, err := google.NewDirectoryService(gwsService)
 	if err != nil {
 		return errors.Wrap(err, "idpscim syncGroups: cannot create google directory service")
 	}
 
 	// Identity Provider Service
-	idp, err := idp.NewIdentityProvider(gds)
+	idp, err := idp.NewIdentityProvider(gwsDS)
 	if err != nil {
 		return errors.Wrap(err, "idpscim syncGroups: cannot create identity provider service")
 	}

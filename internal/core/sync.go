@@ -109,7 +109,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 	if err != nil {
 		var nsk *types.NoSuchKey
 		if errors.As(err, &nsk) {
-			log.Warn("no state found in the state repository, creating this")
+			log.Warn("no state file found in the state repository, creating this")
 			state = &model.State{}
 		} else {
 			return fmt.Errorf("error getting state data from the repository: %w", err)
@@ -130,8 +130,8 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 		// and we need to reconcile the SCIM side with the identity provider side.
 		// In case of migration from a different tool and we want to keep the state
 		// of the users and groups in the SCIM side, just no recreate, keep the existing ones when the:
-		// - Groups names are equals in bot sides
-		// - Users emails are equals in bot sides
+		// - Groups names are equals in both sides
+		// - Users emails are equals in both sides
 
 		log.Warn("syncing from scim service, first time syncing")
 		log.Warn("reconciling the SCIM data with the Identity Provider data")
@@ -223,8 +223,8 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 			"since":    deltaHours + "h, " + deltaMinutes + "m, " + deltaSeconds + "s",
 		}).Info("syncing from state")
 
-		// log.Tracef("idpGroupsResult: %s", utils.ToJSON(idpGroupsResult))
-		// log.Tracef("state.Resources.Groups: %s", utils.ToJSON(state.Resources.Groups))
+		log.Tracef("idpGroupsResult: %s", utils.ToJSON(idpGroupsResult))
+		log.Tracef("state.Resources.Groups: %s", utils.ToJSON(state.Resources.Groups))
 
 		if idpGroupsResult.HashCode == state.Resources.Groups.HashCode {
 			log.Info("provider groups and state groups are the same, nothing to do with groups")
@@ -276,7 +276,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 
 			log.WithFields(log.Fields{
 				"idp":   idpGroupsMembersResult.Items,
-				"state": &state.Resources.GroupsMembers.Items,
+				"state": state.Resources.GroupsMembers.Items,
 			}).Info("reconciling groups members")
 			membersCreate, membersEqual, membersDelete := membersOperations(idpGroupsMembersResult, &state.Resources.GroupsMembers)
 
@@ -312,12 +312,13 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 		"groups": totalGroupsResult.Items,
 		"users":  totalUsersResult.Items,
 	}).Info("storing the new state")
+
 	// TODO: avoid this step using a cmd flag, could be a nice feature
 	if err := ss.repo.SetState(ss.ctx, newState); err != nil {
 		return fmt.Errorf("error saving state: %w", err)
 	}
 
-	log.Tracef("state store %s", utils.ToJSON(newState))
+	log.Tracef("state data: %s", utils.ToJSON(newState))
 	log.Info("sync completed")
 	return nil
 }

@@ -259,4 +259,6 @@ func (gmr *GroupsMembersResult) SetHashCode() {
 	sort.Slice(copyOfStruct.Resources, func(i, j int) bool {
 		return copyOfStruct.Resources[i].HashCode < copyOfStruct.Resources[j].HashCode
 	})
+
+	gmr.HashCode = hash.Get(copyOfStruct)
 }
