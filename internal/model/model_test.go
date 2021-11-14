@@ -165,10 +165,10 @@ func TestUser_SetHashCode(t *testing.T) {
 	tests := []struct {
 		name string
 		user User
-		want string
+		want User
 	}{
 		{
-			name: "success",
+			name: "success with SCIM field and hashcode",
 			user: User{
 				IPID:   "1",
 				SCIMID: "1",
@@ -181,7 +181,7 @@ func TestUser_SetHashCode(t *testing.T) {
 				Email:       "user.1@mail.com",
 				HashCode:    "test",
 			},
-			want: hash.Get(User{
+			want: User{
 				IPID: "1",
 				Name: Name{
 					GivenName:  "user",
@@ -190,15 +190,87 @@ func TestUser_SetHashCode(t *testing.T) {
 				DisplayName: "user 1",
 				Active:      true,
 				Email:       "user.1@mail.com",
-			}),
+			},
+		},
+		{
+			name: "success with default field values",
+			user: User{
+				Name: Name{
+					GivenName:  "user",
+					FamilyName: "1",
+				},
+				DisplayName: "user 1",
+				Active:      true,
+				Email:       "user.1@mail.com",
+				HashCode:    "test",
+			},
+			want: User{
+				Name: Name{
+					GivenName:  "user",
+					FamilyName: "1",
+				},
+				DisplayName: "user 1",
+				Active:      true,
+				Email:       "user.1@mail.com",
+			},
+		},
+		{
+			name: "success empty",
+			user: User{},
+			want: User{},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.user.SetHashCode()
+			tt.want.SetHashCode()
 			got := tt.user.HashCode
-			if got != tt.want {
-				t.Errorf("User.SetHashCode() = %s, want %s", got, tt.want)
+			if got != tt.want.HashCode {
+				t.Errorf("User.SetHashCode() = %s, want %s", got, tt.want.HashCode)
+			}
+		})
+	}
+}
+
+func TestUser_SetHashCode_pointer(t *testing.T) {
+	tests := []struct {
+		name string
+		user *User
+		want *User
+	}{
+		{
+			name: "success",
+			user: &User{
+				IPID:   "1",
+				SCIMID: "1",
+				Name: Name{
+					GivenName:  "user",
+					FamilyName: "1",
+				},
+				DisplayName: "user 1",
+				Active:      true,
+				Email:       "user.1@mail.com",
+				HashCode:    "test",
+			},
+			want: &User{
+				IPID: "1",
+				Name: Name{
+					GivenName:  "user",
+					FamilyName: "1",
+				},
+				DisplayName: "user 1",
+				Active:      true,
+				Email:       "user.1@mail.com",
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.user.SetHashCode()
+			tt.want.SetHashCode()
+			got := tt.user.HashCode
+			if got != tt.want.HashCode {
+				t.Errorf("User.SetHashCode() = %s, want %s", got, tt.want.HashCode)
 			}
 		})
 	}
@@ -208,7 +280,7 @@ func TestGroup_SetHashCode(t *testing.T) {
 	tests := []struct {
 		name  string
 		group Group
-		want  string
+		want  Group
 	}{
 		{
 			name: "success",
@@ -219,19 +291,20 @@ func TestGroup_SetHashCode(t *testing.T) {
 				Email:    "user.1@mail.com",
 				HashCode: "test",
 			},
-			want: hash.Get(Group{
+			want: Group{
 				IPID:  "1",
 				Name:  "group 1",
 				Email: "user.1@mail.com",
-			}),
+			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.group.SetHashCode()
+			tt.want.SetHashCode()
 			got := tt.group.HashCode
-			if got != tt.want {
-				t.Errorf("Group.SetHashCode() = %s, want %s", got, tt.want)
+			if got != tt.want.HashCode {
+				t.Errorf("Group.SetHashCode() = %s, want %s", got, tt.want.HashCode)
 			}
 		})
 	}

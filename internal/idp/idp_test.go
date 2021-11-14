@@ -36,6 +36,13 @@ func TestNewGoogleIdentityProvider(t *testing.T) {
 }
 
 func TestGoogleProvider_GetGroups(t *testing.T) {
+	g1 := model.Group{IPID: "1", Name: "group 1", Email: "group1@mail.com"}
+	g1.SetHashCode()
+	g2 := model.Group{IPID: "2", Name: "group 2", Email: "group2@mail.com"}
+	g2.SetHashCode()
+	g4 := model.Group{IPID: "4", Name: "group 4", Email: "group4@mail.com"}
+	g4.SetHashCode()
+
 	type fields struct {
 		ds *mocks.MockGoogleProviderService
 	}
@@ -72,18 +79,15 @@ func TestGoogleProvider_GetGroups(t *testing.T) {
 			prepare: func(f *fields) {
 				ctx := context.Background()
 				googleGroups := make([]*admin.Group, 0)
-				googleGroups = append(googleGroups, &admin.Group{Email: "group1@mail.com", Id: "1", Name: "group1"})
-				googleGroups = append(googleGroups, &admin.Group{Email: "group2@mail.com", Id: "2", Name: "group2"})
+				googleGroups = append(googleGroups, &admin.Group{Email: "group1@mail.com", Id: "1", Name: "group 1"})
+				googleGroups = append(googleGroups, &admin.Group{Email: "group2@mail.com", Id: "2", Name: "group 2"})
 
 				f.ds.EXPECT().ListGroups(ctx, gomock.Eq([]string{""})).Return(googleGroups, nil).Times(1)
 			},
 			args: args{ctx: context.Background(), filter: []string{""}},
 			want: &model.GroupsResult{
-				Items: 2,
-				Resources: []model.Group{
-					{IPID: "1", Name: "group1", Email: "group1@mail.com", HashCode: hash.Get(model.Group{IPID: "1", Name: "group1", Email: "group1@mail.com"})},
-					{IPID: "2", Name: "group2", Email: "group2@mail.com", HashCode: hash.Get(model.Group{IPID: "2", Name: "group2", Email: "group2@mail.com"})},
-				},
+				Items:     2,
+				Resources: []model.Group{g1, g2},
 			},
 			wantErr: false,
 		},
@@ -92,21 +96,18 @@ func TestGoogleProvider_GetGroups(t *testing.T) {
 			prepare: func(f *fields) {
 				ctx := context.Background()
 				googleGroups := make([]*admin.Group, 0)
-				googleGroups = append(googleGroups, &admin.Group{Email: "group1@mail.com", Id: "1", Name: "group1"})
-				googleGroups = append(googleGroups, &admin.Group{Email: "group2@mail.com", Id: "2", Name: "group1"})
+				googleGroups = append(googleGroups, &admin.Group{Email: "group1@mail.com", Id: "1", Name: "group 1"})
+				googleGroups = append(googleGroups, &admin.Group{Email: "group2@mail.com", Id: "2", Name: "group 2"})
 
-				googleGroups = append(googleGroups, &admin.Group{Email: "group3@mail.com", Id: "3", Name: "group2"})
-				googleGroups = append(googleGroups, &admin.Group{Email: "group4@mail.com", Id: "4", Name: "group2"})
+				googleGroups = append(googleGroups, &admin.Group{Email: "group3@mail.com", Id: "3", Name: "group 2"}) // Repeated group name
+				googleGroups = append(googleGroups, &admin.Group{Email: "group4@mail.com", Id: "4", Name: "group 4"})
 
 				f.ds.EXPECT().ListGroups(ctx, gomock.Eq([]string{""})).Return(googleGroups, nil).Times(1)
 			},
 			args: args{ctx: context.Background(), filter: []string{""}},
 			want: &model.GroupsResult{
-				Items: 2,
-				Resources: []model.Group{
-					{IPID: "1", Name: "group1", Email: "group1@mail.com", HashCode: hash.Get(model.Group{IPID: "1", Name: "group1", Email: "group1@mail.com"})},
-					{IPID: "3", Name: "group2", Email: "group3@mail.com", HashCode: hash.Get(model.Group{IPID: "3", Name: "group2", Email: "group3@mail.com"})},
-				},
+				Items:     3,
+				Resources: []model.Group{g1, g2, g4},
 			},
 			wantErr: false,
 		},
@@ -153,6 +154,11 @@ func TestGoogleProvider_GetGroups(t *testing.T) {
 }
 
 func TestGoogleProvider_GetUsers(t *testing.T) {
+	u1 := model.User{IPID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, DisplayName: "user 1", Active: true, Email: "user.1@mail.com"}
+	u1.SetHashCode()
+	u2 := model.User{IPID: "2", Name: model.Name{GivenName: "user", FamilyName: "2"}, DisplayName: "user 2", Active: false, Email: "user.2@mail.com"}
+	u2.SetHashCode()
+
 	type fields struct {
 		ds *mocks.MockGoogleProviderService
 	}
@@ -197,11 +203,8 @@ func TestGoogleProvider_GetUsers(t *testing.T) {
 			},
 			args: args{ctx: context.Background(), filter: []string{""}},
 			want: &model.UsersResult{
-				Items: 2,
-				Resources: []model.User{
-					{IPID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com", DisplayName: "user 1", Active: true, HashCode: hash.Get(model.User{IPID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com", DisplayName: "user 1", Active: true})},
-					{IPID: "2", Name: model.Name{GivenName: "user", FamilyName: "2"}, Email: "user.2@mail.com", DisplayName: "user 2", Active: false, HashCode: hash.Get(model.User{IPID: "2", Name: model.Name{GivenName: "user", FamilyName: "2"}, Email: "user.2@mail.com", DisplayName: "user 2", Active: false})},
-				},
+				Items:     2,
+				Resources: []model.User{u1, u2},
 			},
 			wantErr: false,
 		},

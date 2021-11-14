@@ -3,7 +3,9 @@ package model
 import (
 	"encoding/json"
 
+	log "github.com/sirupsen/logrus"
 	"github.com/slashdevops/idp-scim-sync/internal/hash"
+	"github.com/slashdevops/idp-scim-sync/internal/utils"
 )
 
 const (
@@ -36,7 +38,91 @@ func (s *State) MarshalJSON() ([]byte, error) {
 // this method discards fields that are not used in the hash calculation.
 // only fields comming from the Identity Provider are used.
 func (s *State) SetHashCode() {
-	s.HashCode = hash.Get(State{
-		Resources: s.Resources,
-	})
+	// we need to do a deep copy of the state struct to avoid SCIMID in the hash calculation
+	// because every time the idp data iscompared with the state data, the SCIMID doesn't compute in the hash
+
+	groups := make([]Group, 0)
+	for _, group := range s.Resources.Groups.Resources {
+		e := Group{
+			IPID:  group.IPID,
+			Name:  group.Name,
+			Email: group.Email,
+		}
+		e.SetHashCode()
+		groups = append(groups, e)
+	}
+
+	groupsResult := GroupsResult{
+		Items:     len(groups),
+		Resources: groups,
+	}
+	groupsResult.SetHashCode()
+
+	users := make([]User, 0)
+	for _, user := range s.Resources.Users.Resources {
+		e := User{
+			IPID:        user.IPID,
+			Name:        user.Name,
+			DisplayName: user.DisplayName,
+			Active:      user.Active,
+			Email:       user.Email,
+		}
+		e.SetHashCode()
+		users = append(users, e)
+	}
+	usersResult := UsersResult{
+		Items:     len(users),
+		Resources: users,
+	}
+	usersResult.SetHashCode()
+
+	groupsMembers := make([]GroupMembers, 0)
+	for _, groupMembers := range s.Resources.GroupsMembers.Resources {
+
+		group := Group{
+			IPID:  groupMembers.Group.IPID,
+			Name:  groupMembers.Group.Name,
+			Email: groupMembers.Group.Email,
+		}
+		group.SetHashCode()
+
+		members := make([]Member, 0)
+		for _, member := range groupMembers.Resources {
+			m := Member{
+				IPID:  member.IPID,
+				Email: member.Email,
+			}
+			m.SetHashCode()
+			members = append(members, m)
+		}
+
+		e := GroupMembers{
+			Items:     len(groupMembers.Resources),
+			Group:     group,
+			Resources: members,
+		}
+		e.SetHashCode()
+		groupsMembers = append(groupsMembers, e)
+	}
+
+	groupsMembersResult := GroupsMembersResult{
+		Items:     len(groupsMembers),
+		Resources: groupsMembers,
+	}
+	groupsMembersResult.SetHashCode()
+
+	copyState := State{
+		Resources: StateResources{
+			Groups:        groupsResult,
+			Users:         usersResult,
+			GroupsMembers: groupsMembersResult,
+		},
+	}
+
+	s.HashCode = hash.Get(copyState)
+	log.Debugf("state hashcode structure: %s", utils.ToJSON(copyState))
+
+	// s.HashCode = hash.Get(State{
+	// 	Resources: s.Resources,
+	// })
 }

@@ -1,6 +1,8 @@
 package model
 
 import (
+	"bytes"
+	"encoding/gob"
 	"encoding/json"
 	"sort"
 
@@ -24,17 +26,36 @@ type User struct {
 	HashCode    string `json:"hashCode"`
 }
 
+// GobEncode implements the gob.GobEncoder interface for User entity.
+// This is necessary to avoid include the value in the field SCIMID until
+// the hashcode calculation is done.
+// the hash.Get function use gob to calculate the hash code.
+func (u User) GobEncode() ([]byte, error) {
+	buf := new(bytes.Buffer)
+	enc := gob.NewEncoder(buf)
+	if err := enc.Encode(u.IPID); err != nil {
+		panic(err)
+	}
+	if err := enc.Encode(u.Name); err != nil {
+		panic(err)
+	}
+	if err := enc.Encode(u.DisplayName); err != nil {
+		panic(err)
+	}
+	if err := enc.Encode(u.Active); err != nil {
+		panic(err)
+	}
+	if err := enc.Encode(u.Email); err != nil {
+		panic(err)
+	}
+	return buf.Bytes(), nil
+}
+
 // SetHashCode is a helper function to avoid errors when calculating hash code.
 // this method discards fields that are not used in the hash calculation.
 // only fields comming from the Identity Provider are used.
 func (u *User) SetHashCode() {
-	u.HashCode = hash.Get(User{
-		IPID:        u.IPID,
-		Name:        u.Name,
-		DisplayName: u.DisplayName,
-		Active:      u.Active,
-		Email:       u.Email,
-	})
+	u.HashCode = hash.Get(u)
 }
 
 // UsersResult represents a user result list entity.
@@ -86,15 +107,30 @@ type Group struct {
 	HashCode string `json:"hashCode"`
 }
 
+// GobEncode implements the gob.GobEncoder interface for User entity.
+// This is necessary to avoid include the value in the field SCIMID until
+// the hashcode calculation is done.
+// the hash.Get function use gob to calculate the hash code.
+func (g Group) GobEncode() ([]byte, error) {
+	buf := new(bytes.Buffer)
+	enc := gob.NewEncoder(buf)
+	if err := enc.Encode(g.IPID); err != nil {
+		panic(err)
+	}
+	if err := enc.Encode(g.Name); err != nil {
+		panic(err)
+	}
+	if err := enc.Encode(g.Email); err != nil {
+		panic(err)
+	}
+	return buf.Bytes(), nil
+}
+
 // SetHashCode is a helper function to avoid errors when calculating hash code.
 // this method discards fields that are not used in the hash calculation.
 // only fields comming from the Identity Provider are used.
 func (g *Group) SetHashCode() {
-	g.HashCode = hash.Get(Group{
-		IPID:  g.IPID,
-		Name:  g.Name,
-		Email: g.Email,
-	})
+	g.HashCode = hash.Get(g)
 }
 
 // GroupsResult represents a group result list entity.
