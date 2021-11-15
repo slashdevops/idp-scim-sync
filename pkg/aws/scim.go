@@ -246,14 +246,14 @@ func (s *AWSSCIMService) DeleteUser(ctx context.Context, id string) error {
 
 	reqUrl.Path = path.Join(reqUrl.Path, fmt.Sprintf("/Users/%s", id))
 
-	req, err := s.newRequest(http.MethodPatch, reqUrl, nil)
+	req, err := s.newRequest(http.MethodDelete, reqUrl, nil)
 	if err != nil {
-		return fmt.Errorf("aws: error creating request, http method: %s, url: %v, error: %w", http.MethodPatch, reqUrl.String(), err)
+		return fmt.Errorf("aws: error creating request, http method: %s, url: %v, error: %w", http.MethodDelete, reqUrl.String(), err)
 	}
 
 	resp, err := s.do(ctx, req)
 	if err != nil {
-		return fmt.Errorf("aws: error sending request, http method: %s, url: %v, error: %w", http.MethodPatch, reqUrl.String(), err)
+		return fmt.Errorf("aws: error sending request, http method: %s, url: %v, error: %w", http.MethodDelete, reqUrl.String(), err)
 	}
 	defer resp.Body.Close()
 
@@ -543,14 +543,14 @@ func (s *AWSSCIMService) DeleteGroup(ctx context.Context, id string) error {
 
 	reqUrl.Path = path.Join(reqUrl.Path, fmt.Sprintf("/Groups/%s", id))
 
-	req, err := s.newRequest(http.MethodPatch, reqUrl, nil)
+	req, err := s.newRequest(http.MethodDelete, reqUrl, nil)
 	if err != nil {
-		return fmt.Errorf("aws DeleteGroup: error creating request, http method: %s, url: %v, error: %w", http.MethodPatch, reqUrl.String(), err)
+		return fmt.Errorf("aws DeleteGroup: error creating request, http method: %s, url: %v, error: %w", http.MethodDelete, reqUrl.String(), err)
 	}
 
 	resp, err := s.do(ctx, req)
 	if err != nil {
-		return fmt.Errorf("aws DeleteGroup: error sending request, http method: %s, url: %v, error: %w", http.MethodPatch, reqUrl.String(), err)
+		return fmt.Errorf("aws DeleteGroup: error sending request, http method: %s, url: %v, error: %w", http.MethodDelete, reqUrl.String(), err)
 	}
 	defer resp.Body.Close()
 
