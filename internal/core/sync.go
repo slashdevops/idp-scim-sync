@@ -198,7 +198,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 			return fmt.Errorf("error reconciling groups members: %w", err)
 		}
 
-		log.Tracef("membersCreated: %s\n, membersEqual: %s\n", utils.ToJSON(membersCreated), utils.ToJSON(membersEqual))
+		log.Tracef("membersCreated: %s\n, membersEqual: %s\n, membersDelete: %s\n", utils.ToJSON(membersCreated), utils.ToJSON(membersEqual), utils.ToJSON(membersDelete))
 		// membersCreate + membersEqual = members total
 		totalGroupsMembersResult = mergeGroupsMembersResult(membersCreated, membersEqual)
 

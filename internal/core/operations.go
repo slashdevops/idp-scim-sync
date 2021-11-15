@@ -58,7 +58,7 @@ func membersOperations(idp, scim *model.GroupsMembersResult) (create *model.Grou
 		for _, member := range grpMembers.Resources {
 
 			if _, ok := scimMemberSet[grpMembers.Group.Name][member.Email]; ok {
-				member.SCIMID = idpMemberSet[grpMembers.Group.Name][member.Email].SCIMID
+				member.SCIMID = scimMemberSet[grpMembers.Group.Name][member.Email].SCIMID
 			}
 
 			if _, ok := scimMemberSet[grpMembers.Group.Name][member.Email]; !ok {
