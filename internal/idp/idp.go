@@ -224,6 +224,22 @@ func (i *IdentityProvider) GetGroupsMembers(ctx context.Context, gr *model.Group
 			groupMember.SetHashCode()
 
 			groupMembers = append(groupMembers, groupMember)
+		} else {
+			e := model.Group{
+				IPID:  group.IPID,
+				Name:  group.Name,
+				Email: group.Email,
+			}
+			e.SetHashCode()
+
+			groupMember := model.GroupMembers{
+				Items:     0,
+				Group:     e,
+				Resources: make([]model.Member, 0),
+			}
+			groupMember.SetHashCode()
+
+			groupMembers = append(groupMembers, groupMember)
 		}
 	}
 

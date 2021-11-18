@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 )
 
 // Consume http methods
@@ -164,13 +165,25 @@ func (s *AWSSCIMService) checkHTTPResponse(r *http.Response) error {
 			} else if err != nil {
 				return fmt.Errorf("aws checkHTTPResponse: error decoding error response: %w", err)
 			}
-
 		}
 
 		b, err := io.ReadAll(r.Body)
 		if err != nil {
 			return fmt.Errorf("aws checkHTTPResponse: error reading response body: %w", err)
 		}
+
+		// in case somebody delete/create elements manually from AWS SCIM API
+		// or if this program broke at some moment and create inconsistent state and now
+		// so is better to avoid errors here to be self-healing
+		if r.StatusCode == http.StatusNotFound {
+			log.Warningf("aws checkHTTPResponse: error: %s, method: %s, request url: %s\n", r.Status, r.Request.Method, r.Request.URL)
+			return nil
+		}
+		if r.StatusCode == http.StatusConflict {
+			log.Warningf("aws checkHTTPResponse: error: %s, method: %s, request url: %s\n", r.Status, r.Request.Method, r.Request.URL)
+			return nil
+		}
+
 		return fmt.Errorf("aws checkHTTPResponse: error code: '%s', body: '%s'", r.Status, string(b))
 	}
 
@@ -524,7 +537,13 @@ func (s *AWSSCIMService) CreateGroup(ctx context.Context, g *CreateGroupRequest)
 
 	var response CreateGroupResponse
 	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
-		return nil, fmt.Errorf("aws CreateGroup: error decoding response body: %v", err)
+
+		b, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return nil, fmt.Errorf("aws CreateGroup: error reading response body: %w", err)
+		}
+
+		return nil, fmt.Errorf("aws CreateGroup: error decoding response body: %w, body: %s", err, string(b))
 	}
 
 	return &response, nil

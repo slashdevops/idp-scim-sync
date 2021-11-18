@@ -41,6 +41,7 @@ func membersOperations(idp, scim *model.GroupsMembersResult) (create *model.Grou
 	}
 
 	// log.Tracef("scimMemberSet: %s\n", utils.ToJSON(scimMemberSet))
+	// log.Tracef("scimGroupsSet: %s\n", utils.ToJSON(scimGroupsSet))
 
 	// map[group.Name][]*model.Member
 	toC := make(map[string][]model.Member)
@@ -51,19 +52,18 @@ func membersOperations(idp, scim *model.GroupsMembersResult) (create *model.Grou
 		toC[grpMembers.Group.Name] = make([]model.Member, 0)
 		toE[grpMembers.Group.Name] = make([]model.Member, 0)
 
-		if _, ok := scimGroupsSet[grpMembers.Group.Name]; ok {
-			grpMembers.Group.SCIMID = scimGroupsSet[grpMembers.Group.Name].SCIMID
+		// this case is when the groups is not new in scim
+		if grpMembers.Group.SCIMID == "" {
+			if _, ok := scimGroupsSet[grpMembers.Group.Name]; ok {
+				grpMembers.Group.SCIMID = scimGroupsSet[grpMembers.Group.Name].SCIMID
+			}
 		}
 
 		for _, member := range grpMembers.Resources {
-
-			if _, ok := scimMemberSet[grpMembers.Group.Name][member.Email]; ok {
-				member.SCIMID = scimMemberSet[grpMembers.Group.Name][member.Email].SCIMID
-			}
-
 			if _, ok := scimMemberSet[grpMembers.Group.Name][member.Email]; !ok {
 				toC[grpMembers.Group.Name] = append(toC[grpMembers.Group.Name], member)
 			} else {
+				member.SCIMID = scimMemberSet[grpMembers.Group.Name][member.Email].SCIMID
 				toE[grpMembers.Group.Name] = append(toE[grpMembers.Group.Name], member)
 			}
 		}
@@ -81,31 +81,30 @@ func membersOperations(idp, scim *model.GroupsMembersResult) (create *model.Grou
 			toCreate = append(toCreate, e)
 		}
 
-		if len(toE[grpMembers.Group.Name]) > 0 {
-			grpMembers.Group.SetHashCode()
-
-			ee := model.GroupMembers{
-				Items:     len(toE[grpMembers.Group.Name]),
-				Group:     grpMembers.Group,
-				Resources: toE[grpMembers.Group.Name],
-			}
-			ee.SetHashCode()
-
-			toEqual = append(toEqual, ee)
+		// add the groups with and without members when are equals
+		grpMembers.Group.SetHashCode()
+		ee := model.GroupMembers{
+			Items:     len(toE[grpMembers.Group.Name]),
+			Group:     grpMembers.Group,
+			Resources: toE[grpMembers.Group.Name],
 		}
+		ee.SetHashCode()
 
+		toEqual = append(toEqual, ee)
 	}
 
 	for _, grpMembers := range scim.Resources {
 		toD[grpMembers.Group.Name] = make([]model.Member, 0)
 
 		for _, member := range grpMembers.Resources {
+
+			if _, ok := scimMemberSet[grpMembers.Group.Name][member.Email]; ok {
+				member.SCIMID = scimMemberSet[grpMembers.Group.Name][member.Email].SCIMID
+			}
+
 			if _, ok := idpMemberSet[grpMembers.Group.Name][member.Email]; !ok {
 				toD[grpMembers.Group.Name] = append(toD[grpMembers.Group.Name], member)
 			}
-			// else {
-			// 	toE[grpMembers.Group.Name] = append(toE[grpMembers.Group.Name], member)
-			// }
 		}
 
 		if len(toD[grpMembers.Group.Name]) > 0 {
@@ -120,19 +119,6 @@ func membersOperations(idp, scim *model.GroupsMembersResult) (create *model.Grou
 
 			toDelete = append(toDelete, e)
 		}
-
-		// if len(toE[grpMembers.Group.Name]) > 0 {
-		// 	grpMembers.Group.SetHashCode()
-
-		// 	ee := model.GroupMembers{
-		// 		Items:     len(toE[grpMembers.Group.Name]),
-		// 		Group:     grpMembers.Group,
-		// 		Resources: toE[grpMembers.Group.Name],
-		// 	}
-		// 	ee.SetHashCode()
-
-		// 	toEqual = append(toEqual, ee)
-		// }
 	}
 
 	create = &model.GroupsMembersResult{

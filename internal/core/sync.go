@@ -198,7 +198,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 			return fmt.Errorf("error reconciling groups members: %w", err)
 		}
 
-		log.Tracef("membersCreated: %s\n, membersEqual: %s\n, membersDelete: %s\n", utils.ToJSON(membersCreated), utils.ToJSON(membersEqual), utils.ToJSON(membersDelete))
+		log.Tracef("membersCreate: %s\n, membersEqual: %s\n, membersDelete: %s\n", utils.ToJSON(membersCreate), utils.ToJSON(membersEqual), utils.ToJSON(membersDelete))
 		// membersCreate + membersEqual = members total
 		totalGroupsMembersResult = mergeGroupsMembersResult(membersCreated, membersEqual)
 
@@ -218,8 +218,6 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 			"lastsync": state.LastSync,
 			"since":    deltaHours + "h, " + deltaMinutes + "m, " + deltaSeconds + "s",
 		}).Info("syncing from state")
-
-		log.Tracef("state.Resources.Groups: %s", utils.ToJSON(state.Resources.Groups))
 
 		if idpGroupsResult.HashCode == state.Resources.Groups.HashCode {
 			log.Info("provider groups and state groups are the same, nothing to do with groups")
@@ -246,8 +244,6 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 			totalGroupsResult = mergeGroupsResult(groupsCreated, groupsUpdated, groupsEqual)
 		}
 
-		log.Tracef("state.Resources.Users: %s", utils.ToJSON(state.Resources.Users))
-
 		if idpUsersResult.HashCode == state.Resources.Users.HashCode {
 			log.Info("provider users and state users are the same, nothing to do with users")
 
@@ -270,8 +266,6 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 			totalUsersResult = mergeUsersResult(usersCreated, usersUpdated, usersEqual)
 		}
 
-		log.Tracef("state.Resources.GroupsMembers: %s", utils.ToJSON(state.Resources.GroupsMembers))
-
 		if idpGroupsMembersResult.HashCode == state.Resources.GroupsMembers.HashCode {
 			log.Info("provider groups-members and state groups-members are the same, nothing to do with groups-members")
 
@@ -279,11 +273,15 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 		} else {
 			log.Info("provider groups-members and state groups-members are diferent")
 
+			log.Tracef("stateGroupsMembersResult: %s\n", utils.ToJSON(state.Resources.GroupsMembers))
+
 			log.WithFields(log.Fields{
 				"idp":   idpGroupsMembersResult.Items,
 				"state": state.Resources.GroupsMembers.Items,
 			}).Info("reconciling groups members")
 			membersCreate, membersEqual, membersDelete := membersOperations(idpGroupsMembersResult, &state.Resources.GroupsMembers)
+
+			// log.Tracef("membersCreate: %s\n, membersEqual: %s\n, membersDelete: %s\n", utils.ToJSON(membersCreate), utils.ToJSON(membersEqual), utils.ToJSON(membersDelete))
 
 			membersCreated, err := reconcilingGroupsMembers(ss.ctx, ss.scim, membersCreate, membersDelete)
 			if err != nil {
