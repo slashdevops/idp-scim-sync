@@ -282,6 +282,17 @@ func TestGoogleProvider_GetGroupMembers(t *testing.T) {
 			wantErr: true,
 		},
 		{
+			name: "Should return error when ListGroupMembers return error",
+			prepare: func(f *fields) {
+				ctx := context.Background()
+
+				f.ds.EXPECT().ListGroupMembers(ctx, gomock.Eq("1")).Return(nil, errors.New("test error")).Times(1)
+			},
+			args:    args{ctx: context.Background(), id: "1"},
+			want:    nil,
+			wantErr: true,
+		},
+		{
 			name: "Should return MembersResult and no error",
 			prepare: func(f *fields) {
 				ctx := context.Background()
@@ -439,6 +450,123 @@ func TestGoogleProvider_GetUsersByGroupMembers(t *testing.T) {
 			}
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("GoogleProvider.GetUsersFromGroupMembers() = %s, want %s", utils.ToJSON(got), utils.ToJSON(tt.want))
+			}
+		})
+	}
+}
+
+func TestGoogleProvider_GetGroupsMembers(t *testing.T) {
+	m1 := model.Member{IPID: "1", Email: "user.1@mail.com"}
+	m1.SetHashCode()
+	m2 := model.Member{IPID: "2", Email: "user.2@mail.com"}
+	m2.SetHashCode()
+
+	type fields struct {
+		ds *mocks.MockGoogleProviderService
+	}
+
+	type args struct {
+		ctx context.Context
+		gr  *model.GroupsResult
+	}
+
+	tests := []struct {
+		name    string
+		prepare func(f *fields)
+		args    args
+		want    *model.GroupsMembersResult
+		wantErr bool
+	}{
+		{
+			name:    "Should return error when gr is nil",
+			prepare: func(f *fields) {},
+			args:    args{ctx: context.Background(), gr: nil},
+			want:    nil,
+			wantErr: true,
+		},
+		{
+			name:    "Should return empty GroupsMembersResult when gr items is 0",
+			prepare: func(f *fields) {},
+			args: args{
+				ctx: context.Background(),
+				gr:  &model.GroupsResult{Items: 0, Resources: []model.Group{}},
+			},
+			want:    &model.GroupsMembersResult{Items: 0, Resources: []model.GroupMembers{}},
+			wantErr: false,
+		},
+		// {
+		// 	name: "Should return error when ListGroupMembers return error",
+		// 	prepare: func(f *fields) {
+		// 		ctx := context.Background()
+
+		// 		f.ds.EXPECT().ListGroupMembers(ctx, gomock.Eq("1")).Return(nil, errors.New("test error")).Times(1)
+		// 	},
+		// 	args: args{
+		// 		ctx: context.Background(),
+		// 		gr: &model.GroupsResult{
+		// 			Items: 1,
+		// 			Resources: []model.Group{
+		// 				{IPID: "1"},
+		// 			},
+		// 		},
+		// 	},
+		// 	want:    nil,
+		// 	wantErr: true,
+		// },
+		// {
+		// 	name: "Should return MembersResult and no error",
+		// 	prepare: func(f *fields) {
+		// 		ctx := context.Background()
+		// 		googleGroupMembers := make([]*admin.Member, 0)
+		// 		googleGroupMembers = append(googleGroupMembers, &admin.Member{Email: "user.1@mail.com", Id: "1"})
+		// 		googleGroupMembers = append(googleGroupMembers, &admin.Member{Email: "user.2@mail.com", Id: "2"})
+
+		// 		f.ds.EXPECT().ListGroupMembers(ctx, gomock.Eq("1")).Return(googleGroupMembers, nil).Times(1)
+		// 	},
+		// 	args: args{
+		// 		ctx: context.Background(),
+		// 		gr: &model.GroupsResult{
+		// 			Items: 1,
+		// 			Resources: []model.Group{
+		// 				{IPID: "1"},
+		// 			},
+		// 		},
+		// 	},
+		// 	want: &model.MembersResult{
+		// 		Items:     2,
+		// 		Resources: []model.Member{m1, m2},
+		// 	},
+		// 	wantErr: false,
+		// },
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockCtrl := gomock.NewController(t)
+			defer mockCtrl.Finish()
+
+			f := fields{ds: mocks.NewMockGoogleProviderService(mockCtrl)}
+
+			if tt.prepare != nil {
+				tt.prepare(&f)
+			}
+
+			g := &IdentityProvider{
+				ps: f.ds,
+			}
+
+			if !tt.wantErr {
+				tt.want.SetHashCode()
+			}
+
+			got, err := g.GetGroupsMembers(tt.args.ctx, tt.args.gr)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("GoogleProvider.GetGroupsMembers() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+
+			if !tt.wantErr && !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("GoogleProvider.GetGroupsMembers() = %s, want %s", utils.ToJSON(got), utils.ToJSON(tt.want))
 			}
 		})
 	}

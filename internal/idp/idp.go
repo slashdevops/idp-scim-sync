@@ -16,6 +16,9 @@ var (
 
 	// ErrGroupIdNil is returned when the groupID is nil.
 	ErrGroupIdNil = errors.New("provoder: group id is nil")
+
+	// ErrGroupResultNil is returned when the group result is nil.
+	ErrGroupResultNil = errors.New("provoder: group result is nil")
 )
 
 //go:generate go run github.com/golang/mock/mockgen@v1.6.0 -package=mocks -destination=../../mocks/idp/idp_mocks.go -source=idp.go GoogleProviderService
@@ -198,6 +201,10 @@ func (i *IdentityProvider) GetUsersByGroupMembers(ctx context.Context, mbr *mode
 
 // GetGroupsMembers return the members of the groups
 func (i *IdentityProvider) GetGroupsMembers(ctx context.Context, gr *model.GroupsResult) (*model.GroupsMembersResult, error) {
+	if gr == nil {
+		return nil, ErrGroupResultNil
+	}
+
 	groupMembers := make([]model.GroupMembers, 0)
 
 	for _, group := range gr.Resources {
