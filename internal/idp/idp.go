@@ -74,9 +74,9 @@ func (i *IdentityProvider) GetGroups(ctx context.Context, filter []string) (*mod
 			syncGroups = append(syncGroups, e)
 		} else {
 			log.WithFields(log.Fields{
-				"group_id":    grp.Id,
-				"group_name":  grp.Name,
-				"group_email": grp.Email,
+				"id":    grp.Id,
+				"name":  grp.Name,
+				"email": grp.Email,
 			}).Warning("idp: group already exists with the same name, this group will be avoided, please make your groups uniques by name!")
 		}
 	}

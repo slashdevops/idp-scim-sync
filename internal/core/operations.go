@@ -1,7 +1,18 @@
 package core
 
 import (
+	"errors"
+
 	"github.com/slashdevops/idp-scim-sync/internal/model"
+)
+
+var (
+	ErrIdentityProviderGroupsMembersNil = errors.New("identity provider groups members is nil")
+	ErrSCIMGroupsMembersNil             = errors.New("scim groups members is nil")
+	ErrIdentityProviderGroupsNil        = errors.New("identity provider groups is nil")
+	ErrSCIMGroupsNil                    = errors.New("scim groups is nil")
+	ErrIdentityProviderUsersNil         = errors.New("identity provider users is nil")
+	ErrSCIMUsersNil                     = errors.New("scim users is nil")
 )
 
 // groupsOperations returns the differences between the groups in the
@@ -14,7 +25,16 @@ import (
 // delete: groups that exist in "scim" but not in "idp"
 //
 // also extract the id from scim to fill the resutls
-func membersOperations(idp, scim *model.GroupsMembersResult) (create *model.GroupsMembersResult, equal *model.GroupsMembersResult, delete *model.GroupsMembersResult) {
+func membersOperations(idp, scim *model.GroupsMembersResult) (create *model.GroupsMembersResult, equal *model.GroupsMembersResult, delete *model.GroupsMembersResult, err error) {
+	if idp == nil {
+		create, equal, delete, err = nil, nil, nil, ErrIdentityProviderGroupsMembersNil
+		return
+	}
+	if scim == nil {
+		create, equal, delete, err = nil, nil, nil, ErrSCIMGroupsMembersNil
+		return
+	}
+
 	idpMemberSet := make(map[string]map[string]model.Member)  // [idp.GroupMembers.Group.Name] -> idp.member.Email -> idp.member
 	scimMemberSet := make(map[string]map[string]model.Member) // [scim.Group.Name] -> [scim.member.Email] -> scim.member
 	scimGroupsSet := make(map[string]model.Group)             // [scim.Group.Name] -> [scim.Group]
@@ -22,8 +42,6 @@ func membersOperations(idp, scim *model.GroupsMembersResult) (create *model.Grou
 	toCreate := make([]model.GroupMembers, 0)
 	toEqual := make([]model.GroupMembers, 0)
 	toDelete := make([]model.GroupMembers, 0)
-
-	// log.Tracef("idp: %s\n, scim: %s\n", utils.ToJSON(idp), utils.ToJSON(scim))
 
 	for _, grpMembers := range idp.Resources {
 		idpMemberSet[grpMembers.Group.Name] = make(map[string]model.Member)
@@ -40,10 +58,6 @@ func membersOperations(idp, scim *model.GroupsMembersResult) (create *model.Grou
 		}
 	}
 
-	// log.Tracef("scimMemberSet: %s\n", utils.ToJSON(scimMemberSet))
-	// log.Tracef("scimGroupsSet: %s\n", utils.ToJSON(scimGroupsSet))
-
-	// map[group.Name][]*model.Member
 	toC := make(map[string][]model.Member)
 	toE := make(map[string][]model.Member)
 	toD := make(map[string][]model.Member)
@@ -51,6 +65,13 @@ func membersOperations(idp, scim *model.GroupsMembersResult) (create *model.Grou
 	for _, grpMembers := range idp.Resources {
 		toC[grpMembers.Group.Name] = make([]model.Member, 0)
 		toE[grpMembers.Group.Name] = make([]model.Member, 0)
+
+		// groups equals both sides without members
+		// if _, ok := scimMemberSet[grpMembers.Group.Name]; ok {
+		// 	if len(scimMemberSet[grpMembers.Group.Name]) == 0 {
+		// 		toE[grpMembers.Group.Name] = make([]model.Member, 0)
+		// 	}
+		// }
 
 		// this case is when the groups is not new in scim
 		if grpMembers.Group.SCIMID == "" {
@@ -62,7 +83,7 @@ func membersOperations(idp, scim *model.GroupsMembersResult) (create *model.Grou
 		for _, member := range grpMembers.Resources {
 			if _, ok := scimMemberSet[grpMembers.Group.Name][member.Email]; !ok {
 				toC[grpMembers.Group.Name] = append(toC[grpMembers.Group.Name], member)
-			} else {
+			} else { // groups equals both sides but with members
 				member.SCIMID = scimMemberSet[grpMembers.Group.Name][member.Email].SCIMID
 				toE[grpMembers.Group.Name] = append(toE[grpMembers.Group.Name], member)
 			}
@@ -158,9 +179,20 @@ func membersOperations(idp, scim *model.GroupsMembersResult) (create *model.Grou
 // delete: groups that exist in "scim" but not in "idp"
 //
 // also extract the id from scim to fill the resutls
-func groupsOperations(idp, scim *model.GroupsResult) (create *model.GroupsResult, update *model.GroupsResult, equal *model.GroupsResult, delete *model.GroupsResult) {
+func groupsOperations(idp, scim *model.GroupsResult) (create *model.GroupsResult, update *model.GroupsResult, equal *model.GroupsResult, delete *model.GroupsResult, err error) {
+	if idp == nil {
+		create, update, equal, delete, err = nil, nil, nil, nil, ErrIdentityProviderGroupsNil
+		return
+	}
+	if scim == nil {
+		create, update, equal, delete, err = nil, nil, nil, nil, ErrSCIMGroupsNil
+		return
+	}
+
 	idpGroups := make(map[string]struct{})     // [idp.Group.Name ] -> struct{}{}
 	scimGroups := make(map[string]model.Group) // [scim.Group.Name] -> scim.Group
+
+	// log.Tracef("idp: %s\n, scim: %s\n", utils.ToJSON(idp), utils.ToJSON(scim))
 
 	toCreate := make([]model.Group, 0)
 	toUpdate := make([]model.Group, 0)
@@ -240,7 +272,16 @@ func groupsOperations(idp, scim *model.GroupsResult) (create *model.GroupsResult
 // update: users that exist in "idp" and in "scim" but attributes changed in idp
 // equal: users that exist in both "idp" and "scim" and their attributes are equal
 // delete: users that exist in "scim" but not in "idp"
-func usersOperations(idp, scim *model.UsersResult) (create *model.UsersResult, update *model.UsersResult, equal *model.UsersResult, delete *model.UsersResult) {
+func usersOperations(idp, scim *model.UsersResult) (create *model.UsersResult, update *model.UsersResult, equal *model.UsersResult, delete *model.UsersResult, err error) {
+	if idp == nil {
+		create, update, equal, delete, err = nil, nil, nil, nil, ErrIdentityProviderUsersNil
+		return
+	}
+	if scim == nil {
+		create, update, equal, delete, err = nil, nil, nil, nil, ErrSCIMUsersNil
+		return
+	}
+
 	idpUsers := make(map[string]struct{})
 	scimUsers := make(map[string]model.User)
 

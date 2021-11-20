@@ -80,21 +80,21 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 		return fmt.Errorf("error getting groups from the identity provider: %w", err)
 	}
 
-	log.Tracef("idpGroupsResult: %s\n", utils.ToJSON(idpGroupsResult))
+	// log.Tracef("idpGroupsResult: %s\n", utils.ToJSON(idpGroupsResult))
 
 	idpUsersResult, err := ss.prov.GetUsers(ss.ctx, []string{""})
 	if err != nil {
 		return fmt.Errorf("error getting users from the identity provider: %w", err)
 	}
 
-	log.Tracef("idpUsersResult: %s\n", utils.ToJSON(idpUsersResult))
+	// log.Tracef("idpUsersResult: %s\n", utils.ToJSON(idpUsersResult))
 
 	idpGroupsMembersResult, err := ss.prov.GetGroupsMembers(ss.ctx, idpGroupsResult)
 	if err != nil {
 		return fmt.Errorf("error getting groups members: %w", err)
 	}
 
-	log.Tracef("idpGroupsMembersResult: %s\n", utils.ToJSON(idpGroupsMembersResult))
+	// log.Tracef("idpGroupsMembersResult: %s\n", utils.ToJSON(idpGroupsMembersResult))
 
 	if idpUsersResult.Items == 0 {
 		log.Warn("there are no users in the identity provider")
@@ -105,7 +105,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 	}
 
 	if idpGroupsMembersResult.Items == 0 {
-		log.Warn("there are no group with members in the identity provider")
+		log.Warn("there are no groups with members in the identity provider")
 	}
 
 	log.Info("getting state data")
@@ -150,7 +150,10 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 			"idp":  idpGroupsResult.Items,
 			"scim": scimGroupsResult.Items,
 		}).Info("reconciling groups")
-		groupsCreate, groupsUpdate, groupsEqual, groupsDelete := groupsOperations(idpGroupsResult, scimGroupsResult)
+		groupsCreate, groupsUpdate, groupsEqual, groupsDelete, err := groupsOperations(idpGroupsResult, scimGroupsResult)
+		if err != nil {
+			return fmt.Errorf("error reconciling groups: %w", err)
+		}
 
 		groupsCreated, groupsUpdated, err := reconcilingGroups(ss.ctx, ss.scim, groupsCreate, groupsUpdate, groupsDelete)
 		if err != nil {
@@ -170,7 +173,10 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 			"idp":  idpUsersResult.Items,
 			"scim": scimUsersResult.Items,
 		}).Info("reconciling users")
-		usersCreate, usersUpdate, usersEqual, usersDelete := usersOperations(idpUsersResult, scimUsersResult)
+		usersCreate, usersUpdate, usersEqual, usersDelete, err := usersOperations(idpUsersResult, scimUsersResult)
+		if err != nil {
+			return fmt.Errorf("error reconciling users: %w", err)
+		}
 
 		usersCreated, usersUpdated, err := reconcilingUsers(ss.ctx, ss.scim, usersCreate, usersUpdate, usersDelete)
 		if err != nil {
@@ -191,14 +197,17 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 			"idp":  idpGroupsMembersResult.Items,
 			"scim": scimGroupsMembersResult.Items,
 		}).Info("reconciling groups members")
-		membersCreate, membersEqual, membersDelete := membersOperations(idpGroupsMembersResult, scimGroupsMembersResult)
+		membersCreate, membersEqual, membersDelete, err := membersOperations(idpGroupsMembersResult, scimGroupsMembersResult)
+		if err != nil {
+			return fmt.Errorf("error reconciling groups members: %w", err)
+		}
 
 		membersCreated, err := reconcilingGroupsMembers(ss.ctx, ss.scim, membersCreate, membersDelete)
 		if err != nil {
 			return fmt.Errorf("error reconciling groups members: %w", err)
 		}
 
-		log.Tracef("membersCreate: %s\n, membersEqual: %s\n, membersDelete: %s\n", utils.ToJSON(membersCreate), utils.ToJSON(membersEqual), utils.ToJSON(membersDelete))
+		// log.Tracef("membersCreate: %s\n, membersEqual: %s\n, membersDelete: %s\n", utils.ToJSON(membersCreate), utils.ToJSON(membersEqual), utils.ToJSON(membersDelete))
 		// membersCreate + membersEqual = members total
 		totalGroupsMembersResult = mergeGroupsMembersResult(membersCreated, membersEqual)
 
@@ -233,7 +242,10 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 				"idp":   idpGroupsResult.Items,
 				"state": state.Resources.Groups.Items,
 			}).Info("reconciling groups")
-			groupsCreate, groupsUpdate, groupsEqual, groupsDelete := groupsOperations(idpGroupsResult, &state.Resources.Groups)
+			groupsCreate, groupsUpdate, groupsEqual, groupsDelete, err := groupsOperations(idpGroupsResult, &state.Resources.Groups)
+			if err != nil {
+				return fmt.Errorf("error reconciling groups: %w", err)
+			}
 
 			groupsCreated, groupsUpdated, err := reconcilingGroups(ss.ctx, ss.scim, groupsCreate, groupsUpdate, groupsDelete)
 			if err != nil {
@@ -255,7 +267,10 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 				"idp":   idpUsersResult.Items,
 				"state": state.Resources.Users.Items,
 			}).Info("reconciling users")
-			usersCreate, usersUpdate, usersEqual, usersDelete := usersOperations(idpUsersResult, &state.Resources.Users)
+			usersCreate, usersUpdate, usersEqual, usersDelete, err := usersOperations(idpUsersResult, &state.Resources.Users)
+			if err != nil {
+				return fmt.Errorf("error reconciling users: %w", err)
+			}
 
 			usersCreated, usersUpdated, err := reconcilingUsers(ss.ctx, ss.scim, usersCreate, usersUpdate, usersDelete)
 			if err != nil {
@@ -273,15 +288,25 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 		} else {
 			log.Info("provider groups-members and state groups-members are diferent")
 
-			log.Tracef("stateGroupsMembersResult: %s\n", utils.ToJSON(state.Resources.GroupsMembers))
+			// log.Tracef("stateGroupsMembersResult: %s\n", utils.ToJSON(state.Resources.GroupsMembers))
+
+			// if we create a group or user during the sync, we need the scimid of these new groups/users
+			// because to add members to a group the scim api needs that.
+			groupsMembers := updateSCIMID(idpGroupsMembersResult, &totalGroupsResult, &totalUsersResult)
+
+			log.Tracef("groupsMembers: %s\n", utils.ToJSON(groupsMembers))
 
 			log.WithFields(log.Fields{
 				"idp":   idpGroupsMembersResult.Items,
 				"state": state.Resources.GroupsMembers.Items,
 			}).Info("reconciling groups members")
-			membersCreate, membersEqual, membersDelete := membersOperations(idpGroupsMembersResult, &state.Resources.GroupsMembers)
+			// membersCreate, membersEqual, membersDelete := membersOperations(idpGroupsMembersResult, &state.Resources.GroupsMembers)
+			membersCreate, membersEqual, membersDelete, err := membersOperations(groupsMembers, &state.Resources.GroupsMembers)
+			if err != nil {
+				return fmt.Errorf("error reconciling groups members: %w", err)
+			}
 
-			// log.Tracef("membersCreate: %s\n, membersEqual: %s\n, membersDelete: %s\n", utils.ToJSON(membersCreate), utils.ToJSON(membersEqual), utils.ToJSON(membersDelete))
+			log.Tracef("membersCreate: %s\n, membersEqual: %s\n, membersDelete: %s\n", utils.ToJSON(membersCreate), utils.ToJSON(membersEqual), utils.ToJSON(membersDelete))
 
 			membersCreated, err := reconcilingGroupsMembers(ss.ctx, ss.scim, membersCreate, membersDelete)
 			if err != nil {
@@ -334,110 +359,59 @@ func (ss *SyncService) SyncGroupsAndUsers() error {
 	return errors.New("not implemented")
 }
 
-// reconcilingGroups receives lists of groups to create, update, equals and delete in the SCIM service
-// returns the lists of groups created and updated in the SCIM service with the Ids of these groups.
-func reconcilingGroups(ctx context.Context, scim SCIMService, create *model.GroupsResult, update *model.GroupsResult, delete *model.GroupsResult) (created *model.GroupsResult, updated *model.GroupsResult, e error) {
-	var err error
+func updateSCIMID(idp *model.GroupsMembersResult, scimGroups *model.GroupsResult, scimUsers *model.UsersResult) *model.GroupsMembersResult {
+	groups := make(map[string]model.Group)
+	users := make(map[string]model.User)
 
-	if create.Items == 0 {
-		log.Info("no groups to be create")
-		created = &model.GroupsResult{Items: 0, Resources: []model.Group{}}
-	} else {
-		log.WithField("quantity", create.Items).Warn("creating groups")
-		created, err = scim.CreateGroups(ctx, create)
-		if err != nil {
-			return nil, nil, fmt.Errorf("error creating groups in SCIM Provider: %w", err)
-		}
+	log.Tracef("groups created: %s", utils.ToJSON(scimGroups))
+	log.Tracef("users created: %s", utils.ToJSON(scimUsers))
 
+	for _, group := range scimGroups.Resources {
+		groups[group.Name] = group
 	}
 
-	if update.Items == 0 {
-		log.Info("no groups to be updated")
-		updated = &model.GroupsResult{Items: 0, Resources: []model.Group{}}
-	} else {
-		log.WithField("quantity", update.Items).Warn("updating groups")
-		updated, err = scim.UpdateGroups(ctx, update)
-		if err != nil {
-			return nil, nil, fmt.Errorf("error updating groups in SCIM Provider: %w", err)
-		}
-
+	for _, user := range scimUsers.Resources {
+		users[user.Email] = user
 	}
 
-	if delete.Items == 0 {
-		log.Info("no groups to be deleted")
-	} else {
-		log.WithField("quantity", delete.Items).Warn("deleting groups")
-		if err := scim.DeleteGroups(ctx, delete); err != nil {
-			return nil, nil, fmt.Errorf("error deleting groups in SCIM Provider: %w", err)
+	gms := make([]model.GroupMembers, 0)
+	for _, groupMembers := range idp.Resources {
+
+		mbs := make([]model.Member, 0)
+
+		g := model.Group{
+			IPID:   groupMembers.Group.IPID,
+			SCIMID: groups[groupMembers.Group.Name].SCIMID,
+			Name:   groupMembers.Group.Name,
+			Email:  groupMembers.Group.Email,
+		}
+		g.SetHashCode()
+
+		for _, member := range groupMembers.Resources {
+			m := model.Member{
+				IPID:   member.IPID,
+				SCIMID: users[member.Email].SCIMID,
+				Email:  member.Email,
+			}
+			m.SetHashCode()
+			mbs = append(mbs, m)
 		}
 
-	}
-
-	return
-}
-
-// reconcilingUsers receives lists of users to create, update and delete in the SCIM service
-// returns the lists of users created and updated in the SCIM service with the Ids of these users in the SCIM service
-func reconcilingUsers(ctx context.Context, scim SCIMService, create *model.UsersResult, update *model.UsersResult, delete *model.UsersResult) (created *model.UsersResult, updated *model.UsersResult, e error) {
-	var err error
-
-	if create.Items == 0 {
-		log.Info("no users to be created")
-		created = &model.UsersResult{Items: 0, Resources: []model.User{}}
-	} else {
-		log.WithField("quantity", create.Items).Warn("creating users")
-		created, err = scim.CreateUsers(ctx, create)
-		if err != nil {
-			return nil, nil, fmt.Errorf("error creating users in SCIM Provider: %w", err)
+		gm := model.GroupMembers{
+			Items:     len(mbs),
+			Group:     g,
+			Resources: mbs,
 		}
+		gm.SetHashCode()
+
+		gms = append(gms, gm)
 	}
 
-	if update.Items == 0 {
-		log.Info("no users to be updated")
-		updated = &model.UsersResult{Items: 0, Resources: []model.User{}}
-	} else {
-		log.WithField("quantity", update.Items).Warn("updating users")
-		updated, err = scim.UpdateUsers(ctx, update)
-		if err != nil {
-			return nil, nil, fmt.Errorf("error updating users in SCIM Provider: %w", err)
-		}
+	gmr := &model.GroupsMembersResult{
+		Items:     idp.Items,
+		Resources: gms,
 	}
+	gmr.SetHashCode()
 
-	if delete.Items == 0 {
-		log.Info("no users to be deleted")
-	} else {
-		log.WithField("quantity", delete.Items).Warn("deleting users")
-		if err := scim.DeleteUsers(ctx, delete); err != nil {
-			return nil, nil, fmt.Errorf("error deleting users in SCIM Provider: %w", err)
-		}
-	}
-
-	return
-}
-
-// reconcilingGroupsMembers
-func reconcilingGroupsMembers(ctx context.Context, scim SCIMService, create *model.GroupsMembersResult, delete *model.GroupsMembersResult) (created *model.GroupsMembersResult, e error) {
-	var err error
-
-	if create.Items == 0 {
-		log.Info("no users to be joined to groups")
-		created = &model.GroupsMembersResult{Items: 0, Resources: []model.GroupMembers{}}
-	} else {
-		log.WithField("quantity", create.Items).Warn("joining users to groups")
-		created, err = scim.CreateGroupsMembers(ctx, create)
-		if err != nil {
-			return nil, fmt.Errorf("error creating groups members in SCIM Provider: %w", err)
-		}
-	}
-
-	if delete.Items == 0 {
-		log.Info("no users to be removed from groups")
-	} else {
-		log.WithField("quantity", delete.Items).Warn("removing users to groups")
-		if err := scim.DeleteGroupsMembers(ctx, delete); err != nil {
-			return nil, fmt.Errorf("error removing users from groups in SCIM Provider: %w", err)
-		}
-	}
-
-	return
+	return gmr
 }

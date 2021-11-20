@@ -4,6 +4,7 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/slashdevops/idp-scim-sync/internal/hash"
 	"github.com/slashdevops/idp-scim-sync/internal/model"
 	"github.com/slashdevops/idp-scim-sync/internal/utils"
 )
@@ -20,6 +21,7 @@ func TestGroupsOperations(t *testing.T) {
 		wantUpdate *model.GroupsResult
 		wantEqual  *model.GroupsResult
 		wantDelete *model.GroupsResult
+		wantErr    bool
 	}{
 		{
 			name: "empty",
@@ -49,6 +51,31 @@ func TestGroupsOperations(t *testing.T) {
 				Items:     0,
 				Resources: []model.Group{},
 			},
+			wantErr: false,
+		},
+		{
+			name: "nil idp",
+			args: args{
+				idp:   nil,
+				state: &model.GroupsResult{},
+			},
+			wantCreate: nil,
+			wantUpdate: nil,
+			wantEqual:  nil,
+			wantDelete: nil,
+			wantErr:    true,
+		},
+		{
+			name: "nil state",
+			args: args{
+				idp:   &model.GroupsResult{},
+				state: nil,
+			},
+			wantCreate: nil,
+			wantUpdate: nil,
+			wantEqual:  nil,
+			wantDelete: nil,
+			wantErr:    true,
 		},
 		{
 			name: "2 equals",
@@ -87,6 +114,7 @@ func TestGroupsOperations(t *testing.T) {
 				Items:     0,
 				Resources: []model.Group{},
 			},
+			wantErr: false,
 		},
 		{
 			name: "1 equals, 1 update",
@@ -126,6 +154,7 @@ func TestGroupsOperations(t *testing.T) {
 				Items:     0,
 				Resources: []model.Group{},
 			},
+			wantErr: false,
 		},
 		{
 			name: "1 equals, 1 update, 1 delete",
@@ -168,6 +197,7 @@ func TestGroupsOperations(t *testing.T) {
 					{IPID: "3", SCIMID: "33", Name: "name3", Email: "3@mail.com"},
 				},
 			},
+			wantErr: false,
 		},
 		{
 			name: "1 equals, 1 update, 1 delete, 1 create",
@@ -213,6 +243,7 @@ func TestGroupsOperations(t *testing.T) {
 					{IPID: "3", SCIMID: "33", Name: "name3", Email: "3@mail.com"},
 				},
 			},
+			wantErr: false,
 		},
 		{
 			name: "1 update, change the ID",
@@ -248,16 +279,24 @@ func TestGroupsOperations(t *testing.T) {
 				Items:     0,
 				Resources: []model.Group{},
 			},
+			wantErr: false,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tt.wantCreate.SetHashCode()
-			tt.wantUpdate.SetHashCode()
-			tt.wantEqual.SetHashCode()
-			tt.wantDelete.SetHashCode()
+			if !tt.wantErr {
+				tt.wantCreate.SetHashCode()
+				tt.wantUpdate.SetHashCode()
+				tt.wantEqual.SetHashCode()
+				tt.wantDelete.SetHashCode()
+			}
 
-			gotCreate, gotUpdate, gotEqual, gotDelete := groupsOperations(tt.args.idp, tt.args.state)
+			gotCreate, gotUpdate, gotEqual, gotDelete, err := groupsOperations(tt.args.idp, tt.args.state)
+
+			if (err != nil) != tt.wantErr {
+				t.Errorf("groupsOperations() error = %v", err)
+				return
+			}
 			if !reflect.DeepEqual(gotCreate, tt.wantCreate) {
 				t.Errorf("groupsOperations() gotCreate = %s, want %s", utils.ToJSON(gotCreate), utils.ToJSON(tt.wantCreate))
 			}
@@ -286,6 +325,7 @@ func TestUsersOperations(t *testing.T) {
 		wantUpdate *model.UsersResult
 		wantEqual  *model.UsersResult
 		wantDelete *model.UsersResult
+		wantErr    bool
 	}{
 		{
 			name: "empty",
@@ -315,6 +355,31 @@ func TestUsersOperations(t *testing.T) {
 				Items:     0,
 				Resources: []model.User{},
 			},
+			wantErr: false,
+		},
+		{
+			name: "nil idp",
+			args: args{
+				idp:   nil,
+				state: &model.UsersResult{},
+			},
+			wantCreate: nil,
+			wantUpdate: nil,
+			wantEqual:  nil,
+			wantDelete: nil,
+			wantErr:    true,
+		},
+		{
+			name: "nil state",
+			args: args{
+				idp:   &model.UsersResult{},
+				state: nil,
+			},
+			wantCreate: nil,
+			wantUpdate: nil,
+			wantEqual:  nil,
+			wantDelete: nil,
+			wantErr:    true,
 		},
 		{
 			name: "2 equals",
@@ -483,12 +548,18 @@ func TestUsersOperations(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tt.wantCreate.SetHashCode()
-			tt.wantUpdate.SetHashCode()
-			tt.wantEqual.SetHashCode()
-			tt.wantDelete.SetHashCode()
+			if !tt.wantErr {
+				tt.wantCreate.SetHashCode()
+				tt.wantUpdate.SetHashCode()
+				tt.wantEqual.SetHashCode()
+				tt.wantDelete.SetHashCode()
+			}
 
-			gotCreate, gotUpdate, gotEqual, gotDelete := usersOperations(tt.args.idp, tt.args.state)
+			gotCreate, gotUpdate, gotEqual, gotDelete, err := usersOperations(tt.args.idp, tt.args.state)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("groupsOperations() error = %v", err)
+				return
+			}
 			if !reflect.DeepEqual(gotCreate, tt.wantCreate) {
 				t.Errorf("usersOperations() gotCreate = %s, want %s", utils.ToJSON(gotCreate), utils.ToJSON(tt.wantCreate))
 			}
@@ -500,6 +571,178 @@ func TestUsersOperations(t *testing.T) {
 			}
 			if !reflect.DeepEqual(gotDelete, tt.wantDelete) {
 				t.Errorf("usersOperations() gotDelete = %s, want %s", utils.ToJSON(gotDelete), utils.ToJSON(tt.wantDelete))
+			}
+		})
+	}
+}
+
+func Test_membersOperations(t *testing.T) {
+	type args struct {
+		idp  *model.GroupsMembersResult
+		scim *model.GroupsMembersResult
+	}
+	tests := []struct {
+		name       string
+		args       args
+		wantCreate *model.GroupsMembersResult
+		wantEqual  *model.GroupsMembersResult
+		wantDelete *model.GroupsMembersResult
+		wantErr    bool
+	}{
+		{
+			name: "empty",
+			args: args{
+				idp:  &model.GroupsMembersResult{},
+				scim: &model.GroupsMembersResult{},
+			},
+			wantCreate: &model.GroupsMembersResult{
+				Items:     0,
+				Resources: []model.GroupMembers{},
+			},
+			wantEqual: &model.GroupsMembersResult{
+				Items:     0,
+				Resources: []model.GroupMembers{},
+			},
+			wantDelete: &model.GroupsMembersResult{
+				Items:     0,
+				Resources: []model.GroupMembers{},
+			},
+			wantErr: false,
+		},
+		{
+			name: "nil idp",
+			args: args{
+				idp:  nil,
+				scim: &model.GroupsMembersResult{},
+			},
+			wantCreate: nil,
+			wantEqual:  nil,
+			wantDelete: nil,
+			wantErr:    true,
+		},
+		{
+			name: "nil scim",
+			args: args{
+				idp:  &model.GroupsMembersResult{},
+				scim: nil,
+			},
+			wantCreate: nil,
+			wantEqual:  nil,
+			wantDelete: nil,
+			wantErr:    true,
+		},
+		{
+			name: "same group: 1 add, 1 equal, 1 delete",
+			args: args{
+				idp: &model.GroupsMembersResult{
+					Items: 1,
+					Resources: []model.GroupMembers{
+						{
+							Items: 1,
+							Group: model.Group{IPID: "1", Name: "group 1", Email: "group.1@mail.com"},
+							Resources: []model.Member{
+								{IPID: "1", Email: "user.1@mail.com"},
+								{IPID: "2", Email: "user.2@mail.com"},
+							},
+						},
+					},
+				},
+				scim: &model.GroupsMembersResult{
+					Items: 1,
+					Resources: []model.GroupMembers{
+						{
+							Items: 1,
+							Group: model.Group{IPID: "1", Name: "group 1", Email: "group.1@mail.com"},
+							Resources: []model.Member{
+								{IPID: "1", Email: "user.1@mail.com"},
+								{IPID: "3", Email: "user.3@mail.com"},
+							},
+						},
+					},
+				},
+			},
+			wantCreate: &model.GroupsMembersResult{
+				Items: 1,
+				Resources: []model.GroupMembers{
+					{
+						Items: 1,
+						Group: model.Group{IPID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: hash.Get(&model.Group{IPID: "1", Name: "group 1", Email: "group.1@mail.com"})},
+						Resources: []model.Member{
+							{IPID: "2", Email: "user.2@mail.com"},
+						},
+						HashCode: hash.Get(&model.GroupMembers{
+							Items: 1,
+							Group: model.Group{IPID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: hash.Get(&model.Group{IPID: "1", Name: "group 1", Email: "group.1@mail.com"})},
+							Resources: []model.Member{
+								{IPID: "2", Email: "user.2@mail.com"},
+							},
+						}),
+					},
+				},
+			},
+			wantEqual: &model.GroupsMembersResult{
+				Items: 1,
+				Resources: []model.GroupMembers{
+					{
+						Items: 1,
+						Group: model.Group{IPID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: hash.Get(&model.Group{IPID: "1", Name: "group 1", Email: "group.1@mail.com"})},
+						Resources: []model.Member{
+							{IPID: "1", Email: "user.1@mail.com"},
+						},
+						HashCode: hash.Get(&model.GroupMembers{
+							Items: 1,
+							Group: model.Group{IPID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: hash.Get(&model.Group{IPID: "1", Name: "group 1", Email: "group.1@mail.com"})},
+							Resources: []model.Member{
+								{IPID: "1", Email: "user.1@mail.com"},
+							},
+						}),
+					},
+				},
+			},
+			wantDelete: &model.GroupsMembersResult{
+				Items: 1,
+				Resources: []model.GroupMembers{
+					{
+						Items: 1,
+						Group: model.Group{IPID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: hash.Get(&model.Group{IPID: "1", Name: "group 1", Email: "group.1@mail.com"})},
+						Resources: []model.Member{
+							{IPID: "3", Email: "user.3@mail.com"},
+						},
+						HashCode: hash.Get(&model.GroupMembers{
+							Items: 1,
+							Group: model.Group{IPID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: hash.Get(&model.Group{IPID: "1", Name: "group 1", Email: "group.1@mail.com"})},
+							Resources: []model.Member{
+								{IPID: "3", Email: "user.3@mail.com"},
+							},
+						}),
+					},
+				},
+			},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if !tt.wantErr {
+				tt.wantCreate.SetHashCode()
+				tt.wantEqual.SetHashCode()
+				tt.wantDelete.SetHashCode()
+			}
+
+			gotCreate, gotEqual, gotDelete, err := membersOperations(tt.args.idp, tt.args.scim)
+
+			if (err != nil) != tt.wantErr {
+				t.Errorf("membersOperations() error = %v", err)
+				return
+			}
+			if !reflect.DeepEqual(gotCreate, tt.wantCreate) {
+				t.Errorf("membersOperations() gotCreate = %s, want %s", utils.ToJSON(gotCreate), utils.ToJSON(tt.wantCreate))
+			}
+			if !reflect.DeepEqual(gotEqual, tt.wantEqual) {
+				t.Errorf("membersOperations() gotEqual = %s, want %s", utils.ToJSON(gotEqual), utils.ToJSON(tt.wantEqual))
+			}
+			if !reflect.DeepEqual(gotDelete, tt.wantDelete) {
+				t.Errorf("membersOperations() gotDelete = %s, want %s", utils.ToJSON(gotDelete), utils.ToJSON(tt.wantDelete))
 			}
 		})
 	}
@@ -646,6 +889,105 @@ func Test_mergeUsersResult(t *testing.T) {
 
 			if gotMerged := mergeUsersResult(tt.args.urs...); !reflect.DeepEqual(gotMerged, tt.wantMerged) {
 				t.Errorf("mergeUsersResult() = %s, want %s", utils.ToJSON(gotMerged), utils.ToJSON(tt.wantMerged))
+			}
+		})
+	}
+}
+
+func Test_mergeGroupsMembersResult(t *testing.T) {
+	type args struct {
+		gms []*model.GroupsMembersResult
+	}
+	tests := []struct {
+		name       string
+		args       args
+		wantMerged model.GroupsMembersResult
+	}{
+		{
+			name: "merge empty",
+			args: args{
+				gms: []*model.GroupsMembersResult{},
+			},
+			wantMerged: model.GroupsMembersResult{
+				Items:     0,
+				Resources: []model.GroupMembers{},
+				HashCode:  "",
+			},
+		},
+		{
+			name: "nil arg",
+			args: args{
+				gms: nil,
+			},
+			wantMerged: model.GroupsMembersResult{
+				Items:     0,
+				Resources: []model.GroupMembers{},
+				HashCode:  "",
+			},
+		},
+		{
+			name: "two groups members",
+			args: args{
+				gms: []*model.GroupsMembersResult{
+					{
+						Items:    1,
+						HashCode: "123",
+						Resources: []model.GroupMembers{
+							{
+								Items: 2,
+								Group: model.Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: "1234567890"},
+								Resources: []model.Member{
+									{IPID: "1", SCIMID: "1", Email: "user.1@gmail.com", HashCode: "1234567890"},
+									{IPID: "2", SCIMID: "2", Email: "user.2@gmail.com", HashCode: "0987654321"},
+								},
+							},
+						},
+					},
+					{
+						Items:    1,
+						HashCode: "321",
+						Resources: []model.GroupMembers{
+							{
+								Items: 2,
+								Group: model.Group{IPID: "2", SCIMID: "2", Name: "group 2", Email: "group.2@mail.com", HashCode: "0987654321"},
+								Resources: []model.Member{
+									{IPID: "1", SCIMID: "1", Email: "user.1@gmail.com", HashCode: "1234567890"},
+									{IPID: "3", SCIMID: "3", Email: "user.3@gmail.com", HashCode: "5612309870"},
+								},
+							},
+						},
+					},
+				},
+			},
+			wantMerged: model.GroupsMembersResult{
+				Items: 2,
+				Resources: []model.GroupMembers{
+					{
+						Items: 2,
+						Group: model.Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: "1234567890"},
+						Resources: []model.Member{
+							{IPID: "1", SCIMID: "1", Email: "user.1@gmail.com", HashCode: "1234567890"},
+							{IPID: "2", SCIMID: "2", Email: "user.2@gmail.com", HashCode: "0987654321"},
+						},
+					},
+					{
+						Items: 2,
+						Group: model.Group{IPID: "2", SCIMID: "2", Name: "group 2", Email: "group.2@mail.com", HashCode: "0987654321"},
+						Resources: []model.Member{
+							{IPID: "1", SCIMID: "1", Email: "user.1@gmail.com", HashCode: "1234567890"},
+							{IPID: "3", SCIMID: "3", Email: "user.3@gmail.com", HashCode: "5612309870"},
+						},
+					},
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.wantMerged.SetHashCode()
+
+			if gotMerged := mergeGroupsMembersResult(tt.args.gms...); !reflect.DeepEqual(gotMerged, tt.wantMerged) {
+				t.Errorf("mergeGroupsMembersResult() = %s, want %s", utils.ToJSON(gotMerged), utils.ToJSON(tt.wantMerged))
 			}
 		})
 	}
