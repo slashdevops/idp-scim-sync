@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestSyncService_reconcilingGroups(t *testing.T) {
+func TestReconcilingGroups(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 	ctx := context.TODO()
@@ -142,7 +142,7 @@ func TestSyncService_reconcilingGroups(t *testing.T) {
 	})
 }
 
-func TestSyncService_reconcilingUsers(t *testing.T) {
+func TestReconcilingUsers(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 	ctx := context.TODO()
@@ -270,5 +270,190 @@ func TestSyncService_reconcilingUsers(t *testing.T) {
 		assert.Error(t, err)
 		assert.Nil(t, urc)
 		assert.Nil(t, uru)
+	})
+}
+
+func TestSyncReconcilingGroupsMembers(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	ctx := context.TODO()
+
+	t.Run("Should call all the methods one time each and no error", func(t *testing.T) {
+		mockSCIMService := mocks.NewMockSCIMService(mockCtrl)
+
+		create := &model.GroupsMembersResult{
+			Items: 1,
+			Resources: []model.GroupMembers{
+				{
+					Items:     1,
+					Group:     model.Group{IPID: "1", Name: "group 1", Email: "group.1@mail.com"},
+					Resources: []model.Member{{IPID: "1", Email: "user.1@mail.com"}},
+				},
+			},
+		}
+		delete := &model.GroupsMembersResult{
+			Items: 1,
+			Resources: []model.GroupMembers{
+				{
+					Items:     1,
+					Group:     model.Group{IPID: "2", Name: "group 2", Email: "group.2@mail.com"},
+					Resources: []model.Member{{IPID: "2", Email: "user.2@mail.com"}},
+				},
+			},
+		}
+
+		mockSCIMService.EXPECT().CreateGroupsMembers(ctx, create).Return(create, nil).Times(1)
+		mockSCIMService.EXPECT().DeleteGroupsMembers(ctx, delete).Return(nil).Times(1)
+
+		gmrc, err := reconcilingGroupsMembers(ctx, mockSCIMService, create, delete)
+		assert.NoError(t, err)
+		assert.NotNil(t, gmrc)
+	})
+
+	t.Run("Should return error when CreateGroupsMembers return error", func(t *testing.T) {
+		mockSCIMService := mocks.NewMockSCIMService(mockCtrl)
+
+		create := &model.GroupsMembersResult{
+			Items: 1,
+			Resources: []model.GroupMembers{
+				{
+					Items:     1,
+					Group:     model.Group{IPID: "1", Name: "group 1", Email: "group.1@mail.com"},
+					Resources: []model.Member{{IPID: "1", Email: "user.1@mail.com"}},
+				},
+			},
+		}
+		delete := &model.GroupsMembersResult{
+			Items: 1,
+			Resources: []model.GroupMembers{
+				{
+					Items:     1,
+					Group:     model.Group{IPID: "2", Name: "group 2", Email: "group.2@mail.com"},
+					Resources: []model.Member{{IPID: "2", Email: "user.2@mail.com"}},
+				},
+			},
+		}
+
+		mockSCIMService.EXPECT().CreateGroupsMembers(ctx, create).Return(nil, errors.New("test error")).Times(1)
+
+		gmrc, err := reconcilingGroupsMembers(ctx, mockSCIMService, create, delete)
+		assert.Error(t, err)
+		assert.Nil(t, gmrc)
+	})
+
+	t.Run("Should return error when DeleteGroupsMembers return error", func(t *testing.T) {
+		mockSCIMService := mocks.NewMockSCIMService(mockCtrl)
+
+		create := &model.GroupsMembersResult{
+			Items: 1,
+			Resources: []model.GroupMembers{
+				{
+					Items:     1,
+					Group:     model.Group{IPID: "1", Name: "group 1", Email: "group.1@mail.com"},
+					Resources: []model.Member{{IPID: "1", Email: "user.1@mail.com"}},
+				},
+			},
+		}
+		delete := &model.GroupsMembersResult{
+			Items: 1,
+			Resources: []model.GroupMembers{
+				{
+					Items:     1,
+					Group:     model.Group{IPID: "2", Name: "group 2", Email: "group.2@mail.com"},
+					Resources: []model.Member{{IPID: "2", Email: "user.2@mail.com"}},
+				},
+			},
+		}
+
+		mockSCIMService.EXPECT().CreateGroupsMembers(ctx, create).Return(create, nil).Times(1)
+		mockSCIMService.EXPECT().DeleteGroupsMembers(ctx, delete).Return(errors.New("test error")).Times(1)
+
+		gmrc, err := reconcilingGroupsMembers(ctx, mockSCIMService, create, delete)
+		assert.Error(t, err)
+		assert.Nil(t, gmrc)
+	})
+
+	t.Run("Should call all the methods one time each and no error when resources are empty", func(t *testing.T) {
+		mockSCIMService := mocks.NewMockSCIMService(mockCtrl)
+
+		create := &model.GroupsMembersResult{
+			Items:     0,
+			Resources: []model.GroupMembers{},
+		}
+		delete := &model.GroupsMembersResult{
+			Items:     0,
+			Resources: []model.GroupMembers{},
+		}
+
+		gmrc, err := reconcilingGroupsMembers(ctx, mockSCIMService, create, delete)
+		assert.NoError(t, err)
+		assert.NotNil(t, gmrc)
+
+		assert.Equal(t, 0, gmrc.Items)
+	})
+
+	t.Run("Should return error when SCIM service in nil", func(t *testing.T) {
+		create := &model.GroupsMembersResult{
+			Items: 1,
+			Resources: []model.GroupMembers{
+				{
+					Items:     1,
+					Group:     model.Group{IPID: "1", Name: "group 1", Email: "group.1@mail.com"},
+					Resources: []model.Member{{IPID: "1", Email: "user.1@mail.com"}},
+				},
+			},
+		}
+		delete := &model.GroupsMembersResult{
+			Items: 1,
+			Resources: []model.GroupMembers{
+				{
+					Items:     1,
+					Group:     model.Group{IPID: "2", Name: "group 2", Email: "group.2@mail.com"},
+					Resources: []model.Member{{IPID: "2", Email: "user.2@mail.com"}},
+				},
+			},
+		}
+
+		gmrc, err := reconcilingGroupsMembers(ctx, nil, create, delete)
+		assert.Error(t, err)
+		assert.Nil(t, gmrc)
+	})
+
+	t.Run("Should error when create groups is nil", func(t *testing.T) {
+		mockSCIMService := mocks.NewMockSCIMService(mockCtrl)
+
+		delete := &model.GroupsMembersResult{
+			Items: 1,
+			Resources: []model.GroupMembers{
+				{
+					Items:     1,
+					Group:     model.Group{IPID: "2", Name: "group 2", Email: "group.2@mail.com"},
+					Resources: []model.Member{{IPID: "2", Email: "user.2@mail.com"}},
+				},
+			},
+		}
+
+		gmrc, err := reconcilingGroupsMembers(ctx, mockSCIMService, nil, delete)
+		assert.Error(t, err)
+		assert.Nil(t, gmrc)
+	})
+
+	t.Run("Should error when delete groups is nil", func(t *testing.T) {
+		mockSCIMService := mocks.NewMockSCIMService(mockCtrl)
+
+		create := &model.GroupsMembersResult{
+			Items: 1,
+			Resources: []model.GroupMembers{
+				{
+					Items:     1,
+					Group:     model.Group{IPID: "1", Name: "group 1", Email: "group.1@mail.com"},
+					Resources: []model.Member{{IPID: "1", Email: "user.1@mail.com"}},
+				},
+			},
+		}
+
+		gmrc, err := reconcilingGroupsMembers(ctx, mockSCIMService, create, nil)
+		assert.Error(t, err)
+		assert.Nil(t, gmrc)
 	})
 }
