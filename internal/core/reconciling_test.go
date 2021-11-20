@@ -93,6 +93,53 @@ func TestSyncService_reconcilingGroups(t *testing.T) {
 		assert.NotNil(t, grc)
 		assert.NotNil(t, gru)
 	})
+
+	t.Run("Should return error when SCIM service in nil", func(t *testing.T) {
+		create := &model.GroupsResult{Items: 0, Resources: []model.Group{}}
+		update := &model.GroupsResult{Items: 0, Resources: []model.Group{}}
+		delete := &model.GroupsResult{Items: 0, Resources: []model.Group{}}
+
+		grc, gru, err := reconcilingGroups(ctx, nil, create, update, delete)
+		assert.Error(t, err)
+		assert.Nil(t, grc)
+		assert.Nil(t, gru)
+	})
+
+	t.Run("Should error when create groups is nil", func(t *testing.T) {
+		mockSCIMService := mocks.NewMockSCIMService(mockCtrl)
+
+		update := &model.GroupsResult{Items: 0, Resources: []model.Group{}}
+		delete := &model.GroupsResult{Items: 0, Resources: []model.Group{}}
+
+		grc, gru, err := reconcilingGroups(ctx, mockSCIMService, nil, update, delete)
+		assert.Error(t, err)
+		assert.Nil(t, grc)
+		assert.Nil(t, gru)
+	})
+
+	t.Run("Should error when update groups is nil", func(t *testing.T) {
+		mockSCIMService := mocks.NewMockSCIMService(mockCtrl)
+
+		create := &model.GroupsResult{Items: 0, Resources: []model.Group{}}
+		delete := &model.GroupsResult{Items: 0, Resources: []model.Group{}}
+
+		grc, gru, err := reconcilingGroups(ctx, mockSCIMService, create, nil, delete)
+		assert.Error(t, err)
+		assert.Nil(t, grc)
+		assert.Nil(t, gru)
+	})
+
+	t.Run("Should error when delete groups is nil", func(t *testing.T) {
+		mockSCIMService := mocks.NewMockSCIMService(mockCtrl)
+
+		create := &model.GroupsResult{Items: 0, Resources: []model.Group{}}
+		update := &model.GroupsResult{Items: 0, Resources: []model.Group{}}
+
+		grc, gru, err := reconcilingGroups(ctx, mockSCIMService, create, update, nil)
+		assert.Error(t, err)
+		assert.Nil(t, grc)
+		assert.Nil(t, gru)
+	})
 }
 
 func TestSyncService_reconcilingUsers(t *testing.T) {
@@ -176,5 +223,52 @@ func TestSyncService_reconcilingUsers(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, urc)
 		assert.NotNil(t, uru)
+	})
+
+	t.Run("Should return error when SCIM service is nil", func(t *testing.T) {
+		create := &model.UsersResult{Items: 0, Resources: []model.User{}}
+		update := &model.UsersResult{Items: 0, Resources: []model.User{}}
+		delete := &model.UsersResult{Items: 0, Resources: []model.User{}}
+
+		urc, uru, err := reconcilingUsers(ctx, nil, create, update, delete)
+		assert.Error(t, err)
+		assert.Nil(t, urc)
+		assert.Nil(t, uru)
+	})
+
+	t.Run("Should return error when create users is nil", func(t *testing.T) {
+		mockSCIMService := mocks.NewMockSCIMService(mockCtrl)
+
+		update := &model.UsersResult{Items: 0, Resources: []model.User{}}
+		delete := &model.UsersResult{Items: 0, Resources: []model.User{}}
+
+		urc, uru, err := reconcilingUsers(ctx, mockSCIMService, nil, update, delete)
+		assert.Error(t, err)
+		assert.Nil(t, urc)
+		assert.Nil(t, uru)
+	})
+
+	t.Run("Should return error when update users is nil", func(t *testing.T) {
+		mockSCIMService := mocks.NewMockSCIMService(mockCtrl)
+
+		create := &model.UsersResult{Items: 0, Resources: []model.User{}}
+		delete := &model.UsersResult{Items: 0, Resources: []model.User{}}
+
+		urc, uru, err := reconcilingUsers(ctx, mockSCIMService, create, nil, delete)
+		assert.Error(t, err)
+		assert.Nil(t, urc)
+		assert.Nil(t, uru)
+	})
+
+	t.Run("Should return error when delete users is nil", func(t *testing.T) {
+		mockSCIMService := mocks.NewMockSCIMService(mockCtrl)
+
+		create := &model.UsersResult{Items: 0, Resources: []model.User{}}
+		update := &model.UsersResult{Items: 0, Resources: []model.User{}}
+
+		urc, uru, err := reconcilingUsers(ctx, mockSCIMService, create, update, nil)
+		assert.Error(t, err)
+		assert.Nil(t, urc)
+		assert.Nil(t, uru)
 	})
 }

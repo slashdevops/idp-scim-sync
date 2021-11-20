@@ -8,9 +8,33 @@ import (
 	"github.com/slashdevops/idp-scim-sync/internal/model"
 )
 
+var (
+	ErrCreateGroupsResultNil        = fmt.Errorf("create Groups Result is nil")
+	ErrUpdateGroupsResultNil        = fmt.Errorf("update Groups Result is nil")
+	ErrDeleteGroupsResultNil        = fmt.Errorf("delete Groups Result is nil")
+	ErrCreateUsersResultNil         = fmt.Errorf("create Users Result is nil")
+	ErrUpdateUsersResultNil         = fmt.Errorf("update Users Result is nil")
+	ErrDeleteUsersResultNil         = fmt.Errorf("delete Users Result is nil")
+	ErrCreateGroupsMembersResultNil = fmt.Errorf("create Groups Members Result is nil")
+	ErrDeleteGroupsMembersResultNil = fmt.Errorf("delete Groups Members Result is nil")
+)
+
 // reconcilingGroups receives lists of groups to create, update, equals and delete in the SCIM service
 // returns the lists of groups created and updated in the SCIM service with the Ids of these groups.
 func reconcilingGroups(ctx context.Context, scim SCIMService, create *model.GroupsResult, update *model.GroupsResult, delete *model.GroupsResult) (created *model.GroupsResult, updated *model.GroupsResult, e error) {
+	if scim == nil {
+		return nil, nil, ErrSCIMServiceNil
+	}
+	if create == nil {
+		return nil, nil, ErrCreateGroupsResultNil
+	}
+	if update == nil {
+		return nil, nil, ErrUpdateGroupsResultNil
+	}
+	if delete == nil {
+		return nil, nil, ErrDeleteGroupsResultNil
+	}
+
 	var err error
 
 	if create.Items == 0 {
@@ -53,6 +77,19 @@ func reconcilingGroups(ctx context.Context, scim SCIMService, create *model.Grou
 // reconcilingUsers creates, updates and deletes users in the SCIM service
 // returns the lists of users created and updated in the SCIM service with the Ids of these users in the SCIM service
 func reconcilingUsers(ctx context.Context, scim SCIMService, create *model.UsersResult, update *model.UsersResult, delete *model.UsersResult) (created *model.UsersResult, updated *model.UsersResult, e error) {
+	if scim == nil {
+		return nil, nil, ErrSCIMServiceNil
+	}
+	if create == nil {
+		return nil, nil, ErrCreateUsersResultNil
+	}
+	if update == nil {
+		return nil, nil, ErrUpdateUsersResultNil
+	}
+	if delete == nil {
+		return nil, nil, ErrDeleteUsersResultNil
+	}
+
 	var err error
 
 	if create.Items == 0 {
@@ -92,6 +129,16 @@ func reconcilingUsers(ctx context.Context, scim SCIMService, create *model.Users
 // reconcilingGroupsMembers creates and deletes the members of the groups in the SCIM service
 // returns the lists of groups members created in the SCIM service with the Ids of these groups members in the SCIM service
 func reconcilingGroupsMembers(ctx context.Context, scim SCIMService, create *model.GroupsMembersResult, delete *model.GroupsMembersResult) (created *model.GroupsMembersResult, e error) {
+	if scim == nil {
+		return nil, ErrSCIMServiceNil
+	}
+	if create == nil {
+		return nil, ErrCreateGroupsMembersResultNil
+	}
+	if delete == nil {
+		return nil, ErrDeleteGroupsMembersResultNil
+	}
+
 	var err error
 
 	if create.Items == 0 {
