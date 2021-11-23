@@ -273,7 +273,7 @@ func TestReconcilingUsers(t *testing.T) {
 	})
 }
 
-func TestSyncReconcilingGroupsMembers(t *testing.T) {
+func TestReconcilingGroupsMembers(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 	ctx := context.TODO()

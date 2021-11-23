@@ -576,7 +576,7 @@ func TestUsersOperations(t *testing.T) {
 	}
 }
 
-func Test_membersOperations(t *testing.T) {
+func TestMembersOperations(t *testing.T) {
 	type args struct {
 		idp  *model.GroupsMembersResult
 		scim *model.GroupsMembersResult
@@ -590,7 +590,7 @@ func Test_membersOperations(t *testing.T) {
 		wantErr    bool
 	}{
 		{
-			name: "empty",
+			name: "empty, return empty",
 			args: args{
 				idp:  &model.GroupsMembersResult{},
 				scim: &model.GroupsMembersResult{},
@@ -610,7 +610,7 @@ func Test_membersOperations(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "nil idp",
+			name: "nil idp, return error",
 			args: args{
 				idp:  nil,
 				scim: &model.GroupsMembersResult{},
@@ -621,7 +621,7 @@ func Test_membersOperations(t *testing.T) {
 			wantErr:    true,
 		},
 		{
-			name: "nil scim",
+			name: "nil scim, return error",
 			args: args{
 				idp:  &model.GroupsMembersResult{},
 				scim: nil,
@@ -748,7 +748,7 @@ func Test_membersOperations(t *testing.T) {
 	}
 }
 
-func Test_mergeGroupsResult(t *testing.T) {
+func TestMergeGroupsResult(t *testing.T) {
 	type args struct {
 		grs []*model.GroupsResult
 	}
@@ -821,7 +821,7 @@ func Test_mergeGroupsResult(t *testing.T) {
 	}
 }
 
-func Test_mergeUsersResult(t *testing.T) {
+func TestMergeUsersResult(t *testing.T) {
 	type args struct {
 		urs []*model.UsersResult
 	}
@@ -894,7 +894,7 @@ func Test_mergeUsersResult(t *testing.T) {
 	}
 }
 
-func Test_mergeGroupsMembersResult(t *testing.T) {
+func TestMergeGroupsMembersResult(t *testing.T) {
 	type args struct {
 		gms []*model.GroupsMembersResult
 	}
@@ -904,7 +904,7 @@ func Test_mergeGroupsMembersResult(t *testing.T) {
 		wantMerged model.GroupsMembersResult
 	}{
 		{
-			name: "merge empty",
+			name: "empty",
 			args: args{
 				gms: []*model.GroupsMembersResult{},
 			},
@@ -926,7 +926,7 @@ func Test_mergeGroupsMembersResult(t *testing.T) {
 			},
 		},
 		{
-			name: "two groups members",
+			name: "two groups, two members each",
 			args: args{
 				gms: []*model.GroupsMembersResult{
 					{
@@ -975,6 +975,78 @@ func Test_mergeGroupsMembersResult(t *testing.T) {
 						Group: model.Group{IPID: "2", SCIMID: "2", Name: "group 2", Email: "group.2@mail.com", HashCode: "0987654321"},
 						Resources: []model.Member{
 							{IPID: "1", SCIMID: "1", Email: "user.1@gmail.com", HashCode: "1234567890"},
+							{IPID: "3", SCIMID: "3", Email: "user.3@gmail.com", HashCode: "5612309870"},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "three groups, one members each",
+			args: args{
+				gms: []*model.GroupsMembersResult{
+					{
+						Items:    1,
+						HashCode: "123",
+						Resources: []model.GroupMembers{
+							{
+								Items: 1,
+								Group: model.Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: "1234567890"},
+								Resources: []model.Member{
+									{IPID: "1", SCIMID: "1", Email: "user.1@gmail.com", HashCode: "1234567890"},
+								},
+							},
+						},
+					},
+					{
+						Items:    1,
+						HashCode: "321",
+						Resources: []model.GroupMembers{
+							{
+								Items: 1,
+								Group: model.Group{IPID: "2", SCIMID: "2", Name: "group 2", Email: "group.2@mail.com", HashCode: "0987654321"},
+								Resources: []model.Member{
+									{IPID: "2", SCIMID: "2", Email: "user.2@gmail.com", HashCode: "0987654321"},
+								},
+							},
+						},
+					},
+					{
+						Items:    1,
+						HashCode: "321",
+						Resources: []model.GroupMembers{
+							{
+								Items: 1,
+								Group: model.Group{IPID: "3", SCIMID: "3", Name: "group 3", Email: "group.3@mail.com", HashCode: "6543219870"},
+								Resources: []model.Member{
+									{IPID: "3", SCIMID: "3", Email: "user.3@gmail.com", HashCode: "5612309870"},
+								},
+							},
+						},
+					},
+				},
+			},
+			wantMerged: model.GroupsMembersResult{
+				Items: 3,
+				Resources: []model.GroupMembers{
+					{
+						Items: 1,
+						Group: model.Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: "1234567890"},
+						Resources: []model.Member{
+							{IPID: "1", SCIMID: "1", Email: "user.1@gmail.com", HashCode: "1234567890"},
+						},
+					},
+					{
+						Items: 1,
+						Group: model.Group{IPID: "2", SCIMID: "2", Name: "group 2", Email: "group.2@mail.com", HashCode: "0987654321"},
+						Resources: []model.Member{
+							{IPID: "2", SCIMID: "2", Email: "user.2@gmail.com", HashCode: "0987654321"},
+						},
+					},
+					{
+						Items: 1,
+						Group: model.Group{IPID: "3", SCIMID: "3", Name: "group 3", Email: "group.3@mail.com", HashCode: "6543219870"},
+						Resources: []model.Member{
 							{IPID: "3", SCIMID: "3", Email: "user.3@gmail.com", HashCode: "5612309870"},
 						},
 					},
