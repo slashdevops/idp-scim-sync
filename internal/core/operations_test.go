@@ -652,10 +652,10 @@ func TestMembersOperations(t *testing.T) {
 					Resources: []model.GroupMembers{
 						{
 							Items: 1,
-							Group: model.Group{IPID: "1", Name: "group 1", Email: "group.1@mail.com"},
+							Group: model.Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com"},
 							Resources: []model.Member{
-								{IPID: "1", Email: "user.1@mail.com"},
-								{IPID: "3", Email: "user.3@mail.com"},
+								{IPID: "1", SCIMID: "1", Email: "user.1@mail.com"},
+								{IPID: "3", SCIMID: "3", Email: "user.3@mail.com"},
 							},
 						},
 					},
@@ -666,13 +666,13 @@ func TestMembersOperations(t *testing.T) {
 				Resources: []model.GroupMembers{
 					{
 						Items: 1,
-						Group: model.Group{IPID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: hash.Get(&model.Group{IPID: "1", Name: "group 1", Email: "group.1@mail.com"})},
+						Group: model.Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: hash.Get(&model.Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com"})},
 						Resources: []model.Member{
 							{IPID: "2", Email: "user.2@mail.com"},
 						},
 						HashCode: hash.Get(&model.GroupMembers{
 							Items: 1,
-							Group: model.Group{IPID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: hash.Get(&model.Group{IPID: "1", Name: "group 1", Email: "group.1@mail.com"})},
+							Group: model.Group{IPID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: hash.Get(&model.Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com"})},
 							Resources: []model.Member{
 								{IPID: "2", Email: "user.2@mail.com"},
 							},
@@ -685,15 +685,15 @@ func TestMembersOperations(t *testing.T) {
 				Resources: []model.GroupMembers{
 					{
 						Items: 1,
-						Group: model.Group{IPID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: hash.Get(&model.Group{IPID: "1", Name: "group 1", Email: "group.1@mail.com"})},
+						Group: model.Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: hash.Get(&model.Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com"})},
 						Resources: []model.Member{
-							{IPID: "1", Email: "user.1@mail.com"},
+							{IPID: "1", SCIMID: "1", Email: "user.1@mail.com"},
 						},
 						HashCode: hash.Get(&model.GroupMembers{
 							Items: 1,
-							Group: model.Group{IPID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: hash.Get(&model.Group{IPID: "1", Name: "group 1", Email: "group.1@mail.com"})},
+							Group: model.Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: hash.Get(&model.Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com"})},
 							Resources: []model.Member{
-								{IPID: "1", Email: "user.1@mail.com"},
+								{IPID: "1", SCIMID: "1", Email: "user.1@mail.com"},
 							},
 						}),
 					},
@@ -704,15 +704,15 @@ func TestMembersOperations(t *testing.T) {
 				Resources: []model.GroupMembers{
 					{
 						Items: 1,
-						Group: model.Group{IPID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: hash.Get(&model.Group{IPID: "1", Name: "group 1", Email: "group.1@mail.com"})},
+						Group: model.Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: hash.Get(&model.Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com"})},
 						Resources: []model.Member{
-							{IPID: "3", Email: "user.3@mail.com"},
+							{IPID: "3", SCIMID: "3", Email: "user.3@mail.com"},
 						},
 						HashCode: hash.Get(&model.GroupMembers{
 							Items: 1,
-							Group: model.Group{IPID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: hash.Get(&model.Group{IPID: "1", Name: "group 1", Email: "group.1@mail.com"})},
+							Group: model.Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: hash.Get(&model.Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com"})},
 							Resources: []model.Member{
-								{IPID: "3", Email: "user.3@mail.com"},
+								{IPID: "3", SCIMID: "3", Email: "user.3@mail.com"},
 							},
 						}),
 					},
