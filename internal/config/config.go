@@ -32,6 +32,8 @@ type Config struct {
 
 	// SyncMethod allow to defined the sync method used to get the user and groups from Google Workspace
 	SyncMethod string `mapstructure:"sync_method"`
+
+	StateEnabled bool `mapstructure:"state_enabled"`
 }
 
 const (
@@ -66,6 +68,9 @@ const (
 
 	// DefaultSCIMAccessTokenSecretName is the name of the secret containing the SCIM access token.
 	DefaultSCIMAccessTokenSecretName = "IDPSCIM_SCIMAccessToken"
+
+	// DefaultStateEnabled is the default state enabled status.
+	DefaultStateEnabled = false
 )
 
 // New returns a new Config
@@ -81,6 +86,7 @@ func New() Config {
 		GWSUserEmailSecretName:          DefaultGWSUserEmailSecretName,
 		SCIMEndpointSecretName:          DefaultSCIMEndpointSecretName,
 		SCIMAccessTokenSecretName:       DefaultSCIMAccessTokenSecretName,
+		StateEnabled:                    DefaultStateEnabled,
 	}
 }
 

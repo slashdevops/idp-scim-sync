@@ -487,7 +487,7 @@ func (s *SCIMProvider) CreateGroupsMembers(ctx context.Context, gmr *model.Group
 			},
 		}
 
-		log.Tracef("patchGroupRequest: %s\n", utils.ToJSON(patchGroupRequest))
+		// log.Tracef("patchGroupRequest: %s\n", utils.ToJSON(patchGroupRequest))
 
 		if err := s.scim.PatchGroup(ctx, patchGroupRequest); err != nil {
 			return nil, fmt.Errorf("scim: error patching group: %w", err)

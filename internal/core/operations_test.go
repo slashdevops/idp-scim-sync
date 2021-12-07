@@ -632,13 +632,13 @@ func TestMembersOperations(t *testing.T) {
 			wantErr:    true,
 		},
 		{
-			name: "same group: 1 add, 1 equal, 1 delete",
+			name: "one group: 1 add, 1 equal, 1 delete",
 			args: args{
 				idp: &model.GroupsMembersResult{
 					Items: 1,
 					Resources: []model.GroupMembers{
 						{
-							Items: 1,
+							Items: 2,
 							Group: model.Group{IPID: "1", Name: "group 1", Email: "group.1@mail.com"},
 							Resources: []model.Member{
 								{IPID: "1", Email: "user.1@mail.com"},
@@ -651,7 +651,7 @@ func TestMembersOperations(t *testing.T) {
 					Items: 1,
 					Resources: []model.GroupMembers{
 						{
-							Items: 1,
+							Items: 2,
 							Group: model.Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com"},
 							Resources: []model.Member{
 								{IPID: "1", SCIMID: "1", Email: "user.1@mail.com"},
@@ -717,6 +717,242 @@ func TestMembersOperations(t *testing.T) {
 						}),
 					},
 				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "two groups: g1 -> add 1, g1 -> equal 1, g2 -> equal 1, g1 -> delete 1, g2 -> delete 1",
+			args: args{
+				idp: &model.GroupsMembersResult{
+					Items: 2,
+					Resources: []model.GroupMembers{
+						{
+							Items: 2,
+							Group: model.Group{IPID: "1", Name: "group 1", Email: "group.1@mail.com"},
+							Resources: []model.Member{
+								{IPID: "1", Email: "user.1@mail.com"},
+								{IPID: "2", Email: "user.2@mail.com"},
+							},
+						},
+						{
+							Items: 1,
+							Group: model.Group{IPID: "2", Name: "group 2", Email: "group.2@mail.com"},
+							Resources: []model.Member{
+								{IPID: "3", Email: "user.3@mail.com"},
+							},
+						},
+					},
+				},
+				scim: &model.GroupsMembersResult{
+					Items: 2,
+					Resources: []model.GroupMembers{
+						{
+							Items: 2,
+							Group: model.Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com"},
+							Resources: []model.Member{
+								{IPID: "2", SCIMID: "2", Email: "user.2@mail.com"},
+								{IPID: "3", SCIMID: "3", Email: "user.3@mail.com"},
+							},
+						},
+						{
+							Items: 2,
+							Group: model.Group{IPID: "2", SCIMID: "2", Name: "group 2", Email: "group.2@mail.com"},
+							Resources: []model.Member{
+								{IPID: "1", SCIMID: "1", Email: "user.1@mail.com"},
+								{IPID: "3", SCIMID: "3", Email: "user.3@mail.com"},
+							},
+						},
+					},
+				},
+			},
+			wantCreate: &model.GroupsMembersResult{
+				Items: 1,
+				Resources: []model.GroupMembers{
+					{
+						Items: 1,
+						Group: model.Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: hash.Get(&model.Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com"})},
+						Resources: []model.Member{
+							{IPID: "1", Email: "user.1@mail.com"},
+						},
+						HashCode: hash.Get(&model.GroupMembers{
+							Items: 1,
+							Group: model.Group{IPID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: hash.Get(&model.Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com"})},
+							Resources: []model.Member{
+								{IPID: "1", Email: "user.1@mail.com"},
+							},
+						}),
+					},
+				},
+			},
+			wantEqual: &model.GroupsMembersResult{
+				Items: 2,
+				Resources: []model.GroupMembers{
+					{
+						Items: 1,
+						Group: model.Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: hash.Get(&model.Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com"})},
+						Resources: []model.Member{
+							{IPID: "2", SCIMID: "2", Email: "user.2@mail.com"},
+						},
+						HashCode: hash.Get(&model.GroupMembers{
+							Items: 1,
+							Group: model.Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: hash.Get(&model.Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com"})},
+							Resources: []model.Member{
+								{IPID: "2", SCIMID: "2", Email: "user.2@mail.com"},
+							},
+						}),
+					},
+					{
+						Items: 1,
+						Group: model.Group{IPID: "2", SCIMID: "2", Name: "group 2", Email: "group.2@mail.com", HashCode: hash.Get(&model.Group{IPID: "2", SCIMID: "2", Name: "group 2", Email: "group.2@mail.com"})},
+						Resources: []model.Member{
+							{IPID: "3", SCIMID: "3", Email: "user.3@mail.com"},
+						},
+						HashCode: hash.Get(&model.GroupMembers{
+							Items: 1,
+							Group: model.Group{IPID: "2", SCIMID: "2", Name: "group 2", Email: "group.2@mail.com", HashCode: hash.Get(&model.Group{IPID: "2", SCIMID: "2", Name: "group 2", Email: "group.2@mail.com"})},
+							Resources: []model.Member{
+								{IPID: "3", SCIMID: "3", Email: "user.3@mail.com"},
+							},
+						}),
+					},
+				},
+			},
+			wantDelete: &model.GroupsMembersResult{
+				Items: 2,
+				Resources: []model.GroupMembers{
+					{
+						Items: 1,
+						Group: model.Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: hash.Get(&model.Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com"})},
+						Resources: []model.Member{
+							{IPID: "3", SCIMID: "3", Email: "user.3@mail.com"},
+						},
+						HashCode: hash.Get(&model.GroupMembers{
+							Items: 1,
+							Group: model.Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: hash.Get(&model.Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com"})},
+							Resources: []model.Member{
+								{IPID: "3", SCIMID: "3", Email: "user.3@mail.com"},
+							},
+						}),
+					},
+					{
+						Items: 1,
+						Group: model.Group{IPID: "2", SCIMID: "2", Name: "group 2", Email: "group.2@mail.com", HashCode: hash.Get(&model.Group{IPID: "2", SCIMID: "2", Name: "group 2", Email: "group.2@mail.com"})},
+						Resources: []model.Member{
+							{IPID: "1", SCIMID: "1", Email: "user.1@mail.com"},
+						},
+						HashCode: hash.Get(&model.GroupMembers{
+							Items: 1,
+							Group: model.Group{IPID: "2", SCIMID: "2", Name: "group 2", Email: "group.2@mail.com", HashCode: hash.Get(&model.Group{IPID: "2", SCIMID: "2", Name: "group 2", Email: "group.2@mail.com"})},
+							Resources: []model.Member{
+								{IPID: "1", SCIMID: "1", Email: "user.1@mail.com"},
+							},
+						}),
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "two groups: 2 equals, 1 add",
+			args: args{
+				idp: &model.GroupsMembersResult{
+					Items: 2,
+					Resources: []model.GroupMembers{
+						{
+							Items: 2,
+							Group: model.Group{IPID: "1", Name: "group 1", Email: "group.1@mail.com"},
+							Resources: []model.Member{
+								{IPID: "1", Email: "user.1@mail.com"},
+								{IPID: "2", Email: "user.2@mail.com"},
+							},
+						},
+						{
+							Items: 1,
+							Group: model.Group{IPID: "2", Name: "group 2", Email: "group.2@mail.com"},
+							Resources: []model.Member{
+								{IPID: "3", Email: "user.3@mail.com"},
+							},
+						},
+						{
+							Items:     0,
+							Group:     model.Group{IPID: "3", Name: "group 3", Email: "group.3@mail.com"},
+							Resources: []model.Member{},
+						},
+					},
+				},
+				scim: &model.GroupsMembersResult{
+					Items: 2,
+					Resources: []model.GroupMembers{
+						{
+							Items: 2,
+							Group: model.Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com"},
+							Resources: []model.Member{
+								{IPID: "1", SCIMID: "1", Email: "user.1@mail.com"},
+								{IPID: "2", SCIMID: "2", Email: "user.2@mail.com"},
+							},
+						},
+						{
+							Items:     0,
+							Group:     model.Group{IPID: "2", SCIMID: "2", Name: "group 2", Email: "group.2@mail.com"},
+							Resources: []model.Member{},
+						},
+						{
+							Items:     0,
+							Group:     model.Group{IPID: "3", SCIMID: "3", Name: "group 3", Email: "group.3@mail.com"},
+							Resources: []model.Member{},
+						},
+					},
+				},
+			},
+			wantCreate: &model.GroupsMembersResult{
+				Items:    1,
+				HashCode: "",
+				Resources: []model.GroupMembers{
+					{
+						Items: 1,
+						Group: model.Group{IPID: "2", SCIMID: "2", Name: "group 2", Email: "group.2@mail.com", HashCode: hash.Get(&model.Group{IPID: "2", SCIMID: "2", Name: "group 2", Email: "group.2@mail.com"})},
+						Resources: []model.Member{
+							{IPID: "3", Email: "user.3@mail.com"},
+						},
+						HashCode: hash.Get(&model.GroupMembers{
+							Items: 1,
+							Group: model.Group{IPID: "2", SCIMID: "2", Name: "group 2", Email: "group.2@mail.com", HashCode: hash.Get(&model.Group{IPID: "2", SCIMID: "2", Name: "group 2", Email: "group.2@mail.com"})}, Resources: []model.Member{
+								{IPID: "3", Email: "user.3@mail.com"},
+							},
+						}),
+					},
+				},
+			},
+			wantEqual: &model.GroupsMembersResult{
+				Items: 2,
+				Resources: []model.GroupMembers{
+					{
+						Items: 2,
+						Group: model.Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: hash.Get(&model.Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com"})},
+						Resources: []model.Member{
+							{IPID: "1", SCIMID: "1", Email: "user.1@mail.com"},
+							{IPID: "2", SCIMID: "2", Email: "user.2@mail.com"},
+						},
+						HashCode: hash.Get(&model.GroupMembers{
+							Items: 2,
+							Group: model.Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: hash.Get(&model.Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com"})},
+							Resources: []model.Member{
+								{IPID: "1", SCIMID: "1", Email: "user.1@mail.com"},
+								{IPID: "2", SCIMID: "2", Email: "user.2@mail.com"},
+							},
+						}),
+					},
+					{
+						Items:     0,
+						Group:     model.Group{IPID: "3", SCIMID: "3", Name: "group 3", Email: "group.3@mail.com", HashCode: hash.Get(&model.Group{IPID: "3", SCIMID: "3", Name: "group 3", Email: "group.3@mail.com"})},
+						Resources: []model.Member{},
+					},
+				},
+			},
+			wantDelete: &model.GroupsMembersResult{
+				Items:     0,
+				HashCode:  "",
+				Resources: []model.GroupMembers{},
 			},
 			wantErr: false,
 		},

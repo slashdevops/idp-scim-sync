@@ -56,7 +56,7 @@ func init() {
 
 	rootCmd.PersistentFlags().BoolVarP(&cfg.Debug, "debug", "d", config.DefaultDebug, "fast way to set the log-level to debug")
 	rootCmd.PersistentFlags().StringVarP(&cfg.LogFormat, "log-format", "f", config.DefaultLogFormat, "set the log format")
-	rootCmd.PersistentFlags().StringVarP(&cfg.LogLevel, "log-level", "l", config.DefaultLogLevel, "set the log level (panic|fatal|error|warn|info|debug|trace)")
+	rootCmd.PersistentFlags().StringVarP(&cfg.LogLevel, "log-level", "l", config.DefaultLogLevel, "set the log level [panic|fatal|error|warn|info|debug|trace]")
 
 	rootCmd.PersistentFlags().StringVarP(&cfg.SCIMAccessToken, "aws-scim-access-token", "t", "", "AWS SSO SCIM API Access Token")
 	_ = rootCmd.MarkPersistentFlagRequired("aws-scim-access-token")
@@ -73,13 +73,15 @@ func init() {
 	rootCmd.Flags().StringSliceVarP(&cfg.GWSGroupsFilter, "query-groups", "q", []string{""}, "Google Workspace Groups query parameter, example: --query-groups 'name:Admin* email:admin*' --query-groups 'name:Power* email:power*', see: https://developers.google.com/admin-sdk/directory/v1/guides/search-groups")
 	rootCmd.Flags().StringSliceVarP(&cfg.GWSUsersFilter, "query-users", "r", []string{""}, "Google Workspace Users query parameter, example: --query-users 'name:Admin* email:admin*' --query-users 'name:Power* email:power*', see: https://developers.google.com/admin-sdk/directory/v1/guides/search-users")
 
-	rootCmd.PersistentFlags().StringVarP(&cfg.SyncMethod, "sync-method", "m", config.DefaultSyncMethod, "Sync method to use (groups)")
+	rootCmd.PersistentFlags().StringVarP(&cfg.SyncMethod, "sync-method", "m", config.DefaultSyncMethod, "Sync method to use [groups]")
 
 	rootCmd.PersistentFlags().StringVarP(&cfg.AWSS3BucketName, "aws-s3-bucket-name", "b", "", "AWS S3 Bucket name to store the state")
 	_ = rootCmd.MarkPersistentFlagRequired("aws-s3-bucket-name")
 
 	rootCmd.PersistentFlags().StringVarP(&cfg.AWSS3BucketKey, "aws-s3-bucket-key", "k", "", "AWS S3 Bucket key to store the state")
 	_ = rootCmd.MarkPersistentFlagRequired("aws-s3-bucket-key")
+
+	rootCmd.PersistentFlags().BoolVarP(&cfg.StateEnabled, "state-enabled", "n", config.DefaultStateEnabled, "enable state")
 }
 
 // initConfig reads in config file and ENV variables if set.
@@ -103,6 +105,7 @@ func initConfig() {
 		"scim_endpoint",
 		"scim_endpoint_secret_name",
 		"scim_access_token_secret_name",
+		"state_enabled",
 	}
 
 	for _, e := range envVars {

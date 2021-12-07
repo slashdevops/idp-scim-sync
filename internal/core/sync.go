@@ -193,6 +193,8 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 			return fmt.Errorf("error getting groups members from the SCIM service: %w", err)
 		}
 
+		log.Tracef("idpGroupsMembersResult: %s\n, scimGroupsMembersResult: %s\n", utils.ToJSON(idpGroupsMembersResult), utils.ToJSON(scimGroupsMembersResult))
+
 		log.WithFields(log.Fields{
 			"idp":  idpGroupsMembersResult.Items,
 			"scim": scimGroupsMembersResult.Items,
@@ -202,12 +204,14 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 			return fmt.Errorf("error reconciling groups members: %w", err)
 		}
 
+		log.Tracef("membersCreate: %s\n, membersEqual: %s\n, membersDelete: %s\n", utils.ToJSON(membersCreate), utils.ToJSON(membersEqual), utils.ToJSON(membersDelete))
+
 		membersCreated, err := reconcilingGroupsMembers(ss.ctx, ss.scim, membersCreate, membersDelete)
 		if err != nil {
 			return fmt.Errorf("error reconciling groups members: %w", err)
 		}
 
-		// log.Tracef("membersCreate: %s\n, membersEqual: %s\n, membersDelete: %s\n", utils.ToJSON(membersCreate), utils.ToJSON(membersEqual), utils.ToJSON(membersDelete))
+		// log.Tracef("membersCreated: %s\n", utils.ToJSON(membersCreated))
 		// membersCreate + membersEqual = members total
 		totalGroupsMembersResult = mergeGroupsMembersResult(membersCreated, membersEqual)
 
@@ -288,7 +292,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 		} else {
 			log.Info("provider groups-members and state groups-members are diferent")
 
-			// log.Tracef("stateGroupsMembersResult: %s\n", utils.ToJSON(state.Resources.GroupsMembers))
+			log.Tracef("idpGroupsMembersResult: %s, stateGroupsMembersResult: %s\n", utils.ToJSON(idpGroupsMembersResult), utils.ToJSON(state.Resources.GroupsMembers))
 
 			// if we create a group or user during the sync, we need the scimid of these new groups/users
 			// because to add members to a group the scim api needs that.
