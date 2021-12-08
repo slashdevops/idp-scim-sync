@@ -333,6 +333,7 @@ func (s *SCIMProvider) UpdateUsers(ctx context.Context, ur *model.UsersResult) (
 		userRequest := &aws.PutUserRequest{
 			ID:          user.SCIMID,
 			DisplayName: user.DisplayName,
+			UserName:    user.Email,
 			ExternalId:  user.IPID,
 			Name: aws.Name{
 				FamilyName: user.Name.FamilyName,
@@ -340,8 +341,9 @@ func (s *SCIMProvider) UpdateUsers(ctx context.Context, ur *model.UsersResult) (
 			},
 			Emails: []aws.Email{
 				{
-					Value: user.Email,
-					Type:  "work",
+					Value:   user.Email,
+					Type:    "work",
+					Primary: true,
 				},
 			},
 			Active: user.Active,
@@ -354,10 +356,12 @@ func (s *SCIMProvider) UpdateUsers(ctx context.Context, ur *model.UsersResult) (
 			"scimid": user.SCIMID,
 		}).Trace("updating user (details)")
 
+		log.Tracef("scim: updating user -> userRequest: %s", utils.ToJSON(userRequest))
+
 		log.WithFields(log.Fields{
 			"user":  user.DisplayName,
 			"email": user.Email,
-		}).Trace("updating user")
+		}).Debug("updating user")
 
 		r, err := s.scim.PutUser(ctx, userRequest)
 		if err != nil {

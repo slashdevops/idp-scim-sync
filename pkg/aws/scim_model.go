@@ -200,8 +200,8 @@ type PutUserRequest struct {
 	UserName    string  `json:"userName"`
 	Name        Name    `json:"name"`
 	DisplayName string  `json:"displayName"`
-	NickName    string  `json:"nickName"`
-	ProfileURL  string  `json:"profileURL"`
+	NickName    string  `json:"nickName,omitempty"`
+	ProfileURL  string  `json:"profileURL,omitempty"`
 	Active      bool    `json:"active"`
 	Emails      []Email `json:"emails"`
 }

@@ -175,7 +175,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 		}).Info("reconciling users")
 		usersCreate, usersUpdate, usersEqual, usersDelete, err := usersOperations(idpUsersResult, scimUsersResult)
 		if err != nil {
-			return fmt.Errorf("error reconciling users: %w", err)
+			return fmt.Errorf("error operating with users: %w", err)
 		}
 
 		usersCreated, usersUpdated, err := reconcilingUsers(ss.ctx, ss.scim, usersCreate, usersUpdate, usersDelete)
@@ -273,7 +273,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 			}).Info("reconciling users")
 			usersCreate, usersUpdate, usersEqual, usersDelete, err := usersOperations(idpUsersResult, &state.Resources.Users)
 			if err != nil {
-				return fmt.Errorf("error reconciling users: %w", err)
+				return fmt.Errorf("error operating with users: %w", err)
 			}
 
 			usersCreated, usersUpdated, err := reconcilingUsers(ss.ctx, ss.scim, usersCreate, usersUpdate, usersDelete)
