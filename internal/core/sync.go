@@ -293,6 +293,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 			log.Info("provider groups-members and state groups-members are diferent")
 
 			log.Tracef("idpGroupsMembersResult: %s, stateGroupsMembersResult: %s\n", utils.ToJSON(idpGroupsMembersResult), utils.ToJSON(state.Resources.GroupsMembers))
+			log.Tracef("totalGroupsResult: %s, totalUsersResult: %s\n", utils.ToJSON(&totalGroupsResult), utils.ToJSON(&totalUsersResult))
 
 			// if we create a group or user during the sync, we need the scimid of these new groups/users
 			// because to add members to a group the scim api needs that.
@@ -304,7 +305,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 				"idp":   idpGroupsMembersResult.Items,
 				"state": state.Resources.GroupsMembers.Items,
 			}).Info("reconciling groups members")
-			// membersCreate, membersEqual, membersDelete := membersOperations(idpGroupsMembersResult, &state.Resources.GroupsMembers)
+
 			membersCreate, membersEqual, membersDelete, err := membersOperations(groupsMembers, &state.Resources.GroupsMembers)
 			if err != nil {
 				return fmt.Errorf("error reconciling groups members: %w", err)
@@ -312,14 +313,12 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 
 			log.Tracef("membersCreate: %s\n, membersEqual: %s\n, membersDelete: %s\n", utils.ToJSON(membersCreate), utils.ToJSON(membersEqual), utils.ToJSON(membersDelete))
 
-			membersCreated, err := reconcilingGroupsMembers(ss.ctx, ss.scim, membersCreate, membersDelete)
+			_, err = reconcilingGroupsMembers(ss.ctx, ss.scim, membersCreate, membersDelete)
 			if err != nil {
 				return fmt.Errorf("error reconciling groups members: %w", err)
 			}
 
-			// membersCreate + membersEqual = members total
-			totalGroupsMembersResult = mergeGroupsMembersResult(membersCreated, membersEqual)
-
+			totalGroupsMembersResult = mergeGroupsMembersResult(groupsMembers)
 		}
 	}
 
@@ -342,7 +341,6 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 		"lastSycn": newState.LastSync,
 		"groups":   totalGroupsResult.Items,
 		"users":    totalUsersResult.Items,
-		"members":  totalGroupsMembersResult.Items,
 	}).Info("storing the new state")
 
 	// TODO: avoid this step using a cmd flag, could be a nice feature
@@ -361,61 +359,4 @@ func (ss *SyncService) SyncGroupsAndUsers() error {
 	defer ss.mu.Unlock()
 
 	return errors.New("not implemented")
-}
-
-func updateSCIMID(idp *model.GroupsMembersResult, scimGroups *model.GroupsResult, scimUsers *model.UsersResult) *model.GroupsMembersResult {
-	groups := make(map[string]model.Group)
-	users := make(map[string]model.User)
-
-	log.Tracef("groups created: %s", utils.ToJSON(scimGroups))
-	log.Tracef("users created: %s", utils.ToJSON(scimUsers))
-
-	for _, group := range scimGroups.Resources {
-		groups[group.Name] = group
-	}
-
-	for _, user := range scimUsers.Resources {
-		users[user.Email] = user
-	}
-
-	gms := make([]model.GroupMembers, 0)
-	for _, groupMembers := range idp.Resources {
-
-		mbs := make([]model.Member, 0)
-
-		g := model.Group{
-			IPID:   groupMembers.Group.IPID,
-			SCIMID: groups[groupMembers.Group.Name].SCIMID,
-			Name:   groupMembers.Group.Name,
-			Email:  groupMembers.Group.Email,
-		}
-		g.SetHashCode()
-
-		for _, member := range groupMembers.Resources {
-			m := model.Member{
-				IPID:   member.IPID,
-				SCIMID: users[member.Email].SCIMID,
-				Email:  member.Email,
-			}
-			m.SetHashCode()
-			mbs = append(mbs, m)
-		}
-
-		gm := model.GroupMembers{
-			Items:     len(mbs),
-			Group:     g,
-			Resources: mbs,
-		}
-		gm.SetHashCode()
-
-		gms = append(gms, gm)
-	}
-
-	gmr := &model.GroupsMembersResult{
-		Items:     idp.Items,
-		Resources: gms,
-	}
-	gmr.SetHashCode()
-
-	return gmr
 }

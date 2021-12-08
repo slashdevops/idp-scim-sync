@@ -418,3 +418,60 @@ func mergeGroupsMembersResult(gms ...*model.GroupsMembersResult) (merged model.G
 
 	return
 }
+
+func updateSCIMID(idp *model.GroupsMembersResult, scimGroups *model.GroupsResult, scimUsers *model.UsersResult) *model.GroupsMembersResult {
+	groups := make(map[string]model.Group)
+	users := make(map[string]model.User)
+
+	// log.Tracef("groups created: %s", utils.ToJSON(scimGroups))
+	// log.Tracef("users created: %s", utils.ToJSON(scimUsers))
+
+	for _, group := range scimGroups.Resources {
+		groups[group.Name] = group
+	}
+
+	for _, user := range scimUsers.Resources {
+		users[user.Email] = user
+	}
+
+	gms := make([]model.GroupMembers, 0)
+	for _, groupMembers := range idp.Resources {
+
+		mbs := make([]model.Member, 0)
+
+		g := model.Group{
+			IPID:   groupMembers.Group.IPID,
+			SCIMID: groups[groupMembers.Group.Name].SCIMID,
+			Name:   groupMembers.Group.Name,
+			Email:  groupMembers.Group.Email,
+		}
+		g.SetHashCode()
+
+		for _, member := range groupMembers.Resources {
+			m := model.Member{
+				IPID:   member.IPID,
+				SCIMID: users[member.Email].SCIMID,
+				Email:  member.Email,
+			}
+			m.SetHashCode()
+			mbs = append(mbs, m)
+		}
+
+		gm := model.GroupMembers{
+			Items:     len(mbs),
+			Group:     g,
+			Resources: mbs,
+		}
+		gm.SetHashCode()
+
+		gms = append(gms, gm)
+	}
+
+	gmr := &model.GroupsMembersResult{
+		Items:     idp.Items,
+		Resources: gms,
+	}
+	gmr.SetHashCode()
+
+	return gmr
+}
