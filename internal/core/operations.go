@@ -152,25 +152,19 @@ func membersOperations(idp, scim *model.GroupsMembersResult) (create *model.Grou
 		Items:     len(toCreate),
 		Resources: toCreate,
 	}
-	if create.Items > 0 {
-		create.SetHashCode()
-	}
+	create.SetHashCode()
 
 	equal = &model.GroupsMembersResult{
 		Items:     len(toEqual),
 		Resources: toEqual,
 	}
-	if equal.Items > 0 {
-		equal.SetHashCode()
-	}
+	equal.SetHashCode()
 
 	delete = &model.GroupsMembersResult{
 		Items:     len(toDelete),
 		Resources: toDelete,
 	}
-	if delete.Items > 0 {
-		delete.SetHashCode()
-	}
+	delete.SetHashCode()
 
 	return
 }
@@ -197,8 +191,6 @@ func groupsOperations(idp, scim *model.GroupsResult) (create *model.GroupsResult
 
 	idpGroups := make(map[string]struct{})     // [idp.Group.Name ] -> struct{}{}
 	scimGroups := make(map[string]model.Group) // [scim.Group.Name] -> scim.Group
-
-	// log.Tracef("idp: %s\n, scim: %s\n", utils.ToJSON(idp), utils.ToJSON(scim))
 
 	toCreate := make([]model.Group, 0)
 	toUpdate := make([]model.Group, 0)
@@ -240,33 +232,25 @@ func groupsOperations(idp, scim *model.GroupsResult) (create *model.GroupsResult
 		Items:     len(toCreate),
 		Resources: toCreate,
 	}
-	if create.Items > 0 {
-		create.SetHashCode()
-	}
+	create.SetHashCode()
 
 	update = &model.GroupsResult{
 		Items:     len(toUpdate),
 		Resources: toUpdate,
 	}
-	if update.Items > 0 {
-		update.SetHashCode()
-	}
+	update.SetHashCode()
 
 	equal = &model.GroupsResult{
 		Items:     len(toEqual),
 		Resources: toEqual,
 	}
-	if equal.Items > 0 {
-		equal.SetHashCode()
-	}
+	equal.SetHashCode()
 
 	delete = &model.GroupsResult{
 		Items:     len(toDelete),
 		Resources: toDelete,
 	}
-	if delete.Items > 0 {
-		delete.SetHashCode()
-	}
+	delete.SetHashCode()
 
 	return
 }
@@ -334,33 +318,25 @@ func usersOperations(idp, scim *model.UsersResult) (create *model.UsersResult, u
 		Items:     len(toCreate),
 		Resources: toCreate,
 	}
-	if create.Items > 0 {
-		create.SetHashCode()
-	}
+	create.SetHashCode()
 
 	update = &model.UsersResult{
 		Items:     len(toUpdate),
 		Resources: toUpdate,
 	}
-	if update.Items > 0 {
-		update.SetHashCode()
-	}
+	update.SetHashCode()
 
 	equal = &model.UsersResult{
 		Items:     len(toEqual),
 		Resources: toEqual,
 	}
-	if equal.Items > 0 {
-		equal.SetHashCode()
-	}
+	equal.SetHashCode()
 
 	delete = &model.UsersResult{
 		Items:     len(toDelete),
 		Resources: toDelete,
 	}
-	if delete.Items > 0 {
-		delete.SetHashCode()
-	}
+	delete.SetHashCode()
 
 	return
 }
@@ -376,9 +352,7 @@ func mergeGroupsResult(grs ...*model.GroupsResult) (merged model.GroupsResult) {
 		Items:     len(groups),
 		Resources: groups,
 	}
-	if merged.Items > 0 {
-		merged.SetHashCode()
-	}
+	merged.SetHashCode()
 
 	return
 }
@@ -394,9 +368,7 @@ func mergeUsersResult(urs ...*model.UsersResult) (merged model.UsersResult) {
 		Items:     len(users),
 		Resources: users,
 	}
-	if merged.Items > 0 {
-		merged.SetHashCode()
-	}
+	merged.SetHashCode()
 
 	return
 }
@@ -412,9 +384,7 @@ func mergeGroupsMembersResult(gms ...*model.GroupsMembersResult) (merged model.G
 		Items:     len(groupsMembers),
 		Resources: groupsMembers,
 	}
-	if merged.Items > 0 {
-		merged.SetHashCode()
-	}
+	merged.SetHashCode()
 
 	return
 }
@@ -422,9 +392,6 @@ func mergeGroupsMembersResult(gms ...*model.GroupsMembersResult) (merged model.G
 func updateSCIMID(idp *model.GroupsMembersResult, scimGroups *model.GroupsResult, scimUsers *model.UsersResult) *model.GroupsMembersResult {
 	groups := make(map[string]model.Group)
 	users := make(map[string]model.User)
-
-	// log.Tracef("groups created: %s", utils.ToJSON(scimGroups))
-	// log.Tracef("users created: %s", utils.ToJSON(scimUsers))
 
 	for _, group := range scimGroups.Resources {
 		groups[group.Name] = group

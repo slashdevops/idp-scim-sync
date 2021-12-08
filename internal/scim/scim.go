@@ -89,9 +89,7 @@ func (s *SCIMProvider) GetGroups(ctx context.Context) (*model.GroupsResult, erro
 		Items:     len(groups),
 		Resources: groups,
 	}
-	if len(groups) > 0 {
-		groupsResult.SetHashCode()
-	}
+	groupsResult.SetHashCode()
 
 	return groupsResult, nil
 }
@@ -132,9 +130,7 @@ func (s *SCIMProvider) CreateGroups(ctx context.Context, gr *model.GroupsResult)
 		Items:     len(groups),
 		Resources: groups,
 	}
-	if len(groups) > 0 {
-		ret.SetHashCode()
-	}
+	ret.SetHashCode()
 
 	return ret, nil
 }
@@ -195,9 +191,7 @@ func (s *SCIMProvider) UpdateGroups(ctx context.Context, gr *model.GroupsResult)
 		Items:     len(groups),
 		Resources: groups,
 	}
-	if len(groups) > 0 {
-		ret.SetHashCode()
-	}
+	ret.SetHashCode()
 
 	return ret, nil
 }
@@ -254,9 +248,7 @@ func (s *SCIMProvider) GetUsers(ctx context.Context) (*model.UsersResult, error)
 		Items:     len(users),
 		Resources: users,
 	}
-	if len(users) > 0 {
-		usersResult.SetHashCode()
-	}
+	usersResult.SetHashCode()
 
 	return usersResult, nil
 }
@@ -317,9 +309,7 @@ func (s *SCIMProvider) CreateUsers(ctx context.Context, ur *model.UsersResult) (
 		Items:     len(users),
 		Resources: users,
 	}
-	if len(users) > 0 {
-		ret.SetHashCode()
-	}
+	ret.SetHashCode()
 
 	return ret, nil
 }
@@ -388,9 +378,7 @@ func (s *SCIMProvider) UpdateUsers(ctx context.Context, ur *model.UsersResult) (
 		Items:     len(users),
 		Resources: users,
 	}
-	if len(users) > 0 {
-		ret.SetHashCode()
-	}
+	ret.SetHashCode()
 
 	return ret, nil
 }
@@ -491,8 +479,6 @@ func (s *SCIMProvider) CreateGroupsMembers(ctx context.Context, gmr *model.Group
 			},
 		}
 
-		// log.Tracef("patchGroupRequest: %s\n", utils.ToJSON(patchGroupRequest))
-
 		if err := s.scim.PatchGroup(ctx, patchGroupRequest); err != nil {
 			return nil, fmt.Errorf("scim: error patching group: %w", err)
 		}
@@ -502,9 +488,7 @@ func (s *SCIMProvider) CreateGroupsMembers(ctx context.Context, gmr *model.Group
 		Items:     len(groupsMembers),
 		Resources: groupsMembers,
 	}
-	if len(groupsMembers) > 0 {
-		ret.SetHashCode()
-	}
+	ret.SetHashCode()
 
 	return ret, nil
 }
@@ -614,9 +598,7 @@ func (s *SCIMProvider) GetGroupsMembers(ctx context.Context, gr *model.GroupsRes
 		Items:     len(groupMembers),
 		Resources: groupMembers,
 	}
-	if len(groupMembers) > 0 {
-		groupsMembersResult.SetHashCode()
-	}
+	groupsMembersResult.SetHashCode()
 
 	return groupsMembersResult, nil
 }
@@ -639,7 +621,6 @@ func (s *SCIMProvider) GetGroupsMembersBruteForce(ctx context.Context, gr *model
 			if err != nil {
 				return nil, fmt.Errorf("scim: error listing groups: %w", err)
 			}
-			// log.Tracef("lgr: lgr : %s", utils.ToJSON(lgr))
 
 			if lgr.TotalResults > 0 { // crazy thing of the AWS SSO SCIM API, it doesn't return the memnber into the Resources array
 				m := model.Member{
@@ -666,9 +647,7 @@ func (s *SCIMProvider) GetGroupsMembersBruteForce(ctx context.Context, gr *model
 		Items:     len(groupMembers),
 		Resources: groupMembers,
 	}
-	if len(groupMembers) > 0 {
-		groupsMembersResult.SetHashCode()
-	}
+	groupsMembersResult.SetHashCode()
 
 	return groupsMembersResult, nil
 }

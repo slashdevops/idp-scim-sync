@@ -88,9 +88,7 @@ func (i *IdentityProvider) GetGroups(ctx context.Context, filter []string) (*mod
 		Items:     len(syncGroups),
 		Resources: syncGroups,
 	}
-	if len(pGroups) > 0 {
-		syncResult.SetHashCode()
-	}
+	syncResult.SetHashCode()
 
 	return syncResult, nil
 }
@@ -125,9 +123,7 @@ func (i *IdentityProvider) GetUsers(ctx context.Context, filter []string) (*mode
 		Items:     len(pUsers),
 		Resources: syncUsers,
 	}
-	if len(pUsers) > 0 {
-		uResult.SetHashCode()
-	}
+	uResult.SetHashCode()
 
 	return uResult, nil
 }
@@ -159,9 +155,7 @@ func (i *IdentityProvider) GetGroupMembers(ctx context.Context, groupID string) 
 		Items:     len(pMembers),
 		Resources: syncMembers,
 	}
-	if len(pMembers) > 0 {
-		syncMembersResult.SetHashCode()
-	}
+	syncMembersResult.SetHashCode()
 
 	return syncMembersResult, nil
 }
@@ -192,9 +186,7 @@ func (i *IdentityProvider) GetUsersByGroupMembers(ctx context.Context, mbr *mode
 		Items:     len(pUsers),
 		Resources: pUsers,
 	}
-	if len(pUsers) > 0 {
-		pUsersResult.SetHashCode()
-	}
+	pUsersResult.SetHashCode()
 
 	return pUsersResult, nil
 }
@@ -254,9 +246,7 @@ func (i *IdentityProvider) GetGroupsMembers(ctx context.Context, gr *model.Group
 		Items:     len(groupMembers),
 		Resources: groupMembers,
 	}
-	if len(groupMembers) > 0 {
-		groupsMembersResult.SetHashCode()
-	}
+	groupsMembersResult.SetHashCode()
 
 	return groupsMembersResult, nil
 }
