@@ -4,12 +4,13 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
-	"net/http"
 	"os"
+	"time"
 
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/secretsmanager"
+	"github.com/hashicorp/go-retryablehttp"
 	"github.com/pkg/errors"
 	"github.com/slashdevops/idp-scim-sync/internal/config"
 	"github.com/slashdevops/idp-scim-sync/internal/core"
@@ -244,7 +245,18 @@ func syncGroups(cmd *cobra.Command, args []string) error {
 	}
 
 	// httpClient
-	httpClient := &http.Client{}
+	retryClient := retryablehttp.NewClient()
+	retryClient.RetryMax = 10
+	retryClient.RetryWaitMin = time.Millisecond * 100
+
+	if cfg.Debug {
+		retryClient.Logger = log.StandardLogger()
+	} else {
+		retryClient.Logger = nil
+	}
+
+	// httpClient := &http.Client{}
+	httpClient := retryClient.StandardClient()
 
 	// AWS SCIM Service
 	awsSCIM, err := aws.NewSCIMService(httpClient, cfg.SCIMEndpoint, cfg.SCIMAccessToken)
