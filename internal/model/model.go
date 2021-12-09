@@ -77,9 +77,9 @@ func (ur *UsersResult) MarshalJSON() ([]byte, error) {
 // this method discards fields that are not used in the hash calculation.
 // only fields comming from the Identity Provider are used.
 func (ur *UsersResult) SetHashCode() {
-	if len(ur.Resources) == 0 {
-		return
-	}
+	// if len(ur.Resources) == 0 {
+	// 	return
+	// }
 
 	copyResources := make([]User, len(ur.Resources))
 	copy(copyResources, ur.Resources)
@@ -152,9 +152,9 @@ func (gr *GroupsResult) MarshalJSON() ([]byte, error) {
 // this method discards fields that are not used in the hash calculation.
 // only fields comming from the Identity Provider are used.
 func (gr *GroupsResult) SetHashCode() {
-	if len(gr.Resources) == 0 {
-		return
-	}
+	// if len(gr.Resources) == 0 {
+	// 	return
+	// }
 
 	copyResources := make([]Group, len(gr.Resources))
 	copy(copyResources, gr.Resources)
@@ -215,9 +215,9 @@ type MembersResult struct {
 // this method discards fields that are not used in the hash calculation.
 // only fields comming from the Identity Provider are used.
 func (mr *MembersResult) SetHashCode() {
-	if len(mr.Resources) == 0 {
-		return
-	}
+	// if len(mr.Resources) == 0 {
+	// 	return
+	// }
 
 	copyResources := make([]Member, len(mr.Resources))
 	copy(copyResources, mr.Resources)
@@ -248,9 +248,9 @@ type GroupMembers struct {
 // this method discards fields that are not used in the hash calculation.
 // only fields comming from the Identity Provider are used.
 func (gm *GroupMembers) SetHashCode() {
-	if len(gm.Resources) == 0 {
-		return
-	}
+	// if len(gm.Resources) == 0 {
+	// 	return
+	// }
 
 	copyResources := make([]Member, len(gm.Resources))
 	copy(copyResources, gm.Resources)
@@ -290,9 +290,9 @@ func (gur *GroupsMembersResult) MarshalJSON() ([]byte, error) {
 // this method discards fields that are not used in the hash calculation.
 // only fields comming from the Identity Provider are used.
 func (gmr *GroupsMembersResult) SetHashCode() {
-	if len(gmr.Resources) == 0 {
-		return
-	}
+	// if len(gmr.Resources) == 0 {
+	// 	return
+	// }
 
 	copyResources := make([]GroupMembers, len(gmr.Resources))
 	copy(copyResources, gmr.Resources)

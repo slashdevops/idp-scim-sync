@@ -946,6 +946,11 @@ func TestMembersOperations(t *testing.T) {
 						Items:     0,
 						Group:     model.Group{IPID: "3", SCIMID: "3", Name: "group 3", Email: "group.3@mail.com", HashCode: hash.Get(&model.Group{IPID: "3", SCIMID: "3", Name: "group 3", Email: "group.3@mail.com"})},
 						Resources: []model.Member{},
+						HashCode: hash.Get(&model.GroupMembers{
+							Items:     0,
+							Group:     model.Group{IPID: "3", SCIMID: "3", Name: "group 3", Email: "group.3@mail.com", HashCode: hash.Get(&model.Group{IPID: "3", SCIMID: "3", Name: "group 3", Email: "group.3@mail.com"})},
+							Resources: []model.Member{},
+						}),
 					},
 				},
 			},
