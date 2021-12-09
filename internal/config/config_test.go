@@ -51,7 +51,7 @@ func TestConfig_toJSON(t *testing.T) {
   "SCIMEndpointSecretName": "IDPSCIM_SCIMEndpoint",
   "SCIMAccessTokenSecretName": "IDPSCIM_SCIMAccessToken",
   "AWSS3BucketName": "",
-  "AWSS3BucketKey": "",
+  "AWSS3BucketKey": "state.json",
   "SyncMethod": "groups",
   "DisableState": false
 }`),
@@ -90,7 +90,7 @@ scim_access_token: ""
 scim_endpoint_secret_name: IDPSCIM_SCIMEndpoint
 scim_access_token_secret_name: IDPSCIM_SCIMAccessToken
 aws_s3_bucket_name: ""
-aws_s3_bucket_key: ""
+aws_s3_bucket_key: state.json
 sync_method: groups
 disable_state: false
 `),

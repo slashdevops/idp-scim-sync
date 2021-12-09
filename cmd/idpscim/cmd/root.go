@@ -79,7 +79,7 @@ func init() {
 	rootCmd.PersistentFlags().StringVarP(&cfg.AWSS3BucketName, "aws-s3-bucket-name", "b", "", "AWS S3 Bucket name to store the state")
 	_ = rootCmd.MarkPersistentFlagRequired("aws-s3-bucket-name")
 
-	rootCmd.PersistentFlags().StringVarP(&cfg.AWSS3BucketKey, "aws-s3-bucket-key", "k", "", "AWS S3 Bucket key to store the state")
+	rootCmd.PersistentFlags().StringVarP(&cfg.AWSS3BucketKey, "aws-s3-bucket-key", "k", config.DefaultAWSS3BucketKey, "AWS S3 Bucket key to store the state")
 	_ = rootCmd.MarkPersistentFlagRequired("aws-s3-bucket-key")
 
 	rootCmd.PersistentFlags().BoolVarP(&cfg.DisableState, "disable-state", "n", config.DefaultDisableState, "state status [true|false]")
