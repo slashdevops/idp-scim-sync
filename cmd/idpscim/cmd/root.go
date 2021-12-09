@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-lambda-go/lambda"
@@ -124,7 +125,7 @@ func initConfig() {
 		log.Fatalf(errors.Wrap(err, "idpscim: cannot unmarshal config").Error())
 	}
 
-	switch cfg.LogFormat {
+	switch strings.ToLower(cfg.LogFormat) {
 	case "json":
 		log.SetFormatter(&log.JSONFormatter{})
 	case "text":
@@ -139,7 +140,7 @@ func initConfig() {
 	}
 
 	// set the configured log level
-	if level, err := log.ParseLevel(cfg.LogLevel); err == nil {
+	if level, err := log.ParseLevel(strings.ToLower(cfg.LogLevel)); err == nil {
 		log.SetLevel(level)
 	}
 
