@@ -389,6 +389,9 @@ func mergeGroupsMembersResult(gms ...*model.GroupsMembersResult) (merged model.G
 	return
 }
 
+// updateSCIMID updates the SCIMID of the group in the idp object
+// this is necessary because during the sync process we can create users and groups and to add
+// these users to the groups we need to have the SCIMID of the user and the group
 func updateSCIMID(idp *model.GroupsMembersResult, scimGroups *model.GroupsResult, scimUsers *model.UsersResult) *model.GroupsMembersResult {
 	groups := make(map[string]model.Group)
 	users := make(map[string]model.User)

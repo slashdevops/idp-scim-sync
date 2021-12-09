@@ -81,7 +81,7 @@ func init() {
 	rootCmd.PersistentFlags().StringVarP(&cfg.AWSS3BucketKey, "aws-s3-bucket-key", "k", "", "AWS S3 Bucket key to store the state")
 	_ = rootCmd.MarkPersistentFlagRequired("aws-s3-bucket-key")
 
-	rootCmd.PersistentFlags().BoolVarP(&cfg.StateEnabled, "state-enabled", "n", config.DefaultStateEnabled, "enable state")
+	rootCmd.PersistentFlags().BoolVarP(&cfg.DisableState, "disable-state", "n", config.DefaultDisableState, "state status [true|false]")
 }
 
 // initConfig reads in config file and ENV variables if set.
@@ -105,7 +105,7 @@ func initConfig() {
 		"scim_endpoint",
 		"scim_endpoint_secret_name",
 		"scim_access_token_secret_name",
-		"state_enabled",
+		"disable_state",
 	}
 
 	for _, e := range envVars {
@@ -144,6 +144,19 @@ func initConfig() {
 
 	if cfg.IsLambda {
 		getSecrets()
+	}
+
+	// not implemented yet block
+	if cfg.GWSUsersFilter[0] != "" {
+		log.Fatal("idpscim: 'query-users' feature not implemented yet")
+	}
+
+	if cfg.SyncMethod != "groups" {
+		log.Fatal("idpscim: only 'sync_method=groups' are implemented")
+	}
+
+	if cfg.DisableState {
+		log.Warn("idpscim: 'disable-state=true' feature not implemented yet")
 	}
 }
 

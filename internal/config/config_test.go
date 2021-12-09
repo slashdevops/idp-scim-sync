@@ -53,7 +53,7 @@ func TestConfig_toJSON(t *testing.T) {
   "AWSS3BucketName": "",
   "AWSS3BucketKey": "",
   "SyncMethod": "groups",
-  "StateEnabled": false
+  "DisableState": false
 }`),
 		},
 	}
@@ -77,22 +77,22 @@ func TestConfig_toYAML(t *testing.T) {
 			config: New(),
 			want: []byte(`islambda: false
 debug: false
-loglevel: info
-logformat: text
-gwsserviceaccountfile: credentials.json
-gwsuseremail: ""
-gwsserviceaccountfilesecretname: IDPSCIM_GWSServiceAccountFile
-gwsuseremailsecretname: IDPSCIM_GWSUserEmail
-gwsgroupsfilter: []
-gwsusersfilter: []
-scimendpoint: ""
-scimaccesstoken: ""
-scimendpointsecretname: IDPSCIM_SCIMEndpoint
-scimaccesstokensecretname: IDPSCIM_SCIMAccessToken
-awss3bucketname: ""
-awss3bucketkey: ""
-syncmethod: groups
-stateenabled: false
+log_level: info
+log_format: text
+gws_service_account_file: credentials.json
+gws_user_email: ""
+gws_service_account_file_secret_name: IDPSCIM_GWSServiceAccountFile
+gws_user_email_secret_name: IDPSCIM_GWSUserEmail
+gws_groups_filter: []
+gws_users_filter: []
+scim_endpoint: ""
+scim_access_token: ""
+scim_endpoint_secret_name: IDPSCIM_SCIMEndpoint
+scim_access_token_secret_name: IDPSCIM_SCIMAccessToken
+aws_s3_bucket_name: ""
+aws_s3_bucket_key: ""
+sync_method: groups
+disable_state: false
 `),
 		},
 	}
