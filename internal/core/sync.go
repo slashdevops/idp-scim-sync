@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"math"
-	"sync"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
@@ -29,7 +28,6 @@ var (
 // SyncService represent the sync service and the core of the sync process
 type SyncService struct {
 	ctx              context.Context
-	mu               *sync.RWMutex
 	provGroupsFilter []string
 	provUsersFilter  []string
 	prov             IdentityProviderService
@@ -51,7 +49,6 @@ func NewSyncService(ctx context.Context, prov IdentityProviderService, scim SCIM
 
 	ss := &SyncService{
 		ctx:              ctx,
-		mu:               &sync.RWMutex{},
 		prov:             prov,
 		provGroupsFilter: []string{}, // fill in with the opts
 		provUsersFilter:  []string{}, // fill in with the opts
@@ -68,9 +65,6 @@ func NewSyncService(ctx context.Context, prov IdentityProviderService, scim SCIM
 
 // SyncGroupsAndTheirMembers the default sync method tha syncs groups and their members
 func (ss *SyncService) SyncGroupsAndTheirMembers() error {
-	ss.mu.Lock()
-	defer ss.mu.Unlock()
-
 	log.WithFields(log.Fields{
 		"group_filter": ss.provGroupsFilter,
 	}).Info("getting Identity Provider data")
@@ -355,8 +349,5 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 
 // SyncGroupsAndUsers this method is used to sync the usersm groups and their members from the identity provider to the SCIM
 func (ss *SyncService) SyncGroupsAndUsers() error {
-	ss.mu.Lock()
-	defer ss.mu.Unlock()
-
 	return errors.New("not implemented")
 }

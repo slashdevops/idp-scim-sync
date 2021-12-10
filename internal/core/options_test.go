@@ -3,7 +3,6 @@ package core
 import (
 	"context"
 	"reflect"
-	"sync"
 	"testing"
 
 	gomock "github.com/golang/mock/gomock"
@@ -37,7 +36,6 @@ func TestWithIdentityProviderGroupsFilter(t *testing.T) {
 
 		want := &SyncService{
 			ctx:              ctx,
-			mu:               &sync.RWMutex{},
 			prov:             prov,
 			provGroupsFilter: filter,
 			provUsersFilter:  []string{},
@@ -89,7 +87,6 @@ func TestWithIdentityProviderUsersFilter(t *testing.T) {
 
 		want := &SyncService{
 			ctx:              ctx,
-			mu:               &sync.RWMutex{},
 			prov:             prov,
 			provGroupsFilter: []string{},
 			provUsersFilter:  filter,
