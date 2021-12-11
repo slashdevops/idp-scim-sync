@@ -123,13 +123,13 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 
 	// first time syncing
 	if state.LastSync == "" {
-		// Check SCIM side to see if there are elelemnts to be
-		// reconciled. Bassically check if SCIM is not clean before the first sync
+		// check SCIM side to see if there are elements to be
+		// reconciled. Basically, checks if SCIM is not clean before the first sync
 		// and we need to reconcile the SCIM side with the identity provider side.
 		// In case of migration from a different tool and we want to keep the state
-		// of the users and groups in the SCIM side, just no recreate, keep the existing ones when the:
-		// - Groups names are equals in both sides
-		// - Users emails are equals in both sides
+		// of the users and groups in the SCIM side, just no recreation, keep the existing ones when the:n
+		// - Groups names are equals on both sides, update only the external id (comming from the identity provider)
+		// - Users emails are equals on both sides, update only the external id (comming from the identity provider)
 
 		log.Warn("syncing from scim service, first time syncing")
 		log.Warn("reconciling the SCIM data with the Identity Provider data")
@@ -181,6 +181,8 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 		totalUsersResult = mergeUsersResult(usersCreated, usersUpdated, usersEqual)
 
 		log.Info("getting SCIM Groups Members")
+		// unfortunately, the SCIM service does not support the getGroupsMembers method in and efficient way
+		// see: "Nor Supported" section in: https://docs.aws.amazon.com/singlesignon/latest/developerguide/listgroups.html
 		// scimGroupsMembersResult, err := ss.scim.GetGroupsMembers(ss.ctx, &totalGroupsResult) // not supported yet
 		scimGroupsMembersResult, err := ss.scim.GetGroupsMembersBruteForce(ss.ctx, &totalGroupsResult, &totalUsersResult)
 		if err != nil {
@@ -205,7 +207,6 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 			return fmt.Errorf("error reconciling groups members: %w", err)
 		}
 
-		// log.Tracef("membersCreated: %s\n", utils.ToJSON(membersCreated))
 		// membersCreate + membersEqual = members total
 		totalGroupsMembersResult = mergeGroupsMembersResult(membersCreated, membersEqual)
 
@@ -234,7 +235,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 			log.Info("provider groups and state groups are diferent")
 			// now here we have the google fresh data and the last sync data state
 			// we need to compare the data and decide what to do
-			// see differences between the two data sets
+			// see differences between the two datasets
 
 			log.WithFields(log.Fields{
 				"idp":   idpGroupsResult.Items,
@@ -250,7 +251,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 				return fmt.Errorf("error reconciling groups: %w", err)
 			}
 
-			// merge in only one data structure the groups created and updated who has the SCIMID
+			// merge in only one data structure the groups created, updated amd equals who has the SCIMID
 			totalGroupsResult = mergeGroupsResult(groupsCreated, groupsUpdated, groupsEqual)
 		}
 
@@ -286,11 +287,9 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 		} else {
 			log.Info("provider groups-members and state groups-members are diferent")
 
-			log.Tracef("idpGroupsMembersResult: %s, stateGroupsMembersResult: %s\n", utils.ToJSON(idpGroupsMembersResult), utils.ToJSON(state.Resources.GroupsMembers))
-			log.Tracef("totalGroupsResult: %s, totalUsersResult: %s\n", utils.ToJSON(&totalGroupsResult), utils.ToJSON(&totalUsersResult))
-
 			// if we create a group or user during the sync, we need the scimid of these new groups/users
 			// because to add members to a group the scim api needs that.
+			// so this function will fill the scimid of the new groups/users
 			groupsMembers := updateSCIMID(idpGroupsMembersResult, &totalGroupsResult, &totalUsersResult)
 
 			log.Tracef("groupsMembers: %s\n", utils.ToJSON(groupsMembers))
@@ -317,7 +316,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 	}
 
 	// after be sure all the SCIM side is aligned with the Identity Provider side
-	// we can update the state with the identity provider data
+	// we can update the state with the last data comming from the reconciliation
 	newState := &model.State{
 		Resources: model.StateResources{
 			Groups:        totalGroupsResult,
@@ -349,5 +348,5 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 
 // SyncGroupsAndUsers this method is used to sync the usersm groups and their members from the identity provider to the SCIM
 func (ss *SyncService) SyncGroupsAndUsers() error {
-	return errors.New("not implemented")
+	return errors.New("not implemented yet")
 }

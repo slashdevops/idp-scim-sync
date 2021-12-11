@@ -15,16 +15,14 @@ var (
 	ErrSCIMUsersNil                     = errors.New("scim users is nil")
 )
 
-// groupsOperations returns the differences between the groups in the
-// this use the Groups Name as the key.
-// SCIM Groups cannot be updated.
+// groupsOperations returns datasets used to perform differents operations over the SCIM side
 // return 4 objest of GroupsMembersResult
-// create: groups that exist in "scim" but not in "idp"
-// update: groups that exist in "idp" and in "scim" but attributes changed in idp
-// equal: groups that exist in both "idp" and "scim" and their attributes are equal
-// delete: groups that exist in "scim" but not in "idp"
+// create: groups that exist in "idp" but not in "scim" or "state"
+// update: groups that exist in "idp" and in "scim" or "state" but attributes changed in idp
+// equal: groups that exist in both "idp" and "scim" or "state" and their attributes are equal
+// delete: groups that exist in "scim" or "state" but not in "idp"
 //
-// also extract the id from scim to fill the resutls
+// also this extract the id from scim to fill the resutls
 func membersOperations(idp, scim *model.GroupsMembersResult) (create *model.GroupsMembersResult, equal *model.GroupsMembersResult, delete *model.GroupsMembersResult, err error) {
 	if idp == nil {
 		create, equal, delete, err = nil, nil, nil, ErrIdentityProviderGroupsMembersNil
@@ -173,12 +171,12 @@ func membersOperations(idp, scim *model.GroupsMembersResult) (create *model.Grou
 // this use the Groups Name as the key.
 // SCIM Groups cannot be updated.
 // return 4 objest of GroupsResult
-// create: groups that exist in "scim" but not in "idp"
-// update: groups that exist in "idp" and in "scim" but attributes changed in idp
-// equal: groups that exist in both "idp" and "scim" and their attributes are equal
-// delete: groups that exist in "scim" but not in "idp"
+// create: groups that exist in "idp" but not in "scim" or "state"
+// update: groups that exist in "idp" and in "scim" or "state" but attributes changed in idp
+// equal: groups that exist in both "idp" and "scim" or "state" and their attributes are equal
+// delete: groups that exist in "scim" or "state" but not in "idp"
 //
-// also extract the id from scim to fill the resutls
+// also this extract the id from scim to fill the resutls
 func groupsOperations(idp, scim *model.GroupsResult) (create *model.GroupsResult, update *model.GroupsResult, equal *model.GroupsResult, delete *model.GroupsResult, err error) {
 	if idp == nil {
 		create, update, equal, delete, err = nil, nil, nil, nil, ErrIdentityProviderGroupsNil
@@ -255,13 +253,12 @@ func groupsOperations(idp, scim *model.GroupsResult) (create *model.GroupsResult
 	return
 }
 
-// usersOperations returns the differences between the users in the
-// Users Email as the key.
+// usersOperations returns datasets used to perform differents operations over the SCIM side
 // return 4 objest of UsersResult
-// create: users that exist in "scim" but not in "idp"
-// update: users that exist in "idp" and in "scim" but attributes changed in idp
-// equal: users that exist in both "idp" and "scim" and their attributes are equal
-// delete: users that exist in "scim" but not in "idp"
+// create: users that exist in "idp" but not in "scim" or "state"
+// update: users that exist in "idp" and in "scim" or "state" but attributes changed in idp
+// equal: users that exist in both "idp" and "scim" or "state" and their attributes are equal
+// delete: users that exist in "scim" or "state" but not in "idp"
 func usersOperations(idp, scim *model.UsersResult) (create *model.UsersResult, update *model.UsersResult, equal *model.UsersResult, delete *model.UsersResult, err error) {
 	if idp == nil {
 		create, update, equal, delete, err = nil, nil, nil, nil, ErrIdentityProviderUsersNil
@@ -341,6 +338,9 @@ func usersOperations(idp, scim *model.UsersResult) (create *model.UsersResult, u
 	return
 }
 
+// mergeGroupsResult merges n GroupsResult result
+// NOTE: this function does not check the content of the GroupsResult, so
+// the return could have duplicated groups
 func mergeGroupsResult(grs ...*model.GroupsResult) (merged model.GroupsResult) {
 	groups := make([]model.Group, 0)
 
@@ -357,6 +357,9 @@ func mergeGroupsResult(grs ...*model.GroupsResult) (merged model.GroupsResult) {
 	return
 }
 
+// mergeUsersResult merges n UsersResult result
+// NOTE: this function does not check the content of the UsersResult, so
+// the return could have duplicated users
 func mergeUsersResult(urs ...*model.UsersResult) (merged model.UsersResult) {
 	users := make([]model.User, 0)
 
@@ -373,6 +376,9 @@ func mergeUsersResult(urs ...*model.UsersResult) (merged model.UsersResult) {
 	return
 }
 
+// mergeGroupsMembersResult merges n GroupMembers result
+// NOTE: this function does not check the content of the GroupMembers, so
+// the return could have duplicated groupsMembers
 func mergeGroupsMembersResult(gms ...*model.GroupsMembersResult) (merged model.GroupsMembersResult) {
 	groupsMembers := make([]model.GroupMembers, 0)
 
