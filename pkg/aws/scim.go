@@ -304,7 +304,7 @@ func (s *AWSSCIMService) GetUserByUserName(ctx context.Context, userName string)
 
 	var response GetUserResponse
 
-	dataJSON := fmt.Sprintf("%s", lur.Resources[0])
+	dataJSON := lur.Resources[0].String()
 	if err != nil {
 		return nil, fmt.Errorf("aws GetUserByUserName: error decoding response body: %w", err)
 	}

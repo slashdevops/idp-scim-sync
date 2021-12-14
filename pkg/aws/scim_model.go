@@ -82,11 +82,11 @@ type User struct {
 	Emails      []Email  `json:"emails"`
 }
 
-func (u User) String() string {
+func (u *User) String() string {
 	return string(u.ToJSON(u))
 }
 
-func (u User) ToJSON(stc interface{}) []byte {
+func (u *User) ToJSON(stc interface{}) []byte {
 	if stc == nil {
 		return []byte("")
 	}

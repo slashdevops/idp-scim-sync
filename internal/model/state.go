@@ -76,7 +76,6 @@ func (s *State) SetHashCode() {
 
 	groupsMembers := make([]*GroupMembers, 0)
 	for _, groupMembers := range s.Resources.GroupsMembers.Resources {
-
 		group := Group{
 			IPID:  groupMembers.Group.IPID,
 			Name:  groupMembers.Group.Name,

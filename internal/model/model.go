@@ -30,7 +30,7 @@ type User struct {
 // This is necessary to avoid include the value in the field SCIMID until
 // the hashcode calculation is done.
 // the hash.Get function use gob to calculate the hash code.
-func (u User) GobEncode() ([]byte, error) {
+func (u *User) GobEncode() ([]byte, error) {
 	buf := new(bytes.Buffer)
 	enc := gob.NewEncoder(buf)
 	if err := enc.Encode(u.IPID); err != nil {
@@ -107,7 +107,7 @@ type Group struct {
 // This is necessary to avoid include the value in the field SCIMID until
 // the hashcode calculation is done.
 // the hash.Get function use gob to calculate the hash code.
-func (g Group) GobEncode() ([]byte, error) {
+func (g *Group) GobEncode() ([]byte, error) {
 	buf := new(bytes.Buffer)
 	enc := gob.NewEncoder(buf)
 	if err := enc.Encode(g.IPID); err != nil {
@@ -177,7 +177,7 @@ type Member struct {
 // This is necessary to avoid include the value in the field SCIMID until
 // the hashcode calculation is done.
 // the hash.Get function use gob to calculate the hash code.
-func (m Member) GobEncode() ([]byte, error) {
+func (m *Member) GobEncode() ([]byte, error) {
 	buf := new(bytes.Buffer)
 	enc := gob.NewEncoder(buf)
 	if err := enc.Encode(m.IPID); err != nil {
