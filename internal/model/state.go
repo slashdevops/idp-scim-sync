@@ -39,9 +39,9 @@ func (s *State) SetHashCode() {
 	// we need to do a deep copy of the state struct to avoid SCIMID in the hash calculation
 	// because every time the idp data iscompared with the state data, the SCIMID doesn't compute in the hash
 
-	groups := make([]Group, 0)
+	groups := make([]*Group, 0)
 	for _, group := range s.Resources.Groups.Resources {
-		e := Group{
+		e := &Group{
 			IPID:  group.IPID,
 			Name:  group.Name,
 			Email: group.Email,

@@ -52,7 +52,7 @@ func TestState_MarshalJSON(t *testing.T) {
 					Groups: GroupsResult{
 						Items:    1,
 						HashCode: "hashCode",
-						Resources: []Group{
+						Resources: []*Group{
 							{
 								IPID:     "ipid",
 								SCIMID:   "scimid",

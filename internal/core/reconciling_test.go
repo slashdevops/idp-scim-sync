@@ -19,9 +19,9 @@ func TestReconcilingGroups(t *testing.T) {
 	t.Run("Should call all the methods one time each and no error", func(t *testing.T) {
 		mockSCIMService := mocks.NewMockSCIMService(mockCtrl)
 
-		create := &model.GroupsResult{Items: 1, Resources: []model.Group{{IPID: "1", Name: "group 1", Email: "group.1@mail.com"}}}
-		update := &model.GroupsResult{Items: 1, Resources: []model.Group{{IPID: "2", Name: "group 2", Email: "group.2@mail.com"}}}
-		delete := &model.GroupsResult{Items: 1, Resources: []model.Group{{IPID: "3", Name: "group 3", Email: "group.3@mail.com"}}}
+		create := &model.GroupsResult{Items: 1, Resources: []*model.Group{{IPID: "1", Name: "group 1", Email: "group.1@mail.com"}}}
+		update := &model.GroupsResult{Items: 1, Resources: []*model.Group{{IPID: "2", Name: "group 2", Email: "group.2@mail.com"}}}
+		delete := &model.GroupsResult{Items: 1, Resources: []*model.Group{{IPID: "3", Name: "group 3", Email: "group.3@mail.com"}}}
 
 		mockSCIMService.EXPECT().CreateGroups(ctx, create).Return(create, nil).Times(1)
 		mockSCIMService.EXPECT().UpdateGroups(ctx, update).Return(update, nil).Times(1)
@@ -36,9 +36,9 @@ func TestReconcilingGroups(t *testing.T) {
 	t.Run("Should return error when CreateGroups return error", func(t *testing.T) {
 		mockSCIMService := mocks.NewMockSCIMService(mockCtrl)
 
-		create := &model.GroupsResult{Items: 1, Resources: []model.Group{{IPID: "1", Name: "group 1", Email: "group.1@mail.com"}}}
-		update := &model.GroupsResult{Items: 1, Resources: []model.Group{{IPID: "2", Name: "group 2", Email: "group.2@mail.com"}}}
-		delete := &model.GroupsResult{Items: 1, Resources: []model.Group{{IPID: "3", Name: "group 3", Email: "group.3@mail.com"}}}
+		create := &model.GroupsResult{Items: 1, Resources: []*model.Group{{IPID: "1", Name: "group 1", Email: "group.1@mail.com"}}}
+		update := &model.GroupsResult{Items: 1, Resources: []*model.Group{{IPID: "2", Name: "group 2", Email: "group.2@mail.com"}}}
+		delete := &model.GroupsResult{Items: 1, Resources: []*model.Group{{IPID: "3", Name: "group 3", Email: "group.3@mail.com"}}}
 
 		mockSCIMService.EXPECT().CreateGroups(ctx, create).Return(nil, errors.New("test error")).Times(1)
 
@@ -51,9 +51,9 @@ func TestReconcilingGroups(t *testing.T) {
 	t.Run("Should return error when UpdateGroups return error", func(t *testing.T) {
 		mockSCIMService := mocks.NewMockSCIMService(mockCtrl)
 
-		create := &model.GroupsResult{Items: 1, Resources: []model.Group{{IPID: "1", Name: "group 1", Email: "group.1@mail.com"}}}
-		update := &model.GroupsResult{Items: 1, Resources: []model.Group{{IPID: "2", Name: "group 2", Email: "group.2@mail.com"}}}
-		delete := &model.GroupsResult{Items: 1, Resources: []model.Group{{IPID: "3", Name: "group 3", Email: "group.3@mail.com"}}}
+		create := &model.GroupsResult{Items: 1, Resources: []*model.Group{{IPID: "1", Name: "group 1", Email: "group.1@mail.com"}}}
+		update := &model.GroupsResult{Items: 1, Resources: []*model.Group{{IPID: "2", Name: "group 2", Email: "group.2@mail.com"}}}
+		delete := &model.GroupsResult{Items: 1, Resources: []*model.Group{{IPID: "3", Name: "group 3", Email: "group.3@mail.com"}}}
 
 		mockSCIMService.EXPECT().CreateGroups(ctx, create).Return(create, nil).Times(1)
 		mockSCIMService.EXPECT().UpdateGroups(ctx, update).Return(nil, errors.New("test error")).Times(1)
@@ -67,9 +67,9 @@ func TestReconcilingGroups(t *testing.T) {
 	t.Run("Should return error when DeleteGroups return error", func(t *testing.T) {
 		mockSCIMService := mocks.NewMockSCIMService(mockCtrl)
 
-		create := &model.GroupsResult{Items: 1, Resources: []model.Group{{IPID: "1", Name: "group 1", Email: "group.1@mail.com"}}}
-		update := &model.GroupsResult{Items: 1, Resources: []model.Group{{IPID: "2", Name: "group 2", Email: "group.2@mail.com"}}}
-		delete := &model.GroupsResult{Items: 1, Resources: []model.Group{{IPID: "3", Name: "group 3", Email: "group.3@mail.com"}}}
+		create := &model.GroupsResult{Items: 1, Resources: []*model.Group{{IPID: "1", Name: "group 1", Email: "group.1@mail.com"}}}
+		update := &model.GroupsResult{Items: 1, Resources: []*model.Group{{IPID: "2", Name: "group 2", Email: "group.2@mail.com"}}}
+		delete := &model.GroupsResult{Items: 1, Resources: []*model.Group{{IPID: "3", Name: "group 3", Email: "group.3@mail.com"}}}
 
 		mockSCIMService.EXPECT().CreateGroups(ctx, create).Return(create, nil).Times(1)
 		mockSCIMService.EXPECT().UpdateGroups(ctx, update).Return(update, nil).Times(1)
@@ -84,9 +84,9 @@ func TestReconcilingGroups(t *testing.T) {
 	t.Run("Should call all the methods one time each and no error when resources are empty", func(t *testing.T) {
 		mockSCIMService := mocks.NewMockSCIMService(mockCtrl)
 
-		create := &model.GroupsResult{Items: 0, Resources: []model.Group{}}
-		update := &model.GroupsResult{Items: 0, Resources: []model.Group{}}
-		delete := &model.GroupsResult{Items: 0, Resources: []model.Group{}}
+		create := &model.GroupsResult{Items: 0, Resources: []*model.Group{}}
+		update := &model.GroupsResult{Items: 0, Resources: []*model.Group{}}
+		delete := &model.GroupsResult{Items: 0, Resources: []*model.Group{}}
 
 		grc, gru, err := reconcilingGroups(ctx, mockSCIMService, create, update, delete)
 		assert.NoError(t, err)
@@ -95,9 +95,9 @@ func TestReconcilingGroups(t *testing.T) {
 	})
 
 	t.Run("Should return error when SCIM service in nil", func(t *testing.T) {
-		create := &model.GroupsResult{Items: 0, Resources: []model.Group{}}
-		update := &model.GroupsResult{Items: 0, Resources: []model.Group{}}
-		delete := &model.GroupsResult{Items: 0, Resources: []model.Group{}}
+		create := &model.GroupsResult{Items: 0, Resources: []*model.Group{}}
+		update := &model.GroupsResult{Items: 0, Resources: []*model.Group{}}
+		delete := &model.GroupsResult{Items: 0, Resources: []*model.Group{}}
 
 		grc, gru, err := reconcilingGroups(ctx, nil, create, update, delete)
 		assert.Error(t, err)
@@ -108,8 +108,8 @@ func TestReconcilingGroups(t *testing.T) {
 	t.Run("Should error when create groups is nil", func(t *testing.T) {
 		mockSCIMService := mocks.NewMockSCIMService(mockCtrl)
 
-		update := &model.GroupsResult{Items: 0, Resources: []model.Group{}}
-		delete := &model.GroupsResult{Items: 0, Resources: []model.Group{}}
+		update := &model.GroupsResult{Items: 0, Resources: []*model.Group{}}
+		delete := &model.GroupsResult{Items: 0, Resources: []*model.Group{}}
 
 		grc, gru, err := reconcilingGroups(ctx, mockSCIMService, nil, update, delete)
 		assert.Error(t, err)
@@ -120,8 +120,8 @@ func TestReconcilingGroups(t *testing.T) {
 	t.Run("Should error when update groups is nil", func(t *testing.T) {
 		mockSCIMService := mocks.NewMockSCIMService(mockCtrl)
 
-		create := &model.GroupsResult{Items: 0, Resources: []model.Group{}}
-		delete := &model.GroupsResult{Items: 0, Resources: []model.Group{}}
+		create := &model.GroupsResult{Items: 0, Resources: []*model.Group{}}
+		delete := &model.GroupsResult{Items: 0, Resources: []*model.Group{}}
 
 		grc, gru, err := reconcilingGroups(ctx, mockSCIMService, create, nil, delete)
 		assert.Error(t, err)
@@ -132,8 +132,8 @@ func TestReconcilingGroups(t *testing.T) {
 	t.Run("Should error when delete groups is nil", func(t *testing.T) {
 		mockSCIMService := mocks.NewMockSCIMService(mockCtrl)
 
-		create := &model.GroupsResult{Items: 0, Resources: []model.Group{}}
-		update := &model.GroupsResult{Items: 0, Resources: []model.Group{}}
+		create := &model.GroupsResult{Items: 0, Resources: []*model.Group{}}
+		update := &model.GroupsResult{Items: 0, Resources: []*model.Group{}}
 
 		grc, gru, err := reconcilingGroups(ctx, mockSCIMService, create, update, nil)
 		assert.Error(t, err)

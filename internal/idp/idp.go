@@ -55,7 +55,7 @@ func NewIdentityProvider(gps GoogleProviderService) (*IdentityProvider, error) {
 // This method checks the names of the groups and avoid the second, third, etc repetition of the same group name.
 func (i *IdentityProvider) GetGroups(ctx context.Context, filter []string) (*model.GroupsResult, error) {
 	uniqueGroups := make(map[string]struct{})
-	syncGroups := make([]model.Group, 0)
+	syncGroups := make([]*model.Group, 0)
 
 	pGroups, err := i.ps.ListGroups(ctx, filter)
 	if err != nil {
@@ -67,7 +67,7 @@ func (i *IdentityProvider) GetGroups(ctx context.Context, filter []string) (*mod
 		if _, ok := uniqueGroups[grp.Name]; !ok {
 			uniqueGroups[grp.Name] = struct{}{}
 
-			e := model.Group{
+			e := &model.Group{
 				IPID:  grp.Id,
 				Name:  grp.Name,
 				Email: grp.Email,

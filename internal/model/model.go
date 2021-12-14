@@ -131,15 +131,15 @@ func (g *Group) SetHashCode() {
 
 // GroupsResult represents a group result list entity.
 type GroupsResult struct {
-	Items     int     `json:"items"`
-	HashCode  string  `json:"hashCode"`
-	Resources []Group `json:"resources"`
+	Items     int      `json:"items"`
+	HashCode  string   `json:"hashCode"`
+	Resources []*Group `json:"resources"`
 }
 
 // MarshalJSON implements the json.Marshaler interface for GroupsResult entity.
 func (gr *GroupsResult) MarshalJSON() ([]byte, error) {
 	if gr.Resources == nil {
-		gr.Resources = make([]Group, 0)
+		gr.Resources = make([]*Group, 0)
 	}
 	return json.MarshalIndent(*gr, "", "  ")
 }
@@ -148,11 +148,11 @@ func (gr *GroupsResult) MarshalJSON() ([]byte, error) {
 // this method discards fields that are not used in the hash calculation.
 // only fields coming from the Identity Provider are used.
 func (gr *GroupsResult) SetHashCode() {
-	copyResources := make([]Group, len(gr.Resources))
+	copyResources := make([]*Group, len(gr.Resources))
 	copy(copyResources, gr.Resources)
 
 	// only these fields are used in the hash calculation
-	copyOfStruct := GroupsResult{
+	copyOfStruct := &GroupsResult{
 		Items:     gr.Items,
 		Resources: copyResources,
 	}

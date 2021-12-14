@@ -233,7 +233,7 @@ func TestSCIMProvider_CreateGroups(t *testing.T) {
 
 		gr := &model.GroupsResult{
 			Items: 1,
-			Resources: []model.Group{
+			Resources: []*model.Group{
 				{
 					IPID:  "1",
 					Name:  "group 1",
@@ -261,7 +261,7 @@ func TestSCIMProvider_CreateGroups(t *testing.T) {
 
 		gr := &model.GroupsResult{
 			Items: 1,
-			Resources: []model.Group{
+			Resources: []*model.Group{
 				{
 					IPID:  "1",
 					Name:  "group 1",
@@ -313,7 +313,7 @@ func TestSCIMProvider_CreateGroups(t *testing.T) {
 
 		gr := &model.GroupsResult{
 			Items: 1,
-			Resources: []model.Group{
+			Resources: []*model.Group{
 				{
 					IPID:  "1",
 					Name:  "group 1",

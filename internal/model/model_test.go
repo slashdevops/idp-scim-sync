@@ -95,7 +95,7 @@ func TestGroupsResult_MarshalJSON(t *testing.T) {
 	type fields struct {
 		Items     int
 		HashCode  string
-		Resources []Group
+		Resources []*Group
 	}
 	tests := []struct {
 		name    string
@@ -118,7 +118,7 @@ func TestGroupsResult_MarshalJSON(t *testing.T) {
 			fields: fields{
 				Items:    1,
 				HashCode: "test",
-				Resources: []Group{
+				Resources: []*Group{
 					{
 						IPID:     "1",
 						SCIMID:   "1",
@@ -442,9 +442,9 @@ func TestUsersResult_SetHashCode(t *testing.T) {
 }
 
 func TestGroupsResult_SetHashCode(t *testing.T) {
-	g1 := Group{IPID: "1", SCIMID: "1", Name: "group", Email: "group.1@mail.com"}
-	g2 := Group{IPID: "2", SCIMID: "2", Name: "group", Email: "group.2@mail.com"}
-	g3 := Group{IPID: "3", SCIMID: "3", Name: "group", Email: "group.3@mail.com"}
+	g1 := &Group{IPID: "1", SCIMID: "1", Name: "group", Email: "group.1@mail.com"}
+	g2 := &Group{IPID: "2", SCIMID: "2", Name: "group", Email: "group.2@mail.com"}
+	g3 := &Group{IPID: "3", SCIMID: "3", Name: "group", Email: "group.3@mail.com"}
 
 	g1.SetHashCode()
 	g2.SetHashCode()
@@ -452,19 +452,19 @@ func TestGroupsResult_SetHashCode(t *testing.T) {
 
 	gr1 := GroupsResult{
 		Items:     3,
-		Resources: []Group{g1, g2, g3},
+		Resources: []*Group{g1, g2, g3},
 	}
 	gr1.SetHashCode()
 
 	gr2 := GroupsResult{
 		Items:     3,
-		Resources: []Group{g2, g3, g1},
+		Resources: []*Group{g2, g3, g1},
 	}
 	gr2.SetHashCode()
 
 	gr3 := GroupsResult{
 		Items:     3,
-		Resources: []Group{g3, g2, g1},
+		Resources: []*Group{g3, g2, g1},
 	}
 	gr3.SetHashCode()
 
@@ -556,7 +556,7 @@ func TestGroupsMembersResult_SetHashCode(t *testing.T) {
 }
 
 func mergeGroupsResult(grs ...*GroupsResult) (merged GroupsResult) {
-	groups := make([]Group, 0)
+	groups := make([]*Group, 0)
 
 	for _, gr := range grs {
 		groups = append(groups, gr.Resources...)

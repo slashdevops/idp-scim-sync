@@ -98,7 +98,7 @@ func TestStateRepository_SetState(t *testing.T) {
 				Groups: model.GroupsResult{
 					Items:    1,
 					HashCode: "1234567890",
-					Resources: []model.Group{
+					Resources: []*model.Group{
 						{
 							IPID:     "1",
 							Name:     "group 1",

@@ -39,7 +39,7 @@ func reconcilingGroups(ctx context.Context, scim SCIMService, create *model.Grou
 
 	if create.Items == 0 {
 		log.Info("no groups to be create")
-		created = &model.GroupsResult{Items: 0, Resources: []model.Group{}}
+		created = &model.GroupsResult{Items: 0, Resources: []*model.Group{}}
 	} else {
 		log.WithField("quantity", create.Items).Warn("creating groups")
 		created, err = scim.CreateGroups(ctx, create)
@@ -50,7 +50,7 @@ func reconcilingGroups(ctx context.Context, scim SCIMService, create *model.Grou
 
 	if update.Items == 0 {
 		log.Info("no groups to be updated")
-		updated = &model.GroupsResult{Items: 0, Resources: []model.Group{}}
+		updated = &model.GroupsResult{Items: 0, Resources: []*model.Group{}}
 	} else {
 		log.WithField("quantity", update.Items).Warn("updating groups")
 		updated, err = scim.UpdateGroups(ctx, update)

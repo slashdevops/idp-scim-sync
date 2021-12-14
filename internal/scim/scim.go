@@ -72,9 +72,9 @@ func (s *SCIMProvider) GetGroups(ctx context.Context) (*model.GroupsResult, erro
 		return nil, fmt.Errorf("scim: error listing groups: %w", err)
 	}
 
-	groups := make([]model.Group, 0)
+	groups := make([]*model.Group, 0)
 	for _, group := range groupsResponse.Resources {
-		e := model.Group{
+		e := &model.Group{
 			SCIMID: group.ID,
 			Name:   group.DisplayName,
 			IPID:   group.ExternalID,
@@ -95,7 +95,7 @@ func (s *SCIMProvider) GetGroups(ctx context.Context) (*model.GroupsResult, erro
 
 // CreateGroups creates groups in SCIM Provider
 func (s *SCIMProvider) CreateGroups(ctx context.Context, gr *model.GroupsResult) (*model.GroupsResult, error) {
-	groups := make([]model.Group, 0)
+	groups := make([]*model.Group, 0)
 
 	for _, group := range gr.Resources {
 		groupRequest := &aws.CreateGroupRequest{
@@ -135,7 +135,7 @@ func (s *SCIMProvider) CreateGroups(ctx context.Context, gr *model.GroupsResult)
 
 // UpdateGroups updates groups in SCIM Provider
 func (s *SCIMProvider) UpdateGroups(ctx context.Context, gr *model.GroupsResult) (*model.GroupsResult, error) {
-	groups := make([]model.Group, 0)
+	groups := make([]*model.Group, 0)
 
 	for _, group := range gr.Resources {
 		groupRequest := &aws.PatchGroupRequest{
@@ -174,7 +174,7 @@ func (s *SCIMProvider) UpdateGroups(ctx context.Context, gr *model.GroupsResult)
 		}
 
 		// return the same group
-		e := model.Group{
+		e := &model.Group{
 			SCIMID: group.SCIMID,
 			Name:   group.Name,
 			IPID:   group.IPID,
@@ -573,7 +573,7 @@ func (s *SCIMProvider) GetGroupsMembers(ctx context.Context, gr *model.GroupsRes
 
 			e := &model.GroupMembers{
 				Items:     len(members),
-				Group:     group,
+				Group:     *group,
 				Resources: members,
 			}
 			e.SetHashCode()
@@ -620,7 +620,7 @@ func (s *SCIMProvider) GetGroupsMembersBruteForce(ctx context.Context, gr *model
 			}
 			e := &model.GroupMembers{
 				Items:     len(members),
-				Group:     group,
+				Group:     *group,
 				Resources: members,
 			}
 			e.SetHashCode()

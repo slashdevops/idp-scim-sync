@@ -36,11 +36,11 @@ func TestNewGoogleIdentityProvider(t *testing.T) {
 }
 
 func TestGoogleProvider_GetGroups(t *testing.T) {
-	g1 := model.Group{IPID: "1", Name: "group 1", Email: "group1@mail.com"}
+	g1 := &model.Group{IPID: "1", Name: "group 1", Email: "group1@mail.com"}
 	g1.SetHashCode()
-	g2 := model.Group{IPID: "2", Name: "group 2", Email: "group2@mail.com"}
+	g2 := &model.Group{IPID: "2", Name: "group 2", Email: "group2@mail.com"}
 	g2.SetHashCode()
-	g4 := model.Group{IPID: "4", Name: "group 4", Email: "group4@mail.com"}
+	g4 := &model.Group{IPID: "4", Name: "group 4", Email: "group4@mail.com"}
 	g4.SetHashCode()
 
 	type fields struct {
@@ -70,7 +70,7 @@ func TestGoogleProvider_GetGroups(t *testing.T) {
 			args: args{ctx: context.Background(), filter: []string{""}},
 			want: &model.GroupsResult{
 				Items:     0,
-				Resources: make([]model.Group, 0),
+				Resources: make([]*model.Group, 0),
 			},
 			wantErr: false,
 		},
@@ -87,7 +87,7 @@ func TestGoogleProvider_GetGroups(t *testing.T) {
 			args: args{ctx: context.Background(), filter: []string{""}},
 			want: &model.GroupsResult{
 				Items:     2,
-				Resources: []model.Group{g1, g2},
+				Resources: []*model.Group{g1, g2},
 			},
 			wantErr: false,
 		},
@@ -107,7 +107,7 @@ func TestGoogleProvider_GetGroups(t *testing.T) {
 			args: args{ctx: context.Background(), filter: []string{""}},
 			want: &model.GroupsResult{
 				Items:     3,
-				Resources: []model.Group{g1, g2, g4},
+				Resources: []*model.Group{g1, g2, g4},
 			},
 			wantErr: false,
 		},
@@ -489,7 +489,7 @@ func TestGoogleProvider_GetGroupsMembers(t *testing.T) {
 			prepare: func(f *fields) {},
 			args: args{
 				ctx: context.Background(),
-				gr:  &model.GroupsResult{Items: 0, Resources: []model.Group{}},
+				gr:  &model.GroupsResult{Items: 0, Resources: []*model.Group{}},
 			},
 			want:    &model.GroupsMembersResult{Items: 0, Resources: []*model.GroupMembers{}},
 			wantErr: false,

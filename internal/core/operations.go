@@ -189,17 +189,17 @@ func groupsOperations(idp, scim *model.GroupsResult) (create *model.GroupsResult
 	idpGroups := make(map[string]struct{})     // [idp.Group.Name ] -> struct{}{}
 	scimGroups := make(map[string]model.Group) // [scim.Group.Name] -> scim.Group
 
-	toCreate := make([]model.Group, 0)
-	toUpdate := make([]model.Group, 0)
-	toEqual := make([]model.Group, 0)
-	toDelete := make([]model.Group, 0)
+	toCreate := make([]*model.Group, 0)
+	toUpdate := make([]*model.Group, 0)
+	toEqual := make([]*model.Group, 0)
+	toDelete := make([]*model.Group, 0)
 
 	for _, gr := range idp.Resources {
 		idpGroups[gr.Name] = struct{}{}
 	}
 
 	for _, gr := range scim.Resources {
-		scimGroups[gr.Name] = gr
+		scimGroups[gr.Name] = *gr
 	}
 
 	// loop over idp to see what to create and what to update
@@ -338,7 +338,7 @@ func usersOperations(idp, scim *model.UsersResult) (create *model.UsersResult, u
 // NOTE: this function does not check the content of the GroupsResult, so
 // the return could have duplicated groups
 func mergeGroupsResult(grs ...*model.GroupsResult) (merged model.GroupsResult) {
-	groups := make([]model.Group, 0)
+	groups := make([]*model.Group, 0)
 
 	for _, gr := range grs {
 		groups = append(groups, gr.Resources...)
@@ -399,7 +399,7 @@ func updateSCIMID(idp *model.GroupsMembersResult, scimGroups *model.GroupsResult
 	users := make(map[string]model.User)
 
 	for _, group := range scimGroups.Resources {
-		groups[group.Name] = group
+		groups[group.Name] = *group
 	}
 
 	for _, user := range scimUsers.Resources {
