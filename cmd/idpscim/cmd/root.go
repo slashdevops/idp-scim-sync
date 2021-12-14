@@ -37,7 +37,9 @@ var rootCmd = &cobra.Command{
 	Long: `
 Sync your Google Workspace Groups and Users to AWS Single Sing-On using
 AWS SSO SCIM API (https://docs.aws.amazon.com/singlesignon/latest/developerguide/what-is-scim.html).`,
-	RunE: sync,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return sync()
+	},
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -212,14 +214,14 @@ func getSecrets() {
 	cfg.SCIMEndpoint = unwrap
 }
 
-func sync(cmd *cobra.Command, args []string) error {
+func sync() error {
 	if cfg.SyncMethod == "groups" {
-		return syncGroups(cmd, args)
+		return syncGroups()
 	}
 	return nil
 }
 
-func syncGroups(cmd *cobra.Command, args []string) error {
+func syncGroups() error {
 	log.Info("idpscim syncGroups: starting sync groups")
 
 	ctx := context.Background()
