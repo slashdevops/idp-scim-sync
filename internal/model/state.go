@@ -83,9 +83,9 @@ func (s *State) SetHashCode() {
 		}
 		group.SetHashCode()
 
-		members := make([]Member, 0)
+		members := make([]*Member, 0)
 		for _, member := range groupMembers.Resources {
-			m := Member{
+			m := &Member{
 				IPID:  member.IPID,
 				Email: member.Email,
 			}

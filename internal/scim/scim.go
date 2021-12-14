@@ -404,7 +404,7 @@ func (s *SCIMProvider) CreateGroupsMembers(ctx context.Context, gmr *model.Group
 	groupsMembers := make([]*model.GroupMembers, 0)
 
 	for _, groupMembers := range gmr.Resources {
-		members := make([]model.Member, 0)
+		members := make([]*model.Member, 0)
 
 		// https://talks.golang.org/2012/10things.slide#2
 		membersIDValue := []struct {
@@ -426,7 +426,7 @@ func (s *SCIMProvider) CreateGroupsMembers(ctx context.Context, gmr *model.Group
 				Value: member.SCIMID,
 			})
 
-			e := model.Member{
+			e := &model.Member{
 				IPID:   member.IPID,
 				SCIMID: member.SCIMID,
 				Email:  member.Email,
@@ -554,7 +554,7 @@ func (s *SCIMProvider) GetGroupsMembers(ctx context.Context, gr *model.GroupsRes
 		log.Tracef("lgr: lgr : %s", utils.ToJSON(lgr))
 
 		for _, gr := range lgr.Resources {
-			members := make([]model.Member, 0)
+			members := make([]*model.Member, 0)
 
 			for _, member := range gr.Members {
 				u, err := s.scim.GetUser(ctx, member.Value)
@@ -562,7 +562,7 @@ func (s *SCIMProvider) GetGroupsMembers(ctx context.Context, gr *model.GroupsRes
 					return nil, fmt.Errorf("scim: error getting user: %s, error %w", member.Value, err)
 				}
 
-				m := model.Member{
+				m := &model.Member{
 					SCIMID: member.Value,
 					Email:  u.Emails[0].Value,
 				}
@@ -598,7 +598,7 @@ func (s *SCIMProvider) GetGroupsMembersBruteForce(ctx context.Context, gr *model
 
 	// brute force implemented here thanks to the fxxckin' aws sso scim api
 	for _, group := range gr.Resources {
-		members := make([]model.Member, 0)
+		members := make([]*model.Member, 0)
 
 		for _, user := range ur.Resources {
 			// https://docs.aws.amazon.com/singlesignon/latest/developerguide/listgroups.html
@@ -609,7 +609,7 @@ func (s *SCIMProvider) GetGroupsMembersBruteForce(ctx context.Context, gr *model
 			}
 
 			if lgr.TotalResults > 0 { // crazy thing of the AWS SSO SCIM API, it doesn't return the memnber into the Resources array
-				m := model.Member{
+				m := &model.Member{
 					IPID:   user.IPID,
 					SCIMID: user.SCIMID,
 					Email:  user.Email,

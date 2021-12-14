@@ -287,7 +287,7 @@ func TestReconcilingGroupsMembers(t *testing.T) {
 				{
 					Items:     1,
 					Group:     model.Group{IPID: "1", Name: "group 1", Email: "group.1@mail.com"},
-					Resources: []model.Member{{IPID: "1", Email: "user.1@mail.com"}},
+					Resources: []*model.Member{{IPID: "1", Email: "user.1@mail.com"}},
 				},
 			},
 		}
@@ -297,7 +297,7 @@ func TestReconcilingGroupsMembers(t *testing.T) {
 				{
 					Items:     1,
 					Group:     model.Group{IPID: "2", Name: "group 2", Email: "group.2@mail.com"},
-					Resources: []model.Member{{IPID: "2", Email: "user.2@mail.com"}},
+					Resources: []*model.Member{{IPID: "2", Email: "user.2@mail.com"}},
 				},
 			},
 		}
@@ -319,7 +319,7 @@ func TestReconcilingGroupsMembers(t *testing.T) {
 				{
 					Items:     1,
 					Group:     model.Group{IPID: "1", Name: "group 1", Email: "group.1@mail.com"},
-					Resources: []model.Member{{IPID: "1", Email: "user.1@mail.com"}},
+					Resources: []*model.Member{{IPID: "1", Email: "user.1@mail.com"}},
 				},
 			},
 		}
@@ -329,7 +329,7 @@ func TestReconcilingGroupsMembers(t *testing.T) {
 				{
 					Items:     1,
 					Group:     model.Group{IPID: "2", Name: "group 2", Email: "group.2@mail.com"},
-					Resources: []model.Member{{IPID: "2", Email: "user.2@mail.com"}},
+					Resources: []*model.Member{{IPID: "2", Email: "user.2@mail.com"}},
 				},
 			},
 		}
@@ -350,7 +350,7 @@ func TestReconcilingGroupsMembers(t *testing.T) {
 				{
 					Items:     1,
 					Group:     model.Group{IPID: "1", Name: "group 1", Email: "group.1@mail.com"},
-					Resources: []model.Member{{IPID: "1", Email: "user.1@mail.com"}},
+					Resources: []*model.Member{{IPID: "1", Email: "user.1@mail.com"}},
 				},
 			},
 		}
@@ -360,7 +360,7 @@ func TestReconcilingGroupsMembers(t *testing.T) {
 				{
 					Items:     1,
 					Group:     model.Group{IPID: "2", Name: "group 2", Email: "group.2@mail.com"},
-					Resources: []model.Member{{IPID: "2", Email: "user.2@mail.com"}},
+					Resources: []*model.Member{{IPID: "2", Email: "user.2@mail.com"}},
 				},
 			},
 		}
@@ -399,7 +399,7 @@ func TestReconcilingGroupsMembers(t *testing.T) {
 				{
 					Items:     1,
 					Group:     model.Group{IPID: "1", Name: "group 1", Email: "group.1@mail.com"},
-					Resources: []model.Member{{IPID: "1", Email: "user.1@mail.com"}},
+					Resources: []*model.Member{{IPID: "1", Email: "user.1@mail.com"}},
 				},
 			},
 		}
@@ -409,7 +409,7 @@ func TestReconcilingGroupsMembers(t *testing.T) {
 				{
 					Items:     1,
 					Group:     model.Group{IPID: "2", Name: "group 2", Email: "group.2@mail.com"},
-					Resources: []model.Member{{IPID: "2", Email: "user.2@mail.com"}},
+					Resources: []*model.Member{{IPID: "2", Email: "user.2@mail.com"}},
 				},
 			},
 		}
@@ -428,7 +428,7 @@ func TestReconcilingGroupsMembers(t *testing.T) {
 				{
 					Items:     1,
 					Group:     model.Group{IPID: "2", Name: "group 2", Email: "group.2@mail.com"},
-					Resources: []model.Member{{IPID: "2", Email: "user.2@mail.com"}},
+					Resources: []*model.Member{{IPID: "2", Email: "user.2@mail.com"}},
 				},
 			},
 		}
@@ -447,7 +447,7 @@ func TestReconcilingGroupsMembers(t *testing.T) {
 				{
 					Items:     1,
 					Group:     model.Group{IPID: "1", Name: "group 1", Email: "group.1@mail.com"},
-					Resources: []model.Member{{IPID: "1", Email: "user.1@mail.com"}},
+					Resources: []*model.Member{{IPID: "1", Email: "user.1@mail.com"}},
 				},
 			},
 		}

@@ -356,7 +356,7 @@ func TestGroupMembers_SetHashCode(t *testing.T) {
 				Items:    3,
 				HashCode: "test",
 				Group:    Group{IPID: "1", SCIMID: "1", Name: "group", Email: "group.1@mail.com"},
-				Resources: []Member{
+				Resources: []*Member{
 					{IPID: "1", SCIMID: "1", Email: "group.1@mail.com"},
 					{IPID: "2", SCIMID: "2", Email: "group.2@mail.com"},
 					{IPID: "3", SCIMID: "3", Email: "group.3@mail.com"},
@@ -365,7 +365,7 @@ func TestGroupMembers_SetHashCode(t *testing.T) {
 			want: GroupMembers{
 				Items: 3,
 				Group: Group{IPID: "1", SCIMID: "1", Name: "group", Email: "group.1@mail.com"},
-				Resources: []Member{
+				Resources: []*Member{
 					{IPID: "3", SCIMID: "3", Email: "group.3@mail.com"},
 					{IPID: "1", SCIMID: "1", Email: "group.1@mail.com"},
 					{IPID: "2", SCIMID: "2", Email: "group.2@mail.com"},
@@ -495,17 +495,17 @@ func TestGroupsResult_SetHashCode(t *testing.T) {
 }
 
 func TestGroupsMembersResult_SetHashCode(t *testing.T) {
-	m1 := Member{IPID: "1", SCIMID: "1", Email: "group.1@mail.com"}
-	m2 := Member{IPID: "2", SCIMID: "2", Email: "group.2@mail.com"}
-	m3 := Member{IPID: "3", SCIMID: "3", Email: "group.3@mail.com"}
+	m1 := &Member{IPID: "1", SCIMID: "1", Email: "group.1@mail.com"}
+	m2 := &Member{IPID: "2", SCIMID: "2", Email: "group.2@mail.com"}
+	m3 := &Member{IPID: "3", SCIMID: "3", Email: "group.3@mail.com"}
 
 	m1.SetHashCode()
 	m2.SetHashCode()
 	m3.SetHashCode()
 
-	gm1 := &GroupMembers{Group: Group{IPID: "1", SCIMID: "1", Name: "group", Email: "group.1@mail.com"}, Resources: []Member{m1, m2, m3}}
-	gm2 := &GroupMembers{Group: Group{IPID: "2", SCIMID: "2", Name: "group", Email: "group.2@mail.com"}, Resources: []Member{m2, m1, m3}}
-	gm3 := &GroupMembers{Group: Group{IPID: "3", SCIMID: "3", Name: "group", Email: "group.3@mail.com"}, Resources: []Member{m1, m3, m2}}
+	gm1 := &GroupMembers{Group: Group{IPID: "1", SCIMID: "1", Name: "group", Email: "group.1@mail.com"}, Resources: []*Member{m1, m2, m3}}
+	gm2 := &GroupMembers{Group: Group{IPID: "2", SCIMID: "2", Name: "group", Email: "group.2@mail.com"}, Resources: []*Member{m2, m1, m3}}
+	gm3 := &GroupMembers{Group: Group{IPID: "3", SCIMID: "3", Name: "group", Email: "group.3@mail.com"}, Resources: []*Member{m1, m3, m2}}
 
 	gm1.SetHashCode()
 	gm2.SetHashCode()

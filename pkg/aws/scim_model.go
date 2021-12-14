@@ -175,9 +175,9 @@ type CreateGroupResponse struct {
 
 // CreateGroupRequest represent a create group request entity
 type CreateGroupRequest struct {
-	DisplayName string   `json:"displayName"`
-	ExternalID  string   `json:"ExternalID,omitempty"`
-	Members     []Member `json:"members,omitempty"`
+	DisplayName string    `json:"displayName"`
+	ExternalID  string    `json:"ExternalID,omitempty"`
+	Members     []*Member `json:"members,omitempty"`
 }
 
 // CreateUserRequest represent a create user request entity

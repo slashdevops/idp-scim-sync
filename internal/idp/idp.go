@@ -133,7 +133,7 @@ func (i *IdentityProvider) GetGroupMembers(ctx context.Context, groupID string) 
 		return nil, ErrGroupIDNil
 	}
 
-	syncMembers := make([]model.Member, 0)
+	syncMembers := make([]*model.Member, 0)
 
 	pMembers, err := i.ps.ListGroupMembers(ctx, groupID)
 	if err != nil {
@@ -141,7 +141,7 @@ func (i *IdentityProvider) GetGroupMembers(ctx context.Context, groupID string) 
 	}
 
 	for _, member := range pMembers {
-		e := model.Member{
+		e := &model.Member{
 			IPID:  member.Id,
 			Email: member.Email,
 		}
@@ -231,7 +231,7 @@ func (i *IdentityProvider) GetGroupsMembers(ctx context.Context, gr *model.Group
 			groupMember := &model.GroupMembers{
 				Items:     0,
 				Group:     e,
-				Resources: make([]model.Member, 0),
+				Resources: make([]*model.Member, 0),
 			}
 			groupMember.SetHashCode()
 

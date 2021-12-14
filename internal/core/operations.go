@@ -44,7 +44,7 @@ func membersOperations(idp, scim *model.GroupsMembersResult) (create *model.Grou
 	for _, grpMembers := range idp.Resources {
 		idpMemberSet[grpMembers.Group.Name] = make(map[string]model.Member)
 		for _, member := range grpMembers.Resources {
-			idpMemberSet[grpMembers.Group.Name][member.Email] = member
+			idpMemberSet[grpMembers.Group.Name][member.Email] = *member
 		}
 	}
 
@@ -52,16 +52,16 @@ func membersOperations(idp, scim *model.GroupsMembersResult) (create *model.Grou
 		scimGroupsSet[grpMembers.Group.Name] = grpMembers.Group
 		scimMemberSet[grpMembers.Group.Name] = make(map[string]model.Member)
 		for _, member := range grpMembers.Resources {
-			scimMemberSet[grpMembers.Group.Name][member.Email] = member
+			scimMemberSet[grpMembers.Group.Name][member.Email] = *member
 		}
 	}
 
 	for _, grpMembers := range idp.Resources {
-		toC := make(map[string][]model.Member)
-		toE := make(map[string][]model.Member)
+		toC := make(map[string][]*model.Member)
+		toE := make(map[string][]*model.Member)
 
-		toC[grpMembers.Group.Name] = make([]model.Member, 0)
-		toE[grpMembers.Group.Name] = make([]model.Member, 0)
+		toC[grpMembers.Group.Name] = make([]*model.Member, 0)
+		toE[grpMembers.Group.Name] = make([]*model.Member, 0)
 
 		// count when both side have members == 0
 		noMembers := 0
@@ -122,8 +122,8 @@ func membersOperations(idp, scim *model.GroupsMembersResult) (create *model.Grou
 	}
 
 	for _, grpMembers := range scim.Resources {
-		toD := make(map[string][]model.Member)
-		toD[grpMembers.Group.Name] = make([]model.Member, 0)
+		toD := make(map[string][]*model.Member)
+		toD[grpMembers.Group.Name] = make([]*model.Member, 0)
 
 		for _, member := range grpMembers.Resources {
 			if _, ok := idpMemberSet[grpMembers.Group.Name][member.Email]; !ok {
@@ -408,7 +408,7 @@ func updateSCIMID(idp *model.GroupsMembersResult, scimGroups *model.GroupsResult
 
 	gms := make([]*model.GroupMembers, 0)
 	for _, groupMembers := range idp.Resources {
-		mbs := make([]model.Member, 0)
+		mbs := make([]*model.Member, 0)
 
 		g := model.Group{
 			IPID:   groupMembers.Group.IPID,
@@ -419,7 +419,7 @@ func updateSCIMID(idp *model.GroupsMembersResult, scimGroups *model.GroupsResult
 		g.SetHashCode()
 
 		for _, member := range groupMembers.Resources {
-			m := model.Member{
+			m := &model.Member{
 				IPID:   member.IPID,
 				SCIMID: users[member.Email].SCIMID,
 				Email:  member.Email,

@@ -198,20 +198,20 @@ func (m *Member) SetHashCode() {
 
 // MembersResult represents a member result list entity.
 type MembersResult struct {
-	Items     int      `json:"items"`
-	HashCode  string   `json:"hashCode"`
-	Resources []Member `json:"resources"`
+	Items     int       `json:"items"`
+	HashCode  string    `json:"hashCode"`
+	Resources []*Member `json:"resources"`
 }
 
 // SetHashCode is a helper function to avoid errors when calculating hash code.
 // this method discards fields that are not used in the hash calculation.
 // only fields coming from the Identity Provider are used.
 func (mr *MembersResult) SetHashCode() {
-	copyResources := make([]Member, len(mr.Resources))
+	copyResources := make([]*Member, len(mr.Resources))
 	copy(copyResources, mr.Resources)
 
 	// only these fields are used in the hash calculation
-	copyOfStruct := MembersResult{
+	copyOfStruct := &MembersResult{
 		Items:     mr.Items,
 		Resources: copyResources,
 	}
@@ -226,17 +226,17 @@ func (mr *MembersResult) SetHashCode() {
 
 // GroupMembers represents a group members entity.
 type GroupMembers struct {
-	Items     int      `json:"items"`
-	HashCode  string   `json:"hashCode,omitempty"`
-	Group     Group    `json:"group"`
-	Resources []Member `json:"resources"`
+	Items     int       `json:"items"`
+	HashCode  string    `json:"hashCode,omitempty"`
+	Group     Group     `json:"group"`
+	Resources []*Member `json:"resources"`
 }
 
 // SetHashCode is a helper function to avoid errors when calculating hash code.
 // this method discards fields that are not used in the hash calculation.
 // only fields coming from the Identity Provider are used.
 func (gm *GroupMembers) SetHashCode() {
-	copyResources := make([]Member, len(gm.Resources))
+	copyResources := make([]*Member, len(gm.Resources))
 	copy(copyResources, gm.Resources)
 
 	// only these fields are used in the hash calculation
