@@ -60,15 +60,15 @@ func (u *User) SetHashCode() {
 
 // UsersResult represents a user result list entity.
 type UsersResult struct {
-	Items     int    `json:"items"`
-	HashCode  string `json:"hashCode"`
-	Resources []User `json:"resources"`
+	Items     int     `json:"items"`
+	HashCode  string  `json:"hashCode"`
+	Resources []*User `json:"resources"`
 }
 
 // MarshalJSON implements the json.Marshaler interface for UsersResult entity.
 func (ur *UsersResult) MarshalJSON() ([]byte, error) {
 	if ur.Resources == nil {
-		ur.Resources = make([]User, 0)
+		ur.Resources = make([]*User, 0)
 	}
 	return json.MarshalIndent(*ur, "", "  ")
 }
@@ -77,11 +77,11 @@ func (ur *UsersResult) MarshalJSON() ([]byte, error) {
 // this method discards fields that are not used in the hash calculation.
 // only fields coming from the Identity Provider are used.
 func (ur *UsersResult) SetHashCode() {
-	copyResources := make([]User, len(ur.Resources))
+	copyResources := make([]*User, len(ur.Resources))
 	copy(copyResources, ur.Resources)
 
 	// only these fields are used in the hash calculation
-	copyOfStruct := UsersResult{
+	copyOfStruct := &UsersResult{
 		Items:     ur.Items,
 		Resources: copyResources,
 	}

@@ -222,9 +222,9 @@ func (s *SCIMProvider) GetUsers(ctx context.Context) (*model.UsersResult, error)
 		return nil, fmt.Errorf("scim: error listing users: %w", err)
 	}
 
-	users := make([]model.User, 0)
+	users := make([]*model.User, 0)
 	for _, user := range usersResponse.Resources {
-		e := model.User{
+		e := &model.User{
 			IPID:   user.ExternalID,
 			SCIMID: user.ID,
 			Name: model.Name{
@@ -251,7 +251,7 @@ func (s *SCIMProvider) GetUsers(ctx context.Context) (*model.UsersResult, error)
 
 // CreateUsers creates users in SCIM Provider
 func (s *SCIMProvider) CreateUsers(ctx context.Context, ur *model.UsersResult) (*model.UsersResult, error) {
-	users := make([]model.User, 0)
+	users := make([]*model.User, 0)
 
 	for _, user := range ur.Resources {
 		userRequest := &aws.CreateUserRequest{
@@ -283,7 +283,7 @@ func (s *SCIMProvider) CreateUsers(ctx context.Context, ur *model.UsersResult) (
 			return nil, fmt.Errorf("scim: error creating user: %w", err)
 		}
 
-		e := model.User{
+		e := &model.User{
 			IPID:   user.IPID,
 			SCIMID: r.ID,
 			Name: model.Name{
@@ -311,7 +311,7 @@ func (s *SCIMProvider) CreateUsers(ctx context.Context, ur *model.UsersResult) (
 
 // UpdateUsers updates users in SCIM Provider given a list of users
 func (s *SCIMProvider) UpdateUsers(ctx context.Context, ur *model.UsersResult) (*model.UsersResult, error) {
-	users := make([]model.User, 0)
+	users := make([]*model.User, 0)
 
 	for _, user := range ur.Resources {
 		userRequest := &aws.PutUserRequest{
@@ -352,7 +352,7 @@ func (s *SCIMProvider) UpdateUsers(ctx context.Context, ur *model.UsersResult) (
 			return nil, fmt.Errorf("scim: error updating user: %w", err)
 		}
 
-		e := model.User{
+		e := &model.User{
 			IPID:   user.IPID,
 			SCIMID: r.ID,
 			Name: model.Name{

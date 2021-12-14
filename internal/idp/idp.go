@@ -98,7 +98,7 @@ func (i *IdentityProvider) GetGroups(ctx context.Context, filter []string) (*mod
 // The filter parameter is a list of strings that can be used to filter the users
 // according to the Identity Provider API.
 func (i *IdentityProvider) GetUsers(ctx context.Context, filter []string) (*model.UsersResult, error) {
-	syncUsers := make([]model.User, 0)
+	syncUsers := make([]*model.User, 0)
 
 	pUsers, err := i.ps.ListUsers(ctx, filter)
 	if err != nil {
@@ -106,7 +106,7 @@ func (i *IdentityProvider) GetUsers(ctx context.Context, filter []string) (*mode
 	}
 
 	for _, usr := range pUsers {
-		e := model.User{
+		e := &model.User{
 			IPID:        usr.Id,
 			Name:        model.Name{FamilyName: usr.Name.FamilyName, GivenName: usr.Name.GivenName},
 			DisplayName: fmt.Sprintf("%s %s", usr.Name.GivenName, usr.Name.FamilyName),
@@ -161,7 +161,7 @@ func (i *IdentityProvider) GetGroupMembers(ctx context.Context, groupID string) 
 
 // GetUsersByGroupMembers returns a list of users from the Identity Provider API.
 func (i *IdentityProvider) GetUsersByGroupMembers(ctx context.Context, mbr *model.MembersResult) (*model.UsersResult, error) {
-	pUsers := make([]model.User, 0)
+	pUsers := make([]*model.User, 0)
 
 	for _, member := range mbr.Resources {
 		u, err := i.ps.GetUser(ctx, member.IPID)
@@ -169,7 +169,7 @@ func (i *IdentityProvider) GetUsersByGroupMembers(ctx context.Context, mbr *mode
 			return nil, fmt.Errorf("idp: error getting user: %+v, email: %s, error: %w", member.IPID, member.Email, err)
 		}
 
-		e := model.User{
+		e := &model.User{
 			IPID:        u.Id,
 			Name:        model.Name{FamilyName: u.Name.FamilyName, GivenName: u.Name.GivenName},
 			DisplayName: fmt.Sprintf("%s %s", u.Name.GivenName, u.Name.FamilyName),

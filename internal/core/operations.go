@@ -270,17 +270,17 @@ func usersOperations(idp, scim *model.UsersResult) (create *model.UsersResult, u
 	idpUsers := make(map[string]struct{})
 	scimUsers := make(map[string]model.User)
 
-	toCreate := make([]model.User, 0)
-	toUpdate := make([]model.User, 0)
-	toEqual := make([]model.User, 0)
-	toDelete := make([]model.User, 0)
+	toCreate := make([]*model.User, 0)
+	toUpdate := make([]*model.User, 0)
+	toEqual := make([]*model.User, 0)
+	toDelete := make([]*model.User, 0)
 
 	for _, usr := range idp.Resources {
 		idpUsers[usr.Email] = struct{}{}
 	}
 
 	for _, usr := range scim.Resources {
-		scimUsers[usr.Email] = usr
+		scimUsers[usr.Email] = *usr
 	}
 
 	// new users and what equal to them
@@ -357,7 +357,7 @@ func mergeGroupsResult(grs ...*model.GroupsResult) (merged model.GroupsResult) {
 // NOTE: this function does not check the content of the UsersResult, so
 // the return could have duplicated users
 func mergeUsersResult(urs ...*model.UsersResult) (merged model.UsersResult) {
-	users := make([]model.User, 0)
+	users := make([]*model.User, 0)
 
 	for _, u := range urs {
 		users = append(users, u.Resources...)
@@ -403,7 +403,7 @@ func updateSCIMID(idp *model.GroupsMembersResult, scimGroups *model.GroupsResult
 	}
 
 	for _, user := range scimUsers.Resources {
-		users[user.Email] = user
+		users[user.Email] = *user
 	}
 
 	gms := make([]*model.GroupMembers, 0)

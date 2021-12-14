@@ -65,7 +65,7 @@ func TestState_MarshalJSON(t *testing.T) {
 					Users: UsersResult{
 						Items:    1,
 						HashCode: "hashCode",
-						Resources: []User{
+						Resources: []*User{
 							{
 								IPID:     "ipid",
 								SCIMID:   "scimid",

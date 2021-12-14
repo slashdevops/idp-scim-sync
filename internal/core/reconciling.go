@@ -91,7 +91,7 @@ func reconcilingUsers(ctx context.Context, scim SCIMService, create *model.Users
 
 	if create.Items == 0 {
 		log.Info("no users to be created")
-		created = &model.UsersResult{Items: 0, Resources: []model.User{}}
+		created = &model.UsersResult{Items: 0, Resources: []*model.User{}}
 	} else {
 		log.WithField("quantity", create.Items).Warn("creating users")
 		created, err = scim.CreateUsers(ctx, create)
@@ -102,7 +102,7 @@ func reconcilingUsers(ctx context.Context, scim SCIMService, create *model.Users
 
 	if update.Items == 0 {
 		log.Info("no users to be updated")
-		updated = &model.UsersResult{Items: 0, Resources: []model.User{}}
+		updated = &model.UsersResult{Items: 0, Resources: []*model.User{}}
 	} else {
 		log.WithField("quantity", update.Items).Warn("updating users")
 		updated, err = scim.UpdateUsers(ctx, update)

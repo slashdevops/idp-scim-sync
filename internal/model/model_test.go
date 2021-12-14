@@ -12,7 +12,7 @@ import (
 func TestUsersResult_MarshalJSON(t *testing.T) {
 	type fields struct {
 		Items     int
-		Resources []User
+		Resources []*User
 		HashCode  string
 	}
 	tests := []struct {
@@ -36,7 +36,7 @@ func TestUsersResult_MarshalJSON(t *testing.T) {
 			fields: fields{
 				Items:    1,
 				HashCode: "test",
-				Resources: []User{
+				Resources: []*User{
 					{
 						IPID:   "1",
 						SCIMID: "1",
@@ -389,9 +389,9 @@ func TestGroupMembers_SetHashCode(t *testing.T) {
 }
 
 func TestUsersResult_SetHashCode(t *testing.T) {
-	u1 := User{IPID: "1", SCIMID: "1", Name: Name{GivenName: "User", FamilyName: "1"}, Email: "user.1@mail.com"}
-	u2 := User{IPID: "2", SCIMID: "2", Name: Name{GivenName: "User", FamilyName: "2"}, Email: "user.2@mail.com"}
-	u3 := User{IPID: "3", SCIMID: "3", Name: Name{GivenName: "User", FamilyName: "3"}, Email: "user.3@mail.com"}
+	u2 := &User{IPID: "2", SCIMID: "2", Name: Name{GivenName: "User", FamilyName: "2"}, Email: "user.2@mail.com"}
+	u1 := &User{IPID: "1", SCIMID: "1", Name: Name{GivenName: "User", FamilyName: "1"}, Email: "user.1@mail.com"}
+	u3 := &User{IPID: "3", SCIMID: "3", Name: Name{GivenName: "User", FamilyName: "3"}, Email: "user.3@mail.com"}
 
 	u1.SetHashCode()
 	u2.SetHashCode()
@@ -399,19 +399,19 @@ func TestUsersResult_SetHashCode(t *testing.T) {
 
 	ur1 := UsersResult{
 		Items:     3,
-		Resources: []User{u1, u2, u3},
+		Resources: []*User{u1, u2, u3},
 	}
 	ur1.SetHashCode()
 
 	ur2 := UsersResult{
 		Items:     3,
-		Resources: []User{u2, u3, u1},
+		Resources: []*User{u2, u3, u1},
 	}
 	ur2.SetHashCode()
 
 	ur3 := UsersResult{
 		Items:     3,
-		Resources: []User{u3, u2, u1},
+		Resources: []*User{u3, u2, u1},
 	}
 	ur3.SetHashCode()
 
@@ -574,7 +574,7 @@ func mergeGroupsResult(grs ...*GroupsResult) (merged GroupsResult) {
 }
 
 func mergeUsersResult(urs ...*UsersResult) (merged UsersResult) {
-	users := make([]User, 0)
+	users := make([]*User, 0)
 
 	for _, u := range urs {
 		users = append(users, u.Resources...)

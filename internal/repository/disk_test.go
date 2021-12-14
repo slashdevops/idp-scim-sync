@@ -110,7 +110,7 @@ func TestStateRepository_SetState(t *testing.T) {
 				Users: model.UsersResult{
 					Items:    1,
 					HashCode: "hashCode",
-					Resources: []model.User{
+					Resources: []*model.User{
 						{
 							IPID:        "1",
 							Name:        model.Name{FamilyName: "1", GivenName: "user"},

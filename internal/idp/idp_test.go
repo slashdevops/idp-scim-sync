@@ -154,9 +154,9 @@ func TestGoogleProvider_GetGroups(t *testing.T) {
 }
 
 func TestGoogleProvider_GetUsers(t *testing.T) {
-	u1 := model.User{IPID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, DisplayName: "user 1", Active: true, Email: "user.1@mail.com"}
+	u1 := &model.User{IPID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, DisplayName: "user 1", Active: true, Email: "user.1@mail.com"}
 	u1.SetHashCode()
-	u2 := model.User{IPID: "2", Name: model.Name{GivenName: "user", FamilyName: "2"}, DisplayName: "user 2", Active: false, Email: "user.2@mail.com"}
+	u2 := &model.User{IPID: "2", Name: model.Name{GivenName: "user", FamilyName: "2"}, DisplayName: "user 2", Active: false, Email: "user.2@mail.com"}
 	u2.SetHashCode()
 
 	type fields struct {
@@ -187,7 +187,7 @@ func TestGoogleProvider_GetUsers(t *testing.T) {
 			want: &model.UsersResult{
 				Items:     0,
 				HashCode:  "",
-				Resources: make([]model.User, 0),
+				Resources: make([]*model.User, 0),
 			},
 			wantErr: false,
 		},
@@ -204,7 +204,7 @@ func TestGoogleProvider_GetUsers(t *testing.T) {
 			args: args{ctx: context.Background(), filter: []string{""}},
 			want: &model.UsersResult{
 				Items:     2,
-				Resources: []model.User{u1, u2},
+				Resources: []*model.User{u1, u2},
 			},
 			wantErr: false,
 		},
@@ -369,7 +369,7 @@ func TestGoogleProvider_GetUsersByGroupMembers(t *testing.T) {
 			want: &model.UsersResult{
 				Items:     0,
 				HashCode:  "",
-				Resources: make([]model.User, 0),
+				Resources: make([]*model.User, 0),
 			},
 			wantErr: false,
 		},
@@ -397,7 +397,7 @@ func TestGoogleProvider_GetUsersByGroupMembers(t *testing.T) {
 			},
 			want: &model.UsersResult{
 				Items: 2,
-				Resources: []model.User{
+				Resources: []*model.User{
 					{IPID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com", DisplayName: "user 1", Active: true, HashCode: hash.Get(&model.User{IPID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com", DisplayName: "user 1", Active: true})},
 					{IPID: "2", Name: model.Name{GivenName: "user", FamilyName: "2"}, Email: "user.2@mail.com", DisplayName: "user 2", Active: false, HashCode: hash.Get(&model.User{IPID: "2", Name: model.Name{GivenName: "user", FamilyName: "2"}, Email: "user.2@mail.com", DisplayName: "user 2", Active: false})},
 				},

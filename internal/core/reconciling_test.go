@@ -150,9 +150,9 @@ func TestReconcilingUsers(t *testing.T) {
 	t.Run("Should call all the methods one time each and no error", func(t *testing.T) {
 		mockSCIMService := mocks.NewMockSCIMService(mockCtrl)
 
-		create := &model.UsersResult{Items: 1, Resources: []model.User{{IPID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com"}}}
-		update := &model.UsersResult{Items: 1, Resources: []model.User{{IPID: "2", Name: model.Name{GivenName: "user", FamilyName: "2"}, Email: "user.2@mail.com"}}}
-		delete := &model.UsersResult{Items: 1, Resources: []model.User{{IPID: "3", Name: model.Name{GivenName: "user", FamilyName: "3"}, Email: "user.3@mail.com"}}}
+		create := &model.UsersResult{Items: 1, Resources: []*model.User{{IPID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com"}}}
+		update := &model.UsersResult{Items: 1, Resources: []*model.User{{IPID: "2", Name: model.Name{GivenName: "user", FamilyName: "2"}, Email: "user.2@mail.com"}}}
+		delete := &model.UsersResult{Items: 1, Resources: []*model.User{{IPID: "3", Name: model.Name{GivenName: "user", FamilyName: "3"}, Email: "user.3@mail.com"}}}
 
 		mockSCIMService.EXPECT().CreateUsers(ctx, create).Return(create, nil).Times(1)
 		mockSCIMService.EXPECT().UpdateUsers(ctx, update).Return(update, nil).Times(1)
@@ -167,9 +167,9 @@ func TestReconcilingUsers(t *testing.T) {
 	t.Run("Should return error when CreateUsers return error", func(t *testing.T) {
 		mockSCIMService := mocks.NewMockSCIMService(mockCtrl)
 
-		create := &model.UsersResult{Items: 1, Resources: []model.User{{IPID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com"}}}
-		update := &model.UsersResult{Items: 1, Resources: []model.User{{IPID: "2", Name: model.Name{GivenName: "user", FamilyName: "2"}, Email: "user.2@mail.com"}}}
-		delete := &model.UsersResult{Items: 1, Resources: []model.User{{IPID: "3", Name: model.Name{GivenName: "user", FamilyName: "3"}, Email: "user.3@mail.com"}}}
+		create := &model.UsersResult{Items: 1, Resources: []*model.User{{IPID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com"}}}
+		update := &model.UsersResult{Items: 1, Resources: []*model.User{{IPID: "2", Name: model.Name{GivenName: "user", FamilyName: "2"}, Email: "user.2@mail.com"}}}
+		delete := &model.UsersResult{Items: 1, Resources: []*model.User{{IPID: "3", Name: model.Name{GivenName: "user", FamilyName: "3"}, Email: "user.3@mail.com"}}}
 
 		mockSCIMService.EXPECT().CreateUsers(ctx, create).Return(nil, errors.New("test error")).Times(1)
 
@@ -182,9 +182,9 @@ func TestReconcilingUsers(t *testing.T) {
 	t.Run("Should return error when UpdateUsers return error", func(t *testing.T) {
 		mockSCIMService := mocks.NewMockSCIMService(mockCtrl)
 
-		create := &model.UsersResult{Items: 1, Resources: []model.User{{IPID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com"}}}
-		update := &model.UsersResult{Items: 1, Resources: []model.User{{IPID: "2", Name: model.Name{GivenName: "user", FamilyName: "2"}, Email: "user.2@mail.com"}}}
-		delete := &model.UsersResult{Items: 1, Resources: []model.User{{IPID: "3", Name: model.Name{GivenName: "user", FamilyName: "3"}, Email: "user.3@mail.com"}}}
+		create := &model.UsersResult{Items: 1, Resources: []*model.User{{IPID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com"}}}
+		update := &model.UsersResult{Items: 1, Resources: []*model.User{{IPID: "2", Name: model.Name{GivenName: "user", FamilyName: "2"}, Email: "user.2@mail.com"}}}
+		delete := &model.UsersResult{Items: 1, Resources: []*model.User{{IPID: "3", Name: model.Name{GivenName: "user", FamilyName: "3"}, Email: "user.3@mail.com"}}}
 
 		mockSCIMService.EXPECT().CreateUsers(ctx, create).Return(create, nil).Times(1)
 		mockSCIMService.EXPECT().UpdateUsers(ctx, update).Return(nil, errors.New("test error")).Times(1)
@@ -198,9 +198,9 @@ func TestReconcilingUsers(t *testing.T) {
 	t.Run("Should return error when DeleteUsers return error", func(t *testing.T) {
 		mockSCIMService := mocks.NewMockSCIMService(mockCtrl)
 
-		create := &model.UsersResult{Items: 1, Resources: []model.User{{IPID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com"}}}
-		update := &model.UsersResult{Items: 1, Resources: []model.User{{IPID: "2", Name: model.Name{GivenName: "user", FamilyName: "2"}, Email: "user.2@mail.com"}}}
-		delete := &model.UsersResult{Items: 1, Resources: []model.User{{IPID: "3", Name: model.Name{GivenName: "user", FamilyName: "3"}, Email: "user.3@mail.com"}}}
+		create := &model.UsersResult{Items: 1, Resources: []*model.User{{IPID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com"}}}
+		update := &model.UsersResult{Items: 1, Resources: []*model.User{{IPID: "2", Name: model.Name{GivenName: "user", FamilyName: "2"}, Email: "user.2@mail.com"}}}
+		delete := &model.UsersResult{Items: 1, Resources: []*model.User{{IPID: "3", Name: model.Name{GivenName: "user", FamilyName: "3"}, Email: "user.3@mail.com"}}}
 
 		mockSCIMService.EXPECT().CreateUsers(ctx, create).Return(create, nil).Times(1)
 		mockSCIMService.EXPECT().UpdateUsers(ctx, update).Return(update, nil).Times(1)
@@ -215,9 +215,9 @@ func TestReconcilingUsers(t *testing.T) {
 	t.Run("Should call all the methods one time each and no error when resources are empty", func(t *testing.T) {
 		mockSCIMService := mocks.NewMockSCIMService(mockCtrl)
 
-		create := &model.UsersResult{Items: 0, Resources: []model.User{}}
-		update := &model.UsersResult{Items: 0, Resources: []model.User{}}
-		delete := &model.UsersResult{Items: 0, Resources: []model.User{}}
+		create := &model.UsersResult{Items: 0, Resources: []*model.User{}}
+		update := &model.UsersResult{Items: 0, Resources: []*model.User{}}
+		delete := &model.UsersResult{Items: 0, Resources: []*model.User{}}
 
 		urc, uru, err := reconcilingUsers(ctx, mockSCIMService, create, update, delete)
 		assert.NoError(t, err)
@@ -226,9 +226,9 @@ func TestReconcilingUsers(t *testing.T) {
 	})
 
 	t.Run("Should return error when SCIM service is nil", func(t *testing.T) {
-		create := &model.UsersResult{Items: 0, Resources: []model.User{}}
-		update := &model.UsersResult{Items: 0, Resources: []model.User{}}
-		delete := &model.UsersResult{Items: 0, Resources: []model.User{}}
+		create := &model.UsersResult{Items: 0, Resources: []*model.User{}}
+		update := &model.UsersResult{Items: 0, Resources: []*model.User{}}
+		delete := &model.UsersResult{Items: 0, Resources: []*model.User{}}
 
 		urc, uru, err := reconcilingUsers(ctx, nil, create, update, delete)
 		assert.Error(t, err)
@@ -239,8 +239,8 @@ func TestReconcilingUsers(t *testing.T) {
 	t.Run("Should return error when create users is nil", func(t *testing.T) {
 		mockSCIMService := mocks.NewMockSCIMService(mockCtrl)
 
-		update := &model.UsersResult{Items: 0, Resources: []model.User{}}
-		delete := &model.UsersResult{Items: 0, Resources: []model.User{}}
+		update := &model.UsersResult{Items: 0, Resources: []*model.User{}}
+		delete := &model.UsersResult{Items: 0, Resources: []*model.User{}}
 
 		urc, uru, err := reconcilingUsers(ctx, mockSCIMService, nil, update, delete)
 		assert.Error(t, err)
@@ -251,8 +251,8 @@ func TestReconcilingUsers(t *testing.T) {
 	t.Run("Should return error when update users is nil", func(t *testing.T) {
 		mockSCIMService := mocks.NewMockSCIMService(mockCtrl)
 
-		create := &model.UsersResult{Items: 0, Resources: []model.User{}}
-		delete := &model.UsersResult{Items: 0, Resources: []model.User{}}
+		create := &model.UsersResult{Items: 0, Resources: []*model.User{}}
+		delete := &model.UsersResult{Items: 0, Resources: []*model.User{}}
 
 		urc, uru, err := reconcilingUsers(ctx, mockSCIMService, create, nil, delete)
 		assert.Error(t, err)
@@ -263,8 +263,8 @@ func TestReconcilingUsers(t *testing.T) {
 	t.Run("Should return error when delete users is nil", func(t *testing.T) {
 		mockSCIMService := mocks.NewMockSCIMService(mockCtrl)
 
-		create := &model.UsersResult{Items: 0, Resources: []model.User{}}
-		update := &model.UsersResult{Items: 0, Resources: []model.User{}}
+		create := &model.UsersResult{Items: 0, Resources: []*model.User{}}
+		update := &model.UsersResult{Items: 0, Resources: []*model.User{}}
 
 		urc, uru, err := reconcilingUsers(ctx, mockSCIMService, create, update, nil)
 		assert.Error(t, err)

@@ -377,7 +377,7 @@ func TestSCIMProvider_CreateUsers(t *testing.T) {
 
 		usr := &model.UsersResult{
 			Items: 1,
-			Resources: []model.User{
+			Resources: []*model.User{
 				{
 					IPID:        "1",
 					Name:        model.Name{FamilyName: "1", GivenName: "user"},
@@ -414,7 +414,7 @@ func TestSCIMProvider_CreateUsers(t *testing.T) {
 
 		usr := &model.UsersResult{
 			Items: 1,
-			Resources: []model.User{
+			Resources: []*model.User{
 				{
 					IPID:        "1",
 					Name:        model.Name{FamilyName: "1", GivenName: "user"},
@@ -484,7 +484,7 @@ func TestSCIMProvider_CreateUsers(t *testing.T) {
 
 		usr := &model.UsersResult{
 			Items: 2,
-			Resources: []model.User{
+			Resources: []*model.User{
 				{
 					IPID:        "1",
 					Name:        model.Name{FamilyName: "1", GivenName: "user"},

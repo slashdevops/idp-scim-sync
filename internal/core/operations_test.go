@@ -332,28 +332,28 @@ func TestUsersOperations(t *testing.T) {
 			args: args{
 				idp: &model.UsersResult{
 					Items:     0,
-					Resources: []model.User{},
+					Resources: []*model.User{},
 				},
 				state: &model.UsersResult{
 					Items:     0,
-					Resources: []model.User{},
+					Resources: []*model.User{},
 				},
 			},
 			wantCreate: &model.UsersResult{
 				Items:     0,
-				Resources: []model.User{},
+				Resources: []*model.User{},
 			},
 			wantUpdate: &model.UsersResult{
 				Items:     0,
-				Resources: []model.User{},
+				Resources: []*model.User{},
 			},
 			wantEqual: &model.UsersResult{
 				Items:     0,
-				Resources: []model.User{},
+				Resources: []*model.User{},
 			},
 			wantDelete: &model.UsersResult{
 				Items:     0,
-				Resources: []model.User{},
+				Resources: []*model.User{},
 			},
 			wantErr: false,
 		},
@@ -386,14 +386,14 @@ func TestUsersOperations(t *testing.T) {
 			args: args{
 				idp: &model.UsersResult{
 					Items: 2,
-					Resources: []model.User{
+					Resources: []*model.User{
 						{IPID: "1", Email: "john.doe@email.com", Name: model.Name{FamilyName: "john", GivenName: "doe"}, DisplayName: "john doe", Active: true},
 						{IPID: "2", Email: "foo.bar@email.com", Name: model.Name{FamilyName: "foo", GivenName: "bar"}, DisplayName: "foo bar", Active: true},
 					},
 				},
 				state: &model.UsersResult{
 					Items: 2,
-					Resources: []model.User{
+					Resources: []*model.User{
 						{IPID: "1", Email: "john.doe@email.com", Name: model.Name{FamilyName: "john", GivenName: "doe"}, DisplayName: "john doe", Active: true},
 						{IPID: "2", Email: "foo.bar@email.com", Name: model.Name{FamilyName: "foo", GivenName: "bar"}, DisplayName: "foo bar", Active: true},
 					},
@@ -401,22 +401,22 @@ func TestUsersOperations(t *testing.T) {
 			},
 			wantCreate: &model.UsersResult{
 				Items:     0,
-				Resources: []model.User{},
+				Resources: []*model.User{},
 			},
 			wantUpdate: &model.UsersResult{
 				Items:     0,
-				Resources: []model.User{},
+				Resources: []*model.User{},
 			},
 			wantEqual: &model.UsersResult{
 				Items: 2,
-				Resources: []model.User{
+				Resources: []*model.User{
 					{IPID: "1", Email: "john.doe@email.com", Name: model.Name{FamilyName: "john", GivenName: "doe"}, DisplayName: "john doe", Active: true},
 					{IPID: "2", Email: "foo.bar@email.com", Name: model.Name{FamilyName: "foo", GivenName: "bar"}, DisplayName: "foo bar", Active: true},
 				},
 			},
 			wantDelete: &model.UsersResult{
 				Items:     0,
-				Resources: []model.User{},
+				Resources: []*model.User{},
 			},
 		},
 		{
@@ -424,14 +424,14 @@ func TestUsersOperations(t *testing.T) {
 			args: args{
 				idp: &model.UsersResult{
 					Items: 2,
-					Resources: []model.User{
+					Resources: []*model.User{
 						{IPID: "1", Email: "john.doe@email.com", Name: model.Name{FamilyName: "john", GivenName: "doe"}, DisplayName: "john doe", Active: true},
 						{IPID: "2", Email: "foo.bar@email.com", Name: model.Name{FamilyName: "foonew", GivenName: "bar"}, DisplayName: "foonew bar", Active: true},
 					},
 				},
 				state: &model.UsersResult{
 					Items: 2,
-					Resources: []model.User{
+					Resources: []*model.User{
 						{IPID: "1", Email: "john.doe@email.com", Name: model.Name{FamilyName: "john", GivenName: "doe"}, DisplayName: "john doe", Active: true},
 						{IPID: "2", Email: "foo.bar@email.com", Name: model.Name{FamilyName: "foo", GivenName: "bar"}, DisplayName: "foo bar", Active: true},
 						{IPID: "3", Email: "donato.ricupero@email.com", Name: model.Name{FamilyName: "donato", GivenName: "ricupero"}, DisplayName: "donato ricupero", Active: true},
@@ -440,23 +440,23 @@ func TestUsersOperations(t *testing.T) {
 			},
 			wantCreate: &model.UsersResult{
 				Items:     0,
-				Resources: []model.User{},
+				Resources: []*model.User{},
 			},
 			wantUpdate: &model.UsersResult{
 				Items: 1,
-				Resources: []model.User{
+				Resources: []*model.User{
 					{IPID: "2", Email: "foo.bar@email.com", Name: model.Name{FamilyName: "foonew", GivenName: "bar"}, DisplayName: "foonew bar", Active: true},
 				},
 			},
 			wantEqual: &model.UsersResult{
 				Items: 1,
-				Resources: []model.User{
+				Resources: []*model.User{
 					{IPID: "1", Email: "john.doe@email.com", Name: model.Name{FamilyName: "john", GivenName: "doe"}, DisplayName: "john doe", Active: true},
 				},
 			},
 			wantDelete: &model.UsersResult{
 				Items: 1,
-				Resources: []model.User{
+				Resources: []*model.User{
 					{IPID: "3", Email: "donato.ricupero@email.com", Name: model.Name{FamilyName: "donato", GivenName: "ricupero"}, DisplayName: "donato ricupero", Active: true},
 				},
 			},
@@ -466,14 +466,14 @@ func TestUsersOperations(t *testing.T) {
 			args: args{
 				idp: &model.UsersResult{
 					Items: 2,
-					Resources: []model.User{
+					Resources: []*model.User{
 						{IPID: "1", Email: "john.doe@email.com", Name: model.Name{FamilyName: "john", GivenName: "doe"}, DisplayName: "john doe", Active: true},
 						{IPID: "2", Email: "foo.bar@email.com", Name: model.Name{FamilyName: "foonew", GivenName: "bar"}, DisplayName: "foonew bar", Active: true},
 					},
 				},
 				state: &model.UsersResult{
 					Items: 2,
-					Resources: []model.User{
+					Resources: []*model.User{
 						{IPID: "1", Email: "john.doe@email.com", Name: model.Name{FamilyName: "john", GivenName: "doe"}, DisplayName: "john doe", Active: true},
 						{IPID: "2", Email: "foo.bar@email.com", Name: model.Name{FamilyName: "foo", GivenName: "bar"}, DisplayName: "foo bar", Active: true},
 					},
@@ -481,23 +481,23 @@ func TestUsersOperations(t *testing.T) {
 			},
 			wantCreate: &model.UsersResult{
 				Items:     0,
-				Resources: []model.User{},
+				Resources: []*model.User{},
 			},
 			wantUpdate: &model.UsersResult{
 				Items: 1,
-				Resources: []model.User{
+				Resources: []*model.User{
 					{IPID: "2", Email: "foo.bar@email.com", Name: model.Name{FamilyName: "foonew", GivenName: "bar"}, DisplayName: "foonew bar", Active: true},
 				},
 			},
 			wantEqual: &model.UsersResult{
 				Items: 1,
-				Resources: []model.User{
+				Resources: []*model.User{
 					{IPID: "1", Email: "john.doe@email.com", Name: model.Name{FamilyName: "john", GivenName: "doe"}, DisplayName: "john doe", Active: true},
 				},
 			},
 			wantDelete: &model.UsersResult{
 				Items:     0,
-				Resources: []model.User{},
+				Resources: []*model.User{},
 			},
 		},
 		{
@@ -505,7 +505,7 @@ func TestUsersOperations(t *testing.T) {
 			args: args{
 				idp: &model.UsersResult{
 					Items: 2,
-					Resources: []model.User{
+					Resources: []*model.User{
 						{IPID: "1", Email: "john.doe@email.com", Name: model.Name{FamilyName: "john", GivenName: "doe"}, DisplayName: "john doe", Active: true},
 						{IPID: "2", Email: "foo.bar@email.com", Name: model.Name{FamilyName: "foonew", GivenName: "bar"}, DisplayName: "foonew bar", Active: true},
 						{IPID: "4", Email: "don.nadie@email.com", Name: model.Name{FamilyName: "don", GivenName: "nadie"}, DisplayName: "don nadie", Active: true},
@@ -513,7 +513,7 @@ func TestUsersOperations(t *testing.T) {
 				},
 				state: &model.UsersResult{
 					Items: 2,
-					Resources: []model.User{
+					Resources: []*model.User{
 						{IPID: "1", Email: "john.doe@email.com", Name: model.Name{FamilyName: "john", GivenName: "doe"}, DisplayName: "john doe", Active: true},
 						{IPID: "2", Email: "foo.bar@email.com", Name: model.Name{FamilyName: "foo", GivenName: "bar"}, DisplayName: "foo bar", Active: true},
 						{IPID: "3", Email: "donato.ricupero@email.com", Name: model.Name{FamilyName: "donato", GivenName: "ricupero"}, DisplayName: "donato ricupero", Active: true},
@@ -522,25 +522,25 @@ func TestUsersOperations(t *testing.T) {
 			},
 			wantCreate: &model.UsersResult{
 				Items: 1,
-				Resources: []model.User{
+				Resources: []*model.User{
 					{IPID: "4", Email: "don.nadie@email.com", Name: model.Name{FamilyName: "don", GivenName: "nadie"}, DisplayName: "don nadie", Active: true},
 				},
 			},
 			wantUpdate: &model.UsersResult{
 				Items: 1,
-				Resources: []model.User{
+				Resources: []*model.User{
 					{IPID: "2", Email: "foo.bar@email.com", Name: model.Name{FamilyName: "foonew", GivenName: "bar"}, DisplayName: "foonew bar", Active: true},
 				},
 			},
 			wantEqual: &model.UsersResult{
 				Items: 1,
-				Resources: []model.User{
+				Resources: []*model.User{
 					{IPID: "1", Email: "john.doe@email.com", Name: model.Name{FamilyName: "john", GivenName: "doe"}, DisplayName: "john doe", Active: true},
 				},
 			},
 			wantDelete: &model.UsersResult{
 				Items: 1,
-				Resources: []model.User{
+				Resources: []*model.User{
 					{IPID: "3", Email: "donato.ricupero@email.com", Name: model.Name{FamilyName: "donato", GivenName: "ricupero"}, DisplayName: "donato ricupero", Active: true},
 				},
 			},
@@ -1078,7 +1078,7 @@ func TestMergeUsersResult(t *testing.T) {
 			},
 			wantMerged: model.UsersResult{
 				Items:     0,
-				Resources: []model.User{},
+				Resources: []*model.User{},
 				HashCode:  "",
 			},
 		},
@@ -1089,7 +1089,7 @@ func TestMergeUsersResult(t *testing.T) {
 			},
 			wantMerged: model.UsersResult{
 				Items:     0,
-				Resources: []model.User{},
+				Resources: []*model.User{},
 				HashCode:  "",
 			},
 		},
@@ -1099,14 +1099,14 @@ func TestMergeUsersResult(t *testing.T) {
 				urs: []*model.UsersResult{
 					{
 						Items: 1,
-						Resources: []model.User{
+						Resources: []*model.User{
 							{IPID: "1", SCIMID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@gmail.com", HashCode: "1234567890"},
 						},
 						HashCode: "1234",
 					},
 					{
 						Items: 2,
-						Resources: []model.User{
+						Resources: []*model.User{
 							{IPID: "2", SCIMID: "2", Name: model.Name{GivenName: "user", FamilyName: "2"}, Email: "user.2@gmail.com", HashCode: "0987654321"},
 							{IPID: "3", SCIMID: "3", Name: model.Name{GivenName: "user", FamilyName: "3"}, Email: "user.3@gmail.com", HashCode: "1234509876"},
 						},
@@ -1116,7 +1116,7 @@ func TestMergeUsersResult(t *testing.T) {
 			},
 			wantMerged: model.UsersResult{
 				Items: 3,
-				Resources: []model.User{
+				Resources: []*model.User{
 					{IPID: "1", SCIMID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@gmail.com", HashCode: "1234567890"},
 					{IPID: "2", SCIMID: "2", Name: model.Name{GivenName: "user", FamilyName: "2"}, Email: "user.2@gmail.com", HashCode: "0987654321"},
 					{IPID: "3", SCIMID: "3", Name: model.Name{GivenName: "user", FamilyName: "3"}, Email: "user.3@gmail.com", HashCode: "1234509876"},
