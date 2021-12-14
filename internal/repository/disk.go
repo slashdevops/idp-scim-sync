@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"sync"
 
 	"github.com/pkg/errors"
 
@@ -23,7 +22,6 @@ var ErrStateFileNil = errors.New("disk: state file is nil")
 
 // DiskRepository represents a disk based state repository and implement core.StateRepository interface
 type DiskRepository struct {
-	mu        *sync.RWMutex
 	stateFile io.ReadWriter
 }
 
@@ -34,15 +32,12 @@ func NewDiskRepository(stateFile io.ReadWriter) (*DiskRepository, error) {
 	}
 
 	return &DiskRepository{
-		mu:        &sync.RWMutex{},
 		stateFile: stateFile,
 	}, nil
 }
 
 // GetState returns the state from the state file
 func (dr *DiskRepository) GetState(ctx context.Context) (*model.State, error) {
-	dr.mu.RLock()
-	defer dr.mu.RUnlock()
 	var err error
 
 	var state model.State
@@ -56,9 +51,6 @@ func (dr *DiskRepository) GetState(ctx context.Context) (*model.State, error) {
 
 // SetState sets the state in the state file
 func (dr *DiskRepository) SetState(ctx context.Context, state *model.State) error {
-	dr.mu.Lock()
-	defer dr.mu.Unlock()
-
 	enc := json.NewEncoder(dr.stateFile)
 	enc.SetIndent("", "  ")
 	err := enc.Encode(state)

@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"sync"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
@@ -39,7 +38,6 @@ type S3ClientAPI interface {
 
 // S3Repository represent a repository that stores state in S3 and implements model.Repository interface
 type S3Repository struct {
-	mu     *sync.RWMutex
 	bucket string
 	key    string
 	client S3ClientAPI
@@ -52,7 +50,6 @@ func NewS3Repository(client S3ClientAPI, opts ...S3RepositoryOption) (*S3Reposit
 	}
 
 	s3r := &S3Repository{
-		mu:     &sync.RWMutex{},
 		client: client,
 	}
 
@@ -73,9 +70,6 @@ func NewS3Repository(client S3ClientAPI, opts ...S3RepositoryOption) (*S3Reposit
 
 // GetState returns the state from the repository
 func (r *S3Repository) GetState(ctx context.Context) (*model.State, error) {
-	r.mu.RLock()
-	defer r.mu.RUnlock()
-
 	resp, err := r.client.GetObject(ctx, &s3.GetObjectInput{
 		Bucket: aws.String(r.bucket),
 		Key:    aws.String(r.key),
@@ -97,9 +91,6 @@ func (r *S3Repository) GetState(ctx context.Context) (*model.State, error) {
 
 // SetState sets the state in the given repository
 func (r *S3Repository) SetState(ctx context.Context, state *model.State) error {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-
 	if state == nil {
 		return ErrStateNil
 	}
