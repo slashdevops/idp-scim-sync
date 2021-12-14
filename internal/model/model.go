@@ -240,7 +240,7 @@ func (gm *GroupMembers) SetHashCode() {
 	copy(copyResources, gm.Resources)
 
 	// only these fields are used in the hash calculation
-	copyOfStruct := GroupMembers{
+	copyOfStruct := &GroupMembers{
 		Items:     gm.Items,
 		Group:     gm.Group,
 		Resources: copyResources,

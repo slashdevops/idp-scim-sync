@@ -1,6 +1,8 @@
 package model
 
 import (
+	"bytes"
+	"encoding/gob"
 	"reflect"
 	"testing"
 
@@ -605,4 +607,140 @@ func mergeGroupsMembersResult(gms ...*GroupsMembersResult) (merged GroupsMembers
 	}
 
 	return
+}
+
+func TestGroup_GobEncode(t *testing.T) {
+	tests := []struct {
+		name    string
+		g       Group
+		wantErr bool
+	}{
+		{
+			name: "Test Group GobEncode",
+			g: Group{
+				IPID:     "1",
+				SCIMID:   "1",
+				Name:     "group",
+				Email:    "user.1@mail.com",
+				HashCode: "",
+			},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := tt.g.GobEncode()
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Group.GobEncode() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+
+			b := new(bytes.Buffer)
+			enc := gob.NewEncoder(b)
+			if err := enc.Encode(tt.g.IPID); err != nil {
+				t.Fatal(err)
+			}
+			if err := enc.Encode(tt.g.Name); err != nil {
+				t.Fatal(err)
+			}
+			if err := enc.Encode(tt.g.Email); err != nil {
+				t.Fatal(err)
+			}
+
+			if !bytes.Equal(got, b.Bytes()) {
+				t.Errorf("Group.GobEncode() = %v\n, want %v\n", got, b.Bytes())
+			}
+		})
+	}
+}
+
+func TestMember_GobEncode(t *testing.T) {
+	tests := []struct {
+		name    string
+		m       Member
+		wantErr bool
+	}{
+		{
+			name: "Test Member GobEncode",
+			m: Member{
+				IPID:     "1",
+				SCIMID:   "1",
+				Email:    "member.1@mail.com",
+				HashCode: "",
+			},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := tt.m.GobEncode()
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Member.GobEncode() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+
+			b := new(bytes.Buffer)
+			enc := gob.NewEncoder(b)
+			if err := enc.Encode(tt.m.IPID); err != nil {
+				t.Fatal(err)
+			}
+
+			if err := enc.Encode(tt.m.Email); err != nil {
+				t.Fatal(err)
+			}
+
+			if !bytes.Equal(got, b.Bytes()) {
+				t.Errorf("Group.GobEncode() = %v\n, want %v\n", got, b.Bytes())
+			}
+		})
+	}
+}
+
+func TestUser_GobEncode(t *testing.T) {
+	tests := []struct {
+		name    string
+		u       User
+		wantErr bool
+	}{
+		{
+			name: "Test User GobEncode",
+			u: User{
+				IPID:     "1",
+				SCIMID:   "1",
+				Name:     Name{FamilyName: "user", GivenName: "1"},
+				Email:    "user.1@mail.com",
+				HashCode: "",
+			},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := tt.u.GobEncode()
+			if (err != nil) != tt.wantErr {
+				t.Errorf("User.GobEncode() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			b := new(bytes.Buffer)
+			enc := gob.NewEncoder(b)
+			if err := enc.Encode(tt.u.IPID); err != nil {
+				panic(err)
+			}
+			if err := enc.Encode(tt.u.Name); err != nil {
+				panic(err)
+			}
+			if err := enc.Encode(tt.u.DisplayName); err != nil {
+				panic(err)
+			}
+			if err := enc.Encode(tt.u.Active); err != nil {
+				panic(err)
+			}
+			if err := enc.Encode(tt.u.Email); err != nil {
+				panic(err)
+			}
+			if !bytes.Equal(got, b.Bytes()) {
+				t.Errorf("Group.GobEncode() = %v\n, want %v\n", got, b.Bytes())
+			}
+		})
+	}
 }
