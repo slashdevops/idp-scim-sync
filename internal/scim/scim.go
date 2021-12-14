@@ -74,11 +74,10 @@ func (s *SCIMProvider) GetGroups(ctx context.Context) (*model.GroupsResult, erro
 
 	groups := make([]model.Group, 0)
 	for _, group := range groupsResponse.Resources {
-
 		e := model.Group{
 			SCIMID: group.ID,
 			Name:   group.DisplayName,
-			IPID:   group.ExternalId,
+			IPID:   group.ExternalID,
 		}
 		e.SetHashCode()
 
@@ -99,10 +98,9 @@ func (s *SCIMProvider) CreateGroups(ctx context.Context, gr *model.GroupsResult)
 	groups := make([]model.Group, 0)
 
 	for _, group := range gr.Resources {
-
 		groupRequest := &aws.CreateGroupRequest{
 			DisplayName: group.Name,
-			ExternalId:  group.IPID,
+			ExternalID:  group.IPID,
 		}
 
 		log.WithFields(log.Fields{
@@ -140,7 +138,6 @@ func (s *SCIMProvider) UpdateGroups(ctx context.Context, gr *model.GroupsResult)
 	groups := make([]model.Group, 0)
 
 	for _, group := range gr.Resources {
-
 		groupRequest := &aws.PatchGroupRequest{
 			Group: aws.Group{
 				ID:          group.SCIMID,
@@ -153,7 +150,7 @@ func (s *SCIMProvider) UpdateGroups(ctx context.Context, gr *model.GroupsResult)
 						OP: "replace",
 						Value: map[string]string{
 							"id":         group.SCIMID,
-							"externalId": group.IPID,
+							"ExternalID": group.IPID,
 						},
 					},
 				},
@@ -199,7 +196,6 @@ func (s *SCIMProvider) UpdateGroups(ctx context.Context, gr *model.GroupsResult)
 // DeleteGroups deletes groups in SCIM Provider
 func (s *SCIMProvider) DeleteGroups(ctx context.Context, gr *model.GroupsResult) error {
 	for _, group := range gr.Resources {
-
 		log.WithFields(log.Fields{
 			"group":  group.Name,
 			"idpid":  group.IPID,
@@ -229,7 +225,7 @@ func (s *SCIMProvider) GetUsers(ctx context.Context) (*model.UsersResult, error)
 	users := make([]model.User, 0)
 	for _, user := range usersResponse.Resources {
 		e := model.User{
-			IPID:   user.ExternalId,
+			IPID:   user.ExternalID,
 			SCIMID: user.ID,
 			Name: model.Name{
 				FamilyName: user.Name.FamilyName,
@@ -258,12 +254,11 @@ func (s *SCIMProvider) CreateUsers(ctx context.Context, ur *model.UsersResult) (
 	users := make([]model.User, 0)
 
 	for _, user := range ur.Resources {
-
 		userRequest := &aws.CreateUserRequest{
 			ID:          "",
 			UserName:    user.Email,
 			DisplayName: user.DisplayName,
-			ExternalId:  user.IPID,
+			ExternalID:  user.IPID,
 			Name: aws.Name{
 				FamilyName: user.Name.FamilyName,
 				GivenName:  user.Name.GivenName,
@@ -319,12 +314,11 @@ func (s *SCIMProvider) UpdateUsers(ctx context.Context, ur *model.UsersResult) (
 	users := make([]model.User, 0)
 
 	for _, user := range ur.Resources {
-
 		userRequest := &aws.PutUserRequest{
 			ID:          user.SCIMID,
 			DisplayName: user.DisplayName,
 			UserName:    user.Email,
-			ExternalId:  user.IPID,
+			ExternalID:  user.IPID,
 			Name: aws.Name{
 				FamilyName: user.Name.FamilyName,
 				GivenName:  user.Name.GivenName,
@@ -386,7 +380,6 @@ func (s *SCIMProvider) UpdateUsers(ctx context.Context, ur *model.UsersResult) (
 // DeleteUsers deletes users in SCIM Provider given a list of users
 func (s *SCIMProvider) DeleteUsers(ctx context.Context, ur *model.UsersResult) error {
 	for _, user := range ur.Resources {
-
 		log.WithFields(log.Fields{
 			"user":   user.DisplayName,
 			"email":  user.Email,
@@ -408,10 +401,9 @@ func (s *SCIMProvider) DeleteUsers(ctx context.Context, ur *model.UsersResult) e
 
 // CreateGroupsMembers creates groups members in SCIM Provider given a list of groups members
 func (s *SCIMProvider) CreateGroupsMembers(ctx context.Context, gmr *model.GroupsMembersResult) (*model.GroupsMembersResult, error) {
-	groupsMembers := make([]model.GroupMembers, 0)
+	groupsMembers := make([]*model.GroupMembers, 0)
 
 	for _, groupMembers := range gmr.Resources {
-
 		members := make([]model.Member, 0)
 
 		// https://talks.golang.org/2012/10things.slide#2
@@ -420,7 +412,6 @@ func (s *SCIMProvider) CreateGroupsMembers(ctx context.Context, gmr *model.Group
 		}{}
 
 		for _, member := range groupMembers.Resources {
-
 			if member.SCIMID == "" {
 				u, err := s.scim.GetUserByUserName(ctx, member.Email)
 				if err != nil {
@@ -496,7 +487,6 @@ func (s *SCIMProvider) CreateGroupsMembers(ctx context.Context, gmr *model.Group
 // DeleteGroupsMembers deletes groups members in SCIM Provider given a list of groups members
 func (s *SCIMProvider) DeleteGroupsMembers(ctx context.Context, gmr *model.GroupsMembersResult) error {
 	for _, groupMembers := range gmr.Resources {
-
 		// https://talks.golang.org/2012/10things.slide#2
 		membersIDValue := []struct {
 			Value string `json:"value"`
@@ -552,12 +542,11 @@ func (s *SCIMProvider) DeleteGroupsMembers(ctx context.Context, gmr *model.Group
 // list the members of a group, or get a group and their members at the same time
 // reference: https://docs.aws.amazon.com/singlesignon/latest/developerguide/listgroups.html
 func (s *SCIMProvider) GetGroupsMembers(ctx context.Context, gr *model.GroupsResult) (*model.GroupsMembersResult, error) {
-	groupMembers := make([]model.GroupMembers, 0)
+	groupMembers := make([]*model.GroupMembers, 0)
 
 	for _, group := range gr.Resources {
-
 		// https://docs.aws.amazon.com/singlesignon/latest/developerguide/listgroups.html
-		f := fmt.Sprintf("displayName eq \"%s\"", group.Name)
+		f := fmt.Sprintf("displayName eq %q", group.Name)
 		lgr, err := s.scim.ListGroups(ctx, f)
 		if err != nil {
 			return nil, fmt.Errorf("scim: error listing groups: %w", err)
@@ -565,7 +554,6 @@ func (s *SCIMProvider) GetGroupsMembers(ctx context.Context, gr *model.GroupsRes
 		log.Tracef("lgr: lgr : %s", utils.ToJSON(lgr))
 
 		for _, gr := range lgr.Resources {
-
 			members := make([]model.Member, 0)
 
 			for _, member := range gr.Members {
@@ -583,7 +571,7 @@ func (s *SCIMProvider) GetGroupsMembers(ctx context.Context, gr *model.GroupsRes
 				members = append(members, m)
 			}
 
-			e := model.GroupMembers{
+			e := &model.GroupMembers{
 				Items:     len(members),
 				Group:     group,
 				Resources: members,
@@ -606,17 +594,15 @@ func (s *SCIMProvider) GetGroupsMembers(ctx context.Context, gr *model.GroupsRes
 // GetGroupsMembersBruteForce returns a list of groups and their members from the SCIM Provider
 // NOTE: this is an bad alternative to the method GetGroupsMembers,  because read the note in the method.
 func (s *SCIMProvider) GetGroupsMembersBruteForce(ctx context.Context, gr *model.GroupsResult, ur *model.UsersResult) (*model.GroupsMembersResult, error) {
-	groupMembers := make([]model.GroupMembers, 0)
+	groupMembers := make([]*model.GroupMembers, 0)
 
 	// brute force implemented here thanks to the fxxckin' aws sso scim api
 	for _, group := range gr.Resources {
-
 		members := make([]model.Member, 0)
 
 		for _, user := range ur.Resources {
-
 			// https://docs.aws.amazon.com/singlesignon/latest/developerguide/listgroups.html
-			f := fmt.Sprintf("id eq \"%s\" and members eq \"%s\"", group.SCIMID, user.SCIMID)
+			f := fmt.Sprintf("id eq %q and members eq %q", group.SCIMID, user.SCIMID)
 			lgr, err := s.scim.ListGroups(ctx, f)
 			if err != nil {
 				return nil, fmt.Errorf("scim: error listing groups: %w", err)
@@ -632,7 +618,7 @@ func (s *SCIMProvider) GetGroupsMembersBruteForce(ctx context.Context, gr *model
 
 				members = append(members, m)
 			}
-			e := model.GroupMembers{
+			e := &model.GroupMembers{
 				Items:     len(members),
 				Group:     group,
 				Resources: members,

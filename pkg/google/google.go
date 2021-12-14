@@ -19,8 +19,8 @@ const (
 
 var (
 	ErrGoogleClientScopeNil = fmt.Errorf("google: google client scope is required")
-	ErrUserIdNil            = fmt.Errorf("google: user id is required")
-	ErrGroupIdNil           = fmt.Errorf("google: group id is required")
+	ErrUserIDNil            = fmt.Errorf("google: user id is required")
+	ErrGroupIDNil           = fmt.Errorf("google: group id is required")
 )
 
 // DirectoryService represent the  Google Directory API client.
@@ -35,17 +35,17 @@ type DirectoryService struct {
 // - "https://www.googleapis.com/auth/admin.directory.group.readonly"
 // - "https://www.googleapis.com/auth/admin.directory.group.member.readonly"
 // - "https://www.googleapis.com/auth/admin.directory.user.readonly"
-func NewService(ctx context.Context, UserEmail string, ServiceAccount []byte, scope ...string) (*admin.Service, error) {
+func NewService(ctx context.Context, userEmail string, serviceAccount []byte, scope ...string) (*admin.Service, error) {
 	if len(scope) == 0 {
 		return nil, ErrGoogleClientScopeNil
 	}
 
-	config, err := google.JWTConfigFromJSON(ServiceAccount, scope...)
+	config, err := google.JWTConfigFromJSON(serviceAccount, scope...)
 	if err != nil {
 		return nil, fmt.Errorf("google: error getting JWT config from Service Account: %v", err)
 	}
 
-	config.Subject = UserEmail
+	config.Subject = userEmail
 	ts := config.TokenSource(ctx)
 
 	svc, err := admin.NewService(ctx, option.WithTokenSource(ts))
@@ -126,7 +126,7 @@ func (ds *DirectoryService) ListGroups(ctx context.Context, query []string) ([]*
 // ListGroupMembers return a list of all members given a group ID.
 func (ds *DirectoryService) ListGroupMembers(ctx context.Context, groupID string) ([]*admin.Member, error) {
 	if groupID == "" {
-		return nil, ErrGroupIdNil
+		return nil, ErrGroupIDNil
 	}
 
 	m := make([]*admin.Member, 0)
@@ -142,10 +142,10 @@ func (ds *DirectoryService) ListGroupMembers(ctx context.Context, groupID string
 // GetUser return a user given a user ID.
 func (ds *DirectoryService) GetUser(ctx context.Context, userID string) (*admin.User, error) {
 	if userID == "" {
-		return nil, ErrUserIdNil
+		return nil, ErrUserIDNil
 	}
 
-	// u, err := ds.svc.Users.Get(userID).Fields(usersRequiredFields).Context(ctx).Do()
+	// TODO: u, err := ds.svc.Users.Get(userID).Fields(usersRequiredFields).Context(ctx).Do()
 	u, err := ds.svc.Users.Get(userID).Context(ctx).Do()
 	if err != nil {
 		return nil, fmt.Errorf("google: error getting user %s: %v", userID, err)
@@ -157,7 +157,7 @@ func (ds *DirectoryService) GetUser(ctx context.Context, userID string) (*admin.
 // GetGroup return a group given a group ID.
 func (ds *DirectoryService) GetGroup(ctx context.Context, groupID string) (*admin.Group, error) {
 	if groupID == "" {
-		return nil, ErrGroupIdNil
+		return nil, ErrGroupIDNil
 	}
 
 	g, err := ds.svc.Groups.Get(groupID).Fields(groupsRequiredFields).Context(ctx).Do()

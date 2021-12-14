@@ -283,7 +283,7 @@ func TestReconcilingGroupsMembers(t *testing.T) {
 
 		create := &model.GroupsMembersResult{
 			Items: 1,
-			Resources: []model.GroupMembers{
+			Resources: []*model.GroupMembers{
 				{
 					Items:     1,
 					Group:     model.Group{IPID: "1", Name: "group 1", Email: "group.1@mail.com"},
@@ -293,7 +293,7 @@ func TestReconcilingGroupsMembers(t *testing.T) {
 		}
 		delete := &model.GroupsMembersResult{
 			Items: 1,
-			Resources: []model.GroupMembers{
+			Resources: []*model.GroupMembers{
 				{
 					Items:     1,
 					Group:     model.Group{IPID: "2", Name: "group 2", Email: "group.2@mail.com"},
@@ -315,7 +315,7 @@ func TestReconcilingGroupsMembers(t *testing.T) {
 
 		create := &model.GroupsMembersResult{
 			Items: 1,
-			Resources: []model.GroupMembers{
+			Resources: []*model.GroupMembers{
 				{
 					Items:     1,
 					Group:     model.Group{IPID: "1", Name: "group 1", Email: "group.1@mail.com"},
@@ -325,7 +325,7 @@ func TestReconcilingGroupsMembers(t *testing.T) {
 		}
 		delete := &model.GroupsMembersResult{
 			Items: 1,
-			Resources: []model.GroupMembers{
+			Resources: []*model.GroupMembers{
 				{
 					Items:     1,
 					Group:     model.Group{IPID: "2", Name: "group 2", Email: "group.2@mail.com"},
@@ -346,7 +346,7 @@ func TestReconcilingGroupsMembers(t *testing.T) {
 
 		create := &model.GroupsMembersResult{
 			Items: 1,
-			Resources: []model.GroupMembers{
+			Resources: []*model.GroupMembers{
 				{
 					Items:     1,
 					Group:     model.Group{IPID: "1", Name: "group 1", Email: "group.1@mail.com"},
@@ -356,7 +356,7 @@ func TestReconcilingGroupsMembers(t *testing.T) {
 		}
 		delete := &model.GroupsMembersResult{
 			Items: 1,
-			Resources: []model.GroupMembers{
+			Resources: []*model.GroupMembers{
 				{
 					Items:     1,
 					Group:     model.Group{IPID: "2", Name: "group 2", Email: "group.2@mail.com"},
@@ -378,11 +378,11 @@ func TestReconcilingGroupsMembers(t *testing.T) {
 
 		create := &model.GroupsMembersResult{
 			Items:     0,
-			Resources: []model.GroupMembers{},
+			Resources: []*model.GroupMembers{},
 		}
 		delete := &model.GroupsMembersResult{
 			Items:     0,
-			Resources: []model.GroupMembers{},
+			Resources: []*model.GroupMembers{},
 		}
 
 		gmrc, err := reconcilingGroupsMembers(ctx, mockSCIMService, create, delete)
@@ -395,7 +395,7 @@ func TestReconcilingGroupsMembers(t *testing.T) {
 	t.Run("Should return error when SCIM service in nil", func(t *testing.T) {
 		create := &model.GroupsMembersResult{
 			Items: 1,
-			Resources: []model.GroupMembers{
+			Resources: []*model.GroupMembers{
 				{
 					Items:     1,
 					Group:     model.Group{IPID: "1", Name: "group 1", Email: "group.1@mail.com"},
@@ -405,7 +405,7 @@ func TestReconcilingGroupsMembers(t *testing.T) {
 		}
 		delete := &model.GroupsMembersResult{
 			Items: 1,
-			Resources: []model.GroupMembers{
+			Resources: []*model.GroupMembers{
 				{
 					Items:     1,
 					Group:     model.Group{IPID: "2", Name: "group 2", Email: "group.2@mail.com"},
@@ -424,7 +424,7 @@ func TestReconcilingGroupsMembers(t *testing.T) {
 
 		delete := &model.GroupsMembersResult{
 			Items: 1,
-			Resources: []model.GroupMembers{
+			Resources: []*model.GroupMembers{
 				{
 					Items:     1,
 					Group:     model.Group{IPID: "2", Name: "group 2", Email: "group.2@mail.com"},
@@ -443,7 +443,7 @@ func TestReconcilingGroupsMembers(t *testing.T) {
 
 		create := &model.GroupsMembersResult{
 			Items: 1,
-			Resources: []model.GroupMembers{
+			Resources: []*model.GroupMembers{
 				{
 					Items:     1,
 					Group:     model.Group{IPID: "1", Name: "group 1", Email: "group.1@mail.com"},

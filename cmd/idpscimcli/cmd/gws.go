@@ -2,7 +2,7 @@ package cmd
 
 import (
 	"context"
-	"io/ioutil"
+	"os"
 
 	"github.com/slashdevops/idp-scim-sync/internal/config"
 	"github.com/slashdevops/idp-scim-sync/pkg/google"
@@ -64,23 +64,36 @@ func init() {
 	gwsCmd.AddCommand(gwsGroupsCmd)
 	gwsCmd.AddCommand(gwsUsersCmd)
 
-	gwsCmd.PersistentFlags().StringVarP(&cfg.GWSServiceAccountFile, "gws-service-account-file", "s", config.DefaultGWSServiceAccountFile, "path to Google Workspace service account file")
+	gwsCmd.PersistentFlags().StringVarP(
+		&cfg.GWSServiceAccountFile, "gws-service-account-file", "s",
+		config.DefaultGWSServiceAccountFile,
+		"path to Google Workspace service account file",
+	)
 	_ = gwsCmd.MarkPersistentFlagRequired("gws-service-account-file")
 
-	gwsCmd.PersistentFlags().StringVarP(&cfg.GWSUserEmail, "gws-user-email", "u", "", "Google Workspace user email with allowed access to the Google Workspace service account")
+	gwsCmd.PersistentFlags().StringVarP(&cfg.GWSUserEmail,
+		"gws-user-email", "u", "",
+		"Google Workspace user email with allowed access to the Google Workspace service account",
+	)
 	_ = gwsCmd.MarkPersistentFlagRequired("gws-user-email")
 
 	// groups command
 	gwsGroupsCmd.AddCommand(gwsGroupsListCmd)
-	gwsGroupsListCmd.Flags().StringSliceVarP(&groupsQuery, "query-groups", "q", []string{""}, "Google Workspace Groups query parameter, example: --query-groups 'name:Admin* email:admin*' --query-groups 'name:Power* email:power*', see: https://developers.google.com/admin-sdk/directory/v1/guides/search-groups")
+	gwsGroupsListCmd.Flags().StringSliceVarP(
+		&groupsQuery, "query-groups", "q", []string{""},
+		"GWS Groups query parameter, example: --query-groups 'name:Admin* email:admin*' --query-groups 'name:Power* email:power*'",
+	)
 
 	// users command
 	gwsUsersCmd.AddCommand(gwsUsersListCmd)
-	gwsUsersListCmd.Flags().StringSliceVarP(&usersQuery, "query-users", "r", []string{""}, "Google Workspace Users query parameter, example: --query-users 'name:Admin* email:admin*' --query-users 'name:Power* email:power*', see: https://developers.google.com/admin-sdk/directory/v1/guides/search-users")
+	gwsUsersListCmd.Flags().StringSliceVarP(
+		&usersQuery, "query-users", "r", []string{""},
+		"GWS Users query parameter, example: --query-users 'name:Admin* email:admin*' --query-users 'name:Power* email:power*'",
+	)
 }
 
 func getGWSDirectoryService(ctx context.Context) *google.DirectoryService {
-	gCreds, err := ioutil.ReadFile(cfg.GWSServiceAccountFile)
+	gCreds, err := os.ReadFile(cfg.GWSServiceAccountFile)
 	if err != nil {
 		log.Fatalf("error reading the credentials: %s", err)
 	}

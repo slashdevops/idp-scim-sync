@@ -597,15 +597,15 @@ func TestMembersOperations(t *testing.T) {
 			},
 			wantCreate: &model.GroupsMembersResult{
 				Items:     0,
-				Resources: []model.GroupMembers{},
+				Resources: []*model.GroupMembers{},
 			},
 			wantEqual: &model.GroupsMembersResult{
 				Items:     0,
-				Resources: []model.GroupMembers{},
+				Resources: []*model.GroupMembers{},
 			},
 			wantDelete: &model.GroupsMembersResult{
 				Items:     0,
-				Resources: []model.GroupMembers{},
+				Resources: []*model.GroupMembers{},
 			},
 			wantErr: false,
 		},
@@ -636,7 +636,7 @@ func TestMembersOperations(t *testing.T) {
 			args: args{
 				idp: &model.GroupsMembersResult{
 					Items: 1,
-					Resources: []model.GroupMembers{
+					Resources: []*model.GroupMembers{
 						{
 							Items: 2,
 							Group: model.Group{IPID: "1", Name: "group 1", Email: "group.1@mail.com"},
@@ -649,7 +649,7 @@ func TestMembersOperations(t *testing.T) {
 				},
 				scim: &model.GroupsMembersResult{
 					Items: 1,
-					Resources: []model.GroupMembers{
+					Resources: []*model.GroupMembers{
 						{
 							Items: 2,
 							Group: model.Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com"},
@@ -663,7 +663,7 @@ func TestMembersOperations(t *testing.T) {
 			},
 			wantCreate: &model.GroupsMembersResult{
 				Items: 1,
-				Resources: []model.GroupMembers{
+				Resources: []*model.GroupMembers{
 					{
 						Items: 1,
 						Group: model.Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: hash.Get(&model.Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com"})},
@@ -682,7 +682,7 @@ func TestMembersOperations(t *testing.T) {
 			},
 			wantEqual: &model.GroupsMembersResult{
 				Items: 1,
-				Resources: []model.GroupMembers{
+				Resources: []*model.GroupMembers{
 					{
 						Items: 1,
 						Group: model.Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: hash.Get(&model.Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com"})},
@@ -701,7 +701,7 @@ func TestMembersOperations(t *testing.T) {
 			},
 			wantDelete: &model.GroupsMembersResult{
 				Items: 1,
-				Resources: []model.GroupMembers{
+				Resources: []*model.GroupMembers{
 					{
 						Items: 1,
 						Group: model.Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: hash.Get(&model.Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com"})},
@@ -725,7 +725,7 @@ func TestMembersOperations(t *testing.T) {
 			args: args{
 				idp: &model.GroupsMembersResult{
 					Items: 2,
-					Resources: []model.GroupMembers{
+					Resources: []*model.GroupMembers{
 						{
 							Items: 2,
 							Group: model.Group{IPID: "1", Name: "group 1", Email: "group.1@mail.com"},
@@ -745,7 +745,7 @@ func TestMembersOperations(t *testing.T) {
 				},
 				scim: &model.GroupsMembersResult{
 					Items: 2,
-					Resources: []model.GroupMembers{
+					Resources: []*model.GroupMembers{
 						{
 							Items: 2,
 							Group: model.Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com"},
@@ -767,7 +767,7 @@ func TestMembersOperations(t *testing.T) {
 			},
 			wantCreate: &model.GroupsMembersResult{
 				Items: 1,
-				Resources: []model.GroupMembers{
+				Resources: []*model.GroupMembers{
 					{
 						Items: 1,
 						Group: model.Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: hash.Get(&model.Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com"})},
@@ -786,7 +786,7 @@ func TestMembersOperations(t *testing.T) {
 			},
 			wantEqual: &model.GroupsMembersResult{
 				Items: 2,
-				Resources: []model.GroupMembers{
+				Resources: []*model.GroupMembers{
 					{
 						Items: 1,
 						Group: model.Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: hash.Get(&model.Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com"})},
@@ -819,7 +819,7 @@ func TestMembersOperations(t *testing.T) {
 			},
 			wantDelete: &model.GroupsMembersResult{
 				Items: 2,
-				Resources: []model.GroupMembers{
+				Resources: []*model.GroupMembers{
 					{
 						Items: 1,
 						Group: model.Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: hash.Get(&model.Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com"})},
@@ -857,7 +857,7 @@ func TestMembersOperations(t *testing.T) {
 			args: args{
 				idp: &model.GroupsMembersResult{
 					Items: 2,
-					Resources: []model.GroupMembers{
+					Resources: []*model.GroupMembers{
 						{
 							Items: 2,
 							Group: model.Group{IPID: "1", Name: "group 1", Email: "group.1@mail.com"},
@@ -882,7 +882,7 @@ func TestMembersOperations(t *testing.T) {
 				},
 				scim: &model.GroupsMembersResult{
 					Items: 2,
-					Resources: []model.GroupMembers{
+					Resources: []*model.GroupMembers{
 						{
 							Items: 2,
 							Group: model.Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com"},
@@ -907,7 +907,7 @@ func TestMembersOperations(t *testing.T) {
 			wantCreate: &model.GroupsMembersResult{
 				Items:    1,
 				HashCode: "",
-				Resources: []model.GroupMembers{
+				Resources: []*model.GroupMembers{
 					{
 						Items: 1,
 						Group: model.Group{IPID: "2", SCIMID: "2", Name: "group 2", Email: "group.2@mail.com", HashCode: hash.Get(&model.Group{IPID: "2", SCIMID: "2", Name: "group 2", Email: "group.2@mail.com"})},
@@ -925,7 +925,7 @@ func TestMembersOperations(t *testing.T) {
 			},
 			wantEqual: &model.GroupsMembersResult{
 				Items: 2,
-				Resources: []model.GroupMembers{
+				Resources: []*model.GroupMembers{
 					{
 						Items: 2,
 						Group: model.Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: hash.Get(&model.Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com"})},
@@ -957,7 +957,7 @@ func TestMembersOperations(t *testing.T) {
 			wantDelete: &model.GroupsMembersResult{
 				Items:     0,
 				HashCode:  "",
-				Resources: []model.GroupMembers{},
+				Resources: []*model.GroupMembers{},
 			},
 			wantErr: false,
 		},
@@ -1151,7 +1151,7 @@ func TestMergeGroupsMembersResult(t *testing.T) {
 			},
 			wantMerged: model.GroupsMembersResult{
 				Items:     0,
-				Resources: []model.GroupMembers{},
+				Resources: []*model.GroupMembers{},
 				HashCode:  "",
 			},
 		},
@@ -1162,7 +1162,7 @@ func TestMergeGroupsMembersResult(t *testing.T) {
 			},
 			wantMerged: model.GroupsMembersResult{
 				Items:     0,
-				Resources: []model.GroupMembers{},
+				Resources: []*model.GroupMembers{},
 				HashCode:  "",
 			},
 		},
@@ -1173,7 +1173,7 @@ func TestMergeGroupsMembersResult(t *testing.T) {
 					{
 						Items:    1,
 						HashCode: "123",
-						Resources: []model.GroupMembers{
+						Resources: []*model.GroupMembers{
 							{
 								Items: 2,
 								Group: model.Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: "1234567890"},
@@ -1187,7 +1187,7 @@ func TestMergeGroupsMembersResult(t *testing.T) {
 					{
 						Items:    1,
 						HashCode: "321",
-						Resources: []model.GroupMembers{
+						Resources: []*model.GroupMembers{
 							{
 								Items: 2,
 								Group: model.Group{IPID: "2", SCIMID: "2", Name: "group 2", Email: "group.2@mail.com", HashCode: "0987654321"},
@@ -1202,7 +1202,7 @@ func TestMergeGroupsMembersResult(t *testing.T) {
 			},
 			wantMerged: model.GroupsMembersResult{
 				Items: 2,
-				Resources: []model.GroupMembers{
+				Resources: []*model.GroupMembers{
 					{
 						Items: 2,
 						Group: model.Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: "1234567890"},
@@ -1229,7 +1229,7 @@ func TestMergeGroupsMembersResult(t *testing.T) {
 					{
 						Items:    1,
 						HashCode: "123",
-						Resources: []model.GroupMembers{
+						Resources: []*model.GroupMembers{
 							{
 								Items: 1,
 								Group: model.Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: "1234567890"},
@@ -1242,7 +1242,7 @@ func TestMergeGroupsMembersResult(t *testing.T) {
 					{
 						Items:    1,
 						HashCode: "321",
-						Resources: []model.GroupMembers{
+						Resources: []*model.GroupMembers{
 							{
 								Items: 1,
 								Group: model.Group{IPID: "2", SCIMID: "2", Name: "group 2", Email: "group.2@mail.com", HashCode: "0987654321"},
@@ -1255,7 +1255,7 @@ func TestMergeGroupsMembersResult(t *testing.T) {
 					{
 						Items:    1,
 						HashCode: "321",
-						Resources: []model.GroupMembers{
+						Resources: []*model.GroupMembers{
 							{
 								Items: 1,
 								Group: model.Group{IPID: "3", SCIMID: "3", Name: "group 3", Email: "group.3@mail.com", HashCode: "6543219870"},
@@ -1269,7 +1269,7 @@ func TestMergeGroupsMembersResult(t *testing.T) {
 			},
 			wantMerged: model.GroupsMembersResult{
 				Items: 3,
-				Resources: []model.GroupMembers{
+				Resources: []*model.GroupMembers{
 					{
 						Items: 1,
 						Group: model.Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: "1234567890"},

@@ -12,6 +12,8 @@ import (
 //           -X github.com/slashdevops/idp-scim-sync/internal/verion.Branch=$(git rev-parse --abbrev-ref HEAD) \
 //           -X github.com/slashdevops/idp-scim-sync/internal/verion.BuildUser=$(git config --get user.name) \
 //           -X github.com/slashdevops/idp-scim-sync/internal/verion.BuildDate=$(date +'%Y-%m-%dT%H:%M:%S')"
+const unknown string = "unknown"
+
 var (
 	Version   string
 	Revision  string
@@ -39,7 +41,7 @@ func GetVersionInfo() string {
 		Revision = "0"
 	}
 	if Branch == "" {
-		Branch = "unknown"
+		Branch = unknown
 	}
 
 	return fmt.Sprintf("(version=%s, revision=%s, branch=%s)",
@@ -58,13 +60,13 @@ func GetVersionInfoExtended() string {
 		Revision = "0"
 	}
 	if Branch == "" {
-		Branch = "unknown"
+		Branch = unknown
 	}
 	if BuildUser == "" {
-		BuildUser = "unknown"
+		BuildUser = unknown
 	}
 	if BuildDate == "" {
-		BuildDate = "unknown"
+		BuildDate = unknown
 	}
 
 	return fmt.Sprintf("(version=%s, revision=%s, branch=%s, go=%s, user=%s, date=%s)",

@@ -501,9 +501,9 @@ func TestGroupsMembersResult_SetHashCode(t *testing.T) {
 	m2.SetHashCode()
 	m3.SetHashCode()
 
-	gm1 := GroupMembers{Group: Group{IPID: "1", SCIMID: "1", Name: "group", Email: "group.1@mail.com"}, Resources: []Member{m1, m2, m3}}
-	gm2 := GroupMembers{Group: Group{IPID: "2", SCIMID: "2", Name: "group", Email: "group.2@mail.com"}, Resources: []Member{m2, m1, m3}}
-	gm3 := GroupMembers{Group: Group{IPID: "3", SCIMID: "3", Name: "group", Email: "group.3@mail.com"}, Resources: []Member{m1, m3, m2}}
+	gm1 := &GroupMembers{Group: Group{IPID: "1", SCIMID: "1", Name: "group", Email: "group.1@mail.com"}, Resources: []Member{m1, m2, m3}}
+	gm2 := &GroupMembers{Group: Group{IPID: "2", SCIMID: "2", Name: "group", Email: "group.2@mail.com"}, Resources: []Member{m2, m1, m3}}
+	gm3 := &GroupMembers{Group: Group{IPID: "3", SCIMID: "3", Name: "group", Email: "group.3@mail.com"}, Resources: []Member{m1, m3, m2}}
 
 	gm1.SetHashCode()
 	gm2.SetHashCode()
@@ -511,19 +511,19 @@ func TestGroupsMembersResult_SetHashCode(t *testing.T) {
 
 	gmr1 := GroupsMembersResult{
 		Items:     3,
-		Resources: []GroupMembers{gm1, gm2, gm3},
+		Resources: []*GroupMembers{gm1, gm2, gm3},
 	}
 	gmr1.SetHashCode()
 
 	gmr2 := GroupsMembersResult{
 		Items:     3,
-		Resources: []GroupMembers{gm2, gm3, gm1},
+		Resources: []*GroupMembers{gm2, gm3, gm1},
 	}
 	gmr2.SetHashCode()
 
 	gmr3 := GroupsMembersResult{
 		Items:     3,
-		Resources: []GroupMembers{gm3, gm2, gm1},
+		Resources: []*GroupMembers{gm3, gm2, gm1},
 	}
 	gmr3.SetHashCode()
 
@@ -590,7 +590,7 @@ func mergeUsersResult(urs ...*UsersResult) (merged UsersResult) {
 }
 
 func mergeGroupsMembersResult(gms ...*GroupsMembersResult) (merged GroupsMembersResult) {
-	groupsMembers := make([]GroupMembers, 0)
+	groupsMembers := make([]*GroupMembers, 0)
 
 	for _, gm := range gms {
 		groupsMembers = append(groupsMembers, gm.Resources...)

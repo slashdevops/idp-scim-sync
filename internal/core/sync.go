@@ -74,21 +74,15 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 		return fmt.Errorf("error getting groups from the identity provider: %w", err)
 	}
 
-	// log.Tracef("idpGroupsResult: %s\n", utils.ToJSON(idpGroupsResult))
-
 	idpUsersResult, err := ss.prov.GetUsers(ss.ctx, []string{""})
 	if err != nil {
 		return fmt.Errorf("error getting users from the identity provider: %w", err)
 	}
 
-	// log.Tracef("idpUsersResult: %s\n", utils.ToJSON(idpUsersResult))
-
 	idpGroupsMembersResult, err := ss.prov.GetGroupsMembers(ss.ctx, idpGroupsResult)
 	if err != nil {
 		return fmt.Errorf("error getting groups members: %w", err)
 	}
-
-	// log.Tracef("idpGroupsMembersResult: %s\n", utils.ToJSON(idpGroupsMembersResult))
 
 	if idpUsersResult.Items == 0 {
 		log.Warn("there are no users in the identity provider")
@@ -128,8 +122,8 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 		// and we need to reconcile the SCIM side with the identity provider side.
 		// In case of migration from a different tool and we want to keep the state
 		// of the users and groups in the SCIM side, just no recreation, keep the existing ones when the:n
-		// - Groups names are equals on both sides, update only the external id (comming from the identity provider)
-		// - Users emails are equals on both sides, update only the external id (comming from the identity provider)
+		// - Groups names are equals on both sides, update only the external id (coming from the identity provider)
+		// - Users emails are equals on both sides, update only the external id (coming from the identity provider)
 
 		log.Warn("syncing from scim service, first time syncing")
 		log.Warn("reconciling the SCIM data with the Identity Provider data")
@@ -209,9 +203,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 
 		// membersCreate + membersEqual = members total
 		totalGroupsMembersResult = mergeGroupsMembersResult(membersCreated, membersEqual)
-
 	} else { // This is not the first time syncing
-
 		lastSyncTime, err := time.Parse(time.RFC3339, state.LastSync)
 		if err != nil {
 			return fmt.Errorf("error parsing last sync time: %w", err)
@@ -232,7 +224,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 
 			totalGroupsResult = state.Resources.Groups
 		} else {
-			log.Info("provider groups and state groups are diferent")
+			log.Info("provider groups and state groups are different")
 			// now here we have the google fresh data and the last sync data state
 			// we need to compare the data and decide what to do
 			// see differences between the two datasets
@@ -260,7 +252,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 
 			totalUsersResult = state.Resources.Users
 		} else {
-			log.Info("provider users and state users are diferent")
+			log.Info("provider users and state users are different")
 
 			log.WithFields(log.Fields{
 				"idp":   idpUsersResult.Items,
@@ -285,7 +277,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 
 			totalGroupsMembersResult = state.Resources.GroupsMembers
 		} else {
-			log.Info("provider groups-members and state groups-members are diferent")
+			log.Info("provider groups-members and state groups-members are different")
 
 			// if we create a group or user during the sync, we need the scimid of these new groups/users
 			// because to add members to a group the scim api needs that.
@@ -316,7 +308,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 	}
 
 	// after be sure all the SCIM side is aligned with the Identity Provider side
-	// we can update the state with the last data comming from the reconciliation
+	// we can update the state with the last data coming from the reconciliation
 	newState := &model.State{
 		Resources: model.StateResources{
 			Groups:        totalGroupsResult,

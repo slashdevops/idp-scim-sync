@@ -2,7 +2,7 @@ package google
 
 import (
 	"context"
-	"io/ioutil"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -16,7 +16,7 @@ func TestNewService(t *testing.T) {
 		serviceAccountFile := "testdata/service_account.json"
 		scope := "admin.AdminDirectoryGroupReadonlyScope, admin.AdminDirectoryGroupMemberReadonlyScope, admin.AdminDirectoryUserReadonlyScope"
 
-		serviceAccount, err := ioutil.ReadFile(serviceAccountFile)
+		serviceAccount, err := os.ReadFile(serviceAccountFile)
 		if err != nil {
 			t.Fatalf("Error loading golden file: %s", err)
 		}
@@ -54,7 +54,7 @@ func TestNewDirectoryService(t *testing.T) {
 		serviceAccountFile := "testdata/service_account.json"
 		scope := "admin.AdminDirectoryGroupReadonlyScope, admin.AdminDirectoryGroupMemberReadonlyScope, admin.AdminDirectoryUserReadonlyScope"
 
-		serviceAccount, err := ioutil.ReadFile(serviceAccountFile)
+		serviceAccount, err := os.ReadFile(serviceAccountFile)
 		if err != nil {
 			t.Fatalf("Error loading golden file: %s", err)
 		}

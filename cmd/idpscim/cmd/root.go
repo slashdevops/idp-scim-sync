@@ -3,7 +3,6 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"strings"
 	"time"
@@ -66,14 +65,23 @@ func init() {
 	rootCmd.PersistentFlags().StringVarP(&cfg.SCIMEndpoint, "aws-scim-endpoint", "e", "", "AWS SSO SCIM API Endpoint")
 	_ = rootCmd.MarkPersistentFlagRequired("aws-scim-endpoint")
 
-	rootCmd.PersistentFlags().StringVarP(&cfg.GWSServiceAccountFile, "gws-service-account-file", "s", config.DefaultGWSServiceAccountFile, "path to Google Workspace service account file")
+	rootCmd.PersistentFlags().StringVarP(
+		&cfg.GWSServiceAccountFile, "gws-service-account-file", "s", config.DefaultGWSServiceAccountFile,
+		"path to Google Workspace service account file",
+	)
 	_ = rootCmd.MarkPersistentFlagRequired("gws-service-account-file")
 
-	rootCmd.PersistentFlags().StringVarP(&cfg.GWSUserEmail, "gws-user-email", "u", "", "Google Workspace user email with allowed access to the Google Workspace Service Account")
+	rootCmd.PersistentFlags().StringVarP(&cfg.GWSUserEmail, "gws-user-email", "u", "", "GWS user email with allowed access to the Google Workspace Service Account")
 	_ = rootCmd.MarkPersistentFlagRequired("gws-user-email")
 
-	rootCmd.Flags().StringSliceVarP(&cfg.GWSGroupsFilter, "query-groups", "q", []string{""}, "Google Workspace Groups query parameter, example: --query-groups 'name:Admin* email:admin*' --query-groups 'name:Power* email:power*', see: https://developers.google.com/admin-sdk/directory/v1/guides/search-groups")
-	rootCmd.Flags().StringSliceVarP(&cfg.GWSUsersFilter, "query-users", "r", []string{""}, "Google Workspace Users query parameter, example: --query-users 'name:Admin* email:admin*' --query-users 'name:Power* email:power*', see: https://developers.google.com/admin-sdk/directory/v1/guides/search-users")
+	rootCmd.Flags().StringSliceVarP(
+		&cfg.GWSGroupsFilter, "query-groups", "q", []string{""},
+		"GWS Groups query parameter, example: --query-groups 'name:Admin* email:admin*' --query-groups 'name:Power* email:power*'",
+	)
+	rootCmd.Flags().StringSliceVarP(
+		&cfg.GWSUsersFilter, "query-users", "r", []string{""},
+		"GWS Users query parameter, example: --query-users 'name:Admin* email:admin*' --query-users 'name:Power* email:power*'",
+	)
 
 	rootCmd.PersistentFlags().StringVarP(&cfg.SyncMethod, "sync-method", "m", config.DefaultSyncMethod, "Sync method to use [groups]")
 
@@ -163,12 +171,12 @@ func initConfig() {
 }
 
 func getSecrets() {
-	awsconf, err := awsconf.LoadDefaultConfig(context.Background())
+	awsConf, err := awsconf.LoadDefaultConfig(context.Background())
 	if err != nil {
 		log.Fatalf(errors.Wrap(err, "idpscim: cannot load aws config").Error())
 	}
 
-	svc := secretsmanager.NewFromConfig(awsconf)
+	svc := secretsmanager.NewFromConfig(awsConf)
 
 	secrets, err := aws.NewSecretsManagerService(svc)
 	if err != nil {
@@ -216,7 +224,7 @@ func syncGroups(cmd *cobra.Command, args []string) error {
 
 	ctx := context.Background()
 
-	gwsServiceAccount, err := ioutil.ReadFile(cfg.GWSServiceAccountFile)
+	gwsServiceAccount, err := os.ReadFile(cfg.GWSServiceAccountFile)
 	if err != nil {
 		log.Fatalf(errors.Wrap(err, "idpscim: cannot read service account file").Error())
 	}
@@ -240,7 +248,7 @@ func syncGroups(cmd *cobra.Command, args []string) error {
 	}
 
 	// Identity Provider Service
-	idp, err := idp.NewIdentityProvider(gwsDS)
+	idpService, err := idp.NewIdentityProvider(gwsDS)
 	if err != nil {
 		return errors.Wrap(err, "idpscim syncGroups: cannot create identity provider service")
 	}
@@ -256,7 +264,6 @@ func syncGroups(cmd *cobra.Command, args []string) error {
 		retryClient.Logger = nil
 	}
 
-	// httpClient := &http.Client{}
 	httpClient := retryClient.StandardClient()
 
 	// AWS SCIM Service
@@ -265,23 +272,23 @@ func syncGroups(cmd *cobra.Command, args []string) error {
 		return errors.Wrap(err, "idpscim syncGroups: cannot create aws scim service")
 	}
 
-	scim, err := scim.NewSCIMProvider(awsSCIM)
+	scimService, err := scim.NewSCIMProvider(awsSCIM)
 	if err != nil {
 		return errors.Wrap(err, "idpscim syncGroups: cannot create scim provider")
 	}
 
-	awsconf, err := awsconf.LoadDefaultConfig(context.Background())
+	awsConf, err := awsconf.LoadDefaultConfig(context.Background())
 	if err != nil {
 		log.Fatalf(errors.Wrap(err, "idpscim syncGroups: cannot load aws config").Error())
 	}
 
-	s3Client := s3.NewFromConfig(awsconf)
+	s3Client := s3.NewFromConfig(awsConf)
 	repo, err := repository.NewS3Repository(s3Client, repository.WithBucket(cfg.AWSS3BucketName), repository.WithKey(cfg.AWSS3BucketKey))
 	if err != nil {
 		log.Fatalf(errors.Wrap(err, "idpscim syncGroups: cannot create s3 repository").Error())
 	}
 
-	ss, err := core.NewSyncService(ctx, idp, scim, repo, core.WithIdentityProviderGroupsFilter(cfg.GWSGroupsFilter))
+	ss, err := core.NewSyncService(ctx, idpService, scimService, repo, core.WithIdentityProviderGroupsFilter(cfg.GWSGroupsFilter))
 	if err != nil {
 		return errors.Wrap(err, "idpscim syncGroups: cannot create sync service")
 	}

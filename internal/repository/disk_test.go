@@ -10,6 +10,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+const stateFileName = "state.json"
+
 func TestStateRepository_NewDiskRepository(t *testing.T) {
 	t.Run("Call with nil parameters", func(t *testing.T) {
 		repo, err := NewDiskRepository(nil)

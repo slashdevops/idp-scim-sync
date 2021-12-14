@@ -13,10 +13,6 @@ import (
 
 // consume io.ReadWriter
 
-const (
-	stateFileName = "state.json"
-)
-
 // ErrStateFileNil is returned when the state file is nil
 var ErrStateFileNil = errors.New("disk: state file is nil")
 

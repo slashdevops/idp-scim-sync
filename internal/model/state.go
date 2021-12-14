@@ -34,7 +34,7 @@ func (s *State) MarshalJSON() ([]byte, error) {
 
 // SetHashCode is a helper function to avoid errors when calculating hash code.
 // this method discards fields that are not used in the hash calculation.
-// only fields comming from the Identity Provider are used.
+// only fields coming from the Identity Provider are used.
 func (s *State) SetHashCode() {
 	// we need to do a deep copy of the state struct to avoid SCIMID in the hash calculation
 	// because every time the idp data iscompared with the state data, the SCIMID doesn't compute in the hash
@@ -74,7 +74,7 @@ func (s *State) SetHashCode() {
 	}
 	usersResult.SetHashCode()
 
-	groupsMembers := make([]GroupMembers, 0)
+	groupsMembers := make([]*GroupMembers, 0)
 	for _, groupMembers := range s.Resources.GroupsMembers.Resources {
 
 		group := Group{
@@ -94,7 +94,7 @@ func (s *State) SetHashCode() {
 			members = append(members, m)
 		}
 
-		e := GroupMembers{
+		e := &GroupMembers{
 			Items:     len(groupMembers.Resources),
 			Group:     group,
 			Resources: members,

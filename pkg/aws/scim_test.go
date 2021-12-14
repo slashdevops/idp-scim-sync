@@ -53,10 +53,10 @@ func TestNewSCIMService(t *testing.T) {
 func TestAWSSCIMProvider_request(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
+	endpoint := "https://testing.com"
 
 	t.Run("Should return error when error come from request", func(t *testing.T) {
 		mockHTTPCLient := mocks.NewMockHTTPClient(mockCtrl)
-		endpoint := "https://testing.com"
 
 		mockHTTPCLient.EXPECT().Do(gomock.Any()).Return(nil, errors.New("test error"))
 
@@ -68,12 +68,12 @@ func TestAWSSCIMProvider_request(t *testing.T) {
 
 		resp, err := got.do(context.TODO(), req)
 		assert.Error(t, err)
+
 		assert.Nil(t, resp)
 	})
 
 	t.Run("Should return valid response", func(t *testing.T) {
 		mockHTTPCLient := mocks.NewMockHTTPClient(mockCtrl)
-		endpoint := "https://testing.com"
 
 		mockResp := &http.Response{
 			Status:        "200 OK",
@@ -93,6 +93,7 @@ func TestAWSSCIMProvider_request(t *testing.T) {
 
 		resp, err := got.do(context.TODO(), req)
 		assert.NoError(t, err)
+
 		assert.NotNil(t, resp)
 		assert.Equal(t, mockResp, resp)
 	})

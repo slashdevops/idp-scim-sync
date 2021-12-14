@@ -37,9 +37,9 @@ func membersOperations(idp, scim *model.GroupsMembersResult) (create *model.Grou
 	scimMemberSet := make(map[string]map[string]model.Member) // [scim.Group.Name] -> [scim.member.Email] -> scim.member
 	scimGroupsSet := make(map[string]model.Group)             // [scim.Group.Name] -> [scim.Group]
 
-	toCreate := make([]model.GroupMembers, 0)
-	toEqual := make([]model.GroupMembers, 0)
-	toDelete := make([]model.GroupMembers, 0)
+	toCreate := make([]*model.GroupMembers, 0)
+	toEqual := make([]*model.GroupMembers, 0)
+	toDelete := make([]*model.GroupMembers, 0)
 
 	for _, grpMembers := range idp.Resources {
 		idpMemberSet[grpMembers.Group.Name] = make(map[string]model.Member)
@@ -69,7 +69,6 @@ func membersOperations(idp, scim *model.GroupsMembersResult) (create *model.Grou
 		// groups equals both sides without members
 		if _, ok := scimMemberSet[grpMembers.Group.Name]; ok {
 			if len(scimMemberSet[grpMembers.Group.Name]) == 0 && len(idpMemberSet[grpMembers.Group.Name]) == 0 {
-				// toE[grpMembers.Group.Name] = make([]model.Member, 0)
 				noMembers += 1
 			}
 		}
@@ -99,7 +98,7 @@ func membersOperations(idp, scim *model.GroupsMembersResult) (create *model.Grou
 		if len(toC[grpMembers.Group.Name]) > 0 {
 			grpMembers.Group.SetHashCode()
 
-			e := model.GroupMembers{
+			e := &model.GroupMembers{
 				Items:     len(toC[grpMembers.Group.Name]),
 				Group:     grpMembers.Group,
 				Resources: toC[grpMembers.Group.Name],
@@ -111,7 +110,7 @@ func membersOperations(idp, scim *model.GroupsMembersResult) (create *model.Grou
 
 		if noMembers > 0 || len(toE[grpMembers.Group.Name]) > 0 {
 			grpMembers.Group.SetHashCode()
-			ee := model.GroupMembers{
+			ee := &model.GroupMembers{
 				Items:     len(toE[grpMembers.Group.Name]),
 				Group:     grpMembers.Group,
 				Resources: toE[grpMembers.Group.Name],
@@ -135,7 +134,7 @@ func membersOperations(idp, scim *model.GroupsMembersResult) (create *model.Grou
 		if len(toD[grpMembers.Group.Name]) > 0 {
 			grpMembers.Group.SetHashCode()
 
-			e := model.GroupMembers{
+			e := &model.GroupMembers{
 				Items:     len(toD[grpMembers.Group.Name]),
 				Group:     grpMembers.Group,
 				Resources: toD[grpMembers.Group.Name],
@@ -208,7 +207,6 @@ func groupsOperations(idp, scim *model.GroupsResult) (create *model.GroupsResult
 		if _, ok := scimGroups[group.Name]; !ok {
 			toCreate = append(toCreate, group)
 		} else {
-
 			group.SCIMID = scimGroups[group.Name].SCIMID
 
 			if group.IPID != scimGroups[group.Name].IPID {
@@ -290,14 +288,12 @@ func usersOperations(idp, scim *model.UsersResult) (create *model.UsersResult, u
 		if _, ok := scimUsers[usr.Email]; !ok {
 			toCreate = append(toCreate, usr)
 		} else {
-
 			usr.SCIMID = scimUsers[usr.Email].SCIMID
 
 			if usr.Name.FamilyName != scimUsers[usr.Email].Name.FamilyName ||
 				usr.Name.GivenName != scimUsers[usr.Email].Name.GivenName ||
 				usr.Active != scimUsers[usr.Email].Active ||
 				usr.IPID != scimUsers[usr.Email].IPID {
-
 				toUpdate = append(toUpdate, usr)
 			} else {
 				toEqual = append(toEqual, usr)
@@ -380,7 +376,7 @@ func mergeUsersResult(urs ...*model.UsersResult) (merged model.UsersResult) {
 // NOTE: this function does not check the content of the GroupMembers, so
 // the return could have duplicated groupsMembers
 func mergeGroupsMembersResult(gms ...*model.GroupsMembersResult) (merged model.GroupsMembersResult) {
-	groupsMembers := make([]model.GroupMembers, 0)
+	groupsMembers := make([]*model.GroupMembers, 0)
 
 	for _, gm := range gms {
 		groupsMembers = append(groupsMembers, gm.Resources...)
@@ -410,9 +406,8 @@ func updateSCIMID(idp *model.GroupsMembersResult, scimGroups *model.GroupsResult
 		users[user.Email] = user
 	}
 
-	gms := make([]model.GroupMembers, 0)
+	gms := make([]*model.GroupMembers, 0)
 	for _, groupMembers := range idp.Resources {
-
 		mbs := make([]model.Member, 0)
 
 		g := model.Group{
@@ -433,7 +428,7 @@ func updateSCIMID(idp *model.GroupsMembersResult, scimGroups *model.GroupsResult
 			mbs = append(mbs, m)
 		}
 
-		gm := model.GroupMembers{
+		gm := &model.GroupMembers{
 			Items:     len(mbs),
 			Group:     g,
 			Resources: mbs,

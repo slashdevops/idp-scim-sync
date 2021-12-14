@@ -40,6 +40,9 @@ fmt:
 vet:
 	go vet $(GO_FILES)
 
+lint:
+	golangci-lint run
+
 generate:
 	go generate $(GO_FILES)
 

@@ -491,7 +491,7 @@ func TestGoogleProvider_GetGroupsMembers(t *testing.T) {
 				ctx: context.Background(),
 				gr:  &model.GroupsResult{Items: 0, Resources: []model.Group{}},
 			},
-			want:    &model.GroupsMembersResult{Items: 0, Resources: []model.GroupMembers{}},
+			want:    &model.GroupsMembersResult{Items: 0, Resources: []*model.GroupMembers{}},
 			wantErr: false,
 		},
 		// {

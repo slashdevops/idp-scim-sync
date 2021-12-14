@@ -46,7 +46,6 @@ func reconcilingGroups(ctx context.Context, scim SCIMService, create *model.Grou
 		if err != nil {
 			return nil, nil, fmt.Errorf("error creating groups in SCIM Provider: %w", err)
 		}
-
 	}
 
 	if update.Items == 0 {
@@ -58,7 +57,6 @@ func reconcilingGroups(ctx context.Context, scim SCIMService, create *model.Grou
 		if err != nil {
 			return nil, nil, fmt.Errorf("error updating groups in SCIM Provider: %w", err)
 		}
-
 	}
 
 	if delete.Items == 0 {
@@ -68,7 +66,6 @@ func reconcilingGroups(ctx context.Context, scim SCIMService, create *model.Grou
 		if err := scim.DeleteGroups(ctx, delete); err != nil {
 			return nil, nil, fmt.Errorf("error deleting groups in SCIM Provider: %w", err)
 		}
-
 	}
 
 	return
@@ -143,7 +140,7 @@ func reconcilingGroupsMembers(ctx context.Context, scim SCIMService, create *mod
 
 	if create.Items == 0 {
 		log.Info("no users to be joined to groups")
-		created = &model.GroupsMembersResult{Items: 0, Resources: []model.GroupMembers{}}
+		created = &model.GroupsMembersResult{Items: 0, Resources: []*model.GroupMembers{}}
 	} else {
 		log.WithField("quantity", create.Items).Warn("joining users to groups")
 		created, err = scim.CreateGroupsMembers(ctx, create)

@@ -53,7 +53,7 @@ func (u User) GobEncode() ([]byte, error) {
 
 // SetHashCode is a helper function to avoid errors when calculating hash code.
 // this method discards fields that are not used in the hash calculation.
-// only fields comming from the Identity Provider are used.
+// only fields coming from the Identity Provider are used.
 func (u *User) SetHashCode() {
 	u.HashCode = hash.Get(u)
 }
@@ -75,12 +75,8 @@ func (ur *UsersResult) MarshalJSON() ([]byte, error) {
 
 // SetHashCode is a helper function to avoid errors when calculating hash code.
 // this method discards fields that are not used in the hash calculation.
-// only fields comming from the Identity Provider are used.
+// only fields coming from the Identity Provider are used.
 func (ur *UsersResult) SetHashCode() {
-	// if len(ur.Resources) == 0 {
-	// 	return
-	// }
-
 	copyResources := make([]User, len(ur.Resources))
 	copy(copyResources, ur.Resources)
 
@@ -128,7 +124,7 @@ func (g Group) GobEncode() ([]byte, error) {
 
 // SetHashCode is a helper function to avoid errors when calculating hash code.
 // this method discards fields that are not used in the hash calculation.
-// only fields comming from the Identity Provider are used.
+// only fields coming from the Identity Provider are used.
 func (g *Group) SetHashCode() {
 	g.HashCode = hash.Get(g)
 }
@@ -150,12 +146,8 @@ func (gr *GroupsResult) MarshalJSON() ([]byte, error) {
 
 // SetHashCode is a helper function to avoid errors when calculating hash code.
 // this method discards fields that are not used in the hash calculation.
-// only fields comming from the Identity Provider are used.
+// only fields coming from the Identity Provider are used.
 func (gr *GroupsResult) SetHashCode() {
-	// if len(gr.Resources) == 0 {
-	// 	return
-	// }
-
 	copyResources := make([]Group, len(gr.Resources))
 	copy(copyResources, gr.Resources)
 
@@ -199,7 +191,7 @@ func (m Member) GobEncode() ([]byte, error) {
 
 // SetHashCode is a helper function to avoid errors when calculating hash code.
 // this method discards fields that are not used in the hash calculation.
-// only fields comming from the Identity Provider are used.
+// only fields coming from the Identity Provider are used.
 func (m *Member) SetHashCode() {
 	m.HashCode = hash.Get(m)
 }
@@ -213,12 +205,8 @@ type MembersResult struct {
 
 // SetHashCode is a helper function to avoid errors when calculating hash code.
 // this method discards fields that are not used in the hash calculation.
-// only fields comming from the Identity Provider are used.
+// only fields coming from the Identity Provider are used.
 func (mr *MembersResult) SetHashCode() {
-	// if len(mr.Resources) == 0 {
-	// 	return
-	// }
-
 	copyResources := make([]Member, len(mr.Resources))
 	copy(copyResources, mr.Resources)
 
@@ -246,12 +234,8 @@ type GroupMembers struct {
 
 // SetHashCode is a helper function to avoid errors when calculating hash code.
 // this method discards fields that are not used in the hash calculation.
-// only fields comming from the Identity Provider are used.
+// only fields coming from the Identity Provider are used.
 func (gm *GroupMembers) SetHashCode() {
-	// if len(gm.Resources) == 0 {
-	// 	return
-	// }
-
 	copyResources := make([]Member, len(gm.Resources))
 	copy(copyResources, gm.Resources)
 
@@ -273,28 +257,24 @@ func (gm *GroupMembers) SetHashCode() {
 
 // GroupsMembersResult represents a group members result list entity.
 type GroupsMembersResult struct {
-	Items     int            `json:"items"`
-	HashCode  string         `json:"hashCode"`
-	Resources []GroupMembers `json:"resources"`
+	Items     int             `json:"items"`
+	HashCode  string          `json:"hashCode"`
+	Resources []*GroupMembers `json:"resources"`
 }
 
 // MarshalJSON implements the json.Marshaler interface for GroupsMembersResult entity.
-func (gur *GroupsMembersResult) MarshalJSON() ([]byte, error) {
-	if gur.Resources == nil {
-		gur.Resources = make([]GroupMembers, 0)
+func (gmr *GroupsMembersResult) MarshalJSON() ([]byte, error) {
+	if gmr.Resources == nil {
+		gmr.Resources = make([]*GroupMembers, 0)
 	}
-	return json.MarshalIndent(*gur, "", "  ")
+	return json.MarshalIndent(*gmr, "", "  ")
 }
 
 // SetHashCode is a helper function to avoid errors when calculating hash code.
 // this method discards fields that are not used in the hash calculation.
-// only fields comming from the Identity Provider are used.
+// only fields coming from the Identity Provider are used.
 func (gmr *GroupsMembersResult) SetHashCode() {
-	// if len(gmr.Resources) == 0 {
-	// 	return
-	// }
-
-	copyResources := make([]GroupMembers, len(gmr.Resources))
+	copyResources := make([]*GroupMembers, len(gmr.Resources))
 	copy(copyResources, gmr.Resources)
 
 	// only these fields are used in the hash calculation

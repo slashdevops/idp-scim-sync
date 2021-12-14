@@ -75,7 +75,7 @@ func init() {
 
 	awsGroupsCmd.AddCommand(awsGroupsListCmd)
 
-	awsGroupsListCmd.Flags().StringVarP(&filter, "filter", "q", "", "AWS SSO SCIM API Filter, example: --filter 'displayName eq \"Group Bar\" and id eq \"12324\"', see: https://docs.aws.amazon.com/singlesignon/latest/developerguide/listgroups.html#examples-filter-listgroups")
+	awsGroupsListCmd.Flags().StringVarP(&filter, "filter", "q", "", "AWS SSO SCIM API Filter, example: --filter 'displayName eq \"Group Bar\" and id eq \"12324\"'")
 	awsGroupsListCmd.Flags().StringVar(&outFormat, "output-format", "json", "output format (json|yaml)")
 }
 
@@ -111,7 +111,7 @@ func runAWSServiceConfig(cmd *cobra.Command, args []string) error {
 	case "yaml":
 		log.Printf("%s", utils.ToYAML(awsServiceConfig))
 	default:
-		log.Fatalf("unknown output format: %s", outFormat)
+		log.Printf("%s", utils.ToJSON(awsServiceConfig))
 	}
 
 	return nil
@@ -150,7 +150,7 @@ func runAWSGroupsList(cmd *cobra.Command, args []string) error {
 	case "yaml":
 		log.Printf("%s", utils.ToYAML(awsGroupsResponse))
 	default:
-		log.Fatalf("unknown output format: %s", outFormat)
+		log.Printf("%s", utils.ToJSON(awsGroupsResponse))
 	}
 	return nil
 }

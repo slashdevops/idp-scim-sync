@@ -97,7 +97,7 @@ func (r *S3Repository) SetState(ctx context.Context, state *model.State) error {
 
 	jsonPayload, err := json.MarshalIndent(state, "", "  ")
 	if err != nil {
-		return fmt.Errorf("s3: error marshalling state: %w", err)
+		return fmt.Errorf("s3: error marshaling state: %w", err)
 	}
 
 	_, err = r.client.PutObject(ctx, &s3.PutObjectInput{
@@ -108,8 +108,6 @@ func (r *S3Repository) SetState(ctx context.Context, state *model.State) error {
 	if err != nil {
 		return fmt.Errorf("s3: error putting S3 object: %w", err)
 	}
-
-	// log.Debugf("SetState: %s", utils.ToJSON(output))
 
 	return nil
 }

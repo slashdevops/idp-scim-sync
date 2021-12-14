@@ -159,7 +159,7 @@ func TestSCIMProvider_GetUsers(t *testing.T) {
 			Resources: []*aws.User{
 				{
 					ID:          "1",
-					ExternalId:  "1",
+					ExternalID:  "1",
 					Name:        aws.Name{FamilyName: "1", GivenName: "user"},
 					DisplayName: "group 1",
 					Schemas:     []string{"urn:ietf:params:scim:schemas:core:2.0:User"},
@@ -168,7 +168,7 @@ func TestSCIMProvider_GetUsers(t *testing.T) {
 				},
 				{
 					ID:          "2",
-					ExternalId:  "2",
+					ExternalID:  "2",
 					Name:        aws.Name{FamilyName: "2", GivenName: "user"},
 					DisplayName: "group 2",
 					Schemas:     []string{"urn:ietf:params:scim:schemas:core:2.0:User"},
@@ -224,7 +224,7 @@ func TestSCIMProvider_CreateGroups(t *testing.T) {
 		mockSCIM := mocks.NewMockAWSSCIMProvider(mockCtrl)
 		cgr := &aws.CreateGroupRequest{
 			DisplayName: "group 1",
-			ExternalId:  "1",
+			ExternalID:  "1",
 		}
 		resp := &aws.CreateGroupResponse{}
 		ctx := context.TODO()
@@ -252,7 +252,7 @@ func TestSCIMProvider_CreateGroups(t *testing.T) {
 		mockSCIM := mocks.NewMockAWSSCIMProvider(mockCtrl)
 		cgr := &aws.CreateGroupRequest{
 			DisplayName: "group 1",
-			ExternalId:  "1",
+			ExternalID:  "1",
 		}
 		resp := &aws.CreateGroupResponse{}
 		ctx := context.TODO()
@@ -280,11 +280,11 @@ func TestSCIMProvider_CreateGroups(t *testing.T) {
 		mockSCIM := mocks.NewMockAWSSCIMProvider(mockCtrl)
 		cgr1 := &aws.CreateGroupRequest{
 			DisplayName: "group 1",
-			ExternalId:  "1",
+			ExternalID:  "1",
 		}
 		cgr2 := &aws.CreateGroupRequest{
 			DisplayName: "group 2",
-			ExternalId:  "2",
+			ExternalID:  "2",
 		}
 		resp1 := &aws.CreateGroupResponse{
 			ID:          "11",
@@ -363,7 +363,7 @@ func TestSCIMProvider_CreateUsers(t *testing.T) {
 		cur := &aws.CreateUserRequest{
 			UserName:    "user.1@mail.com",
 			DisplayName: "user 1",
-			ExternalId:  "1",
+			ExternalID:  "1",
 			Name:        aws.Name{FamilyName: "1", GivenName: "user"},
 			Emails: []aws.Email{
 				{Value: "user.1@mail.com", Type: "work"},
@@ -400,7 +400,7 @@ func TestSCIMProvider_CreateUsers(t *testing.T) {
 		cur := &aws.CreateUserRequest{
 			UserName:    "user.1@mail.com",
 			DisplayName: "user 1",
-			ExternalId:  "1",
+			ExternalID:  "1",
 			Name:        aws.Name{FamilyName: "1", GivenName: "user"},
 			Emails: []aws.Email{
 				{Value: "user.1@mail.com", Type: "work"},
@@ -436,7 +436,7 @@ func TestSCIMProvider_CreateUsers(t *testing.T) {
 		cur1 := &aws.CreateUserRequest{
 			UserName:    "user.1@mail.com",
 			DisplayName: "user 1",
-			ExternalId:  "1",
+			ExternalID:  "1",
 			Name:        aws.Name{FamilyName: "1", GivenName: "user"},
 			Emails: []aws.Email{
 				{Value: "user.1@mail.com", Type: "work"},
@@ -446,7 +446,7 @@ func TestSCIMProvider_CreateUsers(t *testing.T) {
 		cur2 := &aws.CreateUserRequest{
 			UserName:    "user.2@mail.com",
 			DisplayName: "user 2",
-			ExternalId:  "2",
+			ExternalID:  "2",
 			Name:        aws.Name{FamilyName: "2", GivenName: "user"},
 			Emails: []aws.Email{
 				{Value: "user.2@mail.com", Type: "work"},
@@ -455,7 +455,7 @@ func TestSCIMProvider_CreateUsers(t *testing.T) {
 		}
 		resp1 := &aws.CreateUserResponse{
 			ID:         "11",
-			ExternalId: "1",
+			ExternalID: "1",
 			Name: aws.Name{
 				FamilyName: "1",
 				GivenName:  "user",
@@ -466,7 +466,7 @@ func TestSCIMProvider_CreateUsers(t *testing.T) {
 		}
 		resp2 := &aws.CreateUserResponse{
 			ID:         "22",
-			ExternalId: "2",
+			ExternalID: "2",
 			Name: aws.Name{
 				FamilyName: "2",
 				GivenName:  "user",
