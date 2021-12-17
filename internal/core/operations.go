@@ -37,10 +37,6 @@ func membersOperations(idp, scim *model.GroupsMembersResult) (create, equal, rem
 	scimMemberSet := make(map[string]map[string]model.Member)
 	scimGroupsSet := make(map[string]model.Group)
 
-	toCreate := make([]*model.GroupMembers, 0)
-	toEqual := make([]*model.GroupMembers, 0)
-	toRemove := make([]*model.GroupMembers, 0)
-
 	for _, grpMembers := range idp.Resources {
 		idpMemberSet[grpMembers.Group.Name] = make(map[string]model.Member)
 		for _, member := range grpMembers.Resources {
@@ -56,94 +52,7 @@ func membersOperations(idp, scim *model.GroupsMembersResult) (create, equal, rem
 		}
 	}
 
-	for _, grpMembers := range idp.Resources {
-		toC := make(map[string][]*model.Member)
-		toE := make(map[string][]*model.Member)
-
-		toC[grpMembers.Group.Name] = make([]*model.Member, 0)
-		toE[grpMembers.Group.Name] = make([]*model.Member, 0)
-
-		// count when both side have members == 0
-		noMembers := 0
-
-		// groups equals both sides without members
-		if _, ok := scimMemberSet[grpMembers.Group.Name]; ok {
-			if len(scimMemberSet[grpMembers.Group.Name]) == 0 && len(idpMemberSet[grpMembers.Group.Name]) == 0 {
-				noMembers += 1
-			}
-		}
-
-		// this case is when the groups is not new in scim
-		if grpMembers.Group.SCIMID == "" {
-			if _, ok := scimGroupsSet[grpMembers.Group.Name]; ok {
-				grpMembers.Group.SCIMID = scimGroupsSet[grpMembers.Group.Name].SCIMID
-			}
-		}
-
-		for _, member := range grpMembers.Resources {
-			if _, ok := scimMemberSet[grpMembers.Group.Name][member.Email]; !ok {
-				toC[grpMembers.Group.Name] = append(toC[grpMembers.Group.Name], member)
-			} else {
-				// check if the groups has the same members before adding to equal
-				// TODO: check if the groups has the same members before adding to equal, what happens if some members are different?
-				for grpMemberEmail := range scimMemberSet[grpMembers.Group.Name] {
-					if grpMemberEmail == member.Email {
-						member.SCIMID = scimMemberSet[grpMembers.Group.Name][member.Email].SCIMID
-						toE[grpMembers.Group.Name] = append(toE[grpMembers.Group.Name], member)
-					}
-				}
-			}
-		}
-
-		if len(toC[grpMembers.Group.Name]) > 0 {
-			grpMembers.Group.SetHashCode()
-
-			e := &model.GroupMembers{
-				Items:     len(toC[grpMembers.Group.Name]),
-				Group:     grpMembers.Group,
-				Resources: toC[grpMembers.Group.Name],
-			}
-			e.SetHashCode()
-
-			toCreate = append(toCreate, e)
-		}
-
-		if noMembers > 0 || len(toE[grpMembers.Group.Name]) > 0 {
-			grpMembers.Group.SetHashCode()
-			ee := &model.GroupMembers{
-				Items:     len(toE[grpMembers.Group.Name]),
-				Group:     grpMembers.Group,
-				Resources: toE[grpMembers.Group.Name],
-			}
-			ee.SetHashCode()
-
-			toEqual = append(toEqual, ee)
-		}
-	}
-
-	for _, grpMembers := range scim.Resources {
-		toD := make(map[string][]*model.Member)
-		toD[grpMembers.Group.Name] = make([]*model.Member, 0)
-
-		for _, member := range grpMembers.Resources {
-			if _, ok := idpMemberSet[grpMembers.Group.Name][member.Email]; !ok {
-				toD[grpMembers.Group.Name] = append(toD[grpMembers.Group.Name], member)
-			}
-		}
-
-		if len(toD[grpMembers.Group.Name]) > 0 {
-			grpMembers.Group.SetHashCode()
-
-			e := &model.GroupMembers{
-				Items:     len(toD[grpMembers.Group.Name]),
-				Group:     grpMembers.Group,
-				Resources: toD[grpMembers.Group.Name],
-			}
-			e.SetHashCode()
-
-			toRemove = append(toRemove, e)
-		}
-	}
+	toCreate, toEqual, toRemove := membersDataSets(idp.Resources, scim.Resources, scimGroupsSet, idpMemberSet, scimMemberSet)
 
 	create = &model.GroupsMembersResult{
 		Items:     len(toCreate),
@@ -444,4 +353,107 @@ func updateSCIMID(idp *model.GroupsMembersResult, scimGroups *model.GroupsResult
 	gmr.SetHashCode()
 
 	return gmr
+}
+
+// membersDataSets returns the data sets of the members of the groups
+func membersDataSets(
+	idp []*model.GroupMembers,
+	scim []*model.GroupMembers,
+	scimGroupsSet map[string]model.Group,
+	idpMemberSet, scimMemberSet map[string]map[string]model.Member,
+) (create, equal, remove []*model.GroupMembers) {
+	toCreate := make([]*model.GroupMembers, 0)
+	toEqual := make([]*model.GroupMembers, 0)
+	toRemove := make([]*model.GroupMembers, 0)
+
+	for _, grpMembers := range idp {
+		toC := make(map[string][]*model.Member)
+		toE := make(map[string][]*model.Member)
+
+		toC[grpMembers.Group.Name] = make([]*model.Member, 0)
+		toE[grpMembers.Group.Name] = make([]*model.Member, 0)
+
+		// count when both side have members == 0
+		noMembers := 0
+
+		// groups equals both sides without members
+		if _, ok := scimMemberSet[grpMembers.Group.Name]; ok {
+			if len(scimMemberSet[grpMembers.Group.Name]) == 0 && len(idpMemberSet[grpMembers.Group.Name]) == 0 {
+				noMembers += 1
+			}
+		}
+
+		// this case is when the groups is not new in scim
+		if grpMembers.Group.SCIMID == "" {
+			if _, ok := scimGroupsSet[grpMembers.Group.Name]; ok {
+				grpMembers.Group.SCIMID = scimGroupsSet[grpMembers.Group.Name].SCIMID
+			}
+		}
+
+		for _, member := range grpMembers.Resources {
+			if _, ok := scimMemberSet[grpMembers.Group.Name][member.Email]; !ok {
+				toC[grpMembers.Group.Name] = append(toC[grpMembers.Group.Name], member)
+			} else {
+				// check if the groups has the same members before adding to equal
+				// TODO: check if the groups has the same members before adding to equal, what happens if some members are different?
+				for grpMemberEmail := range scimMemberSet[grpMembers.Group.Name] {
+					if grpMemberEmail == member.Email {
+						member.SCIMID = scimMemberSet[grpMembers.Group.Name][member.Email].SCIMID
+						toE[grpMembers.Group.Name] = append(toE[grpMembers.Group.Name], member)
+					}
+				}
+			}
+		}
+
+		if len(toC[grpMembers.Group.Name]) > 0 {
+			grpMembers.Group.SetHashCode()
+
+			e := &model.GroupMembers{
+				Items:     len(toC[grpMembers.Group.Name]),
+				Group:     grpMembers.Group,
+				Resources: toC[grpMembers.Group.Name],
+			}
+			e.SetHashCode()
+
+			toCreate = append(toCreate, e)
+		}
+
+		if noMembers > 0 || len(toE[grpMembers.Group.Name]) > 0 {
+			grpMembers.Group.SetHashCode()
+			ee := &model.GroupMembers{
+				Items:     len(toE[grpMembers.Group.Name]),
+				Group:     grpMembers.Group,
+				Resources: toE[grpMembers.Group.Name],
+			}
+			ee.SetHashCode()
+
+			toEqual = append(toEqual, ee)
+		}
+	}
+
+	for _, grpMembers := range scim {
+		toD := make(map[string][]*model.Member)
+		toD[grpMembers.Group.Name] = make([]*model.Member, 0)
+
+		for _, member := range grpMembers.Resources {
+			if _, ok := idpMemberSet[grpMembers.Group.Name][member.Email]; !ok {
+				toD[grpMembers.Group.Name] = append(toD[grpMembers.Group.Name], member)
+			}
+		}
+
+		if len(toD[grpMembers.Group.Name]) > 0 {
+			grpMembers.Group.SetHashCode()
+
+			e := &model.GroupMembers{
+				Items:     len(toD[grpMembers.Group.Name]),
+				Group:     grpMembers.Group,
+				Resources: toD[grpMembers.Group.Name],
+			}
+			e.SetHashCode()
+
+			toRemove = append(toRemove, e)
+		}
+	}
+
+	return toCreate, toEqual, toRemove
 }
