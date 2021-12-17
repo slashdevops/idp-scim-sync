@@ -340,7 +340,7 @@ func updateSCIMID(idp *model.GroupsMembersResult, scimGroups *model.GroupsResult
 // given an idp and a scim groups members this function
 // this function performs the comparison between the idp and the scim data
 // and returns the data sets of the members that need to be created, equal and removed
-func membersDataSets(idp *model.GroupsMembersResult, scim *model.GroupsMembersResult) (create, equal, remove []*model.GroupMembers) {
+func membersDataSets(idp, scim *model.GroupsMembersResult) (create, equal, remove []*model.GroupMembers) {
 	idpMemberSet := make(map[string]map[string]model.Member)
 	scimMemberSet := make(map[string]map[string]model.Member)
 	scimGroupsSet := make(map[string]model.Group)
