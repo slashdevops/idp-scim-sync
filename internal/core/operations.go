@@ -33,26 +33,7 @@ func membersOperations(idp, scim *model.GroupsMembersResult) (create, equal, rem
 		return
 	}
 
-	idpMemberSet := make(map[string]map[string]model.Member)
-	scimMemberSet := make(map[string]map[string]model.Member)
-	scimGroupsSet := make(map[string]model.Group)
-
-	for _, grpMembers := range idp.Resources {
-		idpMemberSet[grpMembers.Group.Name] = make(map[string]model.Member)
-		for _, member := range grpMembers.Resources {
-			idpMemberSet[grpMembers.Group.Name][member.Email] = *member
-		}
-	}
-
-	for _, grpMembers := range scim.Resources {
-		scimGroupsSet[grpMembers.Group.Name] = grpMembers.Group
-		scimMemberSet[grpMembers.Group.Name] = make(map[string]model.Member)
-		for _, member := range grpMembers.Resources {
-			scimMemberSet[grpMembers.Group.Name][member.Email] = *member
-		}
-	}
-
-	toCreate, toEqual, toRemove := membersDataSets(idp.Resources, scim.Resources, scimGroupsSet, idpMemberSet, scimMemberSet)
+	toCreate, toEqual, toRemove := membersDataSets(idp, scim)
 
 	create = &model.GroupsMembersResult{
 		Items:     len(toCreate),
@@ -356,17 +337,34 @@ func updateSCIMID(idp *model.GroupsMembersResult, scimGroups *model.GroupsResult
 }
 
 // membersDataSets returns the data sets of the members of the groups
-func membersDataSets(
-	idp []*model.GroupMembers,
-	scim []*model.GroupMembers,
-	scimGroupsSet map[string]model.Group,
-	idpMemberSet, scimMemberSet map[string]map[string]model.Member,
-) (create, equal, remove []*model.GroupMembers) {
+// given an idp and a scim groups members this function
+// this function performs the comparison between the idp and the scim data
+// and returns the data sets of the members that need to be created, equal and removed
+func membersDataSets(idp *model.GroupsMembersResult, scim *model.GroupsMembersResult) (create, equal, remove []*model.GroupMembers) {
+	idpMemberSet := make(map[string]map[string]model.Member)
+	scimMemberSet := make(map[string]map[string]model.Member)
+	scimGroupsSet := make(map[string]model.Group)
+
+	for _, grpMembers := range idp.Resources {
+		idpMemberSet[grpMembers.Group.Name] = make(map[string]model.Member)
+		for _, member := range grpMembers.Resources {
+			idpMemberSet[grpMembers.Group.Name][member.Email] = *member
+		}
+	}
+
+	for _, grpMembers := range scim.Resources {
+		scimGroupsSet[grpMembers.Group.Name] = grpMembers.Group
+		scimMemberSet[grpMembers.Group.Name] = make(map[string]model.Member)
+		for _, member := range grpMembers.Resources {
+			scimMemberSet[grpMembers.Group.Name][member.Email] = *member
+		}
+	}
+
 	toCreate := make([]*model.GroupMembers, 0)
 	toEqual := make([]*model.GroupMembers, 0)
 	toRemove := make([]*model.GroupMembers, 0)
 
-	for _, grpMembers := range idp {
+	for _, grpMembers := range idp.Resources {
 		toC := make(map[string][]*model.Member)
 		toE := make(map[string][]*model.Member)
 
@@ -431,7 +429,7 @@ func membersDataSets(
 		}
 	}
 
-	for _, grpMembers := range scim {
+	for _, grpMembers := range scim.Resources {
 		toD := make(map[string][]*model.Member)
 		toD[grpMembers.Group.Name] = make([]*model.Member, 0)
 
