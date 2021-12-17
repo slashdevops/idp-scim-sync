@@ -52,7 +52,7 @@ linters-settings:
       - G401
 
   lll:
-    line-length: 180
+    line-length: 185
 
   misspell:
     locale: US

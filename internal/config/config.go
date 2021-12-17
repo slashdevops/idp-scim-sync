@@ -1,39 +1,32 @@
 package config
 
-import (
-	"encoding/json"
-	"log"
-
-	"gopkg.in/yaml.v2"
-)
-
 // Config represents the configuration of the application.
 type Config struct {
 	IsLambda bool
 	Debug    bool
 
-	LogLevel  string `mapstructure:"log_level" json:"LogLevel" yaml:"log_level"`
-	LogFormat string `mapstructure:"log_format" json:"LogFormat" yaml:"log_format"`
+	LogLevel  string `mapstructure:"log_level" json:"log_level" yaml:"log_level"`
+	LogFormat string `mapstructure:"log_format" json:"log_format" yaml:"log_format"`
 
-	GWSServiceAccountFile           string   `mapstructure:"gws_service_account_file" json:"GWSServiceAccountFile" yaml:"gws_service_account_file"`
-	GWSUserEmail                    string   `mapstructure:"gws_user_email" json:"GWSUserEmail" yaml:"gws_user_email"`
-	GWSServiceAccountFileSecretName string   `mapstructure:"gws_service_account_file_secret_name" json:"GWSServiceAccountFileSecretName" yaml:"gws_service_account_file_secret_name"`
-	GWSUserEmailSecretName          string   `mapstructure:"gws_user_email_secret_name" json:"GWSUserEmailSecretName" yaml:"gws_user_email_secret_name"`
-	GWSGroupsFilter                 []string `mapstructure:"gws_groups_filter" json:"GWSGroupsFilter" yaml:"gws_groups_filter"`
-	GWSUsersFilter                  []string `mapstructure:"gws_users_filter" json:"GWSUsersFilter" yaml:"gws_users_filter"`
+	GWSServiceAccountFile           string   `mapstructure:"gws_service_account_file" json:"gws_service_account_file" yaml:"gws_service_account_file"`
+	GWSUserEmail                    string   `mapstructure:"gws_user_email" json:"gws_user_email" yaml:"gws_user_email"`
+	GWSServiceAccountFileSecretName string   `mapstructure:"gws_service_account_file_secret_name" json:"gws_service_account_file_secret_name" yaml:"gws_service_account_file_secret_name"`
+	GWSUserEmailSecretName          string   `mapstructure:"gws_user_email_secret_name" json:"gws_user_email_secret_name" yaml:"gws_user_email_secret_name"`
+	GWSGroupsFilter                 []string `mapstructure:"gws_groups_filter" json:"gws_groups_filter" yaml:"gws_groups_filter"`
+	GWSUsersFilter                  []string `mapstructure:"gws_users_filter" json:"gws_users_filter" yaml:"gws_users_filter"`
 
-	SCIMEndpoint              string `mapstructure:"scim_endpoint" json:"SCIMEndpoint" yaml:"scim_endpoint"`
-	SCIMAccessToken           string `mapstructure:"scim_access_token" json:"SCIMAccessToken" yaml:"scim_access_token"`
-	SCIMEndpointSecretName    string `mapstructure:"scim_endpoint_secret_name" json:"SCIMEndpointSecretName" yaml:"scim_endpoint_secret_name"`
-	SCIMAccessTokenSecretName string `mapstructure:"scim_access_token_secret_name" json:"SCIMAccessTokenSecretName" yaml:"scim_access_token_secret_name"`
+	SCIMEndpoint              string `mapstructure:"scim_endpoint" json:"scim_endpoint" yaml:"scim_endpoint"`
+	SCIMAccessToken           string `mapstructure:"scim_access_token" json:"scim_access_token" yaml:"scim_access_token"`
+	SCIMEndpointSecretName    string `mapstructure:"scim_endpoint_secret_name" json:"scim_endpoint_secret_name" yaml:"scim_endpoint_secret_name"`
+	SCIMAccessTokenSecretName string `mapstructure:"scim_access_token_secret_name" json:"scim_access_token_secret_name" yaml:"scim_access_token_secret_name"`
 
-	AWSS3BucketName string `mapstructure:"aws_s3_bucket_name" json:"AWSS3BucketName" yaml:"aws_s3_bucket_name"`
-	AWSS3BucketKey  string `mapstructure:"aws_s3_bucket_key" json:"AWSS3BucketKey" yaml:"aws_s3_bucket_key"`
+	AWSS3BucketName string `mapstructure:"aws_s3_bucket_name" json:"aws_s3_bucket_name" yaml:"aws_s3_bucket_name"`
+	AWSS3BucketKey  string `mapstructure:"aws_s3_bucket_key" json:"aws_s3_bucket_key" yaml:"aws_s3_bucket_key"`
 
 	// SyncMethod allow to defined the sync method used to get the user and groups from Google Workspace
-	SyncMethod string `mapstructure:"sync_method" json:"SyncMethod" yaml:"sync_method"`
+	SyncMethod string `mapstructure:"sync_method" json:"sync_method" yaml:"sync_method"`
 
-	DisableState bool `mapstructure:"disable_state" json:"DisableState" yaml:"disable_state"`
+	DisableState bool `mapstructure:"disable_state" json:"disable_state" yaml:"disable_state"`
 }
 
 const (
@@ -92,22 +85,4 @@ func New() Config {
 		DisableState:                    DefaultDisableState,
 		AWSS3BucketKey:                  DefaultAWSS3BucketKey,
 	}
-}
-
-// toJSON return a json pretty of the config.
-func (c *Config) toJSON() []byte {
-	JSON, err := json.MarshalIndent(c, "", "  ")
-	if err != nil {
-		log.Fatalf(err.Error())
-	}
-	return JSON
-}
-
-// toYAML return a yaml of the config.
-func (c *Config) toYAML() []byte {
-	YAML, err := yaml.Marshal(c)
-	if err != nil {
-		log.Fatalf(err.Error())
-	}
-	return YAML
 }

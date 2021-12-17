@@ -20,26 +20,26 @@ var (
 // create: groups that exist in "idp" but not in "scim" or "state"
 // update: groups that exist in "idp" and in "scim" or "state" but attributes changed in idp
 // equal: groups that exist in both "idp" and "scim" or "state" and their attributes are equal
-// delete: groups that exist in "scim" or "state" but not in "idp"
+// remove: groups that exist in "scim" or "state" but not in "idp"
 //
 // also this extract the id from scim to fill the resutls
-func membersOperations(idp, scim *model.GroupsMembersResult) (create *model.GroupsMembersResult, equal *model.GroupsMembersResult, delete *model.GroupsMembersResult, err error) {
+func membersOperations(idp, scim *model.GroupsMembersResult) (create, equal, remove *model.GroupsMembersResult, err error) {
 	if idp == nil {
-		create, equal, delete, err = nil, nil, nil, ErrIdentityProviderGroupsMembersNil
+		create, equal, remove, err = nil, nil, nil, ErrIdentityProviderGroupsMembersNil
 		return
 	}
 	if scim == nil {
-		create, equal, delete, err = nil, nil, nil, ErrSCIMGroupsMembersNil
+		create, equal, remove, err = nil, nil, nil, ErrSCIMGroupsMembersNil
 		return
 	}
 
-	idpMemberSet := make(map[string]map[string]model.Member)  // [idp.GroupMembers.Group.Name] -> idp.member.Email -> idp.member
-	scimMemberSet := make(map[string]map[string]model.Member) // [scim.Group.Name] -> [scim.member.Email] -> scim.member
-	scimGroupsSet := make(map[string]model.Group)             // [scim.Group.Name] -> [scim.Group]
+	idpMemberSet := make(map[string]map[string]model.Member)
+	scimMemberSet := make(map[string]map[string]model.Member)
+	scimGroupsSet := make(map[string]model.Group)
 
 	toCreate := make([]*model.GroupMembers, 0)
 	toEqual := make([]*model.GroupMembers, 0)
-	toDelete := make([]*model.GroupMembers, 0)
+	toRemove := make([]*model.GroupMembers, 0)
 
 	for _, grpMembers := range idp.Resources {
 		idpMemberSet[grpMembers.Group.Name] = make(map[string]model.Member)
@@ -141,7 +141,7 @@ func membersOperations(idp, scim *model.GroupsMembersResult) (create *model.Grou
 			}
 			e.SetHashCode()
 
-			toDelete = append(toDelete, e)
+			toRemove = append(toRemove, e)
 		}
 	}
 
@@ -157,11 +157,11 @@ func membersOperations(idp, scim *model.GroupsMembersResult) (create *model.Grou
 	}
 	equal.SetHashCode()
 
-	delete = &model.GroupsMembersResult{
-		Items:     len(toDelete),
-		Resources: toDelete,
+	remove = &model.GroupsMembersResult{
+		Items:     len(toRemove),
+		Resources: toRemove,
 	}
-	delete.SetHashCode()
+	remove.SetHashCode()
 
 	return
 }
@@ -173,26 +173,25 @@ func membersOperations(idp, scim *model.GroupsMembersResult) (create *model.Grou
 // create: groups that exist in "idp" but not in "scim" or "state"
 // update: groups that exist in "idp" and in "scim" or "state" but attributes changed in idp
 // equal: groups that exist in both "idp" and "scim" or "state" and their attributes are equal
-// delete: groups that exist in "scim" or "state" but not in "idp"
+// remove: groups that exist in "scim" or "state" but not in "idp"
 //
 // also this extract the id from scim to fill the resutls
-func groupsOperations(idp, scim *model.GroupsResult) (create *model.GroupsResult, update *model.GroupsResult, equal *model.GroupsResult, delete *model.GroupsResult, err error) {
+func groupsOperations(idp, scim *model.GroupsResult) (create, update, equal, remove *model.GroupsResult, err error) {
 	if idp == nil {
-		create, update, equal, delete, err = nil, nil, nil, nil, ErrIdentityProviderGroupsNil
+		create, update, equal, remove, err = nil, nil, nil, nil, ErrIdentityProviderGroupsNil
 		return
 	}
 	if scim == nil {
-		create, update, equal, delete, err = nil, nil, nil, nil, ErrSCIMGroupsNil
+		create, update, equal, remove, err = nil, nil, nil, nil, ErrSCIMGroupsNil
 		return
 	}
 
-	idpGroups := make(map[string]struct{})     // [idp.Group.Name ] -> struct{}{}
-	scimGroups := make(map[string]model.Group) // [scim.Group.Name] -> scim.Group
-
+	idpGroups := make(map[string]struct{})
+	scimGroups := make(map[string]model.Group)
 	toCreate := make([]*model.Group, 0)
 	toUpdate := make([]*model.Group, 0)
 	toEqual := make([]*model.Group, 0)
-	toDelete := make([]*model.Group, 0)
+	toRemove := make([]*model.Group, 0)
 
 	for _, gr := range idp.Resources {
 		idpGroups[gr.Name] = struct{}{}
@@ -217,10 +216,10 @@ func groupsOperations(idp, scim *model.GroupsResult) (create *model.GroupsResult
 		}
 	}
 
-	// loop over scim to see what to delete
+	// loop over scim to see what to remove
 	for _, group := range scim.Resources {
 		if _, ok := idpGroups[group.Name]; !ok {
-			toDelete = append(toDelete, group)
+			toRemove = append(toRemove, group)
 		}
 	}
 
@@ -242,11 +241,11 @@ func groupsOperations(idp, scim *model.GroupsResult) (create *model.GroupsResult
 	}
 	equal.SetHashCode()
 
-	delete = &model.GroupsResult{
-		Items:     len(toDelete),
-		Resources: toDelete,
+	remove = &model.GroupsResult{
+		Items:     len(toRemove),
+		Resources: toRemove,
 	}
-	delete.SetHashCode()
+	remove.SetHashCode()
 
 	return
 }
@@ -256,14 +255,14 @@ func groupsOperations(idp, scim *model.GroupsResult) (create *model.GroupsResult
 // create: users that exist in "idp" but not in "scim" or "state"
 // update: users that exist in "idp" and in "scim" or "state" but attributes changed in idp
 // equal: users that exist in both "idp" and "scim" or "state" and their attributes are equal
-// delete: users that exist in "scim" or "state" but not in "idp"
-func usersOperations(idp, scim *model.UsersResult) (create *model.UsersResult, update *model.UsersResult, equal *model.UsersResult, delete *model.UsersResult, err error) {
+// remove: users that exist in "scim" or "state" but not in "idp"
+func usersOperations(idp, scim *model.UsersResult) (create, update, equal, remove *model.UsersResult, err error) {
 	if idp == nil {
-		create, update, equal, delete, err = nil, nil, nil, nil, ErrIdentityProviderUsersNil
+		create, update, equal, remove, err = nil, nil, nil, nil, ErrIdentityProviderUsersNil
 		return
 	}
 	if scim == nil {
-		create, update, equal, delete, err = nil, nil, nil, nil, ErrSCIMUsersNil
+		create, update, equal, remove, err = nil, nil, nil, nil, ErrSCIMUsersNil
 		return
 	}
 
@@ -273,7 +272,7 @@ func usersOperations(idp, scim *model.UsersResult) (create *model.UsersResult, u
 	toCreate := make([]*model.User, 0)
 	toUpdate := make([]*model.User, 0)
 	toEqual := make([]*model.User, 0)
-	toDelete := make([]*model.User, 0)
+	toRemove := make([]*model.User, 0)
 
 	for _, usr := range idp.Resources {
 		idpUsers[usr.Email] = struct{}{}
@@ -303,7 +302,7 @@ func usersOperations(idp, scim *model.UsersResult) (create *model.UsersResult, u
 
 	for _, usr := range scim.Resources {
 		if _, ok := idpUsers[usr.Email]; !ok {
-			toDelete = append(toDelete, usr)
+			toRemove = append(toRemove, usr)
 		}
 	}
 
@@ -325,11 +324,11 @@ func usersOperations(idp, scim *model.UsersResult) (create *model.UsersResult, u
 	}
 	equal.SetHashCode()
 
-	delete = &model.UsersResult{
-		Items:     len(toDelete),
-		Resources: toDelete,
+	remove = &model.UsersResult{
+		Items:     len(toRemove),
+		Resources: toRemove,
 	}
-	delete.SetHashCode()
+	remove.SetHashCode()
 
 	return
 }
