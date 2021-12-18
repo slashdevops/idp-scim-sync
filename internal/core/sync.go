@@ -212,7 +212,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 
 		log.WithFields(log.Fields{
 			"lastsync": state.LastSync,
-			"since":    time.Since(lastSyncTime),
+			"since":    time.Since(lastSyncTime).String(),
 		}).Info("syncing from state")
 
 		if idpGroupsResult.HashCode == state.Resources.Groups.HashCode {
@@ -278,7 +278,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 			// if we create a group or user during the sync, we need the scimid of these new groups/users
 			// because to add members to a group the scim api needs that.
 			// so this function will fill the scimid of the new groups/users
-			groupsMembers := model.UpdateSCIMID(idpGroupsMembersResult, &totalGroupsResult, &totalUsersResult)
+			groupsMembers := model.UpdateGroupsMembersSCIMID(idpGroupsMembersResult, &totalGroupsResult, &totalUsersResult)
 
 			log.Tracef("groupsMembers: %s\n", utils.ToJSON(groupsMembers))
 

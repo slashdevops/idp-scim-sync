@@ -281,7 +281,7 @@ func MergeGroupsMembersResult(gms ...*GroupsMembersResult) (merged GroupsMembers
 // UpdateSCIMID updates the SCIMID of the group in the idp object
 // this is necessary because during the sync process we can create users and groups and to add
 // these users to the groups we need to have the SCIMID of the user and the group
-func UpdateSCIMID(idp *GroupsMembersResult, scimGroups *GroupsResult, scimUsers *UsersResult) *GroupsMembersResult {
+func UpdateGroupsMembersSCIMID(idp *GroupsMembersResult, scimGroups *GroupsResult, scimUsers *UsersResult) *GroupsMembersResult {
 	groups := make(map[string]Group)
 	users := make(map[string]User)
 
