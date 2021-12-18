@@ -10,7 +10,7 @@ import (
 	"github.com/slashdevops/idp-scim-sync/internal/utils"
 )
 
-func firstSync(
+func scimSync(
 	ctx context.Context,
 	scim SCIMService,
 	idpGroupsResult *model.GroupsResult,

@@ -31,7 +31,7 @@ func MembersOperations(idp, scim *GroupsMembersResult) (create, equal, remove *G
 		return
 	}
 
-	toCreate, toEqual, toRemove := membersDataSets(idp, scim)
+	toCreate, toEqual, toRemove := membersDataSets(idp.Resources, scim.Resources)
 
 	create = &GroupsMembersResult{
 		Items:     len(toCreate),
@@ -338,19 +338,19 @@ func UpdateGroupsMembersSCIMID(idp *GroupsMembersResult, scimGroups *GroupsResul
 // given an idp and a scim groups members this function
 // this function performs the comparison between the idp and the scim data
 // and returns the data sets of the members that need to be created, equal and removed
-func membersDataSets(idp, scim *GroupsMembersResult) (create, equal, remove []*GroupMembers) {
+func membersDataSets(idp, scim []*GroupMembers) (create, equal, remove []*GroupMembers) {
 	idpMemberSet := make(map[string]map[string]Member)
 	scimMemberSet := make(map[string]map[string]Member)
 	scimGroupsSet := make(map[string]Group)
 
-	for _, grpMembers := range idp.Resources {
+	for _, grpMembers := range idp {
 		idpMemberSet[grpMembers.Group.Name] = make(map[string]Member)
 		for _, member := range grpMembers.Resources {
 			idpMemberSet[grpMembers.Group.Name][member.Email] = *member
 		}
 	}
 
-	for _, grpMembers := range scim.Resources {
+	for _, grpMembers := range scim {
 		scimGroupsSet[grpMembers.Group.Name] = grpMembers.Group
 		scimMemberSet[grpMembers.Group.Name] = make(map[string]Member)
 		for _, member := range grpMembers.Resources {
@@ -362,7 +362,7 @@ func membersDataSets(idp, scim *GroupsMembersResult) (create, equal, remove []*G
 	toEqual := make([]*GroupMembers, 0)
 	toRemove := make([]*GroupMembers, 0)
 
-	for _, grpMembers := range idp.Resources {
+	for _, grpMembers := range idp {
 		toC := make(map[string][]*Member)
 		toE := make(map[string][]*Member)
 
@@ -410,7 +410,6 @@ func membersDataSets(idp, scim *GroupsMembersResult) (create, equal, remove []*G
 				Resources: toC[grpMembers.Group.Name],
 			}
 			e.SetHashCode()
-
 			toCreate = append(toCreate, e)
 		}
 
@@ -422,12 +421,11 @@ func membersDataSets(idp, scim *GroupsMembersResult) (create, equal, remove []*G
 				Resources: toE[grpMembers.Group.Name],
 			}
 			ee.SetHashCode()
-
 			toEqual = append(toEqual, ee)
 		}
 	}
 
-	for _, grpMembers := range scim.Resources {
+	for _, grpMembers := range scim {
 		toD := make(map[string][]*Member)
 		toD[grpMembers.Group.Name] = make([]*Member, 0)
 
@@ -446,7 +444,6 @@ func membersDataSets(idp, scim *GroupsMembersResult) (create, equal, remove []*G
 				Resources: toD[grpMembers.Group.Name],
 			}
 			e.SetHashCode()
-
 			toRemove = append(toRemove, e)
 		}
 	}

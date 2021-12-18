@@ -105,9 +105,6 @@ func (ss *SyncService) SyncGroupsAndTheirMembers(ctx context.Context) error {
 		}
 	}
 
-	// these variables are used to store the data that will be used to create, delete and are equal for users and groups in SCIM
-	// the differents between the data in the identity provider and these is that these have already have the SCIMID
-	// after the creation of the element in SCIM
 	var (
 		totalGroupsResult        *model.GroupsResult
 		totalUsersResult         *model.UsersResult
@@ -123,12 +120,11 @@ func (ss *SyncService) SyncGroupsAndTheirMembers(ctx context.Context) error {
 		// of the users and groups in the SCIM side, just no recreation, keep the existing ones when the:n
 		// - Groups names are equals on both sides, update only the external id (coming from the identity provider)
 		// - Users emails are equals on both sides, update only the external id (coming from the identity provider)
-
-		totalGroupsResult, totalUsersResult, totalGroupsMembersResult, err = firstSync(ctx, ss.scim, idpGroupsResult, idpUsersResult, idpGroupsMembersResult)
+		totalGroupsResult, totalUsersResult, totalGroupsMembersResult, err = scimSync(ctx, ss.scim, idpGroupsResult, idpUsersResult, idpGroupsMembersResult)
 		if err != nil {
 			return fmt.Errorf("error doing the first sync: %w", err)
 		}
-	} else { // This is not the first time syncing
+	} else {
 		totalGroupsResult, totalUsersResult, totalGroupsMembersResult, err = stateSync(ctx, state, ss.scim, idpGroupsResult, idpUsersResult, idpGroupsMembersResult)
 		if err != nil {
 			return fmt.Errorf("error syncing state: %w", err)
@@ -144,7 +140,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers(ctx context.Context) error {
 			GroupsMembers: *totalGroupsMembersResult,
 		},
 	}
-	// calculate the hash with the data payload
+
 	newState.SetHashCode()
 	newState.SchemaVersion = model.StateSchemaVersion
 	newState.CodeVersion = version.Version
@@ -167,6 +163,6 @@ func (ss *SyncService) SyncGroupsAndTheirMembers(ctx context.Context) error {
 }
 
 // SyncGroupsAndUsers this method is used to sync the usersm groups and their members from the identity provider to the SCIM
-func (ss *SyncService) SyncGroupsAndUsers() error {
+func (ss *SyncService) SyncGroupsAndUsers(ctx context.Context) error {
 	return errors.New("not implemented yet")
 }
