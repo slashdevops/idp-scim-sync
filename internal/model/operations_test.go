@@ -1303,3 +1303,354 @@ func TestMergeGroupsMembersResult(t *testing.T) {
 		})
 	}
 }
+
+func TestMembersDataSets(t *testing.T) {
+	type args struct {
+		idp  *GroupsMembersResult
+		scim *GroupsMembersResult
+	}
+	tests := []struct {
+		name       string
+		args       args
+		wantCreate []*GroupMembers
+		wantEqual  []*GroupMembers
+		wantDelete []*GroupMembers
+	}{
+		{
+			name: "empty return empty",
+			args: args{
+				idp:  &GroupsMembersResult{},
+				scim: &GroupsMembersResult{},
+			},
+			wantCreate: make([]*GroupMembers, 0),
+			wantEqual:  make([]*GroupMembers, 0),
+			wantDelete: make([]*GroupMembers, 0),
+		},
+		{
+			name: "one group: 1 add, 1 equal, 1 delete",
+			args: args{
+				idp: &GroupsMembersResult{
+					Items: 1,
+					Resources: []*GroupMembers{
+						{
+							Items: 2,
+							Group: Group{IPID: "1", Name: "group 1", Email: "group.1@mail.com"},
+							Resources: []*Member{
+								{IPID: "1", Email: "user.1@mail.com"},
+								{IPID: "2", Email: "user.2@mail.com"},
+							},
+						},
+					},
+				},
+				scim: &GroupsMembersResult{
+					Items: 1,
+					Resources: []*GroupMembers{
+						{
+							Items: 2,
+							Group: Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com"},
+							Resources: []*Member{
+								{IPID: "1", SCIMID: "1", Email: "user.1@mail.com"},
+								{IPID: "3", SCIMID: "3", Email: "user.3@mail.com"},
+							},
+						},
+					},
+				},
+			},
+			wantCreate: []*GroupMembers{
+				{
+					Items: 1,
+					Group: Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: Hash(&Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com"})},
+					Resources: []*Member{
+						{IPID: "2", Email: "user.2@mail.com"},
+					},
+					HashCode: Hash(&GroupMembers{
+						Items: 1,
+						Group: Group{IPID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: Hash(&Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com"})},
+						Resources: []*Member{
+							{IPID: "2", Email: "user.2@mail.com"},
+						},
+					}),
+				},
+			},
+
+			wantEqual: []*GroupMembers{
+				{
+					Items: 1,
+					Group: Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: Hash(&Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com"})},
+					Resources: []*Member{
+						{IPID: "1", SCIMID: "1", Email: "user.1@mail.com"},
+					},
+					HashCode: Hash(&GroupMembers{
+						Items: 1,
+						Group: Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: Hash(&Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com"})},
+						Resources: []*Member{
+							{IPID: "1", SCIMID: "1", Email: "user.1@mail.com"},
+						},
+					}),
+				},
+			},
+
+			wantDelete: []*GroupMembers{
+				{
+					Items: 1,
+					Group: Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: Hash(&Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com"})},
+					Resources: []*Member{
+						{IPID: "3", SCIMID: "3", Email: "user.3@mail.com"},
+					},
+					HashCode: Hash(&GroupMembers{
+						Items: 1,
+						Group: Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: Hash(&Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com"})},
+						Resources: []*Member{
+							{IPID: "3", SCIMID: "3", Email: "user.3@mail.com"},
+						},
+					}),
+				},
+			},
+		},
+		{
+			name: "two groups: g1 -> add 1, g1 -> equal 1, g2 -> equal 1, g1 -> delete 1, g2 -> delete 1",
+			args: args{
+				idp: &GroupsMembersResult{
+					Items: 2,
+					Resources: []*GroupMembers{
+						{
+							Items: 2,
+							Group: Group{IPID: "1", Name: "group 1", Email: "group.1@mail.com"},
+							Resources: []*Member{
+								{IPID: "1", Email: "user.1@mail.com"},
+								{IPID: "2", Email: "user.2@mail.com"},
+							},
+						},
+						{
+							Items: 1,
+							Group: Group{IPID: "2", Name: "group 2", Email: "group.2@mail.com"},
+							Resources: []*Member{
+								{IPID: "3", Email: "user.3@mail.com"},
+							},
+						},
+					},
+				},
+				scim: &GroupsMembersResult{
+					Items: 2,
+					Resources: []*GroupMembers{
+						{
+							Items: 2,
+							Group: Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com"},
+							Resources: []*Member{
+								{IPID: "2", SCIMID: "2", Email: "user.2@mail.com"},
+								{IPID: "3", SCIMID: "3", Email: "user.3@mail.com"},
+							},
+						},
+						{
+							Items: 2,
+							Group: Group{IPID: "2", SCIMID: "2", Name: "group 2", Email: "group.2@mail.com"},
+							Resources: []*Member{
+								{IPID: "1", SCIMID: "1", Email: "user.1@mail.com"},
+								{IPID: "3", SCIMID: "3", Email: "user.3@mail.com"},
+							},
+						},
+					},
+				},
+			},
+			wantCreate: []*GroupMembers{
+				{
+					Items: 1,
+					Group: Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: Hash(&Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com"})},
+					Resources: []*Member{
+						{IPID: "1", Email: "user.1@mail.com"},
+					},
+					HashCode: Hash(&GroupMembers{
+						Items: 1,
+						Group: Group{IPID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: Hash(&Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com"})},
+						Resources: []*Member{
+							{IPID: "1", Email: "user.1@mail.com"},
+						},
+					}),
+				},
+			},
+			wantEqual: []*GroupMembers{
+				{
+					Items: 1,
+					Group: Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: Hash(&Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com"})},
+					Resources: []*Member{
+						{IPID: "2", SCIMID: "2", Email: "user.2@mail.com"},
+					},
+					HashCode: Hash(&GroupMembers{
+						Items: 1,
+						Group: Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: Hash(&Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com"})},
+						Resources: []*Member{
+							{IPID: "2", SCIMID: "2", Email: "user.2@mail.com"},
+						},
+					}),
+				},
+				{
+					Items: 1,
+					Group: Group{IPID: "2", SCIMID: "2", Name: "group 2", Email: "group.2@mail.com", HashCode: Hash(&Group{IPID: "2", SCIMID: "2", Name: "group 2", Email: "group.2@mail.com"})},
+					Resources: []*Member{
+						{IPID: "3", SCIMID: "3", Email: "user.3@mail.com"},
+					},
+					HashCode: Hash(&GroupMembers{
+						Items: 1,
+						Group: Group{IPID: "2", SCIMID: "2", Name: "group 2", Email: "group.2@mail.com", HashCode: Hash(&Group{IPID: "2", SCIMID: "2", Name: "group 2", Email: "group.2@mail.com"})},
+						Resources: []*Member{
+							{IPID: "3", SCIMID: "3", Email: "user.3@mail.com"},
+						},
+					}),
+				},
+			},
+			wantDelete: []*GroupMembers{
+				{
+					Items: 1,
+					Group: Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: Hash(&Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com"})},
+					Resources: []*Member{
+						{IPID: "3", SCIMID: "3", Email: "user.3@mail.com"},
+					},
+					HashCode: Hash(&GroupMembers{
+						Items: 1,
+						Group: Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: Hash(&Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com"})},
+						Resources: []*Member{
+							{IPID: "3", SCIMID: "3", Email: "user.3@mail.com"},
+						},
+					}),
+				},
+				{
+					Items: 1,
+					Group: Group{IPID: "2", SCIMID: "2", Name: "group 2", Email: "group.2@mail.com", HashCode: Hash(&Group{IPID: "2", SCIMID: "2", Name: "group 2", Email: "group.2@mail.com"})},
+					Resources: []*Member{
+						{IPID: "1", SCIMID: "1", Email: "user.1@mail.com"},
+					},
+					HashCode: Hash(&GroupMembers{
+						Items: 1,
+						Group: Group{IPID: "2", SCIMID: "2", Name: "group 2", Email: "group.2@mail.com", HashCode: Hash(&Group{IPID: "2", SCIMID: "2", Name: "group 2", Email: "group.2@mail.com"})},
+						Resources: []*Member{
+							{IPID: "1", SCIMID: "1", Email: "user.1@mail.com"},
+						},
+					}),
+				},
+			},
+		},
+		{
+			name: "two groups: 2 equals, 1 add",
+			args: args{
+				idp: &GroupsMembersResult{
+					Items: 2,
+					Resources: []*GroupMembers{
+						{
+							Items: 2,
+							Group: Group{IPID: "1", Name: "group 1", Email: "group.1@mail.com"},
+							Resources: []*Member{
+								{IPID: "1", Email: "user.1@mail.com"},
+								{IPID: "2", Email: "user.2@mail.com"},
+							},
+						},
+						{
+							Items: 1,
+							Group: Group{IPID: "2", Name: "group 2", Email: "group.2@mail.com"},
+							Resources: []*Member{
+								{IPID: "3", Email: "user.3@mail.com"},
+							},
+						},
+						{
+							Items:     0,
+							Group:     Group{IPID: "3", Name: "group 3", Email: "group.3@mail.com"},
+							Resources: []*Member{},
+						},
+					},
+				},
+				scim: &GroupsMembersResult{
+					Items: 2,
+					Resources: []*GroupMembers{
+						{
+							Items: 2,
+							Group: Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com"},
+							Resources: []*Member{
+								{IPID: "1", SCIMID: "1", Email: "user.1@mail.com"},
+								{IPID: "2", SCIMID: "2", Email: "user.2@mail.com"},
+							},
+						},
+						{
+							Items:     0,
+							Group:     Group{IPID: "2", SCIMID: "2", Name: "group 2", Email: "group.2@mail.com"},
+							Resources: []*Member{},
+						},
+						{
+							Items:     0,
+							Group:     Group{IPID: "3", SCIMID: "3", Name: "group 3", Email: "group.3@mail.com"},
+							Resources: []*Member{},
+						},
+					},
+				},
+			},
+			wantCreate: []*GroupMembers{
+				{
+					Items: 1,
+					Group: Group{IPID: "2", SCIMID: "2", Name: "group 2", Email: "group.2@mail.com", HashCode: Hash(&Group{IPID: "2", SCIMID: "2", Name: "group 2", Email: "group.2@mail.com"})},
+					Resources: []*Member{
+						{IPID: "3", Email: "user.3@mail.com"},
+					},
+					HashCode: Hash(&GroupMembers{
+						Items: 1,
+						Group: Group{IPID: "2", SCIMID: "2", Name: "group 2", Email: "group.2@mail.com", HashCode: Hash(&Group{IPID: "2", SCIMID: "2", Name: "group 2", Email: "group.2@mail.com"})}, Resources: []*Member{
+							{IPID: "3", Email: "user.3@mail.com"},
+						},
+					}),
+				},
+			},
+
+			wantEqual: []*GroupMembers{
+				{
+					Items: 2,
+					Group: Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: Hash(&Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com"})},
+					Resources: []*Member{
+						{IPID: "1", SCIMID: "1", Email: "user.1@mail.com"},
+						{IPID: "2", SCIMID: "2", Email: "user.2@mail.com"},
+					},
+					HashCode: Hash(&GroupMembers{
+						Items: 2,
+						Group: Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: Hash(&Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com"})},
+						Resources: []*Member{
+							{IPID: "1", SCIMID: "1", Email: "user.1@mail.com"},
+							{IPID: "2", SCIMID: "2", Email: "user.2@mail.com"},
+						},
+					}),
+				},
+				{
+					Items:     0,
+					Group:     Group{IPID: "3", SCIMID: "3", Name: "group 3", Email: "group.3@mail.com", HashCode: Hash(&Group{IPID: "3", SCIMID: "3", Name: "group 3", Email: "group.3@mail.com"})},
+					Resources: []*Member{},
+					HashCode: Hash(&GroupMembers{
+						Items:     0,
+						Group:     Group{IPID: "3", SCIMID: "3", Name: "group 3", Email: "group.3@mail.com", HashCode: Hash(&Group{IPID: "3", SCIMID: "3", Name: "group 3", Email: "group.3@mail.com"})},
+						Resources: []*Member{},
+					}),
+				},
+			},
+			wantDelete: []*GroupMembers{},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			for _, item := range tt.wantCreate {
+				item.SetHashCode()
+			}
+			for _, item := range tt.wantEqual {
+				item.SetHashCode()
+			}
+			for _, item := range tt.wantDelete {
+				item.SetHashCode()
+			}
+
+			gotCreate, gotEqual, gotDelete := membersDataSets(tt.args.idp, tt.args.scim)
+
+			if !reflect.DeepEqual(gotCreate, tt.wantCreate) {
+				t.Errorf("membersDataSets() gotCreate = %s, want %s", utils.ToJSON(gotCreate), utils.ToJSON(tt.wantCreate))
+			}
+			if !reflect.DeepEqual(gotEqual, tt.wantEqual) {
+				t.Errorf("membersDataSets() gotEqual = %s, want %s", utils.ToJSON(gotEqual), utils.ToJSON(tt.wantEqual))
+			}
+			if !reflect.DeepEqual(gotDelete, tt.wantDelete) {
+				t.Errorf("membersDataSets() gotDelete = %s, want %s", utils.ToJSON(gotDelete), utils.ToJSON(tt.wantDelete))
+			}
+		})
+	}
+}

@@ -5,7 +5,8 @@ import (
 	"crypto/sha1"
 	"encoding/gob"
 	"fmt"
-	"log"
+
+	log "github.com/sirupsen/logrus"
 )
 
 func Hash(value interface{}) string {
@@ -16,7 +17,7 @@ func Hash(value interface{}) string {
 	buf := new(bytes.Buffer)
 	enc := gob.NewEncoder(buf)
 	if err := enc.Encode(value); err != nil {
-		panic(err)
+		log.Panic(err)
 	}
 
 	return fmt.Sprintf("%x", sha1.Sum(buf.Bytes()))

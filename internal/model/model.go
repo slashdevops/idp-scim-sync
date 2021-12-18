@@ -7,7 +7,7 @@ import (
 	"sort"
 )
 
-// Name represents a name entity.
+// Name represents a name entity and is used in other entities.
 type Name struct {
 	FamilyName string `json:"familyName"`
 	GivenName  string `json:"givenName"`
@@ -101,7 +101,7 @@ type Group struct {
 	HashCode string `json:"hashCode"`
 }
 
-// GobEncode implements the gob.GobEncoder interface for User entity.
+// GobEncode implements the gob.GobEncoder interface for Group entity.
 // This is necessary to avoid include the value in the field SCIMID until
 // the hashcode calculation is done.
 // the Hash function use gob to calculate the hash code.
@@ -171,7 +171,7 @@ type Member struct {
 	HashCode string `json:"hashCode"`
 }
 
-// GobEncode implements the gob.GobEncoder interface for User entity.
+// GobEncode implements the gob.GobEncoder interface for Member entity.
 // This is necessary to avoid include the value in the field SCIMID until
 // the hashcode calculation is done.
 // the Hash function use gob to calculate the hash code.

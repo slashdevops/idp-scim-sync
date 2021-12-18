@@ -5,13 +5,6 @@ import (
 	"runtime"
 )
 
-// Populated at build-time.
-// go build \
-// -ldflags "-X github.com/slashdevops/idp-scim-sync/internal/verion.Version=$(git rev-parse --abbrev-ref HEAD) \
-//           -X github.com/slashdevops/idp-scim-sync/internal/verion.Revision=$(git rev-parse --short HEAD) \
-//           -X github.com/slashdevops/idp-scim-sync/internal/verion.Branch=$(git rev-parse --abbrev-ref HEAD) \
-//           -X github.com/slashdevops/idp-scim-sync/internal/verion.BuildUser=$(git config --get user.name) \
-//           -X github.com/slashdevops/idp-scim-sync/internal/verion.BuildDate=$(date +'%Y-%m-%dT%H:%M:%S')"
 const unknown string = "unknown"
 
 var (
@@ -32,7 +25,7 @@ func GetVersion() string {
 	return Version
 }
 
-// GetVersionInfo returns the version string.
+// GetVersionInfo returns a semver version and information related to the revision and branch.
 func GetVersionInfo() string {
 	if Version == "" {
 		Version = "0.0.0"
@@ -51,7 +44,7 @@ func GetVersionInfo() string {
 	)
 }
 
-// GetVersionInfoExtended returns the version string.
+// GetVersionInfoExtended returns an extended version string.
 func GetVersionInfoExtended() string {
 	if Version == "" {
 		Version = "0.0.0"
