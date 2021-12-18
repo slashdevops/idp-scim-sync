@@ -23,8 +23,18 @@ type State struct {
 	Resources     StateResources `json:"resources"`
 }
 
-// MarshalJSON marshals the state to JSON.
+// MarshalJSON marshals the State to JSON.
 func (s *State) MarshalJSON() ([]byte, error) {
+	if s.Resources.Groups.Resources == nil {
+		s.Resources.Groups.Resources = make([]*Group, 0)
+	}
+	if s.Resources.Users.Resources == nil {
+		s.Resources.Users.Resources = make([]*User, 0)
+	}
+	if s.Resources.GroupsMembers.Resources == nil {
+		s.Resources.GroupsMembers.Resources = make([]*GroupMembers, 0)
+	}
+
 	return json.MarshalIndent(*s, "", "  ")
 }
 

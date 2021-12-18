@@ -224,14 +224,14 @@ func UsersOperations(idp, scim *UsersResult) (create, update, equal, remove *Use
 // MergeGroupsResult merges n GroupsResult result
 // NOTE: this function does not check the content of the GroupsResult, so
 // the return could have duplicated groups
-func MergeGroupsResult(grs ...*GroupsResult) (merged GroupsResult) {
+func MergeGroupsResult(grs ...*GroupsResult) (merged *GroupsResult) {
 	groups := make([]*Group, 0)
 
 	for _, gr := range grs {
 		groups = append(groups, gr.Resources...)
 	}
 
-	merged = GroupsResult{
+	merged = &GroupsResult{
 		Items:     len(groups),
 		Resources: groups,
 	}
@@ -243,14 +243,14 @@ func MergeGroupsResult(grs ...*GroupsResult) (merged GroupsResult) {
 // MergeUsersResult merges n UsersResult result
 // NOTE: this function does not check the content of the UsersResult, so
 // the return could have duplicated users
-func MergeUsersResult(urs ...*UsersResult) (merged UsersResult) {
+func MergeUsersResult(urs ...*UsersResult) (merged *UsersResult) {
 	users := make([]*User, 0)
 
 	for _, u := range urs {
 		users = append(users, u.Resources...)
 	}
 
-	merged = UsersResult{
+	merged = &UsersResult{
 		Items:     len(users),
 		Resources: users,
 	}
@@ -262,14 +262,14 @@ func MergeUsersResult(urs ...*UsersResult) (merged UsersResult) {
 // MergeGroupsMembersResult merges n GroupMembers result
 // NOTE: this function does not check the content of the GroupMembers, so
 // the return could have duplicated groupsMembers
-func MergeGroupsMembersResult(gms ...*GroupsMembersResult) (merged GroupsMembersResult) {
+func MergeGroupsMembersResult(gms ...*GroupsMembersResult) (merged *GroupsMembersResult) {
 	groupsMembers := make([]*GroupMembers, 0)
 
 	for _, gm := range gms {
 		groupsMembers = append(groupsMembers, gm.Resources...)
 	}
 
-	merged = GroupsMembersResult{
+	merged = &GroupsMembersResult{
 		Items:     len(groupsMembers),
 		Resources: groupsMembers,
 	}

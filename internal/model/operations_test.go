@@ -994,14 +994,14 @@ func TestMergeGroupsResult(t *testing.T) {
 	tests := []struct {
 		name       string
 		args       args
-		wantMerged GroupsResult
+		wantMerged *GroupsResult
 	}{
 		{
 			name: "merge empty",
 			args: args{
 				grs: []*GroupsResult{},
 			},
-			wantMerged: GroupsResult{
+			wantMerged: &GroupsResult{
 				Items:     0,
 				Resources: []*Group{},
 				HashCode:  "",
@@ -1012,7 +1012,7 @@ func TestMergeGroupsResult(t *testing.T) {
 			args: args{
 				grs: nil,
 			},
-			wantMerged: GroupsResult{
+			wantMerged: &GroupsResult{
 				Items:     0,
 				Resources: []*Group{},
 				HashCode:  "",
@@ -1039,7 +1039,7 @@ func TestMergeGroupsResult(t *testing.T) {
 					},
 				},
 			},
-			wantMerged: GroupsResult{
+			wantMerged: &GroupsResult{
 				Items: 3,
 				Resources: []*Group{
 					{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@gmail.com", HashCode: "1234567890"},
@@ -1067,14 +1067,14 @@ func TestMergeUsersResult(t *testing.T) {
 	tests := []struct {
 		name       string
 		args       args
-		wantMerged UsersResult
+		wantMerged *UsersResult
 	}{
 		{
 			name: "merge empty",
 			args: args{
 				urs: []*UsersResult{},
 			},
-			wantMerged: UsersResult{
+			wantMerged: &UsersResult{
 				Items:     0,
 				Resources: []*User{},
 				HashCode:  "",
@@ -1085,7 +1085,7 @@ func TestMergeUsersResult(t *testing.T) {
 			args: args{
 				urs: nil,
 			},
-			wantMerged: UsersResult{
+			wantMerged: &UsersResult{
 				Items:     0,
 				Resources: []*User{},
 				HashCode:  "",
@@ -1112,7 +1112,7 @@ func TestMergeUsersResult(t *testing.T) {
 					},
 				},
 			},
-			wantMerged: UsersResult{
+			wantMerged: &UsersResult{
 				Items: 3,
 				Resources: []*User{
 					{IPID: "1", SCIMID: "1", Name: Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@gmail.com", HashCode: "1234567890"},
@@ -1140,14 +1140,14 @@ func TestMergeGroupsMembersResult(t *testing.T) {
 	tests := []struct {
 		name       string
 		args       args
-		wantMerged GroupsMembersResult
+		wantMerged *GroupsMembersResult
 	}{
 		{
 			name: "empty",
 			args: args{
 				gms: []*GroupsMembersResult{},
 			},
-			wantMerged: GroupsMembersResult{
+			wantMerged: &GroupsMembersResult{
 				Items:     0,
 				Resources: []*GroupMembers{},
 				HashCode:  "",
@@ -1158,7 +1158,7 @@ func TestMergeGroupsMembersResult(t *testing.T) {
 			args: args{
 				gms: nil,
 			},
-			wantMerged: GroupsMembersResult{
+			wantMerged: &GroupsMembersResult{
 				Items:     0,
 				Resources: []*GroupMembers{},
 				HashCode:  "",
@@ -1198,7 +1198,7 @@ func TestMergeGroupsMembersResult(t *testing.T) {
 					},
 				},
 			},
-			wantMerged: GroupsMembersResult{
+			wantMerged: &GroupsMembersResult{
 				Items: 2,
 				Resources: []*GroupMembers{
 					{
@@ -1265,7 +1265,7 @@ func TestMergeGroupsMembersResult(t *testing.T) {
 					},
 				},
 			},
-			wantMerged: GroupsMembersResult{
+			wantMerged: &GroupsMembersResult{
 				Items: 3,
 				Resources: []*GroupMembers{
 					{
