@@ -12,6 +12,12 @@ linters-settings:
   goconst:
     min-len: 4
     min-occurrences: 4
+    ignore-tests: false
+    match-constant: true
+    numbers: false
+    min: 3
+    max: 3
+    ignore-calls: true
 
   gocritic:
     enabled-tags:
@@ -73,6 +79,9 @@ linters-settings:
   unused:
     go: "1.17"
 
+  gocognit:
+    min-complexity: 50
+
 linters:
   disable-all: true
   enable:
@@ -108,18 +117,20 @@ linters:
     - unused
     - varcheck
     - whitespace
+    - asciicheck
+    - gocognit
+    - nakedret
+    - nestif
+    - prealloc
+    - testpackage
+    - revive
 
   # don't enable:
-  # - asciicheck
-  # - scopelint
   # - gochecknoglobals
   # - gochecknoinits
-  # - gocognit
   # - godot
   # - godox
   # - goerr113
-  # - interfacer
-  # - maligned
   # - nakedret
   # - nestif
   # - prealloc

@@ -377,7 +377,7 @@ func membersDataSets(idp, scim *model.GroupsMembersResult) (create, equal, remov
 		// groups equals both sides without members
 		if _, ok := scimMemberSet[grpMembers.Group.Name]; ok {
 			if len(scimMemberSet[grpMembers.Group.Name]) == 0 && len(idpMemberSet[grpMembers.Group.Name]) == 0 {
-				noMembers += 1
+				noMembers++
 			}
 		}
 

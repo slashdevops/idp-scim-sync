@@ -111,9 +111,11 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 	// these variables are used to store the data that will be used to create, delete and are equal for users and groups in SCIM
 	// the differents between the data in the identity provider and these is that these have already have the SCIMID
 	// after the creation of the element in SCIM
-	var totalGroupsResult model.GroupsResult
-	var totalUsersResult model.UsersResult
-	var totalGroupsMembersResult model.GroupsMembersResult
+	var (
+		totalGroupsResult        model.GroupsResult
+		totalUsersResult         model.UsersResult
+		totalGroupsMembersResult model.GroupsMembersResult
+	)
 
 	// first time syncing
 	if state.LastSync == "" {
