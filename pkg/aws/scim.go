@@ -72,8 +72,8 @@ type HTTPClient interface {
 	Do(req *http.Request) (*http.Response, error)
 }
 
-// AWSSCIMService is an AWS SCIM Service.
-type AWSSCIMService struct {
+// SCIMService is an AWS SCIM Service.
+type SCIMService struct {
 	httpClient  HTTPClient
 	url         *url.URL
 	UserAgent   string
@@ -81,7 +81,7 @@ type AWSSCIMService struct {
 }
 
 // NewSCIMService creates a new AWS SCIM Service.
-func NewSCIMService(httpClient HTTPClient, urlStr, token string) (*AWSSCIMService, error) {
+func NewSCIMService(httpClient HTTPClient, urlStr, token string) (*SCIMService, error) {
 	if httpClient == nil {
 		httpClient = http.DefaultClient
 	}
@@ -95,7 +95,7 @@ func NewSCIMService(httpClient HTTPClient, urlStr, token string) (*AWSSCIMServic
 		return nil, fmt.Errorf("aws: error parsing url: %w", err)
 	}
 
-	return &AWSSCIMService{
+	return &SCIMService{
 		httpClient:  httpClient,
 		url:         u,
 		bearerToken: token,
@@ -103,7 +103,7 @@ func NewSCIMService(httpClient HTTPClient, urlStr, token string) (*AWSSCIMServic
 }
 
 // newRequest creates an http.Request with the given method, URL, and (optionally) body.
-func (s *AWSSCIMService) newRequest(ctx context.Context, method string, u *url.URL, body interface{}) (*http.Request, error) {
+func (s *SCIMService) newRequest(ctx context.Context, method string, u *url.URL, body interface{}) (*http.Request, error) {
 	var buf io.ReadWriter
 	if body != nil {
 		buf = &bytes.Buffer{}
@@ -134,7 +134,7 @@ func (s *AWSSCIMService) newRequest(ctx context.Context, method string, u *url.U
 }
 
 // do sends an HTTP request and returns an HTTP response, following policy (e.g. redirects, cookies, auth) as configured on the client.
-func (s *AWSSCIMService) do(ctx context.Context, req *http.Request) (*http.Response, error) {
+func (s *SCIMService) do(ctx context.Context, req *http.Request) (*http.Response, error) {
 	req = req.WithContext(ctx)
 
 	// Set bearer token
@@ -153,7 +153,7 @@ func (s *AWSSCIMService) do(ctx context.Context, req *http.Request) (*http.Respo
 }
 
 // checkHTTPResponse checks the status code of the HTTP response.
-func (s *AWSSCIMService) checkHTTPResponse(r *http.Response) error {
+func (s *SCIMService) checkHTTPResponse(r *http.Response) error {
 	if r.StatusCode < http.StatusOK || r.StatusCode >= http.StatusBadRequest {
 		defer r.Body.Close()
 		dec := json.NewDecoder(r.Body)
@@ -192,7 +192,7 @@ func (s *AWSSCIMService) checkHTTPResponse(r *http.Response) error {
 // CreateUser creates a new user in the AWS SSO Using the API.
 // references:
 // + https://docs.aws.amazon.com/singlesignon/latest/developerguide/createuser.html
-func (s *AWSSCIMService) CreateUser(ctx context.Context, usr *CreateUserRequest) (*CreateUserResponse, error) {
+func (s *SCIMService) CreateUser(ctx context.Context, usr *CreateUserRequest) (*CreateUserResponse, error) {
 	if usr == nil {
 		return nil, ErrCreateUserRequestEmpty
 	}
@@ -242,7 +242,7 @@ func (s *AWSSCIMService) CreateUser(ctx context.Context, usr *CreateUserRequest)
 }
 
 // DeleteUser deletes a user in the AWS SSO Using the API.
-func (s *AWSSCIMService) DeleteUser(ctx context.Context, id string) error {
+func (s *SCIMService) DeleteUser(ctx context.Context, id string) error {
 	if id == "" {
 		return ErrUserIDEmpty
 	}
@@ -269,7 +269,7 @@ func (s *AWSSCIMService) DeleteUser(ctx context.Context, id string) error {
 }
 
 // GetUser returns an user from the AWS SSO Using the API
-func (s *AWSSCIMService) GetUserByUserName(ctx context.Context, userName string) (*GetUserResponse, error) {
+func (s *SCIMService) GetUserByUserName(ctx context.Context, userName string) (*GetUserResponse, error) {
 	if userName == "" {
 		return nil, ErrUserUserNameEmpty
 	}
@@ -320,7 +320,7 @@ func (s *AWSSCIMService) GetUserByUserName(ctx context.Context, userName string)
 }
 
 // GetUser returns an user from the AWS SSO Using the API
-func (s *AWSSCIMService) GetUser(ctx context.Context, userID string) (*GetUserResponse, error) {
+func (s *SCIMService) GetUser(ctx context.Context, userID string) (*GetUserResponse, error) {
 	if userID == "" {
 		return nil, ErrUserIDEmpty
 	}
@@ -352,7 +352,7 @@ func (s *AWSSCIMService) GetUser(ctx context.Context, userID string) (*GetUserRe
 }
 
 // ListUsers returns a list of users from the AWS SSO Using the API
-func (s *AWSSCIMService) ListUsers(ctx context.Context, filter string) (*ListUsersResponse, error) {
+func (s *SCIMService) ListUsers(ctx context.Context, filter string) (*ListUsersResponse, error) {
 	reqURL, err := url.Parse(s.url.String())
 	if err != nil {
 		return nil, fmt.Errorf("aws ListUsers: error parsing url: %w", err)
@@ -386,7 +386,7 @@ func (s *AWSSCIMService) ListUsers(ctx context.Context, filter string) (*ListUse
 }
 
 // PatchUser updates a user in the AWS SSO Using the API
-func (s *AWSSCIMService) PatchUser(ctx context.Context, pur *PatchUserRequest) error {
+func (s *SCIMService) PatchUser(ctx context.Context, pur *PatchUserRequest) error {
 	if pur == nil {
 		return ErrPatchUserRequestEmpty
 	}
@@ -416,7 +416,7 @@ func (s *AWSSCIMService) PatchUser(ctx context.Context, pur *PatchUserRequest) e
 }
 
 // PutUser creates a new user in the AWS SSO Using the API.
-func (s *AWSSCIMService) PutUser(ctx context.Context, usr *PutUserRequest) (*PutUserResponse, error) {
+func (s *SCIMService) PutUser(ctx context.Context, usr *PutUserRequest) (*PutUserResponse, error) {
 	if usr == nil {
 		return nil, ErrPutUserRequestEmpty
 	}
@@ -462,7 +462,7 @@ func (s *AWSSCIMService) PutUser(ctx context.Context, usr *PutUserRequest) (*Put
 }
 
 // ListGroups returns a list of groups from the AWS SSO Using the API
-func (s *AWSSCIMService) ListGroups(ctx context.Context, filter string) (*ListGroupsResponse, error) {
+func (s *SCIMService) ListGroups(ctx context.Context, filter string) (*ListGroupsResponse, error) {
 	reqURL, err := url.Parse(s.url.String())
 	if err != nil {
 		return nil, fmt.Errorf("aws ListGroups: error parsing url: %w", err)
@@ -498,7 +498,7 @@ func (s *AWSSCIMService) ListGroups(ctx context.Context, filter string) (*ListGr
 // CreateGroup creates a new group in the AWS SSO Using the API
 // reference:
 // + https://docs.aws.amazon.com/singlesignon/latest/developerguide/creategroup.html
-func (s *AWSSCIMService) CreateGroup(ctx context.Context, g *CreateGroupRequest) (*CreateGroupResponse, error) {
+func (s *SCIMService) CreateGroup(ctx context.Context, g *CreateGroupRequest) (*CreateGroupResponse, error) {
 	if g == nil {
 		return nil, ErrCreateGroupRequestEmpty
 	}
@@ -538,7 +538,7 @@ func (s *AWSSCIMService) CreateGroup(ctx context.Context, g *CreateGroupRequest)
 }
 
 // DeleteGroup deletes a group from the AWS SSO Using the API
-func (s *AWSSCIMService) DeleteGroup(ctx context.Context, id string) error {
+func (s *SCIMService) DeleteGroup(ctx context.Context, id string) error {
 	if id == "" {
 		return ErrGroupIDEmpty
 	}
@@ -565,7 +565,7 @@ func (s *AWSSCIMService) DeleteGroup(ctx context.Context, id string) error {
 }
 
 // PatchGroup updates a group in the AWS SSO Using the API
-func (s *AWSSCIMService) PatchGroup(ctx context.Context, pgr *PatchGroupRequest) error {
+func (s *SCIMService) PatchGroup(ctx context.Context, pgr *PatchGroupRequest) error {
 	if pgr == nil {
 		return ErrPatchGroupRequestEmpty
 	}
@@ -597,7 +597,7 @@ func (s *AWSSCIMService) PatchGroup(ctx context.Context, pgr *PatchGroupRequest)
 // ServiceProviderConfig returns additional information about the AWS SSO SCIM implementation
 // references:
 // + https://docs.aws.amazon.com/singlesignon/latest/developerguide/serviceproviderconfig.html
-func (s *AWSSCIMService) ServiceProviderConfig(ctx context.Context) (*ServiceProviderConfig, error) {
+func (s *SCIMService) ServiceProviderConfig(ctx context.Context) (*ServiceProviderConfig, error) {
 	reqURL, err := url.Parse(s.url.String())
 	if err != nil {
 		return nil, fmt.Errorf("aws ServiceProviderConfig: error parsing url: %w", err)
