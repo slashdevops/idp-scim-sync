@@ -65,14 +65,14 @@ type Group struct {
 	Meta        Meta     `json:"meta"`
 	Schemas     []string `json:"schemas"`
 	DisplayName string   `json:"displayName"`
-	ExternalID  string   `json:"ExternalID"`
+	ExternalID  string   `json:"externalId"`
 	Members     []Member `json:"members"`
 }
 
 // User represent a user entity
 type User struct {
 	ID          string   `json:"id"`
-	ExternalID  string   `json:"ExternalID"`
+	ExternalID  string   `json:"externalId"`
 	Meta        Meta     `json:"meta"`
 	Schemas     []string `json:"schemas"`
 	UserName    string   `json:"userName"`
@@ -161,7 +161,7 @@ type APIErrorResponse struct {
 	Status             string   `json:"status"`
 	Detail             string   `json:"detail"`
 	Timestamp          string   `json:"timestamp"`
-	ExceptionRequestID string   `json:"ExceptionRequestID"`
+	ExceptionRequestID string   `json:"exceptionRequestId"`
 	Schema             []string `json:"schema"`
 }
 
@@ -176,14 +176,14 @@ type CreateGroupResponse struct {
 // CreateGroupRequest represent a create group request entity
 type CreateGroupRequest struct {
 	DisplayName string    `json:"displayName"`
-	ExternalID  string    `json:"ExternalID,omitempty"`
+	ExternalID  string    `json:"externalId,omitempty"`
 	Members     []*Member `json:"members,omitempty"`
 }
 
 // CreateUserRequest represent a create user request entity
 type CreateUserRequest struct {
 	ID          string  `json:"id,omitempty"`
-	ExternalID  string  `json:"ExternalID"`
+	ExternalID  string  `json:"externalId"`
 	UserName    string  `json:"userName"`
 	Name        Name    `json:"name"`
 	DisplayName string  `json:"displayName"`
@@ -196,7 +196,7 @@ type CreateUserRequest struct {
 // PutUserRequest represent a put user request entity
 type PutUserRequest struct {
 	ID          string  `json:"id"`
-	ExternalID  string  `json:"ExternalID"`
+	ExternalID  string  `json:"externalId"`
 	UserName    string  `json:"userName"`
 	Name        Name    `json:"name"`
 	DisplayName string  `json:"displayName"`
@@ -209,7 +209,7 @@ type PutUserRequest struct {
 // CreateUserResponse represent a create user response entity
 type CreateUserResponse struct {
 	ID          string   `json:"id"`
-	ExternalID  string   `json:"ExternalID"`
+	ExternalID  string   `json:"externalId"`
 	Meta        Meta     `json:"meta"`
 	Schemas     []string `json:"schemas"`
 	UserName    string   `json:"userName"`
@@ -222,7 +222,7 @@ type CreateUserResponse struct {
 // PutUserResponse represent a put user response entity
 type PutUserResponse struct {
 	ID          string   `json:"id"`
-	ExternalID  string   `json:"ExternalID"`
+	ExternalID  string   `json:"externalId"`
 	Meta        Meta     `json:"meta"`
 	Schemas     []string `json:"schemas"`
 	UserName    string   `json:"userName"`
@@ -246,7 +246,7 @@ type PatchUserRequest struct {
 
 type GetUserResponse struct {
 	ID          string   `json:"id"`
-	ExternalID  string   `json:"ExternalID"`
+	ExternalID  string   `json:"externalId"`
 	Meta        Meta     `json:"meta"`
 	Schemas     []string `json:"schemas"`
 	UserName    string   `json:"userName"`
