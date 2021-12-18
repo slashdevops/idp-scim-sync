@@ -174,12 +174,8 @@ func (s *SCIMService) checkHTTPResponse(r *http.Response) error {
 		// in case somebody delete/create elements manually from AWS SCIM API
 		// or if this program broke at some moment and create inconsistent state and now
 		// so is better to avoid errors here to be self-healing
-		if r.StatusCode == http.StatusNotFound {
-			log.Warningf("aws checkHTTPResponse: error: %s, method: %s, request url: %s\n", r.Status, r.Request.Method, r.Request.URL)
-			return nil
-		}
-		if r.StatusCode == http.StatusConflict {
-			log.Warningf("aws checkHTTPResponse: error: %s, method: %s, request url: %s\n", r.Status, r.Request.Method, r.Request.URL)
+		if r.StatusCode == http.StatusNotFound || r.StatusCode == http.StatusConflict {
+			log.Warnf("aws checkHTTPResponse: error: %s, method: %s, request url: %s\n", r.Status, r.Request.Method, r.Request.URL)
 			return nil
 		}
 
