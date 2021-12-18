@@ -274,7 +274,7 @@ func syncGroups() error {
 		return errors.Wrap(err, "idpscim syncGroups: cannot create aws scim service")
 	}
 
-	scimService, err := scim.NewSCIMProvider(awsSCIM)
+	scimService, err := scim.NewProvider(awsSCIM)
 	if err != nil {
 		return errors.Wrap(err, "idpscim syncGroups: cannot create scim provider")
 	}

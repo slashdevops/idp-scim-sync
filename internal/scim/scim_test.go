@@ -12,20 +12,20 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestNewSCIMProvider(t *testing.T) {
+func TestNewProvider(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
 	t.Run("Should return SCIMProvider and no error", func(t *testing.T) {
 		mockSCIM := mocks.NewMockAWSSCIMProvider(mockCtrl)
-		svc, err := NewSCIMProvider(mockSCIM)
+		svc, err := NewProvider(mockSCIM)
 
 		assert.NoError(t, err)
 		assert.NotNil(t, svc)
 	})
 
 	t.Run("Should return an error if no AWSSCIMProvider is provided", func(t *testing.T) {
-		svc, err := NewSCIMProvider(nil)
+		svc, err := NewProvider(nil)
 
 		assert.Error(t, err)
 		assert.Nil(t, svc)
@@ -41,7 +41,7 @@ func TestSCIMProvider_GetGroups(t *testing.T) {
 		mockSCIM := mocks.NewMockAWSSCIMProvider(mockCtrl)
 		mockSCIM.EXPECT().ListGroups(context.TODO(), gomock.Any()).Return(nil, errors.New("test error"))
 
-		svc, _ := NewSCIMProvider(mockSCIM)
+		svc, _ := NewProvider(mockSCIM)
 		gr, err := svc.GetGroups(context.TODO())
 
 		assert.Error(t, err)
@@ -53,7 +53,7 @@ func TestSCIMProvider_GetGroups(t *testing.T) {
 		groups := &aws.ListGroupsResponse{}
 		mockSCIM.EXPECT().ListGroups(context.TODO(), gomock.Any()).Return(groups, nil)
 
-		svc, _ := NewSCIMProvider(mockSCIM)
+		svc, _ := NewProvider(mockSCIM)
 		gr, err := svc.GetGroups(context.TODO())
 
 		assert.NoError(t, err)
@@ -92,7 +92,7 @@ func TestSCIMProvider_GetGroups(t *testing.T) {
 
 		mockSCIM.EXPECT().ListGroups(context.TODO(), gomock.Any()).Return(groups, nil)
 
-		svc, _ := NewSCIMProvider(mockSCIM)
+		svc, _ := NewProvider(mockSCIM)
 		gr, err := svc.GetGroups(context.TODO())
 
 		assert.NoError(t, err)
@@ -125,7 +125,7 @@ func TestSCIMProvider_GetUsers(t *testing.T) {
 		mockSCIM := mocks.NewMockAWSSCIMProvider(mockCtrl)
 		mockSCIM.EXPECT().ListUsers(context.TODO(), gomock.Any()).Return(nil, errors.New("test error"))
 
-		svc, _ := NewSCIMProvider(mockSCIM)
+		svc, _ := NewProvider(mockSCIM)
 		gr, err := svc.GetUsers(context.TODO())
 
 		assert.Error(t, err)
@@ -137,7 +137,7 @@ func TestSCIMProvider_GetUsers(t *testing.T) {
 		users := &aws.ListUsersResponse{}
 		mockSCIM.EXPECT().ListUsers(context.TODO(), gomock.Any()).Return(users, nil)
 
-		svc, _ := NewSCIMProvider(mockSCIM)
+		svc, _ := NewProvider(mockSCIM)
 		gr, err := svc.GetUsers(context.TODO())
 
 		assert.NoError(t, err)
@@ -180,7 +180,7 @@ func TestSCIMProvider_GetUsers(t *testing.T) {
 
 		mockSCIM.EXPECT().ListUsers(context.TODO(), gomock.Any()).Return(users, nil)
 
-		svc, _ := NewSCIMProvider(mockSCIM)
+		svc, _ := NewProvider(mockSCIM)
 		gr, err := svc.GetUsers(context.TODO())
 
 		assert.NoError(t, err)
@@ -214,7 +214,7 @@ func TestSCIMProvider_CreateGroups(t *testing.T) {
 		mockSCIM := mocks.NewMockAWSSCIMProvider(mockCtrl)
 		empty := &model.GroupsResult{}
 
-		svc, _ := NewSCIMProvider(mockSCIM)
+		svc, _ := NewProvider(mockSCIM)
 		gr, err := svc.CreateGroups(context.TODO(), empty)
 		assert.NoError(t, err)
 		assert.NotNil(t, gr)
@@ -242,7 +242,7 @@ func TestSCIMProvider_CreateGroups(t *testing.T) {
 			},
 		}
 
-		svc, _ := NewSCIMProvider(mockSCIM)
+		svc, _ := NewProvider(mockSCIM)
 		gr, err := svc.CreateGroups(ctx, gr)
 		assert.NoError(t, err)
 		assert.NotNil(t, gr)
@@ -270,7 +270,7 @@ func TestSCIMProvider_CreateGroups(t *testing.T) {
 			},
 		}
 
-		svc, _ := NewSCIMProvider(mockSCIM)
+		svc, _ := NewProvider(mockSCIM)
 		gr, err := svc.CreateGroups(ctx, gr)
 		assert.Error(t, err)
 		assert.Nil(t, gr)
@@ -327,7 +327,7 @@ func TestSCIMProvider_CreateGroups(t *testing.T) {
 			},
 		}
 
-		svc, _ := NewSCIMProvider(mockSCIM)
+		svc, _ := NewProvider(mockSCIM)
 		gr, err := svc.CreateGroups(ctx, gr)
 		assert.NoError(t, err)
 		assert.NotNil(t, gr)
@@ -351,7 +351,7 @@ func TestSCIMProvider_CreateUsers(t *testing.T) {
 		mockSCIM := mocks.NewMockAWSSCIMProvider(mockCtrl)
 		empty := &model.UsersResult{}
 
-		svc, _ := NewSCIMProvider(mockSCIM)
+		svc, _ := NewProvider(mockSCIM)
 		cur, err := svc.CreateUsers(context.TODO(), empty)
 
 		assert.NoError(t, err)
@@ -388,7 +388,7 @@ func TestSCIMProvider_CreateUsers(t *testing.T) {
 			},
 		}
 
-		svc, _ := NewSCIMProvider(mockSCIM)
+		svc, _ := NewProvider(mockSCIM)
 		ur, err := svc.CreateUsers(ctx, usr)
 
 		assert.NoError(t, err)
@@ -424,7 +424,7 @@ func TestSCIMProvider_CreateUsers(t *testing.T) {
 			},
 		}
 
-		svc, _ := NewSCIMProvider(mockSCIM)
+		svc, _ := NewProvider(mockSCIM)
 		ur, err := svc.CreateUsers(ctx, usr)
 
 		assert.Error(t, err)
@@ -502,7 +502,7 @@ func TestSCIMProvider_CreateUsers(t *testing.T) {
 			},
 		}
 
-		svc, _ := NewSCIMProvider(mockSCIM)
+		svc, _ := NewProvider(mockSCIM)
 		ur, err := svc.CreateUsers(ctx, usr)
 
 		assert.NoError(t, err)
