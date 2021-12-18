@@ -1,7 +1,6 @@
 package core
 
 import (
-	"context"
 	"reflect"
 	"testing"
 
@@ -26,16 +25,14 @@ func TestWithIdentityProviderGroupsFilter(t *testing.T) {
 		mockCtrl := gomock.NewController(t)
 		defer mockCtrl.Finish()
 
-		ctx := context.TODO()
 		filter := []string{"group1", "group2"}
 		prov := mocks.NewMockIdentityProviderService(mockCtrl)
 		scim := mocks.NewMockSCIMService(mockCtrl)
 		repo := mocks.NewMockStateRepository(mockCtrl)
 
-		got, _ := NewSyncService(ctx, prov, scim, repo, WithIdentityProviderGroupsFilter(filter))
+		got, _ := NewSyncService(prov, scim, repo, WithIdentityProviderGroupsFilter(filter))
 
 		want := &SyncService{
-			ctx:              ctx,
 			prov:             prov,
 			provGroupsFilter: filter,
 			provUsersFilter:  []string{},
@@ -77,16 +74,14 @@ func TestWithIdentityProviderUsersFilter(t *testing.T) {
 		mockCtrl := gomock.NewController(t)
 		defer mockCtrl.Finish()
 
-		ctx := context.TODO()
 		filter := []string{"user1", "user2"}
 		prov := mocks.NewMockIdentityProviderService(mockCtrl)
 		scim := mocks.NewMockSCIMService(mockCtrl)
 		repo := mocks.NewMockStateRepository(mockCtrl)
 
-		got, _ := NewSyncService(ctx, prov, scim, repo, WithIdentityProviderUsersFilter(filter))
+		got, _ := NewSyncService(prov, scim, repo, WithIdentityProviderUsersFilter(filter))
 
 		want := &SyncService{
-			ctx:              ctx,
 			prov:             prov,
 			provGroupsFilter: []string{},
 			provUsersFilter:  filter,

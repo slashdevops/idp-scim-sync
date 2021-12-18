@@ -290,12 +290,12 @@ func syncGroups() error {
 		log.Fatalf(errors.Wrap(err, "idpscim syncGroups: cannot create s3 repository").Error())
 	}
 
-	ss, err := core.NewSyncService(ctx, idpService, scimService, repo, core.WithIdentityProviderGroupsFilter(cfg.GWSGroupsFilter))
+	ss, err := core.NewSyncService(idpService, scimService, repo, core.WithIdentityProviderGroupsFilter(cfg.GWSGroupsFilter))
 	if err != nil {
 		return errors.Wrap(err, "idpscim syncGroups: cannot create sync service")
 	}
 
-	if err := ss.SyncGroupsAndTheirMembers(); err != nil {
+	if err := ss.SyncGroupsAndTheirMembers(ctx); err != nil {
 		return errors.Wrap(err, "idpscim syncGroups: cannot sync groups and their members")
 	}
 

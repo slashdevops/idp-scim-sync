@@ -26,7 +26,6 @@ var (
 
 // SyncService represent the sync service and the core of the sync process
 type SyncService struct {
-	ctx              context.Context
 	provGroupsFilter []string
 	provUsersFilter  []string
 	prov             IdentityProviderService
@@ -35,7 +34,7 @@ type SyncService struct {
 }
 
 // NewSyncService creates a new sync service.
-func NewSyncService(ctx context.Context, prov IdentityProviderService, scim SCIMService, repo StateRepository, opts ...SyncServiceOption) (*SyncService, error) {
+func NewSyncService(prov IdentityProviderService, scim SCIMService, repo StateRepository, opts ...SyncServiceOption) (*SyncService, error) {
 	if prov == nil {
 		return nil, ErrIdentiyProviderServiceNil
 	}
@@ -47,7 +46,6 @@ func NewSyncService(ctx context.Context, prov IdentityProviderService, scim SCIM
 	}
 
 	ss := &SyncService{
-		ctx:              ctx,
 		prov:             prov,
 		provGroupsFilter: []string{}, // fill in with the opts
 		provUsersFilter:  []string{}, // fill in with the opts
@@ -63,22 +61,22 @@ func NewSyncService(ctx context.Context, prov IdentityProviderService, scim SCIM
 }
 
 // SyncGroupsAndTheirMembers the default sync method tha syncs groups and their members
-func (ss *SyncService) SyncGroupsAndTheirMembers() error {
+func (ss *SyncService) SyncGroupsAndTheirMembers(ctx context.Context) error {
 	log.WithFields(log.Fields{
 		"group_filter": ss.provGroupsFilter,
 	}).Info("getting Identity Provider data")
 
-	idpGroupsResult, err := ss.prov.GetGroups(ss.ctx, ss.provGroupsFilter)
+	idpGroupsResult, err := ss.prov.GetGroups(ctx, ss.provGroupsFilter)
 	if err != nil {
 		return fmt.Errorf("error getting groups from the identity provider: %w", err)
 	}
 
-	idpUsersResult, err := ss.prov.GetUsers(ss.ctx, []string{""})
+	idpUsersResult, err := ss.prov.GetUsers(ctx, []string{""})
 	if err != nil {
 		return fmt.Errorf("error getting users from the identity provider: %w", err)
 	}
 
-	idpGroupsMembersResult, err := ss.prov.GetGroupsMembers(ss.ctx, idpGroupsResult)
+	idpGroupsMembersResult, err := ss.prov.GetGroupsMembers(ctx, idpGroupsResult)
 	if err != nil {
 		return fmt.Errorf("error getting groups members: %w", err)
 	}
@@ -96,7 +94,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 	}
 
 	log.Info("getting state data")
-	state, err := ss.repo.GetState(ss.ctx)
+	state, err := ss.repo.GetState(ctx)
 	if err != nil {
 		var nsk *types.NoSuchKey
 		if errors.As(err, &nsk) {
@@ -130,7 +128,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 		log.Warn("reconciling the SCIM data with the Identity Provider data")
 
 		log.Info("getting SCIM Groups")
-		scimGroupsResult, err := ss.scim.GetGroups(ss.ctx)
+		scimGroupsResult, err := ss.scim.GetGroups(ctx)
 		if err != nil {
 			return fmt.Errorf("error getting groups from the SCIM service: %w", err)
 		}
@@ -144,7 +142,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 			return fmt.Errorf("error reconciling groups: %w", err)
 		}
 
-		groupsCreated, groupsUpdated, err := reconcilingGroups(ss.ctx, ss.scim, groupsCreate, groupsUpdate, groupsDelete)
+		groupsCreated, groupsUpdated, err := reconcilingGroups(ctx, ss.scim, groupsCreate, groupsUpdate, groupsDelete)
 		if err != nil {
 			return fmt.Errorf("error reconciling groups: %w", err)
 		}
@@ -153,7 +151,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 		totalGroupsResult = model.MergeGroupsResult(groupsCreated, groupsUpdated, groupsEqual)
 
 		log.Info("getting SCIM Users")
-		scimUsersResult, err := ss.scim.GetUsers(ss.ctx)
+		scimUsersResult, err := ss.scim.GetUsers(ctx)
 		if err != nil {
 			return fmt.Errorf("error getting users from the SCIM service: %w", err)
 		}
@@ -167,7 +165,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 			return fmt.Errorf("error operating with users: %w", err)
 		}
 
-		usersCreated, usersUpdated, err := reconcilingUsers(ss.ctx, ss.scim, usersCreate, usersUpdate, usersDelete)
+		usersCreated, usersUpdated, err := reconcilingUsers(ctx, ss.scim, usersCreate, usersUpdate, usersDelete)
 		if err != nil {
 			return fmt.Errorf("error reconciling users: %w", err)
 		}
@@ -178,8 +176,8 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 		log.Info("getting SCIM Groups Members")
 		// unfortunately, the SCIM service does not support the getGroupsMembers method in and efficient way
 		// see: "Nor Supported" section in: https://docs.aws.amazon.com/singlesignon/latest/developerguide/listgroups.html
-		// scimGroupsMembersResult, err := ss.scim.GetGroupsMembers(ss.ctx, &totalGroupsResult) // not supported yet
-		scimGroupsMembersResult, err := ss.scim.GetGroupsMembersBruteForce(ss.ctx, &totalGroupsResult, &totalUsersResult)
+		// scimGroupsMembersResult, err := ss.scim.GetGroupsMembers(ctx, &totalGroupsResult) // not supported yet
+		scimGroupsMembersResult, err := ss.scim.GetGroupsMembersBruteForce(ctx, &totalGroupsResult, &totalUsersResult)
 		if err != nil {
 			return fmt.Errorf("error getting groups members from the SCIM service: %w", err)
 		}
@@ -197,7 +195,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 
 		log.Tracef("membersCreate: %s\n, membersEqual: %s\n, membersDelete: %s\n", utils.ToJSON(membersCreate), utils.ToJSON(membersEqual), utils.ToJSON(membersDelete))
 
-		membersCreated, err := reconcilingGroupsMembers(ss.ctx, ss.scim, membersCreate, membersDelete)
+		membersCreated, err := reconcilingGroupsMembers(ctx, ss.scim, membersCreate, membersDelete)
 		if err != nil {
 			return fmt.Errorf("error reconciling groups members: %w", err)
 		}
@@ -234,7 +232,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 				return fmt.Errorf("error reconciling groups: %w", err)
 			}
 
-			groupsCreated, groupsUpdated, err := reconcilingGroups(ss.ctx, ss.scim, groupsCreate, groupsUpdate, groupsDelete)
+			groupsCreated, groupsUpdated, err := reconcilingGroups(ctx, ss.scim, groupsCreate, groupsUpdate, groupsDelete)
 			if err != nil {
 				return fmt.Errorf("error reconciling groups: %w", err)
 			}
@@ -259,7 +257,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 				return fmt.Errorf("error operating with users: %w", err)
 			}
 
-			usersCreated, usersUpdated, err := reconcilingUsers(ss.ctx, ss.scim, usersCreate, usersUpdate, usersDelete)
+			usersCreated, usersUpdated, err := reconcilingUsers(ctx, ss.scim, usersCreate, usersUpdate, usersDelete)
 			if err != nil {
 				return fmt.Errorf("error reconciling users: %w", err)
 			}
@@ -294,7 +292,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 
 			log.Tracef("membersCreate: %s\n, membersEqual: %s\n, membersDelete: %s\n", utils.ToJSON(membersCreate), utils.ToJSON(membersEqual), utils.ToJSON(membersDelete))
 
-			_, err = reconcilingGroupsMembers(ss.ctx, ss.scim, membersCreate, membersDelete)
+			_, err = reconcilingGroupsMembers(ctx, ss.scim, membersCreate, membersDelete)
 			if err != nil {
 				return fmt.Errorf("error reconciling groups members: %w", err)
 			}
@@ -325,7 +323,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 	}).Info("storing the new state")
 
 	// TODO: avoid this step using a cmd flag, could be a nice feature
-	if err := ss.repo.SetState(ss.ctx, newState); err != nil {
+	if err := ss.repo.SetState(ctx, newState); err != nil {
 		return fmt.Errorf("error storing the state: %w", err)
 	}
 
