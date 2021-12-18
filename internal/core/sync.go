@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"math"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
@@ -210,15 +209,10 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 		if err != nil {
 			return fmt.Errorf("error parsing last sync time: %w", err)
 		}
-		deltaTime := time.Since(lastSyncTime)
-
-		deltaHours := fmt.Sprintf("%.0f", math.Floor(deltaTime.Hours()))
-		deltaMinutes := fmt.Sprintf("%.0f", math.Floor(deltaTime.Minutes()))
-		deltaSeconds := fmt.Sprintf("%.0f", math.Floor(deltaTime.Seconds()))
 
 		log.WithFields(log.Fields{
 			"lastsync": state.LastSync,
-			"since":    deltaHours + "h, " + deltaMinutes + "m, " + deltaSeconds + "s",
+			"since":    time.Since(lastSyncTime),
 		}).Info("syncing from state")
 
 		if idpGroupsResult.HashCode == state.Resources.Groups.HashCode {
