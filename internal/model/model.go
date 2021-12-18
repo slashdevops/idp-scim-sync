@@ -5,8 +5,6 @@ import (
 	"encoding/gob"
 	"encoding/json"
 	"sort"
-
-	"github.com/slashdevops/idp-scim-sync/internal/hash"
 )
 
 // Name represents a name entity.
@@ -29,7 +27,7 @@ type User struct {
 // GobEncode implements the gob.GobEncoder interface for User entity.
 // This is necessary to avoid include the value in the field SCIMID until
 // the hashcode calculation is done.
-// the hash.Get function use gob to calculate the hash code.
+// the Hash function use gob to calculate the hash code.
 func (u *User) GobEncode() ([]byte, error) {
 	buf := new(bytes.Buffer)
 	enc := gob.NewEncoder(buf)
@@ -55,7 +53,7 @@ func (u *User) GobEncode() ([]byte, error) {
 // this method discards fields that are not used in the hash calculation.
 // only fields coming from the Identity Provider are used.
 func (u *User) SetHashCode() {
-	u.HashCode = hash.Get(u)
+	u.HashCode = Hash(u)
 }
 
 // UsersResult represents a user result list entity.
@@ -81,17 +79,17 @@ func (ur *UsersResult) SetHashCode() {
 	copy(copyResources, ur.Resources)
 
 	// only these fields are used in the hash calculation
-	copyOfStruct := &UsersResult{
+	copyStruct := &UsersResult{
 		Items:     ur.Items,
 		Resources: copyResources,
 	}
 
 	// order the resources by their hash code to be consistency always
-	sort.Slice(copyOfStruct.Resources, func(i, j int) bool {
-		return copyOfStruct.Resources[i].HashCode < copyOfStruct.Resources[j].HashCode
+	sort.Slice(copyStruct.Resources, func(i, j int) bool {
+		return copyStruct.Resources[i].HashCode < copyStruct.Resources[j].HashCode
 	})
 
-	ur.HashCode = hash.Get(copyOfStruct)
+	ur.HashCode = Hash(copyStruct)
 }
 
 // Group represents a group entity.
@@ -106,7 +104,7 @@ type Group struct {
 // GobEncode implements the gob.GobEncoder interface for User entity.
 // This is necessary to avoid include the value in the field SCIMID until
 // the hashcode calculation is done.
-// the hash.Get function use gob to calculate the hash code.
+// the Hash function use gob to calculate the hash code.
 func (g *Group) GobEncode() ([]byte, error) {
 	buf := new(bytes.Buffer)
 	enc := gob.NewEncoder(buf)
@@ -126,7 +124,7 @@ func (g *Group) GobEncode() ([]byte, error) {
 // this method discards fields that are not used in the hash calculation.
 // only fields coming from the Identity Provider are used.
 func (g *Group) SetHashCode() {
-	g.HashCode = hash.Get(g)
+	g.HashCode = Hash(g)
 }
 
 // GroupsResult represents a group result list entity.
@@ -152,17 +150,17 @@ func (gr *GroupsResult) SetHashCode() {
 	copy(copyResources, gr.Resources)
 
 	// only these fields are used in the hash calculation
-	copyOfStruct := &GroupsResult{
+	copyStruct := &GroupsResult{
 		Items:     gr.Items,
 		Resources: copyResources,
 	}
 
 	// order the resources by their hash code to be consistency always
-	sort.Slice(copyOfStruct.Resources, func(i, j int) bool {
-		return copyOfStruct.Resources[i].HashCode < copyOfStruct.Resources[j].HashCode
+	sort.Slice(copyStruct.Resources, func(i, j int) bool {
+		return copyStruct.Resources[i].HashCode < copyStruct.Resources[j].HashCode
 	})
 
-	gr.HashCode = hash.Get(copyOfStruct)
+	gr.HashCode = Hash(copyStruct)
 }
 
 // Member represents a member entity.
@@ -176,7 +174,7 @@ type Member struct {
 // GobEncode implements the gob.GobEncoder interface for User entity.
 // This is necessary to avoid include the value in the field SCIMID until
 // the hashcode calculation is done.
-// the hash.Get function use gob to calculate the hash code.
+// the Hash function use gob to calculate the hash code.
 func (m *Member) GobEncode() ([]byte, error) {
 	buf := new(bytes.Buffer)
 	enc := gob.NewEncoder(buf)
@@ -193,7 +191,7 @@ func (m *Member) GobEncode() ([]byte, error) {
 // this method discards fields that are not used in the hash calculation.
 // only fields coming from the Identity Provider are used.
 func (m *Member) SetHashCode() {
-	m.HashCode = hash.Get(m)
+	m.HashCode = Hash(m)
 }
 
 // MembersResult represents a member result list entity.
@@ -211,17 +209,17 @@ func (mr *MembersResult) SetHashCode() {
 	copy(copyResources, mr.Resources)
 
 	// only these fields are used in the hash calculation
-	copyOfStruct := &MembersResult{
+	copyStruct := &MembersResult{
 		Items:     mr.Items,
 		Resources: copyResources,
 	}
 
 	// order the resources by their hash code to be consistency always
-	sort.Slice(copyOfStruct.Resources, func(i, j int) bool {
-		return copyOfStruct.Resources[i].IPID < copyOfStruct.Resources[j].IPID
+	sort.Slice(copyStruct.Resources, func(i, j int) bool {
+		return copyStruct.Resources[i].IPID < copyStruct.Resources[j].IPID
 	})
 
-	mr.HashCode = hash.Get(copyOfStruct)
+	mr.HashCode = Hash(copyStruct)
 }
 
 // GroupMembers represents a group members entity.
@@ -240,7 +238,7 @@ func (gm *GroupMembers) SetHashCode() {
 	copy(copyResources, gm.Resources)
 
 	// only these fields are used in the hash calculation
-	copyOfStruct := &GroupMembers{
+	copyStruct := &GroupMembers{
 		Items:     gm.Items,
 		Group:     gm.Group,
 		Resources: copyResources,
@@ -248,11 +246,11 @@ func (gm *GroupMembers) SetHashCode() {
 
 	// to order the members of the group we used the email of the members
 	// because this never coulb be empty and it is unique
-	sort.Slice(copyOfStruct.Resources, func(i, j int) bool {
-		return copyOfStruct.Resources[i].Email < copyOfStruct.Resources[j].Email
+	sort.Slice(copyStruct.Resources, func(i, j int) bool {
+		return copyStruct.Resources[i].Email < copyStruct.Resources[j].Email
 	})
 
-	gm.HashCode = hash.Get(copyOfStruct)
+	gm.HashCode = Hash(copyStruct)
 }
 
 // GroupsMembersResult represents a group members result list entity.
@@ -278,16 +276,16 @@ func (gmr *GroupsMembersResult) SetHashCode() {
 	copy(copyResources, gmr.Resources)
 
 	// only these fields are used in the hash calculation
-	copyOfStruct := GroupsMembersResult{
+	copyStruct := GroupsMembersResult{
 		Items:     gmr.Items,
 		Resources: copyResources,
 	}
 
 	// to order the members of the group we used the email of the members
 	// because this never coulb be empty and it is unique
-	sort.Slice(copyOfStruct.Resources, func(i, j int) bool {
-		return copyOfStruct.Resources[i].HashCode < copyOfStruct.Resources[j].HashCode
+	sort.Slice(copyStruct.Resources, func(i, j int) bool {
+		return copyStruct.Resources[i].HashCode < copyStruct.Resources[j].HashCode
 	})
 
-	gmr.HashCode = hash.Get(copyOfStruct)
+	gmr.HashCode = Hash(copyStruct)
 }

@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	gomock "github.com/golang/mock/gomock"
-	"github.com/slashdevops/idp-scim-sync/internal/hash"
 	"github.com/slashdevops/idp-scim-sync/internal/model"
 	"github.com/slashdevops/idp-scim-sync/internal/utils"
 	mocks "github.com/slashdevops/idp-scim-sync/mocks/idp"
@@ -398,8 +397,8 @@ func TestGoogleProvider_GetUsersByGroupMembers(t *testing.T) {
 			want: &model.UsersResult{
 				Items: 2,
 				Resources: []*model.User{
-					{IPID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com", DisplayName: "user 1", Active: true, HashCode: hash.Get(&model.User{IPID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com", DisplayName: "user 1", Active: true})},
-					{IPID: "2", Name: model.Name{GivenName: "user", FamilyName: "2"}, Email: "user.2@mail.com", DisplayName: "user 2", Active: false, HashCode: hash.Get(&model.User{IPID: "2", Name: model.Name{GivenName: "user", FamilyName: "2"}, Email: "user.2@mail.com", DisplayName: "user 2", Active: false})},
+					{IPID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com", DisplayName: "user 1", Active: true, HashCode: model.Hash(&model.User{IPID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com", DisplayName: "user 1", Active: true})},
+					{IPID: "2", Name: model.Name{GivenName: "user", FamilyName: "2"}, Email: "user.2@mail.com", DisplayName: "user 2", Active: false, HashCode: model.Hash(&model.User{IPID: "2", Name: model.Name{GivenName: "user", FamilyName: "2"}, Email: "user.2@mail.com", DisplayName: "user 2", Active: false})},
 				},
 			},
 			wantErr: false,

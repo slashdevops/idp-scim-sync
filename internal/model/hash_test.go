@@ -1,4 +1,4 @@
-package hash
+package model
 
 import (
 	"bytes"
@@ -42,7 +42,7 @@ func (cs CustomStructSerialized) GobEncode() ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func TestGet(t *testing.T) {
+func TestHash(t *testing.T) {
 	type args struct {
 		value interface{}
 	}
@@ -54,28 +54,28 @@ func TestGet(t *testing.T) {
 		{
 			name: "empty",
 			args: args{value: ""},
-			want: Get(""),
+			want: Hash(""),
 		},
 		{
 			name: "slice of string",
 			args: args{
 				value: []string{"a", "b", "c"},
 			},
-			want: Get([]string{"a", "b", "c"}),
+			want: Hash([]string{"a", "b", "c"}),
 		},
 		{
 			name: "array of string",
 			args: args{
 				value: [3]string{"a", "b", "c"},
 			},
-			want: Get([3]string{"a", "b", "c"}),
+			want: Hash([3]string{"a", "b", "c"}),
 		},
 		{
 			name: "array of integers",
 			args: args{
 				value: [3]int{1, 2, 3},
 			},
-			want: Get([3]int{1, 2, 3}),
+			want: Hash([3]int{1, 2, 3}),
 		},
 		{
 			name: "array of ordered structs",
@@ -90,7 +90,7 @@ func TestGet(t *testing.T) {
 					{3, "test 3", true},
 				},
 			},
-			want: Get([3]struct {
+			want: Hash([3]struct {
 				A int
 				B string
 				C bool
@@ -117,7 +117,7 @@ func TestGet(t *testing.T) {
 					},
 				},
 			},
-			want: Get(CustomStruct{
+			want: Hash(CustomStruct{
 				Name:    "John",
 				Age:     30,
 				Friends: []string{"a", "b", "c"},
@@ -148,7 +148,7 @@ func TestGet(t *testing.T) {
 					},
 				},
 			},
-			want: Get(&CustomStruct{
+			want: Hash(&CustomStruct{
 				Name:    "John",
 				Age:     30,
 				Friends: []string{"a", "b", "c"},
@@ -179,7 +179,7 @@ func TestGet(t *testing.T) {
 					},
 				},
 			},
-			want: Get(CustomStructSerialized{
+			want: Hash(CustomStructSerialized{
 				Name:    "John",
 				Age:     30,
 				Friends: []string{"a", "b", "c"},
@@ -210,7 +210,7 @@ func TestGet(t *testing.T) {
 					},
 				},
 			},
-			want: Get(&CustomStructSerialized{
+			want: Hash(&CustomStructSerialized{
 				Name:    "John",
 				Age:     30,
 				Friends: []string{"a", "b", "c"},
@@ -228,8 +228,8 @@ func TestGet(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := Get(tt.args.value); got != tt.want {
-				t.Errorf("Get() = %v, want %v", got, tt.want)
+			if got := Hash(tt.args.value); got != tt.want {
+				t.Errorf("Hash() = %v, want %v", got, tt.want)
 			}
 		})
 	}

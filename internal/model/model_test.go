@@ -415,9 +415,9 @@ func TestUsersResult_SetHashCode(t *testing.T) {
 	}
 	ur3.SetHashCode()
 
-	ur4 := mergeUsersResult(&ur2, &ur1, &ur3)
+	ur4 := MergeUsersResult(&ur2, &ur1, &ur3)
 	ur4.SetHashCode()
-	ur5 := mergeUsersResult(&ur3, &ur2, &ur1)
+	ur5 := MergeUsersResult(&ur3, &ur2, &ur1)
 	ur5.SetHashCode()
 
 	t.Logf("ur4: %s\n", utils.ToJSON(ur4))
@@ -468,9 +468,9 @@ func TestGroupsResult_SetHashCode(t *testing.T) {
 	}
 	gr3.SetHashCode()
 
-	gr4 := mergeGroupsResult(&gr2, &gr1, &gr3)
+	gr4 := MergeGroupsResult(&gr2, &gr1, &gr3)
 	gr4.SetHashCode()
-	gr5 := mergeGroupsResult(&gr3, &gr2, &gr1)
+	gr5 := MergeGroupsResult(&gr3, &gr2, &gr1)
 	gr5.SetHashCode()
 
 	t.Logf("gr4: %s\n", utils.ToJSON(gr4))
@@ -529,9 +529,9 @@ func TestGroupsMembersResult_SetHashCode(t *testing.T) {
 	}
 	gmr3.SetHashCode()
 
-	gmr4 := mergeGroupsMembersResult(&gmr2, &gmr1, &gmr3)
+	gmr4 := MergeGroupsMembersResult(&gmr2, &gmr1, &gmr3)
 	gmr4.SetHashCode()
-	gmr5 := mergeGroupsMembersResult(&gmr3, &gmr2, &gmr1)
+	gmr5 := MergeGroupsMembersResult(&gmr3, &gmr2, &gmr1)
 	gmr5.SetHashCode()
 
 	t.Logf("gmr4: %s\n", utils.ToJSON(gmr4))
@@ -553,60 +553,6 @@ func TestGroupsMembersResult_SetHashCode(t *testing.T) {
 	if gmr5.HashCode != gmr4.HashCode {
 		t.Errorf("GroupsMembersResult.HashCode should be equal: gmr5-> %s, gmr4-> %s", gmr5.HashCode, gmr4.HashCode)
 	}
-}
-
-func mergeGroupsResult(grs ...*GroupsResult) (merged GroupsResult) {
-	groups := make([]*Group, 0)
-
-	for _, gr := range grs {
-		groups = append(groups, gr.Resources...)
-	}
-
-	merged = GroupsResult{
-		Items:     len(groups),
-		Resources: groups,
-	}
-	if merged.Items > 0 {
-		merged.SetHashCode()
-	}
-
-	return
-}
-
-func mergeUsersResult(urs ...*UsersResult) (merged UsersResult) {
-	users := make([]*User, 0)
-
-	for _, u := range urs {
-		users = append(users, u.Resources...)
-	}
-
-	merged = UsersResult{
-		Items:     len(users),
-		Resources: users,
-	}
-	if merged.Items > 0 {
-		merged.SetHashCode()
-	}
-
-	return
-}
-
-func mergeGroupsMembersResult(gms ...*GroupsMembersResult) (merged GroupsMembersResult) {
-	groupsMembers := make([]*GroupMembers, 0)
-
-	for _, gm := range gms {
-		groupsMembers = append(groupsMembers, gm.Resources...)
-	}
-
-	merged = GroupsMembersResult{
-		Items:     len(groupsMembers),
-		Resources: groupsMembers,
-	}
-	if merged.Items > 0 {
-		merged.SetHashCode()
-	}
-
-	return
 }
 
 func TestGroup_GobEncode(t *testing.T) {

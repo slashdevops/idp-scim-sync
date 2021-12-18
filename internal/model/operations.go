@@ -1,9 +1,7 @@
-package core
+package model
 
 import (
 	"errors"
-
-	"github.com/slashdevops/idp-scim-sync/internal/model"
 )
 
 var (
@@ -15,7 +13,7 @@ var (
 	ErrSCIMUsersNil                     = errors.New("scim users is nil")
 )
 
-// groupsOperations returns datasets used to perform differents operations over the SCIM side
+// MembersOperations returns datasets used to perform differents operations over the SCIM side
 // return 4 objest of GroupsMembersResult
 // create: groups that exist in "idp" but not in "scim" or "state"
 // update: groups that exist in "idp" and in "scim" or "state" but attributes changed in idp
@@ -23,7 +21,7 @@ var (
 // remove: groups that exist in "scim" or "state" but not in "idp"
 //
 // also this extract the id from scim to fill the resutls
-func membersOperations(idp, scim *model.GroupsMembersResult) (create, equal, remove *model.GroupsMembersResult, err error) {
+func MembersOperations(idp, scim *GroupsMembersResult) (create, equal, remove *GroupsMembersResult, err error) {
 	if idp == nil {
 		create, equal, remove, err = nil, nil, nil, ErrIdentityProviderGroupsMembersNil
 		return
@@ -35,19 +33,19 @@ func membersOperations(idp, scim *model.GroupsMembersResult) (create, equal, rem
 
 	toCreate, toEqual, toRemove := membersDataSets(idp, scim)
 
-	create = &model.GroupsMembersResult{
+	create = &GroupsMembersResult{
 		Items:     len(toCreate),
 		Resources: toCreate,
 	}
 	create.SetHashCode()
 
-	equal = &model.GroupsMembersResult{
+	equal = &GroupsMembersResult{
 		Items:     len(toEqual),
 		Resources: toEqual,
 	}
 	equal.SetHashCode()
 
-	remove = &model.GroupsMembersResult{
+	remove = &GroupsMembersResult{
 		Items:     len(toRemove),
 		Resources: toRemove,
 	}
@@ -56,7 +54,7 @@ func membersOperations(idp, scim *model.GroupsMembersResult) (create, equal, rem
 	return
 }
 
-// groupsOperations returns the differences between the groups in the
+// GroupsOperations returns the differences between the groups in the
 // this use the Groups Name as the key.
 // SCIM Groups cannot be updated.
 // return 4 objest of GroupsResult
@@ -66,7 +64,7 @@ func membersOperations(idp, scim *model.GroupsMembersResult) (create, equal, rem
 // remove: groups that exist in "scim" or "state" but not in "idp"
 //
 // also this extract the id from scim to fill the resutls
-func groupsOperations(idp, scim *model.GroupsResult) (create, update, equal, remove *model.GroupsResult, err error) {
+func GroupsOperations(idp, scim *GroupsResult) (create, update, equal, remove *GroupsResult, err error) {
 	if idp == nil {
 		create, update, equal, remove, err = nil, nil, nil, nil, ErrIdentityProviderGroupsNil
 		return
@@ -77,11 +75,11 @@ func groupsOperations(idp, scim *model.GroupsResult) (create, update, equal, rem
 	}
 
 	idpGroups := make(map[string]struct{})
-	scimGroups := make(map[string]model.Group)
-	toCreate := make([]*model.Group, 0)
-	toUpdate := make([]*model.Group, 0)
-	toEqual := make([]*model.Group, 0)
-	toRemove := make([]*model.Group, 0)
+	scimGroups := make(map[string]Group)
+	toCreate := make([]*Group, 0)
+	toUpdate := make([]*Group, 0)
+	toEqual := make([]*Group, 0)
+	toRemove := make([]*Group, 0)
 
 	for _, gr := range idp.Resources {
 		idpGroups[gr.Name] = struct{}{}
@@ -113,25 +111,25 @@ func groupsOperations(idp, scim *model.GroupsResult) (create, update, equal, rem
 		}
 	}
 
-	create = &model.GroupsResult{
+	create = &GroupsResult{
 		Items:     len(toCreate),
 		Resources: toCreate,
 	}
 	create.SetHashCode()
 
-	update = &model.GroupsResult{
+	update = &GroupsResult{
 		Items:     len(toUpdate),
 		Resources: toUpdate,
 	}
 	update.SetHashCode()
 
-	equal = &model.GroupsResult{
+	equal = &GroupsResult{
 		Items:     len(toEqual),
 		Resources: toEqual,
 	}
 	equal.SetHashCode()
 
-	remove = &model.GroupsResult{
+	remove = &GroupsResult{
 		Items:     len(toRemove),
 		Resources: toRemove,
 	}
@@ -140,13 +138,13 @@ func groupsOperations(idp, scim *model.GroupsResult) (create, update, equal, rem
 	return
 }
 
-// usersOperations returns datasets used to perform differents operations over the SCIM side
+// UsersOperations returns datasets used to perform differents operations over the SCIM side
 // return 4 objest of UsersResult
 // create: users that exist in "idp" but not in "scim" or "state"
 // update: users that exist in "idp" and in "scim" or "state" but attributes changed in idp
 // equal: users that exist in both "idp" and "scim" or "state" and their attributes are equal
 // remove: users that exist in "scim" or "state" but not in "idp"
-func usersOperations(idp, scim *model.UsersResult) (create, update, equal, remove *model.UsersResult, err error) {
+func UsersOperations(idp, scim *UsersResult) (create, update, equal, remove *UsersResult, err error) {
 	if idp == nil {
 		create, update, equal, remove, err = nil, nil, nil, nil, ErrIdentityProviderUsersNil
 		return
@@ -157,12 +155,12 @@ func usersOperations(idp, scim *model.UsersResult) (create, update, equal, remov
 	}
 
 	idpUsers := make(map[string]struct{})
-	scimUsers := make(map[string]model.User)
+	scimUsers := make(map[string]User)
 
-	toCreate := make([]*model.User, 0)
-	toUpdate := make([]*model.User, 0)
-	toEqual := make([]*model.User, 0)
-	toRemove := make([]*model.User, 0)
+	toCreate := make([]*User, 0)
+	toUpdate := make([]*User, 0)
+	toEqual := make([]*User, 0)
+	toRemove := make([]*User, 0)
 
 	for _, usr := range idp.Resources {
 		idpUsers[usr.Email] = struct{}{}
@@ -196,25 +194,25 @@ func usersOperations(idp, scim *model.UsersResult) (create, update, equal, remov
 		}
 	}
 
-	create = &model.UsersResult{
+	create = &UsersResult{
 		Items:     len(toCreate),
 		Resources: toCreate,
 	}
 	create.SetHashCode()
 
-	update = &model.UsersResult{
+	update = &UsersResult{
 		Items:     len(toUpdate),
 		Resources: toUpdate,
 	}
 	update.SetHashCode()
 
-	equal = &model.UsersResult{
+	equal = &UsersResult{
 		Items:     len(toEqual),
 		Resources: toEqual,
 	}
 	equal.SetHashCode()
 
-	remove = &model.UsersResult{
+	remove = &UsersResult{
 		Items:     len(toRemove),
 		Resources: toRemove,
 	}
@@ -223,17 +221,17 @@ func usersOperations(idp, scim *model.UsersResult) (create, update, equal, remov
 	return
 }
 
-// mergeGroupsResult merges n GroupsResult result
+// MergeGroupsResult merges n GroupsResult result
 // NOTE: this function does not check the content of the GroupsResult, so
 // the return could have duplicated groups
-func mergeGroupsResult(grs ...*model.GroupsResult) (merged model.GroupsResult) {
-	groups := make([]*model.Group, 0)
+func MergeGroupsResult(grs ...*GroupsResult) (merged GroupsResult) {
+	groups := make([]*Group, 0)
 
 	for _, gr := range grs {
 		groups = append(groups, gr.Resources...)
 	}
 
-	merged = model.GroupsResult{
+	merged = GroupsResult{
 		Items:     len(groups),
 		Resources: groups,
 	}
@@ -242,17 +240,17 @@ func mergeGroupsResult(grs ...*model.GroupsResult) (merged model.GroupsResult) {
 	return
 }
 
-// mergeUsersResult merges n UsersResult result
+// MergeUsersResult merges n UsersResult result
 // NOTE: this function does not check the content of the UsersResult, so
 // the return could have duplicated users
-func mergeUsersResult(urs ...*model.UsersResult) (merged model.UsersResult) {
-	users := make([]*model.User, 0)
+func MergeUsersResult(urs ...*UsersResult) (merged UsersResult) {
+	users := make([]*User, 0)
 
 	for _, u := range urs {
 		users = append(users, u.Resources...)
 	}
 
-	merged = model.UsersResult{
+	merged = UsersResult{
 		Items:     len(users),
 		Resources: users,
 	}
@@ -261,17 +259,17 @@ func mergeUsersResult(urs ...*model.UsersResult) (merged model.UsersResult) {
 	return
 }
 
-// mergeGroupsMembersResult merges n GroupMembers result
+// MergeGroupsMembersResult merges n GroupMembers result
 // NOTE: this function does not check the content of the GroupMembers, so
 // the return could have duplicated groupsMembers
-func mergeGroupsMembersResult(gms ...*model.GroupsMembersResult) (merged model.GroupsMembersResult) {
-	groupsMembers := make([]*model.GroupMembers, 0)
+func MergeGroupsMembersResult(gms ...*GroupsMembersResult) (merged GroupsMembersResult) {
+	groupsMembers := make([]*GroupMembers, 0)
 
 	for _, gm := range gms {
 		groupsMembers = append(groupsMembers, gm.Resources...)
 	}
 
-	merged = model.GroupsMembersResult{
+	merged = GroupsMembersResult{
 		Items:     len(groupsMembers),
 		Resources: groupsMembers,
 	}
@@ -280,12 +278,12 @@ func mergeGroupsMembersResult(gms ...*model.GroupsMembersResult) (merged model.G
 	return
 }
 
-// updateSCIMID updates the SCIMID of the group in the idp object
+// UpdateSCIMID updates the SCIMID of the group in the idp object
 // this is necessary because during the sync process we can create users and groups and to add
 // these users to the groups we need to have the SCIMID of the user and the group
-func updateSCIMID(idp *model.GroupsMembersResult, scimGroups *model.GroupsResult, scimUsers *model.UsersResult) *model.GroupsMembersResult {
-	groups := make(map[string]model.Group)
-	users := make(map[string]model.User)
+func UpdateSCIMID(idp *GroupsMembersResult, scimGroups *GroupsResult, scimUsers *UsersResult) *GroupsMembersResult {
+	groups := make(map[string]Group)
+	users := make(map[string]User)
 
 	for _, group := range scimGroups.Resources {
 		groups[group.Name] = *group
@@ -295,11 +293,11 @@ func updateSCIMID(idp *model.GroupsMembersResult, scimGroups *model.GroupsResult
 		users[user.Email] = *user
 	}
 
-	gms := make([]*model.GroupMembers, 0)
+	gms := make([]*GroupMembers, 0)
 	for _, groupMembers := range idp.Resources {
-		mbs := make([]*model.Member, 0)
+		mbs := make([]*Member, 0)
 
-		g := model.Group{
+		g := Group{
 			IPID:   groupMembers.Group.IPID,
 			SCIMID: groups[groupMembers.Group.Name].SCIMID,
 			Name:   groupMembers.Group.Name,
@@ -308,7 +306,7 @@ func updateSCIMID(idp *model.GroupsMembersResult, scimGroups *model.GroupsResult
 		g.SetHashCode()
 
 		for _, member := range groupMembers.Resources {
-			m := &model.Member{
+			m := &Member{
 				IPID:   member.IPID,
 				SCIMID: users[member.Email].SCIMID,
 				Email:  member.Email,
@@ -317,7 +315,7 @@ func updateSCIMID(idp *model.GroupsMembersResult, scimGroups *model.GroupsResult
 			mbs = append(mbs, m)
 		}
 
-		gm := &model.GroupMembers{
+		gm := &GroupMembers{
 			Items:     len(mbs),
 			Group:     g,
 			Resources: mbs,
@@ -327,7 +325,7 @@ func updateSCIMID(idp *model.GroupsMembersResult, scimGroups *model.GroupsResult
 		gms = append(gms, gm)
 	}
 
-	gmr := &model.GroupsMembersResult{
+	gmr := &GroupsMembersResult{
 		Items:     idp.Items,
 		Resources: gms,
 	}
@@ -340,13 +338,13 @@ func updateSCIMID(idp *model.GroupsMembersResult, scimGroups *model.GroupsResult
 // given an idp and a scim groups members this function
 // this function performs the comparison between the idp and the scim data
 // and returns the data sets of the members that need to be created, equal and removed
-func membersDataSets(idp, scim *model.GroupsMembersResult) (create, equal, remove []*model.GroupMembers) {
-	idpMemberSet := make(map[string]map[string]model.Member)
-	scimMemberSet := make(map[string]map[string]model.Member)
-	scimGroupsSet := make(map[string]model.Group)
+func membersDataSets(idp, scim *GroupsMembersResult) (create, equal, remove []*GroupMembers) {
+	idpMemberSet := make(map[string]map[string]Member)
+	scimMemberSet := make(map[string]map[string]Member)
+	scimGroupsSet := make(map[string]Group)
 
 	for _, grpMembers := range idp.Resources {
-		idpMemberSet[grpMembers.Group.Name] = make(map[string]model.Member)
+		idpMemberSet[grpMembers.Group.Name] = make(map[string]Member)
 		for _, member := range grpMembers.Resources {
 			idpMemberSet[grpMembers.Group.Name][member.Email] = *member
 		}
@@ -354,22 +352,22 @@ func membersDataSets(idp, scim *model.GroupsMembersResult) (create, equal, remov
 
 	for _, grpMembers := range scim.Resources {
 		scimGroupsSet[grpMembers.Group.Name] = grpMembers.Group
-		scimMemberSet[grpMembers.Group.Name] = make(map[string]model.Member)
+		scimMemberSet[grpMembers.Group.Name] = make(map[string]Member)
 		for _, member := range grpMembers.Resources {
 			scimMemberSet[grpMembers.Group.Name][member.Email] = *member
 		}
 	}
 
-	toCreate := make([]*model.GroupMembers, 0)
-	toEqual := make([]*model.GroupMembers, 0)
-	toRemove := make([]*model.GroupMembers, 0)
+	toCreate := make([]*GroupMembers, 0)
+	toEqual := make([]*GroupMembers, 0)
+	toRemove := make([]*GroupMembers, 0)
 
 	for _, grpMembers := range idp.Resources {
-		toC := make(map[string][]*model.Member)
-		toE := make(map[string][]*model.Member)
+		toC := make(map[string][]*Member)
+		toE := make(map[string][]*Member)
 
-		toC[grpMembers.Group.Name] = make([]*model.Member, 0)
-		toE[grpMembers.Group.Name] = make([]*model.Member, 0)
+		toC[grpMembers.Group.Name] = make([]*Member, 0)
+		toE[grpMembers.Group.Name] = make([]*Member, 0)
 
 		// count when both side have members == 0
 		noMembers := 0
@@ -406,7 +404,7 @@ func membersDataSets(idp, scim *model.GroupsMembersResult) (create, equal, remov
 		if len(toC[grpMembers.Group.Name]) > 0 {
 			grpMembers.Group.SetHashCode()
 
-			e := &model.GroupMembers{
+			e := &GroupMembers{
 				Items:     len(toC[grpMembers.Group.Name]),
 				Group:     grpMembers.Group,
 				Resources: toC[grpMembers.Group.Name],
@@ -418,7 +416,7 @@ func membersDataSets(idp, scim *model.GroupsMembersResult) (create, equal, remov
 
 		if noMembers > 0 || len(toE[grpMembers.Group.Name]) > 0 {
 			grpMembers.Group.SetHashCode()
-			ee := &model.GroupMembers{
+			ee := &GroupMembers{
 				Items:     len(toE[grpMembers.Group.Name]),
 				Group:     grpMembers.Group,
 				Resources: toE[grpMembers.Group.Name],
@@ -430,8 +428,8 @@ func membersDataSets(idp, scim *model.GroupsMembersResult) (create, equal, remov
 	}
 
 	for _, grpMembers := range scim.Resources {
-		toD := make(map[string][]*model.Member)
-		toD[grpMembers.Group.Name] = make([]*model.Member, 0)
+		toD := make(map[string][]*Member)
+		toD[grpMembers.Group.Name] = make([]*Member, 0)
 
 		for _, member := range grpMembers.Resources {
 			if _, ok := idpMemberSet[grpMembers.Group.Name][member.Email]; !ok {
@@ -442,7 +440,7 @@ func membersDataSets(idp, scim *model.GroupsMembersResult) (create, equal, remov
 		if len(toD[grpMembers.Group.Name]) > 0 {
 			grpMembers.Group.SetHashCode()
 
-			e := &model.GroupMembers{
+			e := &GroupMembers{
 				Items:     len(toD[grpMembers.Group.Name]),
 				Group:     grpMembers.Group,
 				Resources: toD[grpMembers.Group.Name],

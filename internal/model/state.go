@@ -1,10 +1,6 @@
 package model
 
-import (
-	"encoding/json"
-
-	"github.com/slashdevops/idp-scim-sync/internal/hash"
-)
+import "encoding/json"
 
 const (
 	// StateSchemaVersion is the current schema version for the state file.
@@ -116,5 +112,5 @@ func (s *State) SetHashCode() {
 		},
 	}
 
-	s.HashCode = hash.Get(copyState)
+	s.HashCode = Hash(copyState)
 }

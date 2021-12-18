@@ -139,7 +139,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 			"idp":  idpGroupsResult.Items,
 			"scim": scimGroupsResult.Items,
 		}).Info("reconciling groups")
-		groupsCreate, groupsUpdate, groupsEqual, groupsDelete, err := groupsOperations(idpGroupsResult, scimGroupsResult)
+		groupsCreate, groupsUpdate, groupsEqual, groupsDelete, err := model.GroupsOperations(idpGroupsResult, scimGroupsResult)
 		if err != nil {
 			return fmt.Errorf("error reconciling groups: %w", err)
 		}
@@ -150,7 +150,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 		}
 
 		// groupsCreated + groupsUpdated + groupsEqual = groups total
-		totalGroupsResult = mergeGroupsResult(groupsCreated, groupsUpdated, groupsEqual)
+		totalGroupsResult = model.MergeGroupsResult(groupsCreated, groupsUpdated, groupsEqual)
 
 		log.Info("getting SCIM Users")
 		scimUsersResult, err := ss.scim.GetUsers(ss.ctx)
@@ -162,7 +162,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 			"idp":  idpUsersResult.Items,
 			"scim": scimUsersResult.Items,
 		}).Info("reconciling users")
-		usersCreate, usersUpdate, usersEqual, usersDelete, err := usersOperations(idpUsersResult, scimUsersResult)
+		usersCreate, usersUpdate, usersEqual, usersDelete, err := model.UsersOperations(idpUsersResult, scimUsersResult)
 		if err != nil {
 			return fmt.Errorf("error operating with users: %w", err)
 		}
@@ -173,7 +173,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 		}
 
 		// usersCreated + usersUpdated + usersEqual = users total
-		totalUsersResult = mergeUsersResult(usersCreated, usersUpdated, usersEqual)
+		totalUsersResult = model.MergeUsersResult(usersCreated, usersUpdated, usersEqual)
 
 		log.Info("getting SCIM Groups Members")
 		// unfortunately, the SCIM service does not support the getGroupsMembers method in and efficient way
@@ -190,7 +190,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 			"idp":  idpGroupsMembersResult.Items,
 			"scim": scimGroupsMembersResult.Items,
 		}).Info("reconciling groups members")
-		membersCreate, membersEqual, membersDelete, err := membersOperations(idpGroupsMembersResult, scimGroupsMembersResult)
+		membersCreate, membersEqual, membersDelete, err := model.MembersOperations(idpGroupsMembersResult, scimGroupsMembersResult)
 		if err != nil {
 			return fmt.Errorf("error reconciling groups members: %w", err)
 		}
@@ -203,7 +203,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 		}
 
 		// membersCreate + membersEqual = members total
-		totalGroupsMembersResult = mergeGroupsMembersResult(membersCreated, membersEqual)
+		totalGroupsMembersResult = model.MergeGroupsMembersResult(membersCreated, membersEqual)
 	} else { // This is not the first time syncing
 		lastSyncTime, err := time.Parse(time.RFC3339, state.LastSync)
 		if err != nil {
@@ -229,7 +229,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 				"idp":   idpGroupsResult.Items,
 				"state": state.Resources.Groups.Items,
 			}).Info("reconciling groups")
-			groupsCreate, groupsUpdate, groupsEqual, groupsDelete, err := groupsOperations(idpGroupsResult, &state.Resources.Groups)
+			groupsCreate, groupsUpdate, groupsEqual, groupsDelete, err := model.GroupsOperations(idpGroupsResult, &state.Resources.Groups)
 			if err != nil {
 				return fmt.Errorf("error reconciling groups: %w", err)
 			}
@@ -240,7 +240,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 			}
 
 			// merge in only one data structure the groups created, updated amd equals who has the SCIMID
-			totalGroupsResult = mergeGroupsResult(groupsCreated, groupsUpdated, groupsEqual)
+			totalGroupsResult = model.MergeGroupsResult(groupsCreated, groupsUpdated, groupsEqual)
 		}
 
 		if idpUsersResult.HashCode == state.Resources.Users.HashCode {
@@ -254,7 +254,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 				"idp":   idpUsersResult.Items,
 				"state": state.Resources.Users.Items,
 			}).Info("reconciling users")
-			usersCreate, usersUpdate, usersEqual, usersDelete, err := usersOperations(idpUsersResult, &state.Resources.Users)
+			usersCreate, usersUpdate, usersEqual, usersDelete, err := model.UsersOperations(idpUsersResult, &state.Resources.Users)
 			if err != nil {
 				return fmt.Errorf("error operating with users: %w", err)
 			}
@@ -265,7 +265,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 			}
 
 			// usersCreated + usersUpdated + usersEqual = users total
-			totalUsersResult = mergeUsersResult(usersCreated, usersUpdated, usersEqual)
+			totalUsersResult = model.MergeUsersResult(usersCreated, usersUpdated, usersEqual)
 		}
 
 		if idpGroupsMembersResult.HashCode == state.Resources.GroupsMembers.HashCode {
@@ -278,7 +278,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 			// if we create a group or user during the sync, we need the scimid of these new groups/users
 			// because to add members to a group the scim api needs that.
 			// so this function will fill the scimid of the new groups/users
-			groupsMembers := updateSCIMID(idpGroupsMembersResult, &totalGroupsResult, &totalUsersResult)
+			groupsMembers := model.UpdateSCIMID(idpGroupsMembersResult, &totalGroupsResult, &totalUsersResult)
 
 			log.Tracef("groupsMembers: %s\n", utils.ToJSON(groupsMembers))
 
@@ -287,7 +287,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 				"state": state.Resources.GroupsMembers.Items,
 			}).Info("reconciling groups members")
 
-			membersCreate, membersEqual, membersDelete, err := membersOperations(groupsMembers, &state.Resources.GroupsMembers)
+			membersCreate, membersEqual, membersDelete, err := model.MembersOperations(groupsMembers, &state.Resources.GroupsMembers)
 			if err != nil {
 				return fmt.Errorf("error reconciling groups members: %w", err)
 			}
@@ -299,7 +299,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers() error {
 				return fmt.Errorf("error reconciling groups members: %w", err)
 			}
 
-			totalGroupsMembersResult = mergeGroupsMembersResult(groupsMembers)
+			totalGroupsMembersResult = model.MergeGroupsMembersResult(groupsMembers)
 		}
 	}
 
