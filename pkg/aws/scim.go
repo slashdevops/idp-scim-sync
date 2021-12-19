@@ -145,28 +145,13 @@ func (s *SCIMService) do(ctx context.Context, req *http.Request) (*http.Response
 		return nil, fmt.Errorf("aws do: error sending request: %w", err)
 	}
 
-	if err := s.checkHTTPResponse(resp); err != nil {
-		return nil, err
-	}
-
 	return resp, nil
 }
 
 // checkHTTPResponse checks the status code of the HTTP response.
-func (s *SCIMService) checkHTTPResponse(r *http.Response) error {
-	if r.StatusCode < http.StatusOK || r.StatusCode >= http.StatusBadRequest {
-		defer r.Body.Close()
-		dec := json.NewDecoder(r.Body)
-		for {
-			var errResp APIErrorResponse
-			if err := dec.Decode(&errResp); err == io.EOF {
-				break
-			} else if err != nil {
-				return fmt.Errorf("aws checkHTTPResponse: error decoding error response: %w", err)
-			}
-		}
-
-		b, err := io.ReadAll(r.Body)
+func (s *SCIMService) checkHTTPResponse(resp *http.Response) error {
+	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusBadRequest {
+		body, err := io.ReadAll(resp.Body)
 		if err != nil {
 			return fmt.Errorf("aws checkHTTPResponse: error reading response body: %w", err)
 		}
@@ -174,12 +159,12 @@ func (s *SCIMService) checkHTTPResponse(r *http.Response) error {
 		// in case somebody delete/create elements manually from AWS SCIM API
 		// or if this program broke at some moment and create inconsistent state and now
 		// so is better to avoid errors here to be self-healing
-		if r.StatusCode == http.StatusNotFound || r.StatusCode == http.StatusConflict {
-			log.Warnf("aws checkHTTPResponse: error: %s, method: %s, request url: %s\n", r.Status, r.Request.Method, r.Request.URL)
+		if resp.StatusCode == http.StatusNotFound || resp.StatusCode == http.StatusConflict {
+			log.Warnf("aws checkHTTPResponse: error: %s, method: %s, request url: %s, body: %s\n", resp.Status, resp.Request.Method, resp.Request.URL, string(body))
 			return nil
 		}
 
-		return fmt.Errorf("aws checkHTTPResponse: error code: '%s', body: '%s'", r.Status, string(b))
+		return fmt.Errorf("aws checkHTTPResponse: error code: %s, body: %s", resp.Status, string(body))
 	}
 
 	return nil
@@ -229,6 +214,10 @@ func (s *SCIMService) CreateUser(ctx context.Context, usr *CreateUserRequest) (*
 	}
 	defer resp.Body.Close()
 
+	if e := s.checkHTTPResponse(resp); e != nil {
+		return nil, e
+	}
+
 	var response CreateUserResponse
 	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
 		return nil, fmt.Errorf("aws CreateUser: error decoding response body: %w", err)
@@ -261,6 +250,10 @@ func (s *SCIMService) DeleteUser(ctx context.Context, id string) error {
 	}
 	defer resp.Body.Close()
 
+	if e := s.checkHTTPResponse(resp); e != nil {
+		return e
+	}
+
 	return nil
 }
 
@@ -292,6 +285,10 @@ func (s *SCIMService) GetUserByUserName(ctx context.Context, userName string) (*
 		return nil, fmt.Errorf("aws GetUserByUserName: error sending request, http method: %s, url: %v, error: %w", http.MethodGet, reqURL.String(), err)
 	}
 	defer resp.Body.Close()
+
+	if e := s.checkHTTPResponse(resp); e != nil {
+		return nil, e
+	}
 
 	var lur ListUsersResponse
 	if err = json.NewDecoder(resp.Body).Decode(&lur); err != nil {
@@ -339,6 +336,10 @@ func (s *SCIMService) GetUser(ctx context.Context, userID string) (*GetUserRespo
 	}
 	defer resp.Body.Close()
 
+	if e := s.checkHTTPResponse(resp); e != nil {
+		return nil, e
+	}
+
 	var response GetUserResponse
 	if err = json.NewDecoder(resp.Body).Decode(&response); err != nil {
 		return nil, fmt.Errorf("aws GetUser: error decoding response body: %w", err)
@@ -372,6 +373,10 @@ func (s *SCIMService) ListUsers(ctx context.Context, filter string) (*ListUsersR
 		return nil, fmt.Errorf("aws ListUsers: error sending request, http method: %s, url: %v, error: %w", http.MethodGet, reqURL.String(), err)
 	}
 	defer resp.Body.Close()
+
+	if e := s.checkHTTPResponse(resp); e != nil {
+		return nil, e
+	}
 
 	var response ListUsersResponse
 	if err = json.NewDecoder(resp.Body).Decode(&response); err != nil {
@@ -407,6 +412,10 @@ func (s *SCIMService) PatchUser(ctx context.Context, pur *PatchUserRequest) erro
 		return fmt.Errorf("aws: error sending request, http method: %s, url: %v, error: %w", http.MethodPatch, reqURL.String(), err)
 	}
 	defer resp.Body.Close()
+
+	if e := s.checkHTTPResponse(resp); e != nil {
+		return e
+	}
 
 	return nil
 }
@@ -449,6 +458,10 @@ func (s *SCIMService) PutUser(ctx context.Context, usr *PutUserRequest) (*PutUse
 	}
 	defer resp.Body.Close()
 
+	if e := s.checkHTTPResponse(resp); e != nil {
+		return nil, e
+	}
+
 	var response PutUserResponse
 	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
 		return nil, fmt.Errorf("aws PutUser: error decoding response body: %w", err)
@@ -482,6 +495,10 @@ func (s *SCIMService) ListGroups(ctx context.Context, filter string) (*ListGroup
 		return nil, fmt.Errorf("aws ListGroups: error sending request, http method: %s, url: %v, error: %w", http.MethodGet, reqURL.String(), err)
 	}
 	defer resp.Body.Close()
+
+	if e := s.checkHTTPResponse(resp); e != nil {
+		return nil, e
+	}
 
 	var response ListGroupsResponse
 	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
@@ -520,6 +537,10 @@ func (s *SCIMService) CreateGroup(ctx context.Context, g *CreateGroupRequest) (*
 	}
 	defer resp.Body.Close()
 
+	if e := s.checkHTTPResponse(resp); e != nil {
+		return nil, e
+	}
+
 	var response CreateGroupResponse
 	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
 		b, err := io.ReadAll(resp.Body)
@@ -557,6 +578,10 @@ func (s *SCIMService) DeleteGroup(ctx context.Context, id string) error {
 	}
 	defer resp.Body.Close()
 
+	if e := s.checkHTTPResponse(resp); e != nil {
+		return e
+	}
+
 	return nil
 }
 
@@ -587,6 +612,10 @@ func (s *SCIMService) PatchGroup(ctx context.Context, pgr *PatchGroupRequest) er
 	}
 	defer resp.Body.Close()
 
+	if e := s.checkHTTPResponse(resp); e != nil {
+		return e
+	}
+
 	return nil
 }
 
@@ -611,6 +640,10 @@ func (s *SCIMService) ServiceProviderConfig(ctx context.Context) (*ServiceProvid
 		return nil, fmt.Errorf("aws ServiceProviderConfig: error sending request, http method: %s, url: %v, error: %w", http.MethodGet, reqURL.String(), err)
 	}
 	defer resp.Body.Close()
+
+	if e := s.checkHTTPResponse(resp); e != nil {
+		return nil, e
+	}
 
 	var response ServiceProviderConfig
 	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {

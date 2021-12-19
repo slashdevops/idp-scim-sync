@@ -156,15 +156,6 @@ type ListUsersResponse struct {
 	Resources []*User `json:"Resources"`
 }
 
-// APIErrorResponse represent an api error response entity
-type APIErrorResponse struct {
-	Status             string   `json:"status"`
-	Detail             string   `json:"detail"`
-	Timestamp          string   `json:"timestamp"`
-	ExceptionRequestID string   `json:"exceptionRequestId"`
-	Schema             []string `json:"schema"`
-}
-
 // CreateGroupResponse represent a create group response entity
 type CreateGroupResponse struct {
 	ID          string   `json:"id"`
@@ -244,6 +235,7 @@ type PatchUserRequest struct {
 	Patch Patch `json:"patch"`
 }
 
+// GetUserResponse represent a get user response entity
 type GetUserResponse struct {
 	ID          string   `json:"id"`
 	ExternalID  string   `json:"externalId"`
