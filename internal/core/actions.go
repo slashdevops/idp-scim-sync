@@ -7,7 +7,6 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"github.com/slashdevops/idp-scim-sync/internal/model"
-	"github.com/slashdevops/idp-scim-sync/internal/utils"
 )
 
 func scimSync(
@@ -79,8 +78,6 @@ func scimSync(
 		return nil, nil, nil, fmt.Errorf("error getting groups members from the SCIM service: %w", err)
 	}
 
-	log.Tracef("idpGroupsMembersResult: %s\n, scimGroupsMembersResult: %s\n", utils.ToJSON(idpGroupsMembersResult), utils.ToJSON(scimGroupsMembersResult))
-
 	log.WithFields(log.Fields{
 		"idp":  idpGroupsMembersResult.Items,
 		"scim": scimGroupsMembersResult.Items,
@@ -89,8 +86,6 @@ func scimSync(
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("error reconciling groups members: %w", err)
 	}
-
-	log.Tracef("membersCreate: %s\n, membersEqual: %s\n, membersDelete: %s\n", utils.ToJSON(membersCreate), utils.ToJSON(membersEqual), utils.ToJSON(membersDelete))
 
 	membersCreated, err := reconcilingGroupsMembers(ctx, scim, membersCreate, membersDelete)
 	if err != nil {
@@ -190,19 +185,15 @@ func stateSync(
 		// so this function will fill the scimid of the new groups/users
 		groupsMembers := model.UpdateGroupsMembersSCIMID(idpGroupsMembersResult, totalGroupsResult, totalUsersResult)
 
-		log.Tracef("groupsMembers: %s\n", utils.ToJSON(groupsMembers))
-
 		log.WithFields(log.Fields{
 			"idp":   idpGroupsMembersResult.Items,
 			"state": state.Resources.GroupsMembers.Items,
 		}).Info("reconciling groups members")
 
-		membersCreate, membersEqual, membersDelete, err := model.MembersOperations(groupsMembers, &state.Resources.GroupsMembers)
+		membersCreate, _, membersDelete, err := model.MembersOperations(groupsMembers, &state.Resources.GroupsMembers)
 		if err != nil {
 			return nil, nil, nil, fmt.Errorf("error reconciling groups members: %w", err)
 		}
-
-		log.Tracef("membersCreate: %s\n, membersEqual: %s\n, membersDelete: %s\n", utils.ToJSON(membersCreate), utils.ToJSON(membersEqual), utils.ToJSON(membersDelete))
 
 		_, err = reconcilingGroupsMembers(ctx, scim, membersCreate, membersDelete)
 		if err != nil {

@@ -9,7 +9,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 	log "github.com/sirupsen/logrus"
 	"github.com/slashdevops/idp-scim-sync/internal/model"
-	"github.com/slashdevops/idp-scim-sync/internal/utils"
 	"github.com/slashdevops/idp-scim-sync/internal/version"
 )
 
@@ -86,7 +85,10 @@ func (ss *SyncService) SyncGroupsAndTheirMembers(ctx context.Context) error {
 	}
 
 	if idpGroupsResult.Items == 0 {
-		log.Warnf("there are no groups in the identity provider that match with this filter: %s", ss.provGroupsFilter)
+		log.WithFields(
+			log.Fields{
+				"group_filter": ss.provGroupsFilter,
+			}).Warn("there are no groups in the identity provider that match")
 	}
 
 	if idpGroupsMembersResult.Items == 0 {
@@ -157,7 +159,6 @@ func (ss *SyncService) SyncGroupsAndTheirMembers(ctx context.Context) error {
 		return fmt.Errorf("error storing the state: %w", err)
 	}
 
-	log.Tracef("state data: %s", utils.ToJSON(newState))
 	log.Info("sync completed")
 	return nil
 }

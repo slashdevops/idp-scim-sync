@@ -160,7 +160,11 @@ func (s *SCIMService) checkHTTPResponse(resp *http.Response) error {
 		// or if this program broke at some moment and create inconsistent state and now
 		// so is better to avoid errors here to be self-healing
 		if resp.StatusCode == http.StatusNotFound || resp.StatusCode == http.StatusConflict {
-			log.Warnf("aws checkHTTPResponse: error: %s, method: %s, request url: %s, body: %s\n", resp.Status, resp.Request.Method, resp.Request.URL, string(body))
+			log.WithFields(log.Fields{
+				"status": resp.Status,
+				"method": resp.Request.Method,
+				"url":    resp.Request.URL,
+			}).Warnf("aws checkHTTPResponse: body: %s\n", string(body))
 			return nil
 		}
 

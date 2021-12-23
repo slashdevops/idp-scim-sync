@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/slashdevops/idp-scim-sync/internal/model"
-	"github.com/slashdevops/idp-scim-sync/internal/utils"
 	"github.com/slashdevops/idp-scim-sync/pkg/aws"
 
 	log "github.com/sirupsen/logrus"
@@ -340,8 +339,6 @@ func (s *Provider) UpdateUsers(ctx context.Context, ur *model.UsersResult) (*mod
 			"scimid": user.SCIMID,
 		}).Trace("updating user (details)")
 
-		log.Tracef("scim: updating user -> userRequest: %s", utils.ToJSON(userRequest))
-
 		log.WithFields(log.Fields{
 			"user":  user.DisplayName,
 			"email": user.Email,
@@ -551,7 +548,6 @@ func (s *Provider) GetGroupsMembers(ctx context.Context, gr *model.GroupsResult)
 		if err != nil {
 			return nil, fmt.Errorf("scim: error listing groups: %w", err)
 		}
-		log.Tracef("lgr: lgr : %s", utils.ToJSON(lgr))
 
 		for _, gr := range lgr.Resources {
 			members := make([]*model.Member, 0)
