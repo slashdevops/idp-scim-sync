@@ -21,6 +21,6 @@ func TestNew(t *testing.T) {
 	assert.Equal(cfg.SyncMethod, DefaultSyncMethod)
 	assert.Equal(cfg.GWSServiceAccountFileSecretName, DefaultGWSServiceAccountFileSecretName)
 	assert.Equal(cfg.GWSUserEmailSecretName, DefaultGWSUserEmailSecretName)
-	assert.Equal(cfg.SCIMEndpointSecretName, DefaultSCIMEndpointSecretName)
-	assert.Equal(cfg.SCIMAccessTokenSecretName, DefaultSCIMAccessTokenSecretName)
+	assert.Equal(cfg.AWSSCIMEndpointSecretName, DefaultAWSSCIMEndpointSecretName)
+	assert.Equal(cfg.AWSSCIMAccessTokenSecretName, DefaultAWSSCIMAccessTokenSecretName)
 }

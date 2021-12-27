@@ -17,6 +17,7 @@ import (
 	"github.com/slashdevops/idp-scim-sync/internal/idp"
 	"github.com/slashdevops/idp-scim-sync/internal/repository"
 	"github.com/slashdevops/idp-scim-sync/internal/scim"
+	"github.com/slashdevops/idp-scim-sync/internal/utils"
 	"github.com/slashdevops/idp-scim-sync/internal/version"
 	"github.com/slashdevops/idp-scim-sync/pkg/aws"
 	"github.com/slashdevops/idp-scim-sync/pkg/google"
@@ -61,45 +62,32 @@ func init() {
 	rootCmd.PersistentFlags().StringVarP(&cfg.LogFormat, "log-format", "f", config.DefaultLogFormat, "set the log format")
 	rootCmd.PersistentFlags().StringVarP(&cfg.LogLevel, "log-level", "l", config.DefaultLogLevel, "set the log level [panic|fatal|error|warn|info|debug|trace]")
 
-	rootCmd.PersistentFlags().StringVarP(&cfg.SCIMAccessToken, "aws-scim-access-token", "t", "", "AWS SSO SCIM API Access Token")
-	_ = rootCmd.MarkPersistentFlagRequired("aws-scim-access-token")
-
-	rootCmd.PersistentFlags().StringVarP(&cfg.SCIMEndpoint, "aws-scim-endpoint", "e", "", "AWS SSO SCIM API Endpoint")
-	_ = rootCmd.MarkPersistentFlagRequired("aws-scim-endpoint")
+	rootCmd.PersistentFlags().StringVarP(&cfg.AWSSCIMAccessToken, "aws-scim-access-token", "t", "", "AWS SSO SCIM API Access Token")
+	rootCmd.PersistentFlags().StringVarP(&cfg.AWSSCIMEndpoint, "aws-scim-endpoint", "e", "", "AWS SSO SCIM API Endpoint")
+	rootCmd.PersistentFlags().StringVarP(&cfg.AWSS3BucketName, "aws-s3-bucket-name", "b", "", "AWS S3 Bucket name to store the state")
+	rootCmd.PersistentFlags().StringVarP(&cfg.AWSS3BucketKey, "aws-s3-bucket-key", "k", config.DefaultAWSS3BucketKey, "AWS S3 Bucket key to store the state")
 
 	rootCmd.PersistentFlags().StringVarP(
 		&cfg.GWSServiceAccountFile, "gws-service-account-file", "s", config.DefaultGWSServiceAccountFile,
 		"path to Google Workspace service account file",
 	)
-	_ = rootCmd.MarkPersistentFlagRequired("gws-service-account-file")
-
 	rootCmd.PersistentFlags().StringVarP(&cfg.GWSUserEmail, "gws-user-email", "u", "", "GWS user email with allowed access to the Google Workspace Service Account")
-	_ = rootCmd.MarkPersistentFlagRequired("gws-user-email")
-
 	rootCmd.Flags().StringSliceVarP(
-		&cfg.GWSGroupsFilter, "query-groups", "q", []string{""},
-		"GWS Groups query parameter, example: --query-groups 'name:Admin* email:admin*' --query-groups 'name:Power* email:power*'",
+		&cfg.GWSGroupsFilter, "gws-groups-filter", "q", []string{""},
+		"GWS Groups query parameter, example: --gws-groups-filter 'name:Admin* email:admin*' --gws-groups-filter 'name:Power* email:power*'",
 	)
 	rootCmd.Flags().StringSliceVarP(
-		&cfg.GWSUsersFilter, "query-users", "r", []string{""},
-		"GWS Users query parameter, example: --query-users 'name:Admin* email:admin*' --query-users 'name:Power* email:power*'",
+		&cfg.GWSUsersFilter, "gws-users-filter", "r", []string{""},
+		"GWS Users query parameter, example: --gws-users-filter 'name:Admin* email:admin*' --gws-users-filter 'name:Power* email:power*'",
 	)
 
 	rootCmd.PersistentFlags().StringVarP(&cfg.SyncMethod, "sync-method", "m", config.DefaultSyncMethod, "Sync method to use [groups]")
-
-	rootCmd.PersistentFlags().StringVarP(&cfg.AWSS3BucketName, "aws-s3-bucket-name", "b", "", "AWS S3 Bucket name to store the state")
-	_ = rootCmd.MarkPersistentFlagRequired("aws-s3-bucket-name")
-
-	rootCmd.PersistentFlags().StringVarP(&cfg.AWSS3BucketKey, "aws-s3-bucket-key", "k", config.DefaultAWSS3BucketKey, "AWS S3 Bucket key to store the state")
-	_ = rootCmd.MarkPersistentFlagRequired("aws-s3-bucket-key")
-
 	rootCmd.PersistentFlags().BoolVarP(&cfg.DisableState, "disable-state", "n", config.DefaultDisableState, "state status [true|false]")
 }
 
 // initConfig reads in config file and ENV variables if set.
 func initConfig() {
 	viper.SetEnvPrefix("idpscim") // allow to read in from environment
-	viper.AutomaticEnv()          // read in environment variables that match
 
 	envVars := []string{
 		"log_level",
@@ -113,26 +101,26 @@ func initConfig() {
 		"gws_user_email_secret_name",
 		"gws_groups_filter",
 		"gws_users_filter",
-		"scim_access_token",
-		"scim_endpoint",
-		"scim_endpoint_secret_name",
-		"scim_access_token_secret_name",
+		"aws_scim_access_token",
+		"aws_scim_endpoint",
+		"aws_scim_endpoint_secret_name",
+		"aws_scim_access_token_secret_name",
 		"disable_state",
 	}
 
 	for _, e := range envVars {
 		if err := viper.BindEnv(e); err != nil {
-			log.Fatalf(errors.Wrap(err, "idpscim: cannot bind environment variable").Error())
+			log.Fatalf(errors.Wrap(err, "cannot bind environment variable").Error())
 		}
 	}
 
 	// If a config file is found, read it in.
 	if err := viper.ReadInConfig(); err == nil {
-		fmt.Fprintln(os.Stderr, "idpscim: using config file:", viper.ConfigFileUsed())
+		fmt.Fprintln(os.Stderr, "using config file:", viper.ConfigFileUsed())
 	}
 
 	if err := viper.Unmarshal(&cfg); err != nil {
-		log.Fatalf(errors.Wrap(err, "idpscim: cannot unmarshal config").Error())
+		log.Fatalf(errors.Wrap(err, "cannot unmarshal config").Error())
 	}
 
 	switch strings.ToLower(cfg.LogFormat) {
@@ -141,7 +129,7 @@ func initConfig() {
 	case "text":
 		log.SetFormatter(&log.TextFormatter{})
 	default:
-		log.Warnf("idpscim: unknown log format: %s, using text", cfg.LogFormat)
+		log.Warnf("unknown log format: %s, using text", cfg.LogFormat)
 		log.SetFormatter(&log.TextFormatter{})
 	}
 
@@ -160,58 +148,60 @@ func initConfig() {
 
 	// not implemented yet block
 	if cfg.GWSUsersFilter[0] != "" {
-		log.Fatal("idpscim: 'query-users' feature not implemented yet")
+		log.Fatal("'gws-users-filter' feature not implemented yet")
 	}
 
 	if cfg.SyncMethod != "groups" {
-		log.Fatal("idpscim: only 'sync_method=groups' are implemented")
+		log.Fatal("only 'sync-method=groups' are implemented")
 	}
 
 	if cfg.DisableState {
-		log.Warn("idpscim: 'disable-state=true' feature not implemented yet")
+		log.Warn("'disable-state=true' feature not implemented yet")
 	}
+
+	log.Debugf("config: %s", utils.ToJSON(viper.AllSettings()))
 }
 
 func getSecrets() {
 	awsConf, err := awsconf.LoadDefaultConfig(context.Background())
 	if err != nil {
-		log.Fatalf(errors.Wrap(err, "idpscim: cannot load aws config").Error())
+		log.Fatalf(errors.Wrap(err, "cannot load aws config").Error())
 	}
 
 	svc := secretsmanager.NewFromConfig(awsConf)
 
 	secrets, err := aws.NewSecretsManagerService(svc)
 	if err != nil {
-		log.Fatalf(errors.Wrap(err, "idpscim: cannot create aws secrets manager service").Error())
+		log.Fatalf(errors.Wrap(err, "cannot create aws secrets manager service").Error())
 	}
 
-	log.WithField("name", cfg.GWSUserEmailSecretName).Debug("idpscim: reading secret")
+	log.WithField("name", cfg.GWSUserEmailSecretName).Debug("reading secret")
 	unwrap, err := secrets.GetSecretValue(context.Background(), cfg.GWSUserEmailSecretName)
 	if err != nil {
-		log.Fatalf(errors.Wrap(err, "idpscim: cannot get secretmanager value").Error())
+		log.Fatalf(errors.Wrap(err, "cannot get secretmanager value").Error())
 	}
 	cfg.GWSUserEmail = unwrap
 
-	log.WithField("name", cfg.GWSServiceAccountFileSecretName).Debug("idpscim: reading secret")
+	log.WithField("name", cfg.GWSServiceAccountFileSecretName).Debug("reading secret")
 	unwrap, err = secrets.GetSecretValue(context.Background(), cfg.GWSServiceAccountFileSecretName)
 	if err != nil {
-		log.Fatalf(errors.Wrap(err, "idpscim: cannot get secretmanager value").Error())
+		log.Fatalf(errors.Wrap(err, "cannot get secretmanager value").Error())
 	}
 	cfg.GWSServiceAccountFile = unwrap
 
-	log.WithField("name", cfg.SCIMAccessTokenSecretName).Debug("idpscim: reading secret")
-	unwrap, err = secrets.GetSecretValue(context.Background(), cfg.SCIMAccessTokenSecretName)
+	log.WithField("name", cfg.AWSSCIMAccessTokenSecretName).Debug("reading secret")
+	unwrap, err = secrets.GetSecretValue(context.Background(), cfg.AWSSCIMAccessTokenSecretName)
 	if err != nil {
-		log.Fatalf(errors.Wrap(err, "idpscim: cannot get secretmanager value").Error())
+		log.Fatalf(errors.Wrap(err, "cannot get secretmanager value").Error())
 	}
-	cfg.SCIMAccessToken = unwrap
+	cfg.AWSSCIMAccessToken = unwrap
 
-	log.WithField("name", cfg.SCIMEndpointSecretName).Debug("idpscim: reading secret")
-	unwrap, err = secrets.GetSecretValue(context.Background(), cfg.SCIMEndpointSecretName)
+	log.WithField("name", cfg.AWSSCIMEndpointSecretName).Debug("reading secret")
+	unwrap, err = secrets.GetSecretValue(context.Background(), cfg.AWSSCIMEndpointSecretName)
 	if err != nil {
-		log.Fatalf(errors.Wrap(err, "idpscim: cannot get secretmanager value").Error())
+		log.Fatalf(errors.Wrap(err, "cannot get secretmanager value").Error())
 	}
-	cfg.SCIMEndpoint = unwrap
+	cfg.AWSSCIMEndpoint = unwrap
 }
 
 func sync() error {
@@ -222,13 +212,13 @@ func sync() error {
 }
 
 func syncGroups() error {
-	log.Info("idpscim syncGroups: starting sync groups")
+	log.Info("starting sync groups")
 
 	ctx := context.Background()
 
 	gwsServiceAccount, err := os.ReadFile(cfg.GWSServiceAccountFile)
 	if err != nil {
-		log.Fatalf(errors.Wrap(err, "idpscim: cannot read service account file").Error())
+		log.Fatalf(errors.Wrap(err, "cannot read service account file").Error())
 	}
 
 	gwsAPIScopes := []string{
@@ -240,19 +230,19 @@ func syncGroups() error {
 	// Google Client Service
 	gwsService, err := google.NewService(ctx, cfg.GWSUserEmail, gwsServiceAccount, gwsAPIScopes...)
 	if err != nil {
-		return errors.Wrap(err, "idpscim syncGroups: cannot create google service")
+		return errors.Wrap(err, "cannot create google service")
 	}
 
 	// Google Directory Service
 	gwsDS, err := google.NewDirectoryService(gwsService)
 	if err != nil {
-		return errors.Wrap(err, "idpscim syncGroups: cannot create google directory service")
+		return errors.Wrap(err, "cannot create google directory service")
 	}
 
 	// Identity Provider Service
 	idpService, err := idp.NewIdentityProvider(gwsDS)
 	if err != nil {
-		return errors.Wrap(err, "idpscim syncGroups: cannot create identity provider service")
+		return errors.Wrap(err, "cannot create identity provider service")
 	}
 
 	// httpClient
@@ -269,34 +259,34 @@ func syncGroups() error {
 	httpClient := retryClient.StandardClient()
 
 	// AWS SCIM Service
-	awsSCIM, err := aws.NewSCIMService(httpClient, cfg.SCIMEndpoint, cfg.SCIMAccessToken)
+	awsSCIM, err := aws.NewSCIMService(httpClient, cfg.AWSSCIMEndpoint, cfg.AWSSCIMAccessToken)
 	if err != nil {
-		return errors.Wrap(err, "idpscim syncGroups: cannot create aws scim service")
+		return errors.Wrap(err, "cannot create aws scim service")
 	}
 
 	scimService, err := scim.NewProvider(awsSCIM)
 	if err != nil {
-		return errors.Wrap(err, "idpscim syncGroups: cannot create scim provider")
+		return errors.Wrap(err, "cannot create scim provider")
 	}
 
 	awsConf, err := awsconf.LoadDefaultConfig(context.Background())
 	if err != nil {
-		log.Fatalf(errors.Wrap(err, "idpscim syncGroups: cannot load aws config").Error())
+		log.Fatalf(errors.Wrap(err, "cannot load aws config").Error())
 	}
 
 	s3Client := s3.NewFromConfig(awsConf)
 	repo, err := repository.NewS3Repository(s3Client, repository.WithBucket(cfg.AWSS3BucketName), repository.WithKey(cfg.AWSS3BucketKey))
 	if err != nil {
-		log.Fatalf(errors.Wrap(err, "idpscim syncGroups: cannot create s3 repository").Error())
+		log.Fatalf(errors.Wrap(err, "cannot create s3 repository").Error())
 	}
 
 	ss, err := core.NewSyncService(idpService, scimService, repo, core.WithIdentityProviderGroupsFilter(cfg.GWSGroupsFilter))
 	if err != nil {
-		return errors.Wrap(err, "idpscim syncGroups: cannot create sync service")
+		return errors.Wrap(err, "cannot create sync service")
 	}
 
 	if err := ss.SyncGroupsAndTheirMembers(ctx); err != nil {
-		return errors.Wrap(err, "idpscim syncGroups: cannot sync groups and their members")
+		return errors.Wrap(err, "cannot sync groups and their members")
 	}
 
 	return nil

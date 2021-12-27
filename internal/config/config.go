@@ -15,10 +15,10 @@ type Config struct {
 	GWSGroupsFilter                 []string `mapstructure:"gws_groups_filter" json:"gws_groups_filter" yaml:"gws_groups_filter"`
 	GWSUsersFilter                  []string `mapstructure:"gws_users_filter" json:"gws_users_filter" yaml:"gws_users_filter"`
 
-	SCIMEndpoint              string `mapstructure:"scim_endpoint" json:"scim_endpoint" yaml:"scim_endpoint"`
-	SCIMAccessToken           string `mapstructure:"scim_access_token" json:"scim_access_token" yaml:"scim_access_token"`
-	SCIMEndpointSecretName    string `mapstructure:"scim_endpoint_secret_name" json:"scim_endpoint_secret_name" yaml:"scim_endpoint_secret_name"`
-	SCIMAccessTokenSecretName string `mapstructure:"scim_access_token_secret_name" json:"scim_access_token_secret_name" yaml:"scim_access_token_secret_name"`
+	AWSSCIMEndpoint              string `mapstructure:"aws_scim_endpoint" json:"aws_scim_endpoint" yaml:"aws_scim_endpoint"`
+	AWSSCIMAccessToken           string `mapstructure:"aws_scim_access_token" json:"aws_scim_access_token" yaml:"aws_scim_access_token"`
+	AWSSCIMEndpointSecretName    string `mapstructure:"aws_scim_endpoint_secret_name" json:"aws_scim_endpoint_secret_name" yaml:"aws_scim_endpoint_secret_name"`
+	AWSSCIMAccessTokenSecretName string `mapstructure:"aws_scim_access_token_secret_name" json:"aws_scim_access_token_secret_name" yaml:"aws_scim_access_token_secret_name"`
 
 	AWSS3BucketName string `mapstructure:"aws_s3_bucket_name" json:"aws_s3_bucket_name" yaml:"aws_s3_bucket_name"`
 	AWSS3BucketKey  string `mapstructure:"aws_s3_bucket_key" json:"aws_s3_bucket_key" yaml:"aws_s3_bucket_key"`
@@ -56,11 +56,11 @@ const (
 	// DefaultGWSUserEmailSecretName is the name of the secret containing the user email.
 	DefaultGWSUserEmailSecretName = "IDPSCIM_GWSUserEmail"
 
-	// DefaultSCIMEndpointSecretName is the name of the secret containing the SCIM endpoint.
-	DefaultSCIMEndpointSecretName = "IDPSCIM_SCIMEndpoint"
+	// DefaultAWSSCIMEndpointSecretName is the name of the secret containing the SCIM endpoint.
+	DefaultAWSSCIMEndpointSecretName = "IDPSCIM_SCIMEndpoint"
 
-	// DefaultSCIMAccessTokenSecretName is the name of the secret containing the SCIM access token.
-	DefaultSCIMAccessTokenSecretName = "IDPSCIM_SCIMAccessToken"
+	// DefaultAWSSCIMAccessTokenSecretName is the name of the secret containing the SCIM access token.
+	DefaultAWSSCIMAccessTokenSecretName = "IDPSCIM_SCIMAccessToken"
 
 	// DefaultDisableState is the default state status.
 	DefaultDisableState = false
@@ -80,8 +80,8 @@ func New() Config {
 		SyncMethod:                      DefaultSyncMethod,
 		GWSServiceAccountFileSecretName: DefaultGWSServiceAccountFileSecretName,
 		GWSUserEmailSecretName:          DefaultGWSUserEmailSecretName,
-		SCIMEndpointSecretName:          DefaultSCIMEndpointSecretName,
-		SCIMAccessTokenSecretName:       DefaultSCIMAccessTokenSecretName,
+		AWSSCIMEndpointSecretName:       DefaultAWSSCIMEndpointSecretName,
+		AWSSCIMAccessTokenSecretName:    DefaultAWSSCIMAccessTokenSecretName,
 		DisableState:                    DefaultDisableState,
 		AWSS3BucketKey:                  DefaultAWSS3BucketKey,
 	}

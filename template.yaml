@@ -3,7 +3,7 @@ Transform: AWS::Serverless-2016-10-31
 
 Description: >-
   idp-scim-sync is a lambda function used to sync Google Workspace Groups and their Memebers
-  to AWS Single Sing-On service using AWS Single Sign-On SCIM API.
+  with AWS Single Sing-On service using AWS SSO SCIM API.
 
 Metadata:
   AWS::CloudFormation::Interface:

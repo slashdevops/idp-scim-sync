@@ -62,10 +62,10 @@ func init() {
 	rootCmd.AddCommand(awsCmd)
 	awsCmd.AddCommand(awsGroupsCmd)
 
-	awsCmd.PersistentFlags().StringVarP(&cfg.SCIMAccessToken, "aws-scim-access-token", "t", "", "AWS SSO SCIM API Access Token")
+	awsCmd.PersistentFlags().StringVarP(&cfg.AWSSCIMAccessToken, "aws-scim-access-token", "t", "", "AWS SSO SCIM API Access Token")
 	_ = awsCmd.MarkPersistentFlagRequired("aws-scim-access-token")
 
-	awsCmd.PersistentFlags().StringVarP(&cfg.SCIMEndpoint, "aws-scim-endpoint", "e", "", "AWS SSO SCIM API Endpoint")
+	awsCmd.PersistentFlags().StringVarP(&cfg.AWSSCIMEndpoint, "aws-scim-endpoint", "e", "", "AWS SSO SCIM API Endpoint")
 	_ = awsCmd.MarkPersistentFlagRequired("aws-scim-endpoint")
 
 	awsCmd.AddCommand(awsServiceCmd)
@@ -93,7 +93,7 @@ func runAWSServiceConfig(cmd *cobra.Command, args []string) error {
 		Timeout:   time.Second * 10,
 	}
 
-	awsSCIMService, err := aws.NewSCIMService(httpClient, cfg.SCIMEndpoint, cfg.SCIMAccessToken)
+	awsSCIMService, err := aws.NewSCIMService(httpClient, cfg.AWSSCIMEndpoint, cfg.AWSSCIMAccessToken)
 	if err != nil {
 		log.Errorf("error creating SCIM service: %s", err.Error())
 		return err
@@ -131,7 +131,7 @@ func runAWSGroupsList(cmd *cobra.Command, args []string) error {
 		Timeout:   time.Second * 10,
 	}
 
-	awsSCIMService, err := aws.NewSCIMService(httpClient, cfg.SCIMEndpoint, cfg.SCIMAccessToken)
+	awsSCIMService, err := aws.NewSCIMService(httpClient, cfg.AWSSCIMEndpoint, cfg.AWSSCIMAccessToken)
 	if err != nil {
 		log.Errorf("error creating SCIM service: %s", err.Error())
 		return err
