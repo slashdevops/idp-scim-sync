@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -13,6 +14,13 @@ import (
 	mocks "github.com/slashdevops/idp-scim-sync/mocks/aws"
 	"github.com/stretchr/testify/assert"
 )
+
+func ReadJSONFIleAsString(t *testing.T, fileName string) string {
+	bytes, err := ioutil.ReadFile(fileName)
+	assert.NoError(t, err)
+
+	return string(bytes)
+}
 
 func TestNewSCIMService(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
@@ -50,7 +58,7 @@ func TestNewSCIMService(t *testing.T) {
 	})
 }
 
-func TestAWSSCIMProvider_request(t *testing.T) {
+func TestDo(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 	endpoint := "https://testing.com"
@@ -96,5 +104,71 @@ func TestAWSSCIMProvider_request(t *testing.T) {
 
 		assert.NotNil(t, resp)
 		assert.Equal(t, mockResp, resp)
+	})
+}
+
+func TestCreateUser(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	endpoint := "https://testing.com"
+	CreateUserResponseFile := "testdata/CreateUserResponse_Active.json"
+
+	t.Run("Should return error when error come from request", func(t *testing.T) {
+		mockHTTPCLient := mocks.NewMockHTTPClient(mockCtrl)
+
+		jsonResp := ReadJSONFIleAsString(t, CreateUserResponseFile)
+
+		httpResp := &http.Response{
+			Status:     "201 OK",
+			StatusCode: http.StatusOK,
+			Header: http.Header{
+				"Date":             []string{"Tue, 31 Mar 2020 02:36:15 GMT"},
+				"Content-Type":     []string{"application/json"},
+				"x-amzn-RequestId": []string{"abbf9e53-9ecc-46d2-8efe-104a66ff128f"},
+			},
+			Proto:         "HTTP/1.1",
+			Body:          io.NopCloser(strings.NewReader(jsonResp)),
+			ContentLength: int64(len(jsonResp)),
+		}
+
+		mockHTTPCLient.EXPECT().Do(gomock.Any()).Return(httpResp, nil)
+
+		got, err := NewSCIMService(mockHTTPCLient, endpoint, "MyToken")
+		assert.NoError(t, err)
+		assert.NotNil(t, got)
+
+		usrr := &CreateUserRequest{
+			ID:         "1",
+			ExternalID: "1",
+			UserName:   "user.1@mail.com",
+			Name: Name{
+				FamilyName: "1",
+				GivenName:  "test",
+			},
+			DisplayName: "user 1",
+			Emails: []Email{
+				{
+					Value:   "user.1@mail.com",
+					Type:    "work",
+					Primary: true,
+				},
+			},
+			Active: true,
+		}
+
+		resp, err := got.CreateUser(context.TODO(), usrr)
+		assert.NoError(t, err)
+		assert.NotNil(t, resp)
+
+		assert.Equal(t, "1", resp.ID)
+		assert.Equal(t, "1", resp.ExternalID)
+		assert.Equal(t, "user.1@mail.com", resp.UserName)
+		assert.Equal(t, "user", resp.Name.GivenName)
+		assert.Equal(t, "1", resp.Name.FamilyName)
+		assert.Equal(t, "user 1", resp.DisplayName)
+		assert.Equal(t, "user.1@mail.com", resp.Emails[0].Value)
+		assert.Equal(t, "work", resp.Emails[0].Type)
+		assert.Equal(t, true, resp.Emails[0].Primary)
+		assert.Equal(t, true, resp.Active)
 	})
 }
