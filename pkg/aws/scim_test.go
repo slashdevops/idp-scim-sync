@@ -3,10 +3,13 @@ package aws
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
+	"path"
 	"strings"
 	"testing"
 
@@ -74,7 +77,7 @@ func TestDo(t *testing.T) {
 
 		req := httptest.NewRequest(http.MethodGet, endpoint, nil)
 
-		resp, err := got.do(context.TODO(), req)
+		resp, err := got.do(context.Background(), req)
 		assert.Error(t, err)
 
 		assert.Nil(t, resp)
@@ -99,7 +102,7 @@ func TestDo(t *testing.T) {
 
 		req := httptest.NewRequest(http.MethodGet, endpoint, nil)
 
-		resp, err := got.do(context.TODO(), req)
+		resp, err := got.do(context.Background(), req)
 		assert.NoError(t, err)
 
 		assert.NotNil(t, resp)
@@ -120,7 +123,7 @@ func TestCreateUser(t *testing.T) {
 
 		httpResp := &http.Response{
 			Status:     "201 OK",
-			StatusCode: http.StatusOK,
+			StatusCode: http.StatusCreated,
 			Header: http.Header{
 				"Date":             []string{"Tue, 31 Mar 2020 02:36:15 GMT"},
 				"Content-Type":     []string{"application/json"},
@@ -156,7 +159,7 @@ func TestCreateUser(t *testing.T) {
 			Active: true,
 		}
 
-		resp, err := got.CreateUser(context.TODO(), usrr)
+		resp, err := got.CreateUser(context.Background(), usrr)
 		assert.NoError(t, err)
 		assert.NotNil(t, resp)
 
@@ -170,5 +173,48 @@ func TestCreateUser(t *testing.T) {
 		assert.Equal(t, "work", resp.Emails[0].Type)
 		assert.Equal(t, true, resp.Emails[0].Primary)
 		assert.Equal(t, true, resp.Active)
+	})
+}
+
+func TestDeleteUser(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	endpoint := "https://testing.com"
+	reqURL, err := url.Parse(endpoint)
+	assert.NoError(t, err)
+
+	t.Run("should return a valid response with a valid request", func(t *testing.T) {
+		mockHTTPCLient := mocks.NewMockHTTPClient(mockCtrl)
+
+		userID := "1"
+		reqURL.Path = path.Join(reqURL.Path, fmt.Sprintf("/Users/%s", userID))
+
+		httpReq, err := http.NewRequestWithContext(context.Background(), "DELETE", reqURL.String(), nil)
+		assert.NoError(t, err)
+
+		httpReq.Header.Set("Accept", "application/json")
+		httpReq.Header.Set("Authorization", "Bearer MyToken")
+
+		httpResp := &http.Response{
+			Status:     "204 OK",
+			StatusCode: http.StatusNoContent,
+			Header: http.Header{
+				"Date":             []string{"Tue, 31 Mar 2020 02:36:15 GMT"},
+				"Content-Type":     []string{"application/json"},
+				"x-amzn-RequestId": []string{"abbf9e53-9ecc-46d2-8efe-104a66ff128f"},
+			},
+			Proto:         "HTTP/1.1",
+			Body:          io.NopCloser(strings.NewReader("")),
+			ContentLength: int64(len("")),
+		}
+
+		mockHTTPCLient.EXPECT().Do(httpReq).Return(httpResp, nil)
+
+		got, err := NewSCIMService(mockHTTPCLient, endpoint, "MyToken")
+		assert.NoError(t, err)
+		assert.NotNil(t, got)
+
+		err = got.DeleteUser(context.Background(), userID)
+		assert.NoError(t, err)
 	})
 }
