@@ -22,3 +22,5 @@ packaged.yaml
 bin/
 build/
 dist/
+
+.idpscim.yaml

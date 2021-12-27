@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -58,6 +59,8 @@ func init() {
 
 	cobra.OnInitialize(initConfig)
 
+	rootCmd.PersistentFlags().StringVarP(&cfg.ConfigFile, "config-file", "c", config.DefaultConfigFile, "configuration file")
+
 	rootCmd.PersistentFlags().BoolVarP(&cfg.Debug, "debug", "d", config.DefaultDebug, "fast way to set the log-level to debug")
 	rootCmd.PersistentFlags().StringVarP(&cfg.LogFormat, "log-format", "f", config.DefaultLogFormat, "set the log format")
 	rootCmd.PersistentFlags().StringVarP(&cfg.LogLevel, "log-level", "l", config.DefaultLogLevel, "set the log level [panic|fatal|error|warn|info|debug|trace]")
@@ -107,12 +110,26 @@ func initConfig() {
 		"aws_scim_access_token_secret_name",
 		"disable_state",
 	}
-
 	for _, e := range envVars {
 		if err := viper.BindEnv(e); err != nil {
 			log.Fatalf(errors.Wrap(err, "cannot bind environment variable").Error())
 		}
 	}
+
+	home, err := os.UserHomeDir()
+	cobra.CheckErr(err)
+
+	currentDir, err := os.Getwd()
+	cobra.CheckErr(err)
+
+	viper.AddConfigPath(home)
+	viper.AddConfigPath(currentDir)
+	viper.SetConfigType("yaml")
+
+	// Search config in home directory with name "downloader" (without extension).
+	fileExtension := filepath.Ext(cfg.ConfigFile)
+	fileName := cfg.ConfigFile[0 : len(cfg.ConfigFile)-len(fileExtension)]
+	viper.SetConfigName(fileName)
 
 	// If a config file is found, read it in.
 	if err := viper.ReadInConfig(); err == nil {
@@ -158,8 +175,6 @@ func initConfig() {
 	if cfg.DisableState {
 		log.Warn("'disable-state=true' feature not implemented yet")
 	}
-
-	log.Debugf("config: %s", utils.ToJSON(viper.AllSettings()))
 }
 
 func getSecrets() {
@@ -205,6 +220,8 @@ func getSecrets() {
 }
 
 func sync() error {
+	log.Tracef("viper config: %s", utils.ToJSON(viper.AllSettings()))
+
 	if cfg.SyncMethod == "groups" {
 		return syncGroups()
 	}
@@ -284,6 +301,8 @@ func syncGroups() error {
 	if err != nil {
 		return errors.Wrap(err, "cannot create sync service")
 	}
+
+	log.Tracef("app config: %s", utils.ToJSON(cfg))
 
 	if err := ss.SyncGroupsAndTheirMembers(ctx); err != nil {
 		return errors.Wrap(err, "cannot sync groups and their members")

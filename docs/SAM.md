@@ -1,6 +1,6 @@
 # AWS SAM
 
-This document is a reference to the AWS Serverless Application Model (SAM) and how to use it to develop serverless applications.
+This document is a reference to the AWS Serverless Application Model (SAM) and how to use it to develop `serverless` applications.
 
 ## Preparation
 
