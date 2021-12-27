@@ -26,7 +26,7 @@ func TestNewSCIMService(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
-	t.Run("Should return AWSSCIMProvider", func(t *testing.T) {
+	t.Run("should return AWSSCIMProvider", func(t *testing.T) {
 		mockHTTPCLient := mocks.NewMockHTTPClient(mockCtrl)
 
 		got, err := NewSCIMService(mockHTTPCLient, "https://testing.com", "MyToken")
@@ -34,13 +34,13 @@ func TestNewSCIMService(t *testing.T) {
 		assert.NotNil(t, got)
 	})
 
-	t.Run("Should return AWSSCIMProvider when httpClient is nil", func(t *testing.T) {
+	t.Run("should return AWSSCIMProvider when httpClient is nil", func(t *testing.T) {
 		got, err := NewSCIMService(nil, "https://testing.com", "MyToken")
 		assert.NoError(t, err)
 		assert.NotNil(t, got)
 	})
 
-	t.Run("Should return error when url is bad formed", func(t *testing.T) {
+	t.Run("should return error when url is bad formed", func(t *testing.T) {
 		mockHTTPCLient := mocks.NewMockHTTPClient(mockCtrl)
 
 		got, err := NewSCIMService(mockHTTPCLient, "https://%%testing.com", "MyToken")
@@ -48,7 +48,7 @@ func TestNewSCIMService(t *testing.T) {
 		assert.Nil(t, got)
 	})
 
-	t.Run("Should return error when the url is empty ", func(t *testing.T) {
+	t.Run("should return error when the url is empty ", func(t *testing.T) {
 		mockHTTPCLient := mocks.NewMockHTTPClient(mockCtrl)
 
 		got, err := NewSCIMService(mockHTTPCLient, "", "MyToken")
@@ -63,7 +63,7 @@ func TestDo(t *testing.T) {
 	defer mockCtrl.Finish()
 	endpoint := "https://testing.com"
 
-	t.Run("Should return error when error come from request", func(t *testing.T) {
+	t.Run("should return error when error come from request", func(t *testing.T) {
 		mockHTTPCLient := mocks.NewMockHTTPClient(mockCtrl)
 
 		mockHTTPCLient.EXPECT().Do(gomock.Any()).Return(nil, errors.New("test error"))
@@ -80,7 +80,7 @@ func TestDo(t *testing.T) {
 		assert.Nil(t, resp)
 	})
 
-	t.Run("Should return valid response", func(t *testing.T) {
+	t.Run("should return valid response", func(t *testing.T) {
 		mockHTTPCLient := mocks.NewMockHTTPClient(mockCtrl)
 
 		mockResp := &http.Response{
@@ -113,7 +113,7 @@ func TestCreateUser(t *testing.T) {
 	endpoint := "https://testing.com"
 	CreateUserResponseFile := "testdata/CreateUserResponse_Active.json"
 
-	t.Run("Should return error when error come from request", func(t *testing.T) {
+	t.Run("should return a valid response with a valid request", func(t *testing.T) {
 		mockHTTPCLient := mocks.NewMockHTTPClient(mockCtrl)
 
 		jsonResp := ReadJSONFIleAsString(t, CreateUserResponseFile)
