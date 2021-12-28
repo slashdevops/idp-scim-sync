@@ -9,14 +9,22 @@
 [![Maintainability](https://api.codeclimate.com/v1/badges/8f88180aebaca6fc4923/maintainability)](https://codeclimate.com/github/slashdevops/idp-scim-sync/maintainability)
 [![Test Coverage](https://api.codeclimate.com/v1/badges/8f88180aebaca6fc4923/test_coverage)](https://codeclimate.com/github/slashdevops/idp-scim-sync/test_coverage)
 
-`idpscim` is a for keeping Google Workspace Groups and Users with AWS Single Sing-On service using SCIM protocol.
+This project is composed of two main components:
 
-`idpscimcli` is a command line tool to check and validate some functionalities implemented in `idpscim`
+1. [idpscim](cmd/idpscim/cmd/root.go) is a program for keeping Google Workspace Groups and Users sync with AWS Single Sing-On service using SCIM protocol.
 
-## Available Commands
+2. [idpscimcli](cmd/idpscimcli/cmd/root.go) is is a command-line tool to check and validate some functionalities implemented in `idpscim`
 
-### idpscimcli
+## idpscim
+
+This program could work in three ways:
+
+1. As an [AWS Lambda function](https://aws.amazon.com/lambda/?nc1=h_ls) deployed via [AWS SAM](https://aws.amazon.com/serverless/sam/) or consumed directly from the [AWS Serverless Application Repository](https://aws.amazon.com/serverless/serverlessrepo/?nc1=h_ls)
+2. As a command line tool
+3. As a Docker container
+
+## idpscimcli
 
 ```cmd
-idpscimcli gws groups list -u "user.email@google.com" -s "./credentials.json" -q "name:Admin*" -q "name:SuperAdmin*"
+idpscimcli --help
 ```
