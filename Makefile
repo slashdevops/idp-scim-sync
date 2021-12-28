@@ -27,9 +27,11 @@ PROJECT_DEPENDENCIES := $(shell go list -m -f '{{if not (or .Indirect .Main)}}{{
 CONTAINER_OS   ?= linux
 CONTAINER_ARCH ?= arm64v8 amd64
 #CONTAINER_ARCH ?= amd64
-CONTAINER_REPO ?= slashdevops
+CONTAINER_NAMESPACE ?= slashdevops
 CONTAINER_IMAGE_NAME ?= idp-scim-sync
 
+ECR_CONTAINER_REPO    ?= "public.ecr.aws/l2n7y5s7"
+GITHUB_CONTAINER_REPO ?= "ghcr.io"
 
 all: clean test build
 
@@ -79,8 +81,12 @@ container-build: build-dist
 					--build-arg ARCH=$(ARCH) \
 					--build-arg BIN_ARCH=$(BIN_ARCH) \
 					--build-arg OS=$(OS) \
-					-t $(CONTAINER_REPO)/$(CONTAINER_IMAGE_NAME)-$(OS)-$(ARCH):latest \
-					-t $(CONTAINER_REPO)/$(CONTAINER_IMAGE_NAME)-$(OS)-$(ARCH):$(GIT_VERSION) \
+					-t $(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME)-$(OS)-$(ARCH):latest \
+					-t $(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME)-$(OS)-$(ARCH):$(GIT_VERSION) \
+					-t $(GITHUB_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME)-$(OS)-$(ARCH):latest \
+					-t $(GITHUB_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME)-$(OS)-$(ARCH):$(GIT_VERSION) \
+					-t $(ECR_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME)-$(OS)-$(ARCH):latest \
+					-t $(ECR_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME)-$(OS)-$(ARCH):$(GIT_VERSION) \
 					./.; \
 			))
 
@@ -88,14 +94,22 @@ container-publish-docker: container-build
 	$(foreach OS, $(CONTAINER_OS), \
 		$(foreach ARCH, $(CONTAINER_ARCH), \
 			$(if $(findstring $(ARCH), arm64v8), $(eval BIN_ARCH = arm64),$(eval BIN_ARCH = $(ARCH)) ) \
-			docker push "$(CONTAINER_REPO)/$(CONTAINER_IMAGE_NAME)-$(OS)-$(ARCH):latest";  \
-			docker push "$(CONTAINER_REPO)/$(CONTAINER_IMAGE_NAME)-$(OS)-$(ARCH):$(GIT_VERSION)"; \
+			docker push "$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME)-$(OS)-$(ARCH):latest";  \
+			docker push "$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME)-$(OS)-$(ARCH):$(GIT_VERSION)"; \
 			))
 
 container-publish-github: container-build
 	$(foreach OS, $(CONTAINER_OS), \
 		$(foreach ARCH, $(CONTAINER_ARCH), \
 			$(if $(findstring $(ARCH), arm64v8), $(eval BIN_ARCH = arm64),$(eval BIN_ARCH = $(ARCH))) \
-			docker push "ghcr.io/$(CONTAINER_REPO)/$(CONTAINER_IMAGE_NAME)-$(OS)-$(ARCH):latest"; \
-			docker push "ghcr.io/$(CONTAINER_REPO)/$(CONTAINER_IMAGE_NAME)-$(OS)-$(ARCH):$(GIT_VERSION)"; \
+			docker push "$(GITHUB_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME)-$(OS)-$(ARCH):latest"; \
+			docker push "$(GITHUB_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME)-$(OS)-$(ARCH):$(GIT_VERSION)"; \
+			))
+
+container-publish-ecr: container-build
+	$(foreach OS, $(CONTAINER_OS), \
+		$(foreach ARCH, $(CONTAINER_ARCH), \
+			$(if $(findstring $(ARCH), arm64v8), $(eval BIN_ARCH = arm64),$(eval BIN_ARCH = $(ARCH))) \
+			docker push "$(ECR_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME)-$(OS)-$(ARCH):latest"; \
+			docker push "$(ECR_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME)-$(OS)-$(ARCH):$(GIT_VERSION)"; \
 			))

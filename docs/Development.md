@@ -59,3 +59,14 @@ For better integration I use [go:generate](https://pkg.go.dev/cmd/go/internal/ge
 
 - [Accept interfaces, return structs](https://bryanftan.medium.com/accept-interfaces-return-structs-in-go-d4cab29a301b)
 - [CodeReviewComments#interfaces](https://github.com/golang/go/wiki/CodeReviewComments#interfaces)
+
+## Container Registry
+
+AWS ECR
+
+```bash
+aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws/l2n7y5s7
+docker build -t slashdevops/idp-scim-sync .
+docker tag slashdevops/idp-scim-sync:latest public.ecr.aws/l2n7y5s7/slashdevops/idp-scim-sync:latest
+docker push public.ecr.aws/l2n7y5s7/slashdevops/idp-scim-sync:latest
+```
