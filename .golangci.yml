@@ -93,7 +93,7 @@ linters:
     - errcheck
     - exportloopref
     - funlen
-    - goconst
+    #- goconst
     - gocritic
     - gocyclo
     - gofmt
@@ -123,18 +123,6 @@ linters:
     - prealloc
     - testpackage
     - revive
-
-  # don't enable:
-  # - gochecknoglobals
-  # - gochecknoinits
-  # - godot
-  # - godox
-  # - goerr113
-  # - nakedret
-  # - nestif
-  # - prealloc
-  # - testpackage
-  # - wsl
 
 issues:
   # Excluding configuration per-path, per-linter, per-text and per-source

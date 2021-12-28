@@ -3,7 +3,6 @@ package cmd
 import (
 	"context"
 	"net/http"
-	"time"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/slashdevops/idp-scim-sync/internal/utils"
@@ -11,10 +10,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var (
-	outFormat string
-	filter    string
-)
+var filter string
 
 // commands aws
 var (
@@ -53,30 +49,41 @@ var (
 		Use:     "list",
 		Aliases: []string{"l"},
 		Short:   "return available groups",
-		Long:    `list available groups in AWS SSO`,
+		Long:    `list available groups in AWS SSO SCIM`,
 		RunE:    runAWSGroupsList,
+	}
+
+	// users command
+	awsUsersCmd = &cobra.Command{
+		Use:   "users",
+		Short: "AWS SSO SCIM Users commands",
+		Long:  `available commands to validate AWS SSO SCIM Users API.`,
+	}
+
+	// users list command
+	awsUsersListCmd = &cobra.Command{
+		Use:     "list",
+		Aliases: []string{"l"},
+		Short:   "return available users",
+		Long:    `list available usrs in AWS SSO SCIM`,
+		RunE:    runAWSUsersList,
 	}
 )
 
 func init() {
 	rootCmd.AddCommand(awsCmd)
 	awsCmd.AddCommand(awsGroupsCmd)
+	awsCmd.AddCommand(awsUsersCmd)
+	awsCmd.AddCommand(awsServiceCmd)
+	awsServiceCmd.AddCommand(awsServiceConfigCmd)
+	awsGroupsCmd.AddCommand(awsGroupsListCmd)
+	awsUsersCmd.AddCommand(awsUsersListCmd)
 
 	awsCmd.PersistentFlags().StringVarP(&cfg.AWSSCIMAccessToken, "aws-scim-access-token", "t", "", "AWS SSO SCIM API Access Token")
-	_ = awsCmd.MarkPersistentFlagRequired("aws-scim-access-token")
-
 	awsCmd.PersistentFlags().StringVarP(&cfg.AWSSCIMEndpoint, "aws-scim-endpoint", "e", "", "AWS SSO SCIM API Endpoint")
-	_ = awsCmd.MarkPersistentFlagRequired("aws-scim-endpoint")
-
-	awsCmd.AddCommand(awsServiceCmd)
-
-	awsServiceCmd.AddCommand(awsServiceConfigCmd)
-	awsServiceConfigCmd.Flags().StringVar(&outFormat, "output-format", "json", "output format (json|yaml)")
-
-	awsGroupsCmd.AddCommand(awsGroupsListCmd)
 
 	awsGroupsListCmd.Flags().StringVarP(&filter, "filter", "q", "", "AWS SSO SCIM API Filter, example: --filter 'displayName eq \"Group Bar\" and id eq \"12324\"'")
-	awsGroupsListCmd.Flags().StringVar(&outFormat, "output-format", "json", "output format (json|yaml)")
+	awsUsersCmd.Flags().StringVarP(&filter, "filter", "q", "", "AWS SSO SCIM API Filter, example: --filter 'displayName eq \"User Bar\" and id eq \"12324\"'")
 }
 
 func runAWSServiceConfig(cmd *cobra.Command, args []string) error {
@@ -90,7 +97,7 @@ func runAWSServiceConfig(cmd *cobra.Command, args []string) error {
 
 	httpClient := &http.Client{
 		Transport: httpTransport,
-		Timeout:   time.Second * 10,
+		Timeout:   maxTimeout,
 	}
 
 	awsSCIMService, err := aws.NewSCIMService(httpClient, cfg.AWSSCIMEndpoint, cfg.AWSSCIMAccessToken)
@@ -107,11 +114,11 @@ func runAWSServiceConfig(cmd *cobra.Command, args []string) error {
 
 	switch outFormat {
 	case "json":
-		log.Printf("%s", utils.ToJSON(awsServiceConfig))
+		log.Infof("%s", utils.ToJSON(awsServiceConfig))
 	case "yaml":
-		log.Printf("%s", utils.ToYAML(awsServiceConfig))
+		log.Infof("%s", utils.ToYAML(awsServiceConfig))
 	default:
-		log.Printf("%s", utils.ToJSON(awsServiceConfig))
+		log.Infof("%s", utils.ToJSON(awsServiceConfig))
 	}
 
 	return nil
@@ -128,7 +135,7 @@ func runAWSGroupsList(cmd *cobra.Command, args []string) error {
 
 	httpClient := &http.Client{
 		Transport: httpTransport,
-		Timeout:   time.Second * 10,
+		Timeout:   maxTimeout,
 	}
 
 	awsSCIMService, err := aws.NewSCIMService(httpClient, cfg.AWSSCIMEndpoint, cfg.AWSSCIMAccessToken)
@@ -146,11 +153,49 @@ func runAWSGroupsList(cmd *cobra.Command, args []string) error {
 
 	switch outFormat {
 	case "json":
-		log.Printf("%s", utils.ToJSON(awsGroupsResponse))
+		log.Infof("%s", utils.ToJSON(awsGroupsResponse))
 	case "yaml":
-		log.Printf("%s", utils.ToYAML(awsGroupsResponse))
+		log.Infof("%s", utils.ToYAML(awsGroupsResponse))
 	default:
-		log.Printf("%s", utils.ToJSON(awsGroupsResponse))
+		log.Infof("%s", utils.ToJSON(awsGroupsResponse))
+	}
+	return nil
+}
+
+func runAWSUsersList(cmd *cobra.Command, args []string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), reqTimeout)
+	defer cancel()
+
+	httpTransport := http.DefaultTransport.(*http.Transport).Clone()
+	httpTransport.MaxIdleConns = 100
+	httpTransport.MaxConnsPerHost = 100
+	httpTransport.MaxIdleConnsPerHost = 100
+
+	httpClient := &http.Client{
+		Transport: httpTransport,
+		Timeout:   maxTimeout,
+	}
+
+	awsSCIMService, err := aws.NewSCIMService(httpClient, cfg.AWSSCIMEndpoint, cfg.AWSSCIMAccessToken)
+	if err != nil {
+		log.Errorf("error creating SCIM service: %s", err.Error())
+		return err
+	}
+
+	awsUsersResponse, err := awsSCIMService.ListUsers(ctx, filter)
+	if err != nil {
+		log.Errorf("error listing groups, error: %s", err.Error())
+		return err
+	}
+	log.Infof("%d users found", awsUsersResponse.TotalResults)
+
+	switch outFormat {
+	case "json":
+		log.Infof("%s", utils.ToJSON(awsUsersResponse))
+	case "yaml":
+		log.Infof("%s", utils.ToYAML(awsUsersResponse))
+	default:
+		log.Infof("%s", utils.ToJSON(awsUsersResponse))
 	}
 	return nil
 }

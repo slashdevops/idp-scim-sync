@@ -5,15 +5,11 @@ import (
 	"os"
 
 	"github.com/slashdevops/idp-scim-sync/internal/config"
+	"github.com/slashdevops/idp-scim-sync/internal/utils"
 	"github.com/slashdevops/idp-scim-sync/pkg/google"
 	"github.com/spf13/cobra"
 
 	log "github.com/sirupsen/logrus"
-)
-
-var (
-	groupsQuery []string
-	usersQuery  []string
 )
 
 // command gws
@@ -69,26 +65,24 @@ func init() {
 		config.DefaultGWSServiceAccountFile,
 		"path to Google Workspace service account file",
 	)
-	_ = gwsCmd.MarkPersistentFlagRequired("gws-service-account-file")
 
 	gwsCmd.PersistentFlags().StringVarP(&cfg.GWSUserEmail,
 		"gws-user-email", "u", "",
 		"Google Workspace user email with allowed access to the Google Workspace service account",
 	)
-	_ = gwsCmd.MarkPersistentFlagRequired("gws-user-email")
 
 	// groups command
 	gwsGroupsCmd.AddCommand(gwsGroupsListCmd)
 	gwsGroupsListCmd.Flags().StringSliceVarP(
-		&groupsQuery, "query-groups", "q", []string{""},
-		"GWS Groups query parameter, example: --query-groups 'name:Admin* email:admin*' --query-groups 'name:Power* email:power*'",
+		&cfg.GWSGroupsFilter, "gws-groups-filter", "q", []string{""},
+		"GWS Groups query parameter, example: --gws-groups-filter 'name:Admin* email:admin*' --gws-groups-filter 'name:Power* email:power*'",
 	)
 
 	// users command
 	gwsUsersCmd.AddCommand(gwsUsersListCmd)
 	gwsUsersListCmd.Flags().StringSliceVarP(
-		&usersQuery, "query-users", "r", []string{""},
-		"GWS Users query parameter, example: --query-users 'name:Admin* email:admin*' --query-users 'name:Power* email:power*'",
+		&cfg.GWSUsersFilter, "gws-users-filter", "r", []string{""},
+		"GWS Users query parameter, example: --gws-users-filter 'name:Admin* email:admin*' --gws-users-filter 'name:Power* email:power*'",
 	)
 }
 
@@ -123,20 +117,22 @@ func execGWSGroupsList(cmd *cobra.Command, args []string) error {
 
 	gDirService := getGWSDirectoryService(ctx)
 
-	gGroups, err := gDirService.ListGroups(ctx, groupsQuery)
+	gGroups, err := gDirService.ListGroups(ctx, cfg.GWSGroupsFilter)
 	if err != nil {
 		log.Errorf("error listing groups: %s", err)
 		return err
 	}
 	log.Infof("%d groups found", len(gGroups))
 
-	for _, g := range gGroups {
-		log.WithFields(log.Fields{
-			"Id":    g.Id,
-			"Name":  g.Name,
-			"Email": g.Email,
-		}).Info("List Group ->")
+	switch outFormat {
+	case "json":
+		log.Infof("%s", utils.ToJSON(gGroups))
+	case "yaml":
+		log.Infof("%s", utils.ToYAML(gGroups))
+	default:
+		log.Infof("%s", utils.ToJSON(gGroups))
 	}
+
 	return nil
 }
 
@@ -146,20 +142,21 @@ func execGWSUsersList(cmd *cobra.Command, args []string) error {
 
 	gDirService := getGWSDirectoryService(ctx)
 
-	gUsers, err := gDirService.ListUsers(ctx, usersQuery)
+	gUsers, err := gDirService.ListUsers(ctx, cfg.GWSUsersFilter)
 	if err != nil {
 		log.Errorf("error listing users: %s", err)
 		return err
 	}
 	log.Infof("%d users found", len(gUsers))
 
-	for _, u := range gUsers {
-		log.WithFields(log.Fields{
-			"Id":        u.Id,
-			"Name":      u.Name.FullName,
-			"Email":     u.PrimaryEmail,
-			"Suspended": u.Suspended,
-		}).Info("List User ->")
+	switch outFormat {
+	case "json":
+		log.Infof("%s", utils.ToJSON(gUsers))
+	case "yaml":
+		log.Infof("%s", utils.ToYAML(gUsers))
+	default:
+		log.Infof("%s", utils.ToJSON(gUsers))
 	}
+
 	return nil
 }
