@@ -4,6 +4,9 @@ EXECUTABLES = go
 K := $(foreach exec,$(EXECUTABLES),\
   $(if $(shell which $(exec)),some string,$(error "No $(exec) in PATH)))
 
+PROJECT_NAME      ?= idp-scim-sync
+PROJECT_NAMESPACE ?= slashdevops
+
 GIT_VERSION  ?= $(shell git rev-parse --abbrev-ref HEAD | cut -d "/" -f 2)
 GIT_REVISION ?= $(shell git rev-parse HEAD | tr -d '\040\011\012\015\n')
 GIT_BRANCH   ?= $(shell git rev-parse --abbrev-ref HEAD | tr -d '\040\011\012\015\n')
@@ -12,7 +15,7 @@ BUILD_DATE   ?= $(shell date +'%Y-%m-%dT%H:%M:%S')
 
 BUILD_DIR      := ./build
 DIST_DIR       := ./dist
-GO_LDFLAGS     ?= -ldflags "-X github.com/slashdevops/idp-scim-sync/internal/version.Version=$(GIT_VERSION) -X github.com/slashdevops/idp-scim-sync/internal/version.Revision=$(GIT_REVISION) -X github.com/slashdevops/idp-scim-sync/internal/version.Branch=$(GIT_BRANCH) -X github.com/slashdevops/idp-scim-sync/internal/version.BuildUser=\"$(GIT_USER)\" -X github.com/slashdevops/idp-scim-sync/internal/version.BuildDate=$(BUILD_DATE)"
+GO_LDFLAGS     ?= -ldflags "-X github.com/$(PROJECT_NAMESPACE)/$(PROJECT_NAME)/internal/version.Version=$(GIT_VERSION) -X github.com/$(PROJECT_NAMESPACE)/$(PROJECT_NAME)/internal/version.Revision=$(GIT_REVISION) -X github.com/$(PROJECT_NAMESPACE)/$(PROJECT_NAME)/internal/version.Branch=$(GIT_BRANCH) -X github.com/$(PROJECT_NAMESPACE)/$(PROJECT_NAME)/internal/version.BuildUser=\"$(GIT_USER)\" -X github.com/$(PROJECT_NAMESPACE)/$(PROJECT_NAME)/internal/version.BuildDate=$(BUILD_DATE)"
 GO_CGO_ENABLED ?= 0
 GO_OPTS        ?= -v
 GO_OS          ?= darwin linux
@@ -26,12 +29,11 @@ PROJECT_DEPENDENCIES := $(shell go list -m -f '{{if not (or .Indirect .Main)}}{{
 
 CONTAINER_OS   ?= linux
 CONTAINER_ARCH ?= arm64v8 amd64
-#CONTAINER_ARCH ?= amd64
-CONTAINER_NAMESPACE ?= slashdevops
-CONTAINER_IMAGE_NAME ?= idp-scim-sync
+CONTAINER_NAMESPACE ?= $(PROJECT_NAMESPACE)
+CONTAINER_IMAGE_NAME ?= $(PROJECT_NAME)
 
-ECR_CONTAINER_REPO    ?= "public.ecr.aws/l2n7y5s7"
-GITHUB_CONTAINER_REPO ?= "ghcr.io"
+AWS_ECR_CONTAINER_REPO ?= "public.ecr.aws/l2n7y5s7"
+GITHUB_CONTAINER_REPO  ?= "ghcr.io"
 
 all: clean test build
 
@@ -85,8 +87,8 @@ container-build: build-dist
 					-t $(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME)-$(OS)-$(ARCH):$(GIT_VERSION) \
 					-t $(GITHUB_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME)-$(OS)-$(ARCH):latest \
 					-t $(GITHUB_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME)-$(OS)-$(ARCH):$(GIT_VERSION) \
-					-t $(ECR_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME)-$(OS)-$(ARCH):latest \
-					-t $(ECR_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME)-$(OS)-$(ARCH):$(GIT_VERSION) \
+					-t $(AWS_ECR_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME)-$(OS)-$(ARCH):latest \
+					-t $(AWS_ECR_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME)-$(OS)-$(ARCH):$(GIT_VERSION) \
 					./.; \
 			))
 
@@ -110,6 +112,6 @@ container-publish-ecr: container-build
 	$(foreach OS, $(CONTAINER_OS), \
 		$(foreach ARCH, $(CONTAINER_ARCH), \
 			$(if $(findstring $(ARCH), arm64v8), $(eval BIN_ARCH = arm64),$(eval BIN_ARCH = $(ARCH))) \
-			docker push "$(ECR_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME)-$(OS)-$(ARCH):latest"; \
-			docker push "$(ECR_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME)-$(OS)-$(ARCH):$(GIT_VERSION)"; \
+			docker push "$(AWS_ECR_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME)-$(OS)-$(ARCH):latest"; \
+			docker push "$(AWS_ECR_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME)-$(OS)-$(ARCH):$(GIT_VERSION)"; \
 			))
