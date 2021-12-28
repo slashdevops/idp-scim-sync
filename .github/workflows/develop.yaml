@@ -15,6 +15,12 @@ on:
 env:
   GO_VERSION: 1.17
 
+permissions:
+  security-events: write
+  actions: read
+  contents: read
+  pull-requests: read
+
 jobs:
   test:
     name: Test
@@ -61,10 +67,6 @@ jobs:
   codeql:
     needs: Test
     runs-on: ubuntu-latest
-    permissions:
-      security-events: write
-      actions: read
-      contents: read
     steps:
       - name: Set up Go 1.x
         uses: actions/setup-go@v2
@@ -97,8 +99,9 @@ jobs:
         uses: github/codeql-action/init@v1
         with:
           languages: go
+          config-file: ./.github/codeql/codeql-config.yml
 
-      - name: Build
+      - name: Build code
         run: make
 
       - name: Perform CodeQL Analysis
