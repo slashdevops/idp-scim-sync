@@ -44,7 +44,7 @@ jobs:
 
   build:
     name: Build
-    needs: test
+    needs: Test
     runs-on: ubuntu-latest
     steps:
       - name: Set up Go 1.x
