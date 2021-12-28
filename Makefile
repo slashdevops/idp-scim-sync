@@ -6,6 +6,9 @@ K := $(foreach exec,$(EXECUTABLES),\
 
 PROJECT_NAME      ?= idp-scim-sync
 PROJECT_NAMESPACE ?= slashdevops
+PROJECT_MODULES_PATH := $(shell ls -d cmd/*)
+PROJECT_MODULES_NAME := $(foreach dir_name, $(PROJECT_MODULES_PATH), $(shell basename $(dir_name)) )
+PROJECT_DEPENDENCIES := $(shell go list -m -f '{{if not (or .Indirect .Main)}}{{.Path}}{{end}}' all)
 
 GIT_VERSION  ?= $(shell git rev-parse --abbrev-ref HEAD | cut -d "/" -f 2)
 GIT_REVISION ?= $(shell git rev-parse HEAD | tr -d '\040\011\012\015\n')
@@ -23,15 +26,14 @@ GO_ARCH        ?= arm64 amd64
 # avoid mocks in tests
 GO_FILES       := $(shell go list ./... | grep -v /mocks/)
 
-PROJECTS_PATH := $(shell ls -d cmd/*)
-PROJECTS_NAME := $(foreach dir_name, $(PROJECTS_PATH), $(shell basename $(dir_name)) )
-PROJECT_DEPENDENCIES := $(shell go list -m -f '{{if not (or .Indirect .Main)}}{{.Path}}{{end}}' all)
+
 
 CONTAINER_OS   ?= linux
 CONTAINER_ARCH ?= arm64v8 amd64
 CONTAINER_NAMESPACE ?= $(PROJECT_NAMESPACE)
 CONTAINER_IMAGE_NAME ?= $(PROJECT_NAME)
 
+DOCKER_CONTAINER_REPO  ?= "docker.io"
 AWS_ECR_CONTAINER_REPO ?= "public.ecr.aws/l2n7y5s7"
 GITHUB_CONTAINER_REPO  ?= "ghcr.io"
 
@@ -63,14 +65,14 @@ test-coverage: test
 	go tool cover -html=coverage.out
 
 build:
-	$(foreach proj_name, $(PROJECTS_NAME), \
-		$(shell CGO_ENABLED=$(GO_CGO_ENABLED) go build $(GO_LDFLAGS) $(GO_OPTS) -o ./$(BUILD_DIR)/$(proj_name) ./cmd/$(proj_name)/ ))
+	$(foreach proj_mod, $(PROJECT_MODULES_NAME), \
+		$(shell CGO_ENABLED=$(GO_CGO_ENABLED) go build $(GO_LDFLAGS) $(GO_OPTS) -o ./$(BUILD_DIR)/$(proj_mod) ./cmd/$(proj_mod)/ ))
 
 build-dist: build
 	$(foreach GOOS, $(GO_OS),\
 		$(foreach GOARCH, $(GO_ARCH), \
-			$(foreach proj_name, $(PROJECTS_NAME), \
-				$(shell GOOS=$(GOOS) GOARCH=$(GOARCH) CGO_ENABLED=$(GO_CGO_ENABLED) go build $(GO_LDFLAGS) $(GO_OPTS) -o ./$(DIST_DIR)/$(proj_name)-$(GOOS)-$(GOARCH) ./cmd/$(proj_name)/ ))))
+			$(foreach proj_mod, $(PROJECT_MODULES_NAME), \
+				$(shell GOOS=$(GOOS) GOARCH=$(GOARCH) CGO_ENABLED=$(GO_CGO_ENABLED) go build $(GO_LDFLAGS) $(GO_OPTS) -o ./$(DIST_DIR)/$(proj_mod)-$(GOOS)-$(GOARCH) ./cmd/$(proj_mod)/ ))))
 
 clean:
 	rm -rf $(BUILD_DIR) $(DIST_DIR) ./*.out
@@ -85,6 +87,8 @@ container-build: build-dist
 					--build-arg OS=$(OS) \
 					-t $(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME)-$(OS)-$(ARCH):latest \
 					-t $(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME)-$(OS)-$(ARCH):$(GIT_VERSION) \
+					-t $(DOCKER_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME)-$(OS)-$(ARCH):latest \
+					-t $(DOCKER_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME)-$(OS)-$(ARCH):$(GIT_VERSION) \
 					-t $(GITHUB_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME)-$(OS)-$(ARCH):latest \
 					-t $(GITHUB_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME)-$(OS)-$(ARCH):$(GIT_VERSION) \
 					-t $(AWS_ECR_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME)-$(OS)-$(ARCH):latest \
@@ -96,8 +100,8 @@ container-publish-docker: container-build
 	$(foreach OS, $(CONTAINER_OS), \
 		$(foreach ARCH, $(CONTAINER_ARCH), \
 			$(if $(findstring $(ARCH), arm64v8), $(eval BIN_ARCH = arm64),$(eval BIN_ARCH = $(ARCH)) ) \
-			docker push "$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME)-$(OS)-$(ARCH):latest";  \
-			docker push "$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME)-$(OS)-$(ARCH):$(GIT_VERSION)"; \
+			docker push "$(DOCKER_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME)-$(OS)-$(ARCH):latest";  \
+			docker push "$(DOCKER_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME)-$(OS)-$(ARCH):$(GIT_VERSION)"; \
 			))
 
 container-publish-github: container-build
