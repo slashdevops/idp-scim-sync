@@ -23,7 +23,7 @@ permissions:
 
 jobs:
   golangci:
-    name: lint
+    name: golang-ci
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -74,6 +74,7 @@ jobs:
         run: make clean
 
   codeql:
+    name: CodeQL Analysis
     needs: Test
     runs-on: ubuntu-latest
     steps:
