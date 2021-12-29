@@ -1,6 +1,6 @@
 .DELETE_ON_ERROR: clean
 
-EXECUTABLES = go golint
+EXECUTABLES = go
 K := $(foreach exec,$(EXECUTABLES),\
   $(if $(shell which $(exec)),some string,$(error "No $(exec) in PATH)))
 
@@ -53,7 +53,6 @@ vet:
 	go vet $(GO_FILES)
 
 lint:
-	golint $(GO_FILES)
 	golangci-lint run
 
 generate:
