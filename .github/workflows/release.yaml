@@ -1,0 +1,206 @@
+name: "Release workflow"
+
+on:
+  push:
+    tags:
+      - v[012].[0-9]+.[0-9]+ # https://help.github.com/es/actions/reference/workflow-syntax-for-github-actions#filter-pattern-cheat-sheet
+
+env:
+  GO_VERSION: 1.17
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Go 1.x
+        uses: actions/setup-go@v2
+        with:
+          go-version: ${{ env.GO_VERSION }}
+        id: go
+
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v2
+
+      - id: go-cache-paths
+        run: |
+          echo "::set-output name=go-build::$(go env GOCACHE)"
+          echo "::set-output name=go-mod::$(go env GOMODCACHE)"
+
+      - name: Go Build Cache
+        uses: actions/cache@v2
+        with:
+          path: ${{ steps.go-cache-paths.outputs.go-build }}
+          key: ${{ runner.os }}-go-build-${{ hashFiles('**/go.sum') }}
+
+      - name: Go Mod Cache
+        uses: actions/cache@v2
+        with:
+          path: ${{ steps.go-cache-paths.outputs.go-mod }}
+          key: ${{ runner.os }}-go-mod-${{ hashFiles('**/go.sum') }}
+
+      - name: Test
+        run: make test
+
+  build:
+    name: Build
+    needs: Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Go 1.x
+        uses: actions/setup-go@v2
+        with:
+          go-version: ${{ env.GO_VERSION }}
+        id: go
+
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v2
+
+      - id: go-cache-paths
+        run: |
+          echo "::set-output name=go-build::$(go env GOCACHE)"
+          echo "::set-output name=go-mod::$(go env GOMODCACHE)"
+
+      - name: Go Build Cache
+        uses: actions/cache@v2
+        with:
+          path: ${{ steps.go-cache-paths.outputs.go-build }}
+          key: ${{ runner.os }}-go-build-${{ hashFiles('**/go.sum') }}
+
+      - name: Go Mod Cache
+        uses: actions/cache@v2
+        with:
+          path: ${{ steps.go-cache-paths.outputs.go-mod }}
+          key: ${{ runner.os }}-go-mod-${{ hashFiles('**/go.sum') }}
+
+      - name: Git Current Tag Version
+        run: |
+          echo ${{ env.GITHUB_REF }} | cut -d / -f 3
+
+      - name: Git Version
+        run: |
+          git rev-parse --abbrev-ref HEAD
+
+      - name: Git Revision
+        run: |
+          git rev-parse HEAD | tr -d '\040\011\012\015\n'
+
+      - name: Git Branch
+        run: |
+          git rev-parse --abbrev-ref HEAD | tr -d '\040\011\012\015\n'
+
+      - name: Git User
+        run: |
+          git config --get user.name | tr -d '\040\011\012\015\n'
+
+      - name: Build Distribution Cross-Platform
+        run: make build-dist
+
+      - name: Show workspace files
+        run: tree .
+
+      - uses: actions/upload-artifact@v2
+        with:
+          name: dist
+          path: ./dist/
+
+  publish_container_images:
+    name: Publish Container Images
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Go 1.x
+        uses: actions/setup-go@v2
+        with:
+          go-version: ${{ env.GO_VERSION }}
+        id: go
+
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v2
+
+      - id: go-cache-paths
+        run: |
+          echo "::set-output name=go-build::$(go env GOCACHE)"
+          echo "::set-output name=go-mod::$(go env GOMODCACHE)"
+
+      - name: Go Build Cache
+        uses: actions/cache@v2
+        with:
+          path: ${{ steps.go-cache-paths.outputs.go-build }}
+          key: ${{ runner.os }}-go-build-${{ hashFiles('**/go.sum') }}
+
+      - name: Go Mod Cache
+        uses: actions/cache@v2
+        with:
+          path: ${{ steps.go-cache-paths.outputs.go-mod }}
+          key: ${{ runner.os }}-go-mod-${{ hashFiles('**/go.sum') }}
+
+      - name: Set id for github tag version
+        id: get_tag
+        run: echo ::set-output name=name::$(echo $GITHUB_REF | cut -d / -f 3)
+
+      - name: Docker Version
+        run: docker version
+
+      - uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - uses: actions/download-artifact@v2
+        with:
+          name: dist
+          path: ./dist/
+
+      - name: Show workspace files
+        run: tree .
+
+      - name: Build container images
+        run: make container-build GIT_VERSION=${{ steps.get_tag.outputs.name }}
+
+      - name: Show local container images
+        run: docker images
+
+      - name: Logging in Docker Hub
+        run: echo ${{ secrets.DOCKER_HUB_PASSWORD }} | docker login -u ${{ secrets.DOCKER_HUB_USER }} --password-stdin
+
+      - name: Publish Images in Docker Hub
+        run: make container-publish-docker GIT_VERSION=${{ steps.get_tag.outputs.name }}
+
+      # - name: Logging in GitHub Packages
+      #   run: echo ${{ secrets.GH_TOKEN }} | docker login docker.pkg.github.com -u ${{ secrets.GH_USER }} --password-stdin
+
+      # - name: Publish Images in GitHub Packages
+      #   run: make container-publish-github GIT_VERSION=${{ steps.get_tag.outputs.name }}
+
+  create_github_release:
+    name: Create Github Release
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set id for github tag version
+        id: get_tag
+        run: echo ::set-output name=name::$(echo $GITHUB_REF | cut -d / -f 3)
+
+      - name: Create Release
+        id: create_github_release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          tag_name: ${{ steps.get_tag.outputs.name }}
+          name: Release ${{ steps.get_tag.outputs.name }}
+          body: |
+            See the file: CHANGELOG.md
+          draft: false
+          prerelease: false
+          token: ${{ secrets.GITHUB_TOKEN }}
+          files: |
+            LICENSE
+            dist/*

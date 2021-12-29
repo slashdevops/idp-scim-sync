@@ -1,0 +1,66 @@
+{
+  "schemaVersion": "",
+  "codeVersion": "",
+  "lastSync": "2021-09-25T20:49:46+02:00",
+  "hashCode": "hashCode",
+  "resources": {
+    "groups": {
+      "items": 1,
+      "hashCode": "123456789",
+      "resources": [
+        {
+          "ipid": "1",
+          "name": "group 1",
+          "email": "group.1@mail.com",
+          "hashCode": "123456789"
+        }
+      ]
+    },
+    "users": {
+      "items": 1,
+      "hashCode": "hashCode",
+      "resources": [
+        {
+          "ipid": "1",
+          "name": {
+            "familyName": "1",
+            "givenName": "user"
+          },
+          "displayName": "user 1",
+          "active": false,
+          "email": "user.1@mail.com",
+          "hashCode": "123456789"
+        }
+      ]
+    },
+    "groupsUsers": {
+      "items": 1,
+      "hashCode": "123456789",
+      "resources": [
+        {
+          "items": 1,
+          "hashCode": "123456789",
+          "group": {
+            "ipid": "1",
+            "name": "group 1",
+            "email": "group.1@mail.com",
+            "hashCode": "123456789"
+          },
+          "resources": [
+            {
+              "ipid": "1",
+              "name": {
+                "familyName": "1",
+                "givenName": "user"
+              },
+              "displayName": "user 1",
+              "active": false,
+              "email": "user.1@mail.com",
+              "hashCode": "123456789"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

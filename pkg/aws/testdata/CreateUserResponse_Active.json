@@ -1,0 +1,27 @@
+{
+    "id": "1",
+    "externalId": "1",
+    "meta": {
+        "resourceType": "User",
+        "created": "2020-03-31T02:36:15Z",
+        "lastModified": "2020-03-31T02:36:15Z"
+    },
+    "schemas": [
+        "urn:ietf:params:scim:schemas:core:2.0:User",
+        "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User"
+    ],
+    "userName": "user.1@mail.com",
+    "name": {
+        "familyName": "1",
+        "givenName": "user"
+    },
+    "displayName": "user 1",
+    "active": true,
+    "emails": [
+        {
+            "value": "user.1@mail.com",
+            "type": "work",
+            "primary": true
+        }
+    ]
+}

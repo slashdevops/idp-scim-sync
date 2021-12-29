@@ -13,3 +13,14 @@
 
 # Dependency directories (remove the comment below to include it)
 # vendor/
+
+# SAM
+.aws-sam/
+packaged.yaml
+
+# binaries
+bin/
+build/
+dist/
+
+.idpscim.yaml
