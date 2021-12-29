@@ -1,6 +1,6 @@
 # idp-scim-sync
 
-[![CII Best Practices](https://bestpractices.coreinfrastructure.org/en/projects/5348/badge)](https://bestpractices.coreinfrastructure.org/en/projects/5348)
+[![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/5348/badge)](https://bestpractices.coreinfrastructure.org/projects/5348)
 [![e2e](https://github.com/slashdevops/idp-scim-sync/workflows/e2e/badge.svg)](https://github.com/slashdevops/idp-scim-sync/actions)
 ![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/slashdevops/idp-scim-sync?style=plastic)
 [![Go Report Card](https://goreportcard.com/badge/github.com/slashdevops/idp-scim-sync)](https://goreportcard.com/report/github.com/slashdevops/idp-scim-sync)
