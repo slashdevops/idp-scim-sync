@@ -86,6 +86,7 @@ func (u *User) String() string {
 	return string(u.ToJSON(u))
 }
 
+// ToJSON returns the JSON representation of the User
 func (u *User) ToJSON(stc interface{}) []byte {
 	if stc == nil {
 		return []byte("")
