@@ -70,6 +70,12 @@ jobs:
       - name: Show project files after make
         run: tree .
 
+      - name: codecov coverage report
+        uses: codecov/codecov-action@v2
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }} # not required for public repos
+          files: ./coverage.out
+
       - name: Remove artifacts
         run: make clean
 
