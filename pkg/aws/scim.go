@@ -261,7 +261,7 @@ func (s *SCIMService) DeleteUser(ctx context.Context, id string) error {
 	return nil
 }
 
-// GetUser returns an user from the AWS SSO Using the API
+// GetUserByUserName gets a user by username in the AWS SSO Using the API.
 func (s *SCIMService) GetUserByUserName(ctx context.Context, userName string) (*GetUserResponse, error) {
 	if userName == "" {
 		return nil, ErrUserUserNameEmpty

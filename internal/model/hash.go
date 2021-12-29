@@ -9,6 +9,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+// Hash returns a SHA1 hash of value pass as argument
 func Hash(value interface{}) string {
 	if value == nil {
 		log.Fatal("value is nil")

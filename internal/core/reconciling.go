@@ -9,13 +9,28 @@ import (
 )
 
 var (
-	ErrCreateGroupsResultNil        = fmt.Errorf("create Groups Result is nil")
-	ErrUpdateGroupsResultNil        = fmt.Errorf("update Groups Result is nil")
-	ErrDeleteGroupsResultNil        = fmt.Errorf("remove Groups Result is nil")
-	ErrCreateUsersResultNil         = fmt.Errorf("create Users Result is nil")
-	ErrUpdateUsersResultNil         = fmt.Errorf("update Users Result is nil")
-	ErrDeleteUsersResultNil         = fmt.Errorf("remove Users Result is nil")
+	// ErrCreateGroupsResultNil is returned when the create *model.GroupsResult argument is nil
+	ErrCreateGroupsResultNil = fmt.Errorf("create Groups Result is nil")
+
+	// ErrUpdateGroupsResultNil is returned when the update *model.GroupsResult argument is nil
+	ErrUpdateGroupsResultNil = fmt.Errorf("update Groups Result is nil")
+
+	// ErrDeleteGroupsResultNil is returned when the delete *model.GroupsResult argument is nil
+	ErrDeleteGroupsResultNil = fmt.Errorf("remove Groups Result is nil")
+
+	// ErrCreateUsersResultNil is returned when the create *model.UsersResult argument is nil
+	ErrCreateUsersResultNil = fmt.Errorf("create Users Result is nil")
+
+	// ErrUpdateUsersResultNil is returned when the update *model.UsersResult argument is nil
+	ErrUpdateUsersResultNil = fmt.Errorf("update Users Result is nil")
+
+	// ErrDeleteUsersResultNil is returned when the delete *model.UsersResult argument is nil
+	ErrDeleteUsersResultNil = fmt.Errorf("remove Users Result is nil")
+
+	// ErrCreateGroupsMembersResultNil is returned when the SCIM *model.GroupsMembersResult argument is nil
 	ErrCreateGroupsMembersResultNil = fmt.Errorf("create Groups Members Result is nil")
+
+	// ErrDeleteGroupsMembersResultNil is returned when the SCIM *model.GroupsMembersResult argument is nil
 	ErrDeleteGroupsMembersResultNil = fmt.Errorf("remove Groups Members Result is nil")
 )
 

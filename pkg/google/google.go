@@ -18,9 +18,14 @@ const (
 )
 
 var (
+	// ErrGoogleClientScopeNil is returned when the scope is nil.
 	ErrGoogleClientScopeNil = fmt.Errorf("google: google client scope is required")
-	ErrUserIDNil            = fmt.Errorf("google: user id is required")
-	ErrGroupIDNil           = fmt.Errorf("google: group id is required")
+
+	// ErrUserIDNil is returned when the user ID is nil.
+	ErrUserIDNil = fmt.Errorf("google: user id is required")
+
+	// ErrGroupIDNil is returned when the group ID is nil.
+	ErrGroupIDNil = fmt.Errorf("google: group id is required")
 )
 
 // DirectoryService represent the  Google Directory API client.

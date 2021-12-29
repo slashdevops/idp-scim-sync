@@ -36,7 +36,7 @@ const (
 	// DefaultDisableState is the default state status.
 	DefaultDisableState = false
 
-	// AWSS3BucketKey is the key of the AWS S3 bucket.
+	// DefaultAWSS3BucketKey is the key of the AWS S3 bucket.
 	DefaultAWSS3BucketKey = "state.json"
 
 	// DefaultConfigFile is the default config file name.

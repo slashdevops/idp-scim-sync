@@ -5,12 +5,23 @@ import (
 )
 
 var (
+	// ErrIdentityProviderGroupsMembersNil is returned when the idp *GroupsMembersResult argument is nil
 	ErrIdentityProviderGroupsMembersNil = errors.New("identity provider groups members is nil")
-	ErrSCIMGroupsMembersNil             = errors.New("scim groups members is nil")
-	ErrIdentityProviderGroupsNil        = errors.New("identity provider groups is nil")
-	ErrSCIMGroupsNil                    = errors.New("scim groups is nil")
-	ErrIdentityProviderUsersNil         = errors.New("identity provider users is nil")
-	ErrSCIMUsersNil                     = errors.New("scim users is nil")
+
+	// ErrSCIMGroupsMembersNil is returned when the scim *GroupsMembersResult argument is nil
+	ErrSCIMGroupsMembersNil = errors.New("scim groups members is nil")
+
+	// ErrIdentityProviderGroupsNil is returned when the idp *GroupsResult argument is nil
+	ErrIdentityProviderGroupsNil = errors.New("identity provider groups is nil")
+
+	// ErrSCIMGroupsNil is returned when the scim *GroupsResult argument is nil
+	ErrSCIMGroupsNil = errors.New("scim groups is nil")
+
+	// ErrIdentityProviderUsersNil is returned when the idp *UsersResult argument is nil
+	ErrIdentityProviderUsersNil = errors.New("identity provider users is nil")
+
+	// ErrSCIMUsersNil is returned when the scim *UsersResult argument is nil
+	ErrSCIMUsersNil = errors.New("scim users is nil")
 )
 
 // MembersOperations returns datasets used to perform differents operations over the SCIM side
@@ -278,7 +289,7 @@ func MergeGroupsMembersResult(gms ...*GroupsMembersResult) (merged *GroupsMember
 	return
 }
 
-// UpdateSCIMID updates the SCIMID of the group in the idp object
+// UpdateGroupsMembersSCIMID updates the SCIMID of the group in the idp object
 // this is necessary because during the sync process we can create users and groups and to add
 // these users to the groups we need to have the SCIMID of the user and the group
 func UpdateGroupsMembersSCIMID(idp *GroupsMembersResult, scimGroups *GroupsResult, scimUsers *UsersResult) *GroupsMembersResult {
