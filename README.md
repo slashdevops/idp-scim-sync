@@ -19,3 +19,6 @@ This project is [100% Golang](https://go.dev/) and has two main components:
 
 2. [idpscimcli](docs/idpscimcli.md) is is a command-line tool to check and validate some functionalities implemented in `idpscim`. More details [here](docs/idpscimcli.md).
 
+## Examples
+
+look here [docs/Demo.md](docs/Demo.md)
