@@ -17,11 +17,13 @@
 # SAM
 .aws-sam/
 packaged.yaml
+build.toml
 
 # binaries
 bin/
 build/
 dist/
+extras/
 
 # config
 .idpscim.yaml

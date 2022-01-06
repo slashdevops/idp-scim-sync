@@ -100,14 +100,14 @@ func initConfig() {
 		"aws_s3_bucket_key",
 		"gws_user_email",
 		"gws_service_account_file",
-		"gws_service_account_file_secret_name",
-		"gws_user_email_secret_name",
+		"gws_service_account_file_secret_arn",
+		"gws_user_email_secret_arn",
 		"gws_groups_filter",
 		"gws_users_filter",
 		"aws_scim_access_token",
 		"aws_scim_endpoint",
-		"aws_scim_endpoint_secret_name",
-		"aws_scim_access_token_secret_name",
+		"aws_scim_endpoint_secret_arn",
+		"aws_scim_access_token_secret_arn",
 		"disable_state",
 	}
 	for _, e := range envVars {
@@ -190,29 +190,29 @@ func getSecrets() {
 		log.Fatalf(errors.Wrap(err, "cannot create aws secrets manager service").Error())
 	}
 
-	log.WithField("name", cfg.GWSUserEmailSecretName).Debug("reading secret")
-	unwrap, err := secrets.GetSecretValue(context.Background(), cfg.GWSUserEmailSecretName)
+	log.WithField("name", cfg.GWSUserEmailSecretARN).Debug("reading secret")
+	unwrap, err := secrets.GetSecretValue(context.Background(), cfg.GWSUserEmailSecretARN)
 	if err != nil {
 		log.Fatalf(errors.Wrap(err, "cannot get secretmanager value").Error())
 	}
 	cfg.GWSUserEmail = unwrap
 
-	log.WithField("name", cfg.GWSServiceAccountFileSecretName).Debug("reading secret")
-	unwrap, err = secrets.GetSecretValue(context.Background(), cfg.GWSServiceAccountFileSecretName)
+	log.WithField("name", cfg.GWSServiceAccountFileSecretARN).Debug("reading secret")
+	unwrap, err = secrets.GetSecretValue(context.Background(), cfg.GWSServiceAccountFileSecretARN)
 	if err != nil {
 		log.Fatalf(errors.Wrap(err, "cannot get secretmanager value").Error())
 	}
 	cfg.GWSServiceAccountFile = unwrap
 
-	log.WithField("name", cfg.AWSSCIMAccessTokenSecretName).Debug("reading secret")
-	unwrap, err = secrets.GetSecretValue(context.Background(), cfg.AWSSCIMAccessTokenSecretName)
+	log.WithField("name", cfg.AWSSCIMAccessTokenSecretARN).Debug("reading secret")
+	unwrap, err = secrets.GetSecretValue(context.Background(), cfg.AWSSCIMAccessTokenSecretARN)
 	if err != nil {
 		log.Fatalf(errors.Wrap(err, "cannot get secretmanager value").Error())
 	}
 	cfg.AWSSCIMAccessToken = unwrap
 
-	log.WithField("name", cfg.AWSSCIMEndpointSecretName).Debug("reading secret")
-	unwrap, err = secrets.GetSecretValue(context.Background(), cfg.AWSSCIMEndpointSecretName)
+	log.WithField("name", cfg.AWSSCIMEndpointSecretARN).Debug("reading secret")
+	unwrap, err = secrets.GetSecretValue(context.Background(), cfg.AWSSCIMEndpointSecretARN)
 	if err != nil {
 		log.Fatalf(errors.Wrap(err, "cannot get secretmanager value").Error())
 	}

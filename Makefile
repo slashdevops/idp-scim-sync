@@ -26,7 +26,10 @@ GO_ARCH        ?= arm64 amd64
 # avoid mocks in tests
 GO_FILES       := $(shell go list ./... | grep -v /mocks/)
 
-
+# Specify the build target for AWS SAM
+AWS_SAM_GO_OS        ?= linux
+AWS_SAM_GO_ARCH      ?= amd64
+AWS_SAM_PROJECT_NAME ?= idpscim
 
 CONTAINER_OS   ?= linux
 CONTAINER_ARCH ?= arm64v8 amd64
@@ -64,7 +67,7 @@ test: generate tidy fmt vet
 test-coverage: test
 	go tool cover -html=coverage.out
 
-build:
+build: test
 	$(foreach proj_mod, $(PROJECT_MODULES_NAME), \
 		$(shell CGO_ENABLED=$(GO_CGO_ENABLED) go build $(GO_LDFLAGS) $(GO_OPTS) -o ./$(BUILD_DIR)/$(proj_mod) ./cmd/$(proj_mod)/ ))
 
@@ -74,8 +77,13 @@ build-dist: build
 			$(foreach proj_mod, $(PROJECT_MODULES_NAME), \
 				$(shell GOOS=$(GOOS) GOARCH=$(GOARCH) CGO_ENABLED=$(GO_CGO_ENABLED) go build $(GO_LDFLAGS) $(GO_OPTS) -o ./$(DIST_DIR)/$(proj_mod)-$(GOOS)-$(GOARCH) ./cmd/$(proj_mod)/ ))))
 
+build-sam: test
+	$(foreach GOOS, $(AWS_SAM_GO_OS),\
+		$(foreach GOARCH, $(AWS_SAM_GO_ARCH), \
+			$(shell GOOS=$(GOOS) GOARCH=$(GOARCH) CGO_ENABLED=$(GO_CGO_ENABLED) go build $(GO_LDFLAGS) $(GO_OPTS) -o ./$(DIST_DIR)/$(AWS_SAM_PROJECT_NAME)-$(GOOS)-$(GOARCH) ./cmd/$(AWS_SAM_PROJECT_NAME)/ )))
+
 clean:
-	rm -rf $(BUILD_DIR) $(DIST_DIR) ./*.out
+	rm -rf $(BUILD_DIR) $(DIST_DIR) ./*.out build.toml
 
 container-build: build-dist
 	$(foreach OS, $(CONTAINER_OS), \
