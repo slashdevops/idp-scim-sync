@@ -22,3 +22,9 @@ This project is [100% Golang](https://go.dev/) and has two main components:
 ## Examples
 
 look here [docs/Demo.md](docs/Demo.md)
+
+## License
+
+This module is released under the Apache License Version 2.0:
+
+* [http://www.apache.org/licenses/LICENSE-2.0.html](http://www.apache.org/licenses/LICENSE-2.0.html)

@@ -23,4 +23,8 @@ bin/
 build/
 dist/
 
+# config
 .idpscim.yaml
+
+# MacOS stuff
+.DS_Store

@@ -1,0 +1,45 @@
+---
+AWSTemplateFormatVersion: 2010-09-09
+Description: >
+  Template for creating an AWS IAM Policy for a Role attached to GitHub OIDC Provider
+
+Parameters:
+  GithubOpenidRoleStackExportName:
+    Type: String
+    Description: The base CloudFormation stack export name that contains the IAM Role for Github OIDC Provider
+    Default: iam-role-slashdevops-idp-scim-sync
+
+  EcrRepositoryStackExportName:
+    Type: String
+    Description: The base CloudFormation stack export name that contains the IAM OIDC Provider
+    Default: ecr-repo-slashdevops-idp-scim-sync
+
+Resources:
+  Policy:
+    Type: AWS::IAM::Policy
+    Properties:
+      Roles:
+        - Fn::ImportValue: !Sub "${GithubOpenidRoleStackExportName}:RoleName"
+      PolicyName: !Sub
+        - "${prefix}-ECR"
+        -  prefix:
+            Fn::ImportValue: !Sub "${GithubOpenidRoleStackExportName}:RoleName"
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Action:
+              - ecr:BatchCheckLayerAvailability
+              - ecr:CompleteLayerUpload
+              - ecr:InitiateLayerUpload
+              - ecr:PutImage
+              - ecr:UploadLayerPart
+            Resource:
+             - Fn::ImportValue: !Sub "${EcrRepositoryStackExportName}:RepositoryArn"
+
+Outputs:
+  PolicyName:
+    Description: Policy name
+    Value: !Ref Policy
+
+# iam-policy-github-slashdevops-idp-scim-sync-ecr
