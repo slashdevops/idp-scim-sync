@@ -200,7 +200,7 @@ Parameters:
   LogGroupRetentionDays:
     Type: Number
     Description: The number of days you want to keep logs for created function
-    Default: 1
+    Default: 7
     AllowedValues:
       - 1
       - 3
@@ -229,7 +229,7 @@ Resources:
       FunctionName: idp-scim-sync
       Runtime: go1.x
       MemorySize: !Ref MemorySize
-      Handler: dist/idpscim-linux-amd64
+      Handler: dist/idpscim-linux-amd64/idpscim
       Timeout: !Ref Timeout
       Tracing: Active
       Environment:
@@ -278,7 +278,8 @@ Resources:
                 - Sid: SSMGetParameterPolicy
                   Effect: Allow
                   Action:
-                    - secretsmanager:Get*
+                    - secretsmanager:GetResourcePolicy
+                    - secretsmanager:GetSecretValue
                   Resource:
                     - !Ref AWSGWSServiceAccountFileSecret
                     - !Ref AWSGWSUserEmailSecret
@@ -288,15 +289,26 @@ Resources:
                   Effect: Allow
                   Action:
                     - s3:GetObject
+                    - s3:GetObjectAcl
                     - s3:GetObjectVersion
                     - s3:PutObject
+                    - s3:PutObjectAcl
+                    - s3:ListBucket
                   Resource:
+                    - !Sub "arn:aws:s3:::${BucketNamePrefix}-${AWS::AccountId}-${AWS::Region}"
                     - !Sub "arn:aws:s3:::${BucketNamePrefix}-${AWS::AccountId}-${AWS::Region}/*"
+                - Sid: KMSGetDataPolicy
+                  Effect: Allow
+                  Action:
+                    - kms:GenerateDataKeyPair
+                  Resource:
+                    - !GetAtt KMSKey.Arn
                 - Sid: KMSDecryptPolicy
                   Effect: Allow
                   Action:
                     - kms:Decrypt
-                    - kms:GenerateDataKey*
+                    - kms:Encrypt
+                    - kms:GenerateDataKey
                   Resource:
                     - !GetAtt KMSKey.Arn
 
@@ -341,8 +353,8 @@ Resources:
           - Sid: AllowAWSLambdaToRetrieveKMSKey
             Effect: Allow
             Principal:
-              Service:
-                - lambda.amazonaws.com
+              AWS:
+                - !Sub "arn:aws:iam::${AWS::AccountId}:role/serverless-idp-scim-sync-${AWS::AccountId}-${AWS::Region}"
             Action:
               - kms:Encrypt
               - kms:Decrypt
@@ -350,6 +362,9 @@ Resources:
               - kms:GenerateDataKey*
               - kms:DescribeKey
             Resource: "*"
+            Condition:
+              StringEquals:
+                kms:CallerAccount: !Ref 'AWS::AccountId'
 
   KMSKeyAlias:
     Type: AWS::KMS::Alias
@@ -374,6 +389,7 @@ Resources:
           - ServerSideEncryptionByDefault:
               KMSMasterKeyID: !Sub "arn:aws:kms:${AWS::Region}:${AWS::AccountId}:${KMSKeyAlias}"
               SSEAlgorithm: "aws:kms"
+            BucketKeyEnabled: true
 
   BucketPolicy:
     Type: AWS::S3::BucketPolicy
@@ -388,8 +404,10 @@ Resources:
                 - !Sub "arn:aws:iam::${AWS::AccountId}:role/serverless-idp-scim-sync-${AWS::AccountId}-${AWS::Region}"
             Effect: Allow
             Action:
-              - s3:PutObject
               - s3:GetObject
+              - s3:GetObjectAcl
+              - s3:PutObject
+              - s3:PutObjectAcl
               - s3:GetObjectVersion
             Resource:
               - !Sub "arn:${AWS::Partition}:s3:::${Bucket}/*"

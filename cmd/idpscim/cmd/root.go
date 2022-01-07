@@ -116,24 +116,27 @@ func initConfig() {
 		}
 	}
 
-	home, err := os.UserHomeDir()
-	cobra.CheckErr(err)
+	// when use a lambda, we need to read the config from the environment only
+	if !cfg.IsLambda {
+		home, err := os.UserHomeDir()
+		cobra.CheckErr(err)
 
-	currentDir, err := os.Getwd()
-	cobra.CheckErr(err)
+		currentDir, err := os.Getwd()
+		cobra.CheckErr(err)
 
-	viper.AddConfigPath(home)
-	viper.AddConfigPath(currentDir)
-	viper.SetConfigType("yaml")
+		viper.AddConfigPath(home)
+		viper.AddConfigPath(currentDir)
+		viper.SetConfigType("yaml")
 
-	// Search config in home directory with name "downloader" (without extension).
-	fileExtension := filepath.Ext(cfg.ConfigFile)
-	fileName := cfg.ConfigFile[0 : len(cfg.ConfigFile)-len(fileExtension)]
-	viper.SetConfigName(fileName)
+		// Search config in home directory with name "downloader" (without extension).
+		fileExtension := filepath.Ext(cfg.ConfigFile)
+		fileName := cfg.ConfigFile[0 : len(cfg.ConfigFile)-len(fileExtension)]
+		viper.SetConfigName(fileName)
 
-	// If a config file is found, read it in.
-	if err := viper.ReadInConfig(); err == nil {
-		fmt.Fprintln(os.Stderr, "using config file:", viper.ConfigFileUsed())
+		// If a config file is found, read it in.
+		if err := viper.ReadInConfig(); err == nil {
+			fmt.Fprintln(os.Stderr, "using config file:", viper.ConfigFileUsed())
+		}
 	}
 
 	if err := viper.Unmarshal(&cfg); err != nil {
@@ -233,9 +236,15 @@ func syncGroups() error {
 
 	ctx := context.Background()
 
-	gwsServiceAccount, err := os.ReadFile(cfg.GWSServiceAccountFile)
-	if err != nil {
-		log.Fatalf(errors.Wrap(err, "cannot read service account file").Error())
+	// cfg.GWSServiceAccountFile could be a file path or a content of the file
+	gwsServiceAccountContent := []byte(cfg.GWSServiceAccountFile)
+
+	if !cfg.IsLambda {
+		gwsServiceAccount, err := os.ReadFile(cfg.GWSServiceAccountFile)
+		if err != nil {
+			log.Fatalf(errors.Wrap(err, "cannot read service account file").Error())
+		}
+		gwsServiceAccountContent = gwsServiceAccount
 	}
 
 	gwsAPIScopes := []string{
@@ -245,7 +254,7 @@ func syncGroups() error {
 	}
 
 	// Google Client Service
-	gwsService, err := google.NewService(ctx, cfg.GWSUserEmail, gwsServiceAccount, gwsAPIScopes...)
+	gwsService, err := google.NewService(ctx, cfg.GWSUserEmail, gwsServiceAccountContent, gwsAPIScopes...)
 	if err != nil {
 		return errors.Wrap(err, "cannot create google service")
 	}
