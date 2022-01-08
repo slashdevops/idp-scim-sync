@@ -1,8 +1,12 @@
 {
   "cSpell.words": [
+    "codecov",
     "Dockerfiles",
-    "repositoryname",
+    "goarch",
+    "idpscimcli",
     "ipid",
-    "scimid"
+    "repositoryname",
+    "scimid",
+    "syslist"
   ]
 }

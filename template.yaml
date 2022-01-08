@@ -3,14 +3,16 @@ AWSTemplateFormatVersion: "2010-09-09"
 Transform: AWS::Serverless-2016-10-31
 
 Description: |
-  This template is to keep your AWS Single Sign-On (SSO) groups and users in sync with your
-  Google Workspace directory using and AWS Lambda function
+  This is used to keep your AWS Single Sign-On (SSO) groups and users in sync with your
+  Google Workspace directory using and AWS Lambda function.
+
+  Project URL: https://github.com/slashdevops/idp-scim-sync
 
 Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:
       - Label:
-          default: "Lambda - Configuration"
+          default: "Lambda Function - Configuration"
         Parameters:
           - SyncMethod
           - DisableState
@@ -23,7 +25,7 @@ Metadata:
           - Timeout
           - LogGroupRetentionDays
       - Label:
-          default: "State - Configuration"
+          default: "State File - Configuration"
         Parameters:
           - BucketNamePrefix
           - BucketKey
@@ -47,11 +49,11 @@ Metadata:
     Description: |
       keep your AWS Single Sign-On (SSO) groups and users in sync with your
       Google Workspace directory using and AWS Lambda function.
-    Author: SlashDevOps idp-scim-sync Team
+    Author: slashdevops/idp-scim-sync Team
     SpdxLicenseId: Apache-2.0
     LicenseUrl: LICENSE
     ReadmeUrl: README.md
-    Labels:
+    Labels: # only 10 allowed
       - Serverless
       - SSO
       - Lambda
@@ -59,7 +61,7 @@ Metadata:
       - AWS
       - Go
       - Google-Workspace
-      - sso-scim-sync
+      - idp-scim-sync
       - Groups
       - Users
     HomePageUrl: https://github.com/slashdevops/idp-scim-sync
@@ -70,7 +72,7 @@ Parameters:
   ScheduleExpression:
     Type: String
     Description: |
-      Schedule for trigger the execution of ssosync (see EventBridge rule schedule expressions)
+      Schedule for trigger the execution of idp-scim-sync (see EventBridge rule schedule expressions)
       Reference: https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-create-rule-schedule.html
     Default: rate(15 minutes)
 
@@ -98,15 +100,15 @@ Parameters:
   BucketNamePrefix:
     Type: String
     Description: |
-      The name of the bucket where the state data will be stored.
-      NOTE: This template will use the AWS Region and AWS Account ID as a suffix to the bucket name to avoid conflicts.
-      'BucketNamePrefix-AWS::AccountId-AWS::Region'
+      Prefix used in the bucket name where the state data will be stored.
+      NOTE: This template will use the 'AWS Region' and 'AWS Account ID' as a suffix to the 'bucket name' to avoid conflicts.
+      Example: 'BucketNamePrefix-AWS::AccountId-AWS::Region'
     Default: idp-scim-sync-state
 
   BucketKey:
     Type: String
     Description: |
-      The key of the bucket where the state data will be stored
+      The key "file" where the state data will be stored
     Default: data/state.json
 
   GWSServiceAccountFile:
@@ -366,7 +368,9 @@ Resources:
           - Sid: AllowAWSLambdaToRetrieveKMSKey
             Effect: Allow
             Principal:
-              AWS: !Sub "arn:aws:iam::${AWS::AccountId}:role/serverless-idp-scim-sync-${AWS::AccountId}-${AWS::Region}"
+              Service: "lambda.amazonaws.com"
+              #AWS: !GetAtt LambdaFunctionRole.Arn # Fails because circular reference
+              #AWS: !Sub "arn:aws:iam::${AWS::AccountId}:role/serverless-idp-scim-sync-${AWS::AccountId}-${AWS::Region}" # Fails in runtime because the roles is not created yet
             Action:
               - kms:Encrypt
               - kms:Decrypt
@@ -434,7 +438,10 @@ Resources:
             Condition:
               Bool:
                 "aws:SecureTransport": false
-          # NOTE: to implement the following policies is necessary to send the objet encrypted to the bucket
+          # NOTE: To implement the following policies is necessary to send the objet encrypted to the bucket
+          #       and the bucket is already implementing "BucketKeyEnabled", so looks like it is not necessary
+          #       but the problem is the AWS Config rule that want these enabled.  Let's see in the future if
+          #       I will implement these policies.
           # - Sid: DenyPublishingUnencryptedResources
           #   Effect: Deny
           #   Principal: "*"

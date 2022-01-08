@@ -1,13 +1,16 @@
 ---
 AWSTemplateFormatVersion: "2010-09-09"
 Description: >
-  Creates an AWS S3 bucket for Serverless SAM deploy
+  Creates an AWS S3 bucket for AWS SAM Serverless to publish the artifacts.
   Deploy as: slashdevops-s3-idp-scim-sync-sam
 
 Parameters:
   BucketNamePrefix:
     Type: String
-    Description: Prefix used in the bucket name
+    Description: |
+      Prefix used in the bucket name
+      NOTE: This template will use the 'AWS Region' and 'AWS Account ID' as a suffix to the 'bucket name' to avoid conflicts.
+      Example: 'BucketNamePrefix-AWS::AccountId-AWS::Region'
     Default: slashdevops-idp-scim-sync
     MinLength: 5
     MaxLength: 64
