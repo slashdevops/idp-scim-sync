@@ -1,5 +1,7 @@
 # Contributing
 
+__Warning:__ This is a __WIP__
+
 `idp-scim-sync` is [Apache 2.0 licensed](https://github.com/slashdevops/idp-scim-sync/blob/main/LICENSE) and
 accepts contributions via GitHub pull requests. This document outlines
 some of the conventions on to make it easier to get your contribution
@@ -63,8 +65,8 @@ For better integration I use [go:generate](https://pkg.go.dev/cmd/go/internal/ge
 
 Prerequisites:
 
-- make >= 3
-- go >= 1.17
+- [make](https://www.gnu.org/software/make/) >= 3
+- [Go](https://go.dev/learn/) >= 1.17
 
 ```bash
 make test

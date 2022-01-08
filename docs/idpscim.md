@@ -52,3 +52,15 @@ This could be used following the instructions in the main [README.md](docs/READM
 
 this is a __WIP__
 
+Test and build the Docker image
+
+```bash
+make test
+make container-build
+```
+
+Execute
+
+```bash
+docker run -it -v $HOME/tmp/idpscim.yaml:/app/.idpscim.yaml ghcr.io/slashdevops/idp-scim-sync-linux-arm64v8 idpscim --debug
+```
