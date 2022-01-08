@@ -3,23 +3,24 @@ FROM ${ARCH}/alpine
 
 ARG OS="linux"
 ARG BIN_ARCH="amd64"
+
+ENV PROJECT_NAME="idp-scim-sync"
 ENV HOME="/app"
 
-LABEL name="idp-scim-sync"
+LABEL name="${PROJECT_NAME}"
 
 RUN apk add --no-cache --update \
-    ca-certificates \
-    && rm -rf /tmp/* /var/tmp/* /var/cache/apk/*
+  ca-certificates \
+  && rm -rf /tmp/* /var/tmp/* /var/cache/apk/*
 
 RUN mkdir -p $HOME && \
-    chown -R nobody.nobody $HOME
+  chown -R nobody.nobody $HOME
 
-COPY dist/idpscim-${OS}-${BIN_ARCH} ${HOME}/idpscim
-COPY dist/idpscimcli-${OS}-${BIN_ARCH} ${HOME}/idpscimcli
+COPY dist/$PROJECT_NAME-$OS-$BIN_ARCH/* $HOME/
 
 ENV PATH="${PATH}:${HOME}"
 
-VOLUME ${HOME}
+VOLUME $HOME
 USER nobody:nobody
 WORKDIR $HOME
 
