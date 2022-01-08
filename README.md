@@ -11,7 +11,7 @@
 
 Keep your [AWS Single Sign-On (SSO) groups and users](https://aws.amazon.com/single-sign-on/) in sync with your [Google Workspace directory](https://workspace.google.com/) using and [AWS Lambda function](https://aws.amazon.com/lambda/).
 
-![On AWS](images/../docs/images/diagrams/ipd-scim-sync.drawio.png)
+![On AWS](https://raw.githubusercontent.com/slashdevops/idp-scim-sync/main/docs/images/diagrams/ipd-scim-sync.drawio.png)
 
 This project is [100% Golang](https://go.dev/) and has two main components:
 

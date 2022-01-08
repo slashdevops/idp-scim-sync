@@ -1,5 +1,5 @@
 ---
-AWSTemplateFormatVersion: '2010-09-09'
+AWSTemplateFormatVersion: "2010-09-09"
 Transform: AWS::Serverless-2016-10-31
 
 Description: |
@@ -52,9 +52,18 @@ Metadata:
     LicenseUrl: LICENSE
     ReadmeUrl: README.md
     Labels:
-      ["Serverless", "SSO", "Lambda", "SCIM", "AWS", "Go", "Google-Workspace", "sso-scim-sync", "Groups", "Users"]
+      - Serverless
+      - SSO
+      - Lambda
+      - SCIM
+      - AWS
+      - Go
+      - Google-Workspace
+      - sso-scim-sync
+      - Groups
+      - Users
     HomePageUrl: https://github.com/slashdevops/idp-scim-sync
-    SemanticVersion: 0.0.1
+    SemanticVersion: 0.0.1 # will be overwritten by the CI/CD pipeline
     SourceCodeUrl: https://github.com/slashdevops/idp-scim-sync
 
 Parameters:
@@ -275,42 +284,42 @@ Resources:
           PolicyDocument:
             Version: "2012-10-17"
             Statement:
-                - Sid: SSMGetParameterPolicy
-                  Effect: Allow
-                  Action:
-                    - secretsmanager:GetResourcePolicy
-                    - secretsmanager:GetSecretValue
-                  Resource:
-                    - !Ref AWSGWSServiceAccountFileSecret
-                    - !Ref AWSGWSUserEmailSecret
-                    - !Ref AWSSCIMEndpointSecret
-                    - !Ref AWSSCIMAccessTokenSecret
-                - Sid: S3Policy
-                  Effect: Allow
-                  Action:
-                    - s3:GetObject
-                    - s3:GetObjectAcl
-                    - s3:GetObjectVersion
-                    - s3:PutObject
-                    - s3:PutObjectAcl
-                    - s3:ListBucket
-                  Resource:
-                    - !Sub "arn:aws:s3:::${BucketNamePrefix}-${AWS::AccountId}-${AWS::Region}"
-                    - !Sub "arn:aws:s3:::${BucketNamePrefix}-${AWS::AccountId}-${AWS::Region}/*"
-                - Sid: KMSGetDataPolicy
-                  Effect: Allow
-                  Action:
-                    - kms:GenerateDataKeyPair
-                  Resource:
-                    - !GetAtt KMSKey.Arn
-                - Sid: KMSDecryptPolicy
-                  Effect: Allow
-                  Action:
-                    - kms:Decrypt
-                    - kms:Encrypt
-                    - kms:GenerateDataKey
-                  Resource:
-                    - !GetAtt KMSKey.Arn
+              - Sid: SSMGetParameterPolicy
+                Effect: Allow
+                Action:
+                  - secretsmanager:GetResourcePolicy
+                  - secretsmanager:GetSecretValue
+                Resource:
+                  - !Ref AWSGWSServiceAccountFileSecret
+                  - !Ref AWSGWSUserEmailSecret
+                  - !Ref AWSSCIMEndpointSecret
+                  - !Ref AWSSCIMAccessTokenSecret
+              - Sid: S3Policy
+                Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:GetObjectAcl
+                  - s3:GetObjectVersion
+                  - s3:PutObject
+                  - s3:PutObjectAcl
+                  - s3:ListBucket
+                Resource:
+                  - !Sub "arn:aws:s3:::${BucketNamePrefix}-${AWS::AccountId}-${AWS::Region}"
+                  - !Sub "arn:aws:s3:::${BucketNamePrefix}-${AWS::AccountId}-${AWS::Region}/*"
+              - Sid: KMSGetDataPolicy
+                Effect: Allow
+                Action:
+                  - kms:GenerateDataKeyPair
+                Resource:
+                  - !GetAtt KMSKey.Arn
+              - Sid: KMSDecryptPolicy
+                Effect: Allow
+                Action:
+                  - kms:Decrypt
+                  - kms:Encrypt
+                  - kms:GenerateDataKey
+                Resource:
+                  - !GetAtt KMSKey.Arn
 
   AWSGWSServiceAccountFileSecret:
     Type: AWS::SecretsManager::Secret
@@ -353,8 +362,8 @@ Resources:
           - Sid: AllowAWSLambdaToRetrieveKMSKey
             Effect: Allow
             Principal:
-              AWS:
-                - !Sub "arn:aws:iam::${AWS::AccountId}:role/serverless-idp-scim-sync-${AWS::AccountId}-${AWS::Region}"
+              Service:
+                - lambda.amazonaws.com
             Action:
               - kms:Encrypt
               - kms:Decrypt
@@ -364,7 +373,7 @@ Resources:
             Resource: "*"
             Condition:
               StringEquals:
-                kms:CallerAccount: !Ref 'AWS::AccountId'
+                kms:CallerAccount: !Ref "AWS::AccountId"
 
   KMSKeyAlias:
     Type: AWS::KMS::Alias
@@ -389,7 +398,7 @@ Resources:
           - ServerSideEncryptionByDefault:
               KMSMasterKeyID: !Sub "arn:aws:kms:${AWS::Region}:${AWS::AccountId}:${KMSKeyAlias}"
               SSEAlgorithm: "aws:kms"
-            BucketKeyEnabled: true
+            BucketKeyEnabled: true # https://docs.aws.amazon.com/AmazonS3/latest/userguide/bucket-key.html
 
   BucketPolicy:
     Type: AWS::S3::BucketPolicy
