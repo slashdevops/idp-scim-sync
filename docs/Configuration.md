@@ -33,20 +33,20 @@ sync_method: groups
 then run the `idpscim` program
 
 ```bash
-idpscim
+./idpscim
 ```
 
 or create a `<any filename on whenever place>.yaml` then run the `idpscim` program with the `--config-file` option.
 
 ```bash
-idpscim --config-file <any filename on whenever place>.yaml
+./idpscim --config-file <any filename on whenever place>.yaml
 ```
 
 ## Command line arguments
 
 ```bash
 # execute the program with the following arguments
-idpscim \
+./idpscim \
   --aws-s3-bucket-name "my-bucket" \
   --aws-s3-bucket-key "data/state.json" \
   --aws-scim-access-token "<access token>" \
@@ -74,5 +74,5 @@ export IDPSCIM_SYNC_METHOD="groups"
 export IDPSCIM_LOG_LEVEL="trace"
 
 # then execute the program
-idpscim
+./idpscim
 ```

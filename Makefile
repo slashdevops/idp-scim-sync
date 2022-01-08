@@ -21,7 +21,7 @@ DIST_DIR       := ./dist
 GO_LDFLAGS     ?= -ldflags "-X github.com/$(PROJECT_NAMESPACE)/$(PROJECT_NAME)/internal/version.Version=$(GIT_VERSION) -X github.com/$(PROJECT_NAMESPACE)/$(PROJECT_NAME)/internal/version.Revision=$(GIT_REVISION) -X github.com/$(PROJECT_NAMESPACE)/$(PROJECT_NAME)/internal/version.Branch=$(GIT_BRANCH) -X github.com/$(PROJECT_NAMESPACE)/$(PROJECT_NAME)/internal/version.BuildUser=\"$(GIT_USER)\" -X github.com/$(PROJECT_NAMESPACE)/$(PROJECT_NAME)/internal/version.BuildDate=$(BUILD_DATE)"
 GO_CGO_ENABLED ?= 0
 GO_OPTS        ?= -v
-GO_OS          ?= darwin linux
+GO_OS          ?= darwin linux windows
 GO_ARCH        ?= arm64 amd64
 # avoid mocks in tests
 GO_FILES       := $(shell go list ./... | grep -v /mocks/)

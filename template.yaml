@@ -3,14 +3,16 @@ AWSTemplateFormatVersion: "2010-09-09"
 Transform: AWS::Serverless-2016-10-31
 
 Description: |
-  This template is to keep your AWS Single Sign-On (SSO) groups and users in sync with your
-  Google Workspace directory using and AWS Lambda function
+  This is used to keep your AWS Single Sign-On (SSO) groups and users in sync with your
+  Google Workspace directory using and AWS Lambda function.
+
+  Project URL: https://github.com/slashdevops/idp-scim-sync
 
 Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:
       - Label:
-          default: "Lambda - Configuration"
+          default: "Lambda Function - Configuration"
         Parameters:
           - SyncMethod
           - DisableState
@@ -23,7 +25,7 @@ Metadata:
           - Timeout
           - LogGroupRetentionDays
       - Label:
-          default: "State - Configuration"
+          default: "State File - Configuration"
         Parameters:
           - BucketNamePrefix
           - BucketKey
@@ -47,11 +49,11 @@ Metadata:
     Description: |
       keep your AWS Single Sign-On (SSO) groups and users in sync with your
       Google Workspace directory using and AWS Lambda function.
-    Author: SlashDevOps idp-scim-sync Team
+    Author: slashdevops/idp-scim-sync Team
     SpdxLicenseId: Apache-2.0
     LicenseUrl: LICENSE
     ReadmeUrl: README.md
-    Labels:
+    Labels: # only 10 allowed
       - Serverless
       - SSO
       - Lambda
@@ -59,7 +61,7 @@ Metadata:
       - AWS
       - Go
       - Google-Workspace
-      - sso-scim-sync
+      - idp-scim-sync
       - Groups
       - Users
     HomePageUrl: https://github.com/slashdevops/idp-scim-sync
@@ -70,14 +72,14 @@ Parameters:
   ScheduleExpression:
     Type: String
     Description: |
-      Schedule for trigger the execution of ssosync (see EventBridge rule schedule expressions)
+      Schedule for trigger the execution of idp-scim-sync (see EventBridge rule schedule expressions)
       Reference: https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-create-rule-schedule.html
     Default: rate(15 minutes)
 
   LogLevel:
     Type: String
     Description: Log level for Lambda function logging
-    Default: warn
+    Default: info
     AllowedValues:
       - panic
       - fatal
@@ -98,21 +100,21 @@ Parameters:
   BucketNamePrefix:
     Type: String
     Description: |
-      The name of the bucket where the state data will be stored.
-      NOTE: This template will use the AWS Region and AWS Account ID as a suffix to the bucket name to avoid conflicts.
-      'BucketNamePrefix-AWS::AccountId-AWS::Region'
+      Prefix used in the bucket name where the state data will be stored.
+      NOTE: This template will use the 'AWS Region' and 'AWS Account ID' as a suffix to the 'bucket name' to avoid conflicts.
+      Example: 'BucketNamePrefix-AWS::AccountId-AWS::Region'
     Default: idp-scim-sync-state
 
   BucketKey:
     Type: String
     Description: |
-      The key of the bucket where the state data will be stored
+      The key "file" where the state data will be stored
     Default: data/state.json
 
   GWSServiceAccountFile:
     Type: String
     Description: |
-      The Google Workspace credentials file content (content of credentials.json)
+      The Google Workspace credentials file content (content of credentials.json after creates the service account: https://cloud.google.com/iam/docs/creating-managing-service-account-keys)
     NoEcho: true
 
   GWSServiceAccountFileSecretName:
@@ -124,7 +126,7 @@ Parameters:
   GWSUserEmail:
     Type: String
     Description: |
-      The Google Workspace user email
+      The Google Workspace user email authorized on the creation creation of the service account
     NoEcho: true
 
   GWSUserEmailSecretName:
@@ -193,14 +195,15 @@ Parameters:
     Description: |
       The amount of memory to allocate to the Lambda function.
       The value must be a multiple of 64 MB.
-    Default: 512
+      NOTE: Your function is allocated CPU proportional to the memory configured.
+    Default: 256
     MaxValue: 10240
     MinValue: 128
 
   Timeout:
     Type: Number
     Description: |
-      The amount of time that Lambda allows a function to run before terminating it.
+      The amount of time that AWS Lambda service allows a function to run before terminating it.
       The value must be greater than or equal to 60 seconds.
     Default: 300
     MaxValue: 900
@@ -208,7 +211,7 @@ Parameters:
 
   LogGroupRetentionDays:
     Type: Number
-    Description: The number of days you want to keep logs for created function
+    Description: The number of days you want to keep logs for the created lambda function
     Default: 7
     AllowedValues:
       - 1
@@ -236,6 +239,9 @@ Resources:
       - LambdaFunctionLogGroup
     Properties:
       FunctionName: idp-scim-sync
+      Description: |
+        This Lambda function will sync the AWS SSO groups and users with the Google Workspace directory and it will be triggered by an EventBridge rule.
+        Project: https://github.com/slashdevops/idp-scim-sync
       Runtime: go1.x
       MemorySize: !Ref MemorySize
       Handler: dist/idpscim-linux-amd64/idpscim
@@ -362,8 +368,9 @@ Resources:
           - Sid: AllowAWSLambdaToRetrieveKMSKey
             Effect: Allow
             Principal:
-              Service:
-                - lambda.amazonaws.com
+              Service: "lambda.amazonaws.com"
+              #AWS: !GetAtt LambdaFunctionRole.Arn # Fails because circular reference
+              #AWS: !Sub "arn:aws:iam::${AWS::AccountId}:role/serverless-idp-scim-sync-${AWS::AccountId}-${AWS::Region}" # Fails in runtime because the roles is not created yet
             Action:
               - kms:Encrypt
               - kms:Decrypt
@@ -420,23 +427,6 @@ Resources:
               - s3:GetObjectVersion
             Resource:
               - !Sub "arn:${AWS::Partition}:s3:::${Bucket}/*"
-          - Sid: DenyPublishingUnencryptedResources
-            Effect: Deny
-            Principal: "*"
-            Action:
-              - s3:PutObject
-            Resource: !Sub "arn:${AWS::Partition}:s3:::${Bucket}/*"
-            Condition:
-              "Null":
-                "s3:x-amz-server-side-encryption": true
-          - Sid: DenyUnEncryptedObjectUploads
-            Principal: "*"
-            Action: s3:PutObject
-            Effect: Deny
-            Resource: !Sub "arn:${AWS::Partition}:s3:::${Bucket}/*"
-            Condition:
-              "StringNotEquals":
-                "s3:x-amz-server-side-encryption": "aws:kms"
           - Sid: AllowSSLRequestsOnly
             Principal: "*"
             Action:
@@ -448,6 +438,27 @@ Resources:
             Condition:
               Bool:
                 "aws:SecureTransport": false
+          # NOTE: To implement the following policies is necessary to send the objet encrypted to the bucket
+          #       and the bucket is already implementing "BucketKeyEnabled", so looks like it is not necessary
+          #       but the problem is the AWS Config rule that want these enabled.  Let's see in the future if
+          #       I will implement these policies.
+          # - Sid: DenyPublishingUnencryptedResources
+          #   Effect: Deny
+          #   Principal: "*"
+          #   Action:
+          #     - s3:PutObject
+          #   Resource: !Sub "arn:${AWS::Partition}:s3:::${Bucket}/*"
+          #   Condition:
+          #     "Null":
+          #       "s3:x-amz-server-side-encryption": true
+          # - Sid: DenyUnEncryptedObjectUploads
+          #   Principal: "*"
+          #   Action: s3:PutObject
+          #   Effect: Deny
+          #   Resource: !Sub "arn:${AWS::Partition}:s3:::${Bucket}/*"
+          #   Condition:
+          #     "StringNotEquals":
+          #       "s3:x-amz-server-side-encryption": "aws:kms"
 
   LambdaFunctionLogGroup:
     Type: AWS::Logs::LogGroup
@@ -460,12 +471,28 @@ Outputs:
     Value: !GetAtt LambdaFunction.Arn
     Description: >
       The ARN of the Lambda function
-    Export:
-      Name: LambdaFunctionArn
 
   LambdaFunctionName:
     Value: !Ref LambdaFunction
     Description: >
       The name of the Lambda function
-    Export:
-      Name: LambdaFunctionName
+
+  BucketName:
+    Value: !Ref Bucket
+    Description: >
+      The name of the S3 bucket
+
+  BucketArn:
+    Value: !GetAtt Bucket.Arn
+    Description: >
+      The ARN of the S3 bucket
+
+  KMSKeyId:
+    Value: !Ref KMSKey
+    Description: >
+      The ID of the KMS key
+
+  KMSKeyArn:
+    Value: !GetAtt KMSKey.Arn
+    Description: >
+      The ARN of the KMS key

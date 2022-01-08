@@ -52,8 +52,6 @@ func (s *SecretsManagerService) GetSecretValue(ctx context.Context, secretKey st
 		return "", fmt.Errorf("aws: error getting secret value: %v", err)
 	}
 
-	fmt.Printf("len= %v", len(r.SecretBinary))
-
 	var secretString string
 
 	if r.SecretString != nil {
