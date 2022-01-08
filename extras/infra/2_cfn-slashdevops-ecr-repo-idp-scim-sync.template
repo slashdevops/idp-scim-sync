@@ -1,7 +1,8 @@
 ---
-AWSTemplateFormatVersion: 2010-09-09
+AWSTemplateFormatVersion: "2010-09-09"
 Description: >
-  Template for creating an AWS ECR Repository
+  Creates an AWS ECR Repository
+  Deploy as: slashdevops-ecr-repo-idp-scim-sync
 
 Parameters:
   RepositoryName:
@@ -74,7 +75,7 @@ Parameters:
   StackExportName:
     Description: This value will be used to prefix the export values of the template
     Type: String
-    Default: ecr-repo-slashdevops-idp-scim-sync
+    Default: slashdevops-ecr-repo-idp-scim-sync
     AllowedPattern: '[a-z0-9\-]+'
     MinLength: 2
     MaxLength: 64

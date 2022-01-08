@@ -1,7 +1,8 @@
 ---
 AWSTemplateFormatVersion: "2010-09-09"
 Description: >
-  Template for creating an AWS S3 bucket for Serverless SAM deploy
+  Creates an AWS S3 bucket for Serverless SAM deploy
+  Deploy as: slashdevops-s3-idp-scim-sync-sam
 
 Parameters:
   BucketNamePrefix:
@@ -16,7 +17,7 @@ Parameters:
   StackExportName:
     Description: This value will be used to prefix the export values of the template
     Type: String
-    Default: s3-slashdevops-idp-scim-sync-sam
+    Default: slashdevops-s3-idp-scim-sync-sam
     AllowedPattern: '[a-z0-9\-]+'
     MinLength: 2
     MaxLength: 64
@@ -74,5 +75,3 @@ Outputs:
     Value: !GetAtt Bucket.Arn
     Export:
       Name: !Sub "${StackExportName}:BucketArn"
-
-# s3-slashdevops-idp-scim-sync-sam

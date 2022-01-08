@@ -1,18 +1,19 @@
 ---
-AWSTemplateFormatVersion: 2010-09-09
+AWSTemplateFormatVersion: "2010-09-09"
 Description: >
-  Template for creating an AWS IAM Policy to allows push images on AWS ECR and attach it to Role attached to GitHub OIDC Provider
+  Creates an AWS IAM Policy to allows push images on AWS ECR and attach it to Role attached to GitHub OIDC Provider
+  Deploy as: slashdevops-iam-policy-idp-scim-sync-ecr
 
 Parameters:
   GithubOpenidRoleStackExportName:
     Type: String
     Description: The base CloudFormation stack export name that contains the IAM Role for Github OIDC Provider
-    Default: iam-role-slashdevops-idp-scim-sync
+    Default: slashdevops-iam-role-idp-scim-sync
 
   EcrRepositoryStackExportName:
     Type: String
     Description: The base CloudFormation stack export name that contains the IAM OIDC Provider
-    Default: ecr-repo-slashdevops-idp-scim-sync
+    Default: slashdevops-ecr-repo-idp-scim-sync
 
 Resources:
   Policy:
@@ -22,7 +23,7 @@ Resources:
         - Fn::ImportValue: !Sub "${GithubOpenidRoleStackExportName}:RoleName"
       PolicyName: !Sub
         - "${prefix}-ECR"
-        -  prefix:
+        - prefix:
             Fn::ImportValue: !Sub "${GithubOpenidRoleStackExportName}:RoleName"
       PolicyDocument:
         Version: "2012-10-17"
@@ -36,11 +37,9 @@ Resources:
               - ecr:UploadLayerPart
               - ecr:GetAuthorizationToken
             Resource:
-             - Fn::ImportValue: !Sub "${EcrRepositoryStackExportName}:RepositoryArn"
+              - Fn::ImportValue: !Sub "${EcrRepositoryStackExportName}:RepositoryArn"
 
 Outputs:
   PolicyName:
     Description: Policy name
     Value: !Ref Policy
-
-# iam-policy-github-slashdevops-idp-scim-sync-ecr
