@@ -1,8 +1,8 @@
 # Infrastructure
 
-This Cloudformation template is used to create the infrastructure necessary to deploy the poroject into the AWS Cloud.
+These Cloudformation templates (`#_cfn_*`) are used to create the infrastructure necessary to deploy the poroject into the AWS.
 
-Why this is needed?
+Why these is needed?
 
 1. Allow users to consume the `Serverless Lambda function` from the public [AWS Serverless Application Repository](https://aws.amazon.com/es/serverless/serverlessrepo/)
 2. Allow users to consume the public project [Docker image](https://gallery.ecr.aws/l2n7y5s7/slashdevops/idp-scim-sync) in [Amazon ECR](https://aws.amazon.com/es/ecr/) whitout the limits of public Docker repositories
@@ -12,7 +12,7 @@ Why this is needed?
 
 As ususal this is hard to estimate, but the cost of the infrastructure is the same as the cost of the AWS resources.
 
-### Resources used in AWS
+## Resources used in AWS
 
 Long live resources:
 

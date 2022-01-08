@@ -1,13 +1,14 @@
 ---
-AWSTemplateFormatVersion: 2010-09-09
+AWSTemplateFormatVersion: "2010-09-09"
 Description: >
-  Template for creating an AWS IAM Policy to allows AWS SAM deploy in a Serverless Repository and attach it to Role attached to GitHub OIDC Provider
+  Creates an AWS IAM Policy to allows AWS SAM deploy in a Serverless Repository and attach it to Role attached to GitHub OIDC Provider
+  Deploy as: slashdevops-iam-policy-idp-scim-sync-sam
 
 Parameters:
   GithubOpenidRoleStackExportName:
     Type: String
     Description: The base CloudFormation stack export name that contains the IAM Role for Github OIDC Provider
-    Default: iam-role-slashdevops-idp-scim-sync
+    Default: slashdevops-iam-role-idp-scim-sync
 
 Resources:
   Policy:
@@ -17,7 +18,7 @@ Resources:
         - Fn::ImportValue: !Sub "${GithubOpenidRoleStackExportName}:RoleName"
       PolicyName: !Sub
         - "${prefix}-SAM"
-        -  prefix:
+        - prefix:
             Fn::ImportValue: !Sub "${GithubOpenidRoleStackExportName}:RoleName"
       PolicyDocument:
         Version: "2012-10-17"
@@ -36,11 +37,9 @@ Resources:
               - cloudformation:ListStackResources
               - cloudformation:UpdateStack
             Resource:
-             - !Sub "arn:aws:cloudformation:*:${AWS::AccountId}:stack/*"
+              - !Sub "arn:aws:cloudformation:*:${AWS::AccountId}:stack/*"
 
 Outputs:
   PolicyName:
     Description: Policy name
     Value: !Ref Policy
-
-# iam-policy-github-slashdevops-idp-scim-sync-sam

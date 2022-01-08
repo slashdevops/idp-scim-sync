@@ -1,12 +1,13 @@
 ---
-AWSTemplateFormatVersion: 2010-09-09
+AWSTemplateFormatVersion: "2010-09-09"
 Description: >
-  Template for creating an AWS IAM GitHub OIDC Provider
+  Creates an AWS IAM GitHub OIDC Provider
+  Deploy as: slashdevops-iam-oidc-github-provider
 
 Parameters:
   GithubOidcUrl:
     Type: String
-    Default: 'https://token.actions.githubusercontent.com'
+    Default: https://token.actions.githubusercontent.com
 
   GithubOidcClientIdList:
     Type: CommaDelimitedList
@@ -19,7 +20,7 @@ Parameters:
   StackExportName:
     Description: This value will be used to prefix the export values of the template
     Type: String
-    Default: iam-oidc-github-provider
+    Default: slashdevops-iam-oidc-github-provider
     AllowedPattern: '[a-z0-9\-]+'
     MinLength: 2
     MaxLength: 64

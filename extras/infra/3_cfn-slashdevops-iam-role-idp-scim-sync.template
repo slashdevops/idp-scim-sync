@@ -1,26 +1,27 @@
 ---
-AWSTemplateFormatVersion: 2010-09-09
+AWSTemplateFormatVersion: "2010-09-09"
 Description: >
-  Template for creating an AWS IAM Role for GitHub OIDC Provider
+  Creates an AWS IAM Role for GitHub OIDC Provider
+  Deploy as: slashdevops-iam-role-idp-scim-sync
 
 Parameters:
   GitHubOrganization:
     Type: String
-    Default: 'slashdevops'
+    Default: "slashdevops"
 
   GitHubRepositoryName:
     Type: String
-    Default: 'idp-scim-sync'
+    Default: "idp-scim-sync"
 
   GithubOpenidStackExportName:
     Type: String
     Description: The base CloudFormation stack export name that contains the IAM OIDC Provider
-    Default: iam-oidc-github-provider
+    Default: slashdevops-iam-oidc-github-provider
 
   StackExportName:
     Description: This value will be used to prefix the export values of the template
     Type: String
-    Default: iam-role-slashdevops-idp-scim-sync
+    Default: slashdevops-iam-role-idp-scim-sync
     AllowedPattern: '[a-z0-9\-]+'
     MinLength: 2
     MaxLength: 64
