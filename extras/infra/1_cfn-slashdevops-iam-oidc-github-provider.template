@@ -24,7 +24,7 @@ Parameters:
     AllowedPattern: '[a-z0-9\-]+'
     MinLength: 2
     MaxLength: 64
-    ConstraintDescription: Must be in lower case character, "-" is allowed and digit from 0 to 9.  Maximun 40 characters
+    ConstraintDescription: Must be in lower case character, "-" is allowed and digit from 0 to 9.  Maximum 40 characters
 
 Resources:
   GithubOidc:
