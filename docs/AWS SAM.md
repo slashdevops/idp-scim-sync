@@ -15,13 +15,15 @@ export SAM_APP_VERSION=<version here>
 
 ## Deployment
 
+Validate, Build and Publish
+
 ```bash
 aws cloudformation validate-template --template-body file://template.yaml 1>/dev/null --profile $AWS_PROFILE
 sam validate --profile $AWS_PROFILE
+
 sam build --base-dir cmd/idpscim/ --profile $AWS_PROFILE
 
 sam package \
-  --template-file template.yaml \
   --output-template-file packaged.yaml \
   --s3-bucket $SAM_APP_BUCKET \
   --profile $AWS_PROFILE

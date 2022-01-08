@@ -1,9 +1,10 @@
-AWSTemplateFormatVersion: 2010-09-09
+---
+AWSTemplateFormatVersion: "2010-09-09"
 Transform: AWS::Serverless-2016-10-31
 
-Description: >-
-  idp-scim-sync is a lambda function used to sync Google Workspace Groups and their Memebers
-  with AWS Single Sing-On service using AWS SSO SCIM API.
+Description: |
+  This template is to keep your AWS Single Sign-On (SSO) groups and users in sync with your
+  Google Workspace directory using and AWS Lambda function
 
 Metadata:
   AWS::CloudFormation::Interface:
@@ -20,8 +21,9 @@ Metadata:
           - ScheduleExpression
           - MemorySize
           - Timeout
+          - LogGroupRetentionDays
       - Label:
-          default: "Sate - Configuration"
+          default: "State - Configuration"
         Parameters:
           - BucketNamePrefix
           - BucketKey
@@ -42,21 +44,32 @@ Metadata:
 
   AWS::ServerlessRepo::Application:
     Name: idp-scim-sync
-    Description: Sync your AWS Single Sing-On (SSO) with Google Workspace.
-    Author: Christian Gonzalez Di Antonio
+    Description: |
+      keep your AWS Single Sign-On (SSO) groups and users in sync with your
+      Google Workspace directory using and AWS Lambda function.
+    Author: SlashDevOps idp-scim-sync Team
     SpdxLicenseId: Apache-2.0
     LicenseUrl: LICENSE
     ReadmeUrl: README.md
     Labels:
-      ["serverless", "sso", "lambda", "scim", "google", "aws", "go", "golang"]
+      - Serverless
+      - SSO
+      - Lambda
+      - SCIM
+      - AWS
+      - Go
+      - Google-Workspace
+      - sso-scim-sync
+      - Groups
+      - Users
     HomePageUrl: https://github.com/slashdevops/idp-scim-sync
-    SemanticVersion: 0.0.1
-    SourceCodeUrl: https://github.com/slashdevops/idp-scim-sync/tree/0.0.1
+    SemanticVersion: 0.0.1 # will be overwritten by the CI/CD pipeline
+    SourceCodeUrl: https://github.com/slashdevops/idp-scim-sync
 
 Parameters:
   ScheduleExpression:
     Type: String
-    Description: >
+    Description: |
       Schedule for trigger the execution of ssosync (see EventBridge rule schedule expressions)
       Reference: https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-create-rule-schedule.html
     Default: rate(15 minutes)
@@ -84,81 +97,83 @@ Parameters:
 
   BucketNamePrefix:
     Type: String
-    Description: >
+    Description: |
       The name of the bucket where the state data will be stored.
       NOTE: This template will use the AWS Region and AWS Account ID as a suffix to the bucket name to avoid conflicts.
-      'BucketNamePrefix-AWS::Region-AWS::AccountId'
+      'BucketNamePrefix-AWS::AccountId-AWS::Region'
     Default: idp-scim-sync-state
 
   BucketKey:
     Type: String
-    Description: >
+    Description: |
       The key of the bucket where the state data will be stored
     Default: data/state.json
 
   GWSServiceAccountFile:
     Type: String
-    Description: >
+    Description: |
       The Google Workspace credentials file content (content of credentials.json)
     NoEcho: true
 
   GWSServiceAccountFileSecretName:
     Type: String
-    Description: >
+    Description: |
       The Google Workspace credentials file secret name
     Default: IDPSCIM_GWSServiceAccountFile
 
   GWSUserEmail:
     Type: String
-    Description: >
+    Description: |
       The Google Workspace user email
     NoEcho: true
 
   GWSUserEmailSecretName:
     Type: String
-    Description: >
+    Description: |
       The Google Workspace user email secret name
     Default: IDPSCIM_GWSUserEmail
 
   SCIMEndpoint:
     Type: String
-    Description: >
+    Description: |
       The AWS SSO SCIM Endpoint Url
       Reference: https://docs.aws.amazon.com/singlesignon/latest/userguide/provision-automatically.html
     NoEcho: true
 
   SCIMEndpointSecretName:
     Type: String
-    Description: >
+    Description: |
       The AWS SSO SCIM Endpoint Url secret name
     Default: IDPSCIM_SCIMEndpoint
 
   SCIMAccessToken:
     Type: String
-    Description: >
+    Description: |
       The AWS SSO SCIM AccessToken
       Reference: https://docs.aws.amazon.com/singlesignon/latest/userguide/provision-automatically.html
     NoEcho: true
 
   SCIMAccessTokenSecretName:
     Type: String
-    Description: >
+    Description: |
       The AWS SSO SCIM AccessToken secret name
     Default: IDPSCIM_SCIMAccessToken
 
   GWSUsersFilter:
     Type: String
-    Description: >
+    Description: |
       The Google Workspace user filter query parameter, example: 'name:John* email:admin*', see: https://developers.google.com/admin-sdk/directory/v1/guides/search-users
+    Default: ""
 
   GWSGroupsFilter:
     Type: String
-    Description: >
-      The Google Workspace group filter query parameter, example: 'name:Admin* email:aws-*', see: https://developers.google.com/admin-sdk/directory/v1/guides/search-groups
+    Description: |
+      The Google Workspace group filter query parameter, example: 'name:AWS* email:aws-*', see: https://developers.google.com/admin-sdk/directory/v1/guides/search-groups
+    Default: ""
 
   SyncMethod:
     Type: String
-    Description: >
+    Description: |
       The sync method to use
     Default: groups
     AllowedValues:
@@ -166,7 +181,7 @@ Parameters:
 
   DisableState:
     Type: String
-    Description: >
+    Description: |
       Disable the state file?
     Default: false
     AllowedValues:
@@ -175,7 +190,7 @@ Parameters:
 
   MemorySize:
     Type: Number
-    Description: >
+    Description: |
       The amount of memory to allocate to the Lambda function.
       The value must be a multiple of 64 MB.
     Default: 512
@@ -184,21 +199,46 @@ Parameters:
 
   Timeout:
     Type: Number
-    Description: >
+    Description: |
       The amount of time that Lambda allows a function to run before terminating it.
       The value must be greater than or equal to 60 seconds.
     Default: 300
     MaxValue: 900
     MinValue: 3
 
+  LogGroupRetentionDays:
+    Type: Number
+    Description: The number of days you want to keep logs for created function
+    Default: 7
+    AllowedValues:
+      - 1
+      - 3
+      - 5
+      - 7
+      - 14
+      - 30
+      - 60
+      - 90
+      - 120
+      - 150
+      - 180
+      - 365
+      - 400
+      - 545
+      - 731
+      - 1827
+      - 3653
+
 Resources:
-  IDPSCIMSyncLambdaFunction:
+  LambdaFunction:
     Type: AWS::Serverless::Function
+    DependsOn:
+      - LambdaFunctionLogGroup
     Properties:
       FunctionName: idp-scim-sync
       Runtime: go1.x
       MemorySize: !Ref MemorySize
-      Handler: dist/idpscim-linux-amd64
+      Handler: dist/idpscim-linux-amd64/idpscim
       Timeout: !Ref Timeout
       Tracing: Active
       Environment:
@@ -207,36 +247,15 @@ Resources:
           IDPSCIM_LOG_FORMAT: !Ref LogFormat
           IDPSCIM_SYNC_METHOD: !Ref SyncMethod
           IDPSCIM_DISABLE_STATE: !Ref DisableState
-          IDPSCIM_AWS_S3_BUCKET_NAME: !Sub "${BucketNamePrefix}-${AWS::Region}-${AWS::AccountId}"
+          IDPSCIM_AWS_S3_BUCKET_NAME: !Sub "${BucketNamePrefix}-${AWS::AccountId}-${AWS::Region}"
           IDPSCIM_AWS_S3_BUCKET_KEY: !Ref BucketKey
-          IDPSCIM_GWS_USER_EMAIL: !Ref GWSUserEmail
-          IDPSCIM_GWS_USER_EMAIL_SECRET_NAME: !Ref GWSUserEmailSecretName
-          IDPSCIM_GWS_SERVICE_ACCOUNT_FILE: !Ref GWSServiceAccountFile
-          IDPSCIM_GWS_SERVICE_ACCOUNT_FILE_SECRET_NAME: !Ref GWSServiceAccountFileSecretName
           IDPSCIM_GWS_GROUPS_FILTER: !Ref GWSGroupsFilter
           IDPSCIM_GWS_USERS_FILTER: !Ref GWSUsersFilter
-          IDPSCIM_SCIM_ENDPOINT: !Ref SCIMEndpoint
-          IDPSCIM_SCIM_ENDPOINT_SECRET_NAME: !Ref SCIMEndpointSecretName
-          IDPSCIM_SCIM_ACCESS_TOKEN: !Ref SCIMAccessToken
-          IDPSCIM_SCIM_ACCESS_TOKEN_SECRET_NAME: !Ref SCIMAccessTokenSecretName
-      Policies:
-        - Statement:
-            - Sid: SSMGetParameterPolicy
-              Effect: Allow
-              Action:
-                - secretsmanager:Get*
-              Resource:
-                - !Ref AWSGWSServiceAccountFileSecret
-                - !Ref AWSGWSUserEmailSecret
-                - !Ref AWSSCIMEndpointSecret
-                - !Ref AWSSCIMAccessTokenSecret
-            - Sid: S3Policy
-              Effect: Allow
-              Action:
-                - s3:GetObject
-                - s3:PutObject
-              Resource:
-                - !Sub "arn:aws:s3:::${BucketNamePrefix}-${AWS::Region}-${AWS::AccountId}/*"
+          IDPSCIM_GWS_USER_EMAIL_SECRET_ARN: !Ref AWSGWSUserEmailSecret
+          IDPSCIM_GWS_SERVICE_ACCOUNT_FILE_SECRET_ARN: !Ref AWSGWSServiceAccountFileSecret
+          IDPSCIM_SCIM_ENDPOINT_SECRET_ARN: !Ref AWSSCIMEndpointSecret
+          IDPSCIM_SCIM_ACCESS_TOKEN_SECRET_ARN: !Ref AWSSCIMAccessTokenSecret
+      Role: !GetAtt LambdaFunctionRole.Arn
       Events:
         SyncScheduledEvent:
           Type: Schedule
@@ -245,31 +264,88 @@ Resources:
             Enabled: true
             Schedule: !Ref ScheduleExpression
 
+  LambdaFunctionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Description: !Sub "This role is used by the Lambda function ${AWS::StackName}"
+      RoleName: !Sub "serverless-idp-scim-sync-${AWS::AccountId}-${AWS::Region}"
+      Path: /
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Action: sts:AssumeRole
+            Principal:
+              Service: "lambda.amazonaws.com"
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        - arn:aws:iam::aws:policy/AWSXrayWriteOnlyAccess
+      Policies:
+        - PolicyName: CustomLambdaPolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Sid: SSMGetParameterPolicy
+                Effect: Allow
+                Action:
+                  - secretsmanager:GetResourcePolicy
+                  - secretsmanager:GetSecretValue
+                Resource:
+                  - !Ref AWSGWSServiceAccountFileSecret
+                  - !Ref AWSGWSUserEmailSecret
+                  - !Ref AWSSCIMEndpointSecret
+                  - !Ref AWSSCIMAccessTokenSecret
+              - Sid: S3Policy
+                Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:GetObjectAcl
+                  - s3:GetObjectVersion
+                  - s3:PutObject
+                  - s3:PutObjectAcl
+                  - s3:ListBucket
+                Resource:
+                  - !Sub "arn:aws:s3:::${BucketNamePrefix}-${AWS::AccountId}-${AWS::Region}"
+                  - !Sub "arn:aws:s3:::${BucketNamePrefix}-${AWS::AccountId}-${AWS::Region}/*"
+              - Sid: KMSGetDataPolicy
+                Effect: Allow
+                Action:
+                  - kms:GenerateDataKeyPair
+                Resource:
+                  - !GetAtt KMSKey.Arn
+              - Sid: KMSDecryptPolicy
+                Effect: Allow
+                Action:
+                  - kms:Decrypt
+                  - kms:Encrypt
+                  - kms:GenerateDataKey
+                Resource:
+                  - !GetAtt KMSKey.Arn
+
   AWSGWSServiceAccountFileSecret:
-    Type: "AWS::SecretsManager::Secret"
+    Type: AWS::SecretsManager::Secret
     Properties:
       Name: !Ref GWSServiceAccountFileSecretName
       SecretString: !Ref GWSServiceAccountFile
 
   AWSGWSUserEmailSecret:
-    Type: "AWS::SecretsManager::Secret"
+    Type: AWS::SecretsManager::Secret
     Properties:
       Name: !Ref GWSUserEmailSecretName
       SecretString: !Ref GWSUserEmail
 
-  AWSSCIMEndpointSecret: # This can be moved to custom provider
-    Type: "AWS::SecretsManager::Secret"
+  AWSSCIMEndpointSecret:
+    Type: AWS::SecretsManager::Secret
     Properties:
       Name: !Ref SCIMEndpointSecretName
       SecretString: !Ref SCIMEndpoint
 
-  AWSSCIMAccessTokenSecret: # This can be moved to custom provider
-    Type: "AWS::SecretsManager::Secret"
+  AWSSCIMAccessTokenSecret:
+    Type: AWS::SecretsManager::Secret
     Properties:
       Name: !Ref SCIMAccessTokenSecretName
       SecretString: !Ref SCIMAccessToken
 
-  BucketKMSKey:
+  KMSKey:
     Type: AWS::KMS::Key
     Properties:
       Description: ipd-scim-sync state bucket kms key.
@@ -289,26 +365,29 @@ Resources:
               Service:
                 - lambda.amazonaws.com
             Action:
-              - "kms:Encrypt"
-              - "kms:Decrypt"
-              - "kms:ReEncrypt*"
-              - "kms:GenerateDataKey*"
-              - "kms:DescribeKey"
+              - kms:Encrypt
+              - kms:Decrypt
+              - kms:ReEncrypt*
+              - kms:GenerateDataKey*
+              - kms:DescribeKey
             Resource: "*"
+            Condition:
+              StringEquals:
+                kms:CallerAccount: !Ref "AWS::AccountId"
 
-  BucketKMSKeyAlias:
+  KMSKeyAlias:
     Type: AWS::KMS::Alias
     Properties:
-      AliasName: alias/s3-scim-sync-state-bucket
+      AliasName: !Sub "alias/${BucketNamePrefix}-${AWS::AccountId}-${AWS::Region}"
       TargetKeyId:
-        Ref: BucketKMSKey
+        Ref: KMSKey
 
   Bucket:
-    DeletionPolicy: Retain
+    DeletionPolicy: Delete
     UpdateReplacePolicy: Retain
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: !Sub "${BucketNamePrefix}-${AWS::Region}-${AWS::AccountId}"
+      BucketName: !Sub "${BucketNamePrefix}-${AWS::AccountId}-${AWS::Region}"
       PublicAccessBlockConfiguration:
         BlockPublicAcls: true
         BlockPublicPolicy: true
@@ -317,8 +396,9 @@ Resources:
       BucketEncryption:
         ServerSideEncryptionConfiguration:
           - ServerSideEncryptionByDefault:
-              KMSMasterKeyID: !Sub "arn:aws:kms:${AWS::Region}:${AWS::AccountId}:${BucketKMSKeyAlias}"
+              KMSMasterKeyID: !Sub "arn:aws:kms:${AWS::Region}:${AWS::AccountId}:${KMSKeyAlias}"
               SSEAlgorithm: "aws:kms"
+            BucketKeyEnabled: true # https://docs.aws.amazon.com/AmazonS3/latest/userguide/bucket-key.html
 
   BucketPolicy:
     Type: AWS::S3::BucketPolicy
@@ -327,58 +407,65 @@ Resources:
       PolicyDocument:
         Version: 2012-10-17
         Statement:
-          - Sid: AWSLambdaBucketDelivery
+          - Sid: AllowAWSLambdaFunction
+            Principal:
+              AWS:
+                - !Sub "arn:aws:iam::${AWS::AccountId}:role/serverless-idp-scim-sync-${AWS::AccountId}-${AWS::Region}"
             Effect: Allow
             Action:
-              - s3:PutObject
               - s3:GetObject
-            Principal:
-              Service:
-                - lambda.amazonaws.com
+              - s3:GetObjectAcl
+              - s3:PutObject
+              - s3:PutObjectAcl
+              - s3:GetObjectVersion
             Resource:
-              - !Sub "arn:${AWS::Partition}:s3:::${Bucket}/AWSLogs/${AWS::AccountId}/*"
-            Condition:
-              StringLike:
-                s3:x-amz-acl: bucket-owner-full-control
+              - !Sub "arn:${AWS::Partition}:s3:::${Bucket}/*"
           - Sid: DenyPublishingUnencryptedResources
             Effect: Deny
-            Action: s3:PutObject
+            Principal: "*"
+            Action:
+              - s3:PutObject
+            Resource: !Sub "arn:${AWS::Partition}:s3:::${Bucket}/*"
             Condition:
               "Null":
                 "s3:x-amz-server-side-encryption": true
+          - Sid: DenyUnEncryptedObjectUploads
             Principal: "*"
-            Resource: !Sub "arn:${AWS::Partition}:s3:::${Bucket}/*"
-          - Sid: DenyUnencryptedObjectUploads
             Action: s3:PutObject
             Effect: Deny
+            Resource: !Sub "arn:${AWS::Partition}:s3:::${Bucket}/*"
             Condition:
               "StringNotEquals":
                 "s3:x-amz-server-side-encryption": "aws:kms"
-            Principal: "*"
-            Resource: !Sub "arn:${AWS::Partition}:s3:::${Bucket}/*"
           - Sid: AllowSSLRequestsOnly
+            Principal: "*"
             Action:
               - s3:*
             Effect: Deny
-            Condition:
-              Bool:
-                "aws:SecureTransport": false
-            Principal: "*"
             Resource:
               - !Sub "arn:${AWS::Partition}:s3:::${Bucket}"
               - !Sub "arn:${AWS::Partition}:s3:::${Bucket}/*"
+            Condition:
+              Bool:
+                "aws:SecureTransport": false
+
+  LambdaFunctionLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: "/aws/lambda/idp-scim-sync"
+      RetentionInDays: !Ref LogGroupRetentionDays
 
 Outputs:
   LambdaFunctionArn:
-    Value: !GetAtt IDPSCIMSyncLambdaFunction.Arn
+    Value: !GetAtt LambdaFunction.Arn
     Description: >
       The ARN of the Lambda function
     Export:
-      Name: IDPSCIMSyncLambdaFunctionArn
+      Name: LambdaFunctionArn
 
   LambdaFunctionName:
-    Value: !Ref IDPSCIMSyncLambdaFunction
+    Value: !Ref LambdaFunction
     Description: >
       The name of the Lambda function
     Export:
-      Name: IDPSCIMSyncLambdaFunctionName
+      Name: LambdaFunctionName

@@ -8,6 +8,10 @@ on:
 env:
   GO_VERSION: 1.17
 
+permissions:
+      id-token: write
+      contents: read    # This is required for actions/checkout@v1
+
 jobs:
   test:
     name: Test

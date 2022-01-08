@@ -26,8 +26,6 @@ GO_ARCH        ?= arm64 amd64
 # avoid mocks in tests
 GO_FILES       := $(shell go list ./... | grep -v /mocks/)
 
-
-
 CONTAINER_OS   ?= linux
 CONTAINER_ARCH ?= arm64v8 amd64
 CONTAINER_NAMESPACE ?= $(PROJECT_NAMESPACE)
@@ -75,7 +73,7 @@ build-dist: build
 				$(shell GOOS=$(GOOS) GOARCH=$(GOARCH) CGO_ENABLED=$(GO_CGO_ENABLED) go build $(GO_LDFLAGS) $(GO_OPTS) -o ./$(DIST_DIR)/$(proj_mod)-$(GOOS)-$(GOARCH) ./cmd/$(proj_mod)/ ))))
 
 clean:
-	rm -rf $(BUILD_DIR) $(DIST_DIR) ./*.out
+	rm -rf $(BUILD_DIR) $(DIST_DIR) ./*.out .aws-sam/ build.toml
 
 container-build: build-dist
 	$(foreach OS, $(CONTAINER_OS), \
