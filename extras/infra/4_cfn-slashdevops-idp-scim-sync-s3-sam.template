@@ -1,0 +1,78 @@
+---
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >
+  Template for creating an AWS S3 bucket for Serverless SAM deploy
+
+Parameters:
+  BucketNamePrefix:
+    Type: String
+    Description: Prefix used in the bucket name
+    Default: slashdevops-idp-scim-sync
+    MinLength: 5
+    MaxLength: 64
+    AllowedPattern: "^$|^[a-z0-9.\\-]+$"
+    ConstraintDescription: Must be in lower case, alphanumeric (including hyphen) and between 3 and 64 characters.
+
+  StackExportName:
+    Description: This value will be used to prefix the export values of the template
+    Type: String
+    Default: s3-slashdevops-idp-scim-sync-sam
+    AllowedPattern: '[a-z0-9\-]+'
+    MinLength: 2
+    MaxLength: 64
+    ConstraintDescription: Must be in lower case character, "-" is allowed and digit from 0 to 9.  Maximun 40 characters
+
+Resources:
+  Bucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      BucketName: !Sub "${BucketNamePrefix}-${AWS::AccountId}-${AWS::Region}"
+      AccessControl: Private
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      Tags:
+        - Key: Name
+          Value: !Sub "${BucketNamePrefix}-${AWS::AccountId}-${AWS::Region}"
+
+  BucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref Bucket
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: AllowServerlessRead
+            Principal:
+              Service: serverlessrepo.amazonaws.com
+            Effect: Allow
+            Action:
+              - s3:GetObject
+            Resource:
+              - !Sub "arn:aws:s3:::${BucketNamePrefix}-${AWS::AccountId}-${AWS::Region}/*"
+          - Sid: AllowCloudFormationRead
+            Principal:
+              Service: cloudformation.amazonaws.com
+            Effect: Allow
+            Action:
+              - s3:GetObject
+            Resource:
+              - !Sub "arn:aws:s3:::${BucketNamePrefix}-${AWS::AccountId}-${AWS::Region}/*"
+Outputs:
+  BucketName:
+    Description: Bucket name
+    Value: !Ref Bucket
+    Export:
+      Name: !Sub "${StackExportName}:BucketName"
+
+  BucketArn:
+    Description: Bucket ARN
+    Value: !GetAtt Bucket.Arn
+    Export:
+      Name: !Sub "${StackExportName}:BucketArn"
+
+# s3-slashdevops-idp-scim-sync-sam

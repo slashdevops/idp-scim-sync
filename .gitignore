@@ -23,7 +23,6 @@ build.toml
 bin/
 build/
 dist/
-extras/
 
 # config
 .idpscim.yaml
