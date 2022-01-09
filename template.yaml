@@ -49,7 +49,7 @@ Metadata:
     Description: |
       keep your AWS Single Sign-On (SSO) groups and users in sync with your
       Google Workspace directory using and AWS Lambda function.
-    Author: slashdevops/idp-scim-sync Team
+    Author: slashdevops idp-scim-sync Team
     SpdxLicenseId: Apache-2.0
     LicenseUrl: LICENSE
     ReadmeUrl: README.md

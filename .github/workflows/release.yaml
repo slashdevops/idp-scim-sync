@@ -3,14 +3,14 @@ name: "Release workflow"
 on:
   push:
     tags:
-      - v[012].[0-9]+.[0-9]+ # https://help.github.com/es/actions/reference/workflow-syntax-for-github-actions#filter-pattern-cheat-sheet
+      - v[0123456789].[0-9]+.[0-9]+ # https://help.github.com/es/actions/reference/workflow-syntax-for-github-actions#filter-pattern-cheat-sheet
 
 env:
   GO_VERSION: 1.17
 
 permissions:
-      id-token: write
-      contents: read    # This is required for actions/checkout@v1
+  id-token: write
+  contents: read # This is required for actions/checkout@v1
 
 jobs:
   test:
@@ -47,7 +47,7 @@ jobs:
         run: make test
 
   build:
-    name: Build
+    name: Build Distribution
     needs: Test
     runs-on: ubuntu-latest
     steps:

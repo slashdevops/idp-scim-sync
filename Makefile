@@ -64,13 +64,26 @@ test-coverage: test
 
 build:
 	$(foreach proj_mod, $(PROJECT_MODULES_NAME), \
-		$(shell CGO_ENABLED=$(GO_CGO_ENABLED) go build $(GO_LDFLAGS) $(GO_OPTS) -o ./$(BUILD_DIR)/$(proj_mod) ./cmd/$(proj_mod)/ ))
+		$(shell CGO_ENABLED=$(GO_CGO_ENABLED) go build $(GO_LDFLAGS) $(GO_OPTS) -o ./$(BUILD_DIR)/$(proj_mod) ./cmd/$(proj_mod)/ ) \
+	)
 
 build-dist: build
 	$(foreach GOOS, $(GO_OS),\
 		$(foreach GOARCH, $(GO_ARCH), \
 			$(foreach proj_mod, $(PROJECT_MODULES_NAME), \
-				$(shell GOOS=$(GOOS) GOARCH=$(GOARCH) CGO_ENABLED=$(GO_CGO_ENABLED) go build $(GO_LDFLAGS) $(GO_OPTS) -o ./$(DIST_DIR)/$(PROJECT_NAME)-$(GOOS)-$(GOARCH)/$(proj_mod) ./cmd/$(proj_mod)/ ))))
+				$(shell GOOS=$(GOOS) GOARCH=$(GOARCH) CGO_ENABLED=$(GO_CGO_ENABLED) go build $(GO_LDFLAGS) $(GO_OPTS) -o ./$(DIST_DIR)/$(PROJECT_NAME)-$(GOOS)-$(GOARCH)/$(proj_mod) ./cmd/$(proj_mod)/ ) \
+			) \
+		) \
+	)
+
+build-dist-zip: build-dist
+	$(foreach GOOS, $(GO_OS),\
+		$(foreach GOARCH, $(GO_ARCH), \
+			$(foreach proj_mod, $(PROJECT_MODULES_NAME), \
+				$(shell zip --junk-paths -r ./$(DIST_DIR)/$(PROJECT_NAME)-$(GOOS)-$(GOARCH).zip  ./$(DIST_DIR)/$(PROJECT_NAME)-$(GOOS)-$(GOARCH)/) \
+			) \
+		) \
+	)
 
 clean:
 	rm -rf $(BUILD_DIR) $(DIST_DIR) ./*.out .aws-sam/ build.toml
