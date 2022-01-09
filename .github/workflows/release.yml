@@ -179,7 +179,7 @@ jobs:
         run: docker images
 
       - name: Logging in Docker Hub
-        run: echo ${{ secrets.DOCKER_HUB_PASSWORD }} | docker login -u ${{ secrets.DOCKER_HUB_USER }} --password-stdin
+        run: echo ${{ secrets.DOCKER_HUB_TOKEN }} | docker login -u ${{ secrets.DOCKER_HUB_USER }} --password-stdin
 
       - name: Publish Images in Docker Hub
         run: make container-publish-docker GIT_VERSION=${{ steps.get_tag.outputs.name }}
@@ -266,8 +266,8 @@ jobs:
         id: create_github_release
         uses: softprops/action-gh-release@v1
         with:
-          # tag_name: ${{ steps.get_tag.outputs.name }}
-          # name: Release ${{ steps.get_tag.outputs.name }}
+          tag_name: ${{ steps.get_tag.outputs.name }}
+          name: Release ${{ steps.get_tag.outputs.name }}
           # body: |
           #   See the file: CHANGELOG.md
           draft: false
