@@ -1,0 +1,34 @@
+---
+name: Question
+about: Ask to the team about your doubt
+title: "que: "
+labels: ["question"]
+assignees: ""
+
+body:
+  - type: dropdown
+    id: component
+    attributes:
+      label: Component
+      description: What component of the project are you running?
+      options:
+        - idpscim
+        - idpscimcli
+
+  - type: textarea
+    id: question
+    attributes:
+      label: What is your question?
+      description: Did you find this before in the project issues?
+      placeholder: Tell us about your doubt
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Code of Conduct
+      description: By submitting this issue, you agree to follow our [CNCF Code of Conduct](https://github.com/cncf/foundation/blob/master/code-of-conduct.md)
+      options:
+        - label: I agree to follow this project's Code of Conduct
+          required: true

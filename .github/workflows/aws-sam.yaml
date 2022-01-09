@@ -1,0 +1,104 @@
+name: "AWS SAM Publish"
+
+# https://docs.github.com/en/actions/learn-github-actions/events-that-trigger-workflows#workflow_run
+on:
+  workflow_run:
+    workflows: ["Release"]
+    types:
+      - completed
+
+permissions:
+  id-token: write
+  actions: read
+  contents: read
+
+env:
+  AWS_REGION: us-east-1
+
+strategy:
+  matrix:
+    AWS_REGIONS:
+      - us-west-2
+      - us-west-1
+      - us-east-2
+      - us-east-1
+      - eu-central-1
+      - eu-west-1
+      - eu-west-2
+      - eu-west-3
+      - eu-north-1
+      - ap-southeast-2
+      - ap-southeast-1
+      - ap-northeast-1
+      - ap-northeast-2
+      - ap-south-1
+      - ca-central-1
+      - sa-east-1
+
+jobs:
+  publish:
+    name: Publish
+    needs: Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v2
+
+      - name: Set up Python 3.x
+        uses: actions/setup-python@v2
+
+      - name: Set up AWS SAM
+        uses: aws-actions/setup-sam@v1
+
+      - name: configure aws credentials
+        uses: aws-actions/configure-aws-credentials@master
+        with:
+          role-to-assume: ${{ secrets.AWS_OIDC_ROLE_TO_ASSUME }}
+          role-session-name: publish-sam-app
+          aws-region: ${{ env.AWS_REGION }}
+
+      - mame: AWS SAM Validate template
+        run: |
+          aws cloudformation validate-template --template-body file://template.yaml  1>/dev/null
+          sam validate
+
+      - mame: AWS SAM Validate template
+        run: |
+          sam build --base-dir cmd/idpscim/
+
+      - mame: AWS SAM Package
+        env:
+          SAM_APP_BUCKET: ${{ secrets.SAM_APP_BUCKET }}
+        run: |
+          sam package --output-template-file packaged.yaml --s3-bucket $SAM_APP_BUCKET
+
+      - name: Set id for github tag version
+        id: get_tag
+        run: echo ::set-output name=name::$(echo $GITHUB_REF | cut -d / -f 3)
+
+      # iterate over regions
+      - name: AWS SAM Publish
+        env:
+          AWS_PUBLIC_REGION: ${{ matrix.AWS_REGIONS }}
+          SAM_APP_VERSION: ${{ steps.get_tag.outputs.name }}
+        run: |
+          sam publish --semantic-version $SAM_APP_VERSION --template packaged.yaml --region $AWS_PUBLIC_REGION
+
+      - name: Get the AWS SAM published application ARN
+        id: set_arn
+        env:
+          AWS_PUBLIC_REGION: ${{ matrix.AWS_REGIONS }}
+        run: |
+          AWS_SAM_APP_ARN=$(\
+            aws serverlessrepo list-applications --max-items 100 --region $AWS_PUBLIC_REGION \
+              | jq -c '.Applications[] | select(.ApplicationId | contains("idp-scim-sync"))' \
+              | jq -r '.ApplicationId' \
+            )
+          echo "::set-output name=arn::$AWS_SAM_APP_ARN"
+
+      - name: Get the AWS SAM published application ARN
+        env:
+          AWS_PUBLIC_REGION: ${{ matrix.AWS_REGIONS }}
+          AWS_SAM_APP_ARN: ${{ steps.set_arn.outputs.arn }}
+        run: |
+          aws serverlessrepo put-application-policy --application-id $AWS_SAM_APP_ARN --statements Principals='*',Actions='Deploy' --region $AWS_PUBLIC_REGION

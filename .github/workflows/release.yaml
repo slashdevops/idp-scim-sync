@@ -1,4 +1,4 @@
-name: "Release workflow"
+name: "Release"
 
 on:
   push:
@@ -7,10 +7,14 @@ on:
 
 env:
   GO_VERSION: 1.17
+  AWS_REGION: us-east-1
 
 permissions:
   id-token: write
-  contents: read # This is required for actions/checkout@v1
+  security-events: write
+  actions: read
+  contents: read
+  pull-requests: read
 
 jobs:
   test:
@@ -23,7 +27,7 @@ jobs:
           go-version: ${{ env.GO_VERSION }}
         id: go
 
-      - name: Check out code into the Go module directory
+      - name: Check out code
         uses: actions/checkout@v2
 
       - id: go-cache-paths
@@ -43,12 +47,17 @@ jobs:
           path: ${{ steps.go-cache-paths.outputs.go-mod }}
           key: ${{ runner.os }}-go-mod-${{ hashFiles('**/go.sum') }}
 
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v2
+        with:
+          version: latest
+
       - name: Test
         run: make test
 
-  build:
-    name: Build Distribution
-    needs: Test
+  codeql:
+    name: CodeQL Analysis
+    needs: test
     runs-on: ubuntu-latest
     steps:
       - name: Set up Go 1.x
@@ -57,7 +66,50 @@ jobs:
           go-version: ${{ env.GO_VERSION }}
         id: go
 
-      - name: Check out code into the Go module directory
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - id: go-cache-paths
+        run: |
+          echo "::set-output name=go-build::$(go env GOCACHE)"
+          echo "::set-output name=go-mod::$(go env GOMODCACHE)"
+
+      - name: Go Build Cache
+        uses: actions/cache@v2
+        with:
+          path: ${{ steps.go-cache-paths.outputs.go-build }}
+          key: ${{ runner.os }}-go-build-${{ hashFiles('**/go.sum') }}
+
+      - name: Go Mod Cache
+        uses: actions/cache@v2
+        with:
+          path: ${{ steps.go-cache-paths.outputs.go-mod }}
+          key: ${{ runner.os }}-go-mod-${{ hashFiles('**/go.sum') }}
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v1
+        with:
+          languages: go
+          config-file: ./.github/codeql/codeql-config.yml
+
+      - name: Build code
+        run: make
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v1
+
+  build:
+    name: Build Distribution
+    needs: codeql
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Go 1.x
+        uses: actions/setup-go@v2
+        with:
+          go-version: ${{ env.GO_VERSION }}
+        id: go
+
+      - name: Check out code
         uses: actions/checkout@v2
 
       - id: go-cache-paths
@@ -119,7 +171,7 @@ jobs:
           go-version: ${{ env.GO_VERSION }}
         id: go
 
-      - name: Check out code into the Go module directory
+      - name: Check out code
         uses: actions/checkout@v2
 
       - id: go-cache-paths
@@ -175,28 +227,87 @@ jobs:
       - name: Publish Images in Docker Hub
         run: make container-publish-docker GIT_VERSION=${{ steps.get_tag.outputs.name }}
 
-      # - name: Logging in GitHub Packages
-      #   run: echo ${{ secrets.GH_TOKEN }} | docker login docker.pkg.github.com -u ${{ secrets.GH_USER }} --password-stdin
+      - name: Logging in GitHub Packages
+        run: echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ secrets.GH_USER }} --password-stdin
 
       # - name: Publish Images in GitHub Packages
       #   run: make container-publish-github GIT_VERSION=${{ steps.get_tag.outputs.name }}
+
+      - name: configure aws credentials
+        uses: aws-actions/configure-aws-credentials@master
+        with:
+          role-to-assume: ${{ secrets.AWS_OIDC_ROLE_TO_ASSUME }}
+          role-session-name: publish-sam-app
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Publish Images in GitHub Packages
+        run: make container-publish-aws-ecr GIT_VERSION=${{ steps.get_tag.outputs.name }}
 
   create_github_release:
     name: Create Github Release
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
+      - name: Set up Go 1.x
+        uses: actions/setup-go@v2
+        with:
+          go-version: ${{ env.GO_VERSION }}
+        id: go
+
+      - name: Check out code
         uses: actions/checkout@v2
+
+      - id: go-cache-paths
+        run: |
+          echo "::set-output name=go-build::$(go env GOCACHE)"
+          echo "::set-output name=go-mod::$(go env GOMODCACHE)"
+
+      - name: Go Build Cache
+        uses: actions/cache@v2
+        with:
+          path: ${{ steps.go-cache-paths.outputs.go-build }}
+          key: ${{ runner.os }}-go-build-${{ hashFiles('**/go.sum') }}
+
+      - name: Go Mod Cache
+        uses: actions/cache@v2
+        with:
+          path: ${{ steps.go-cache-paths.outputs.go-mod }}
+          key: ${{ runner.os }}-go-mod-${{ hashFiles('**/go.sum') }}
 
       - name: Set id for github tag version
         id: get_tag
         run: echo ::set-output name=name::$(echo $GITHUB_REF | cut -d / -f 3)
 
+      - name: Docker Version
+        run: docker version
+
+      - uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - uses: actions/download-artifact@v2
+        with:
+          name: dist
+          path: ./dist/
+
+      - name: Show workspace files
+        run: tree .
+
+      - name: Build Distribution zip Assets
+        run: make build-dist-zip
+
       - name: Create Release
         id: create_github_release
         uses: softprops/action-gh-release@v1
-        if: startsWith(github.ref, 'refs/tags/')
         with:
           tag_name: ${{ steps.get_tag.outputs.name }}
           name: Release ${{ steps.get_tag.outputs.name }}
@@ -205,6 +316,12 @@ jobs:
           draft: false
           prerelease: false
           token: ${{ secrets.GITHUB_TOKEN }}
-          files: |
-            LICENSE
-            dist/*
+
+      - name: Upload Release Assets
+        id: upload-release-assets
+        uses: dwenegar/upload-release-assets@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          release_id: ${{ steps.create_github_release.outputs.id }}
+          assets_path: dist/assets

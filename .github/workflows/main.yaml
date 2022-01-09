@@ -1,4 +1,4 @@
-name: "Main branch workflow"
+name: "Main"
 
 on:
   push:
@@ -19,15 +19,6 @@ permissions:
   pull-requests: read
 
 jobs:
-  golangci:
-    name: golang-ci
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - name: golangci-lint
-        uses: golangci/golangci-lint-action@v2
-        with:
-          version: latest
   test:
     name: Test
     runs-on: ubuntu-latest
@@ -38,7 +29,7 @@ jobs:
           go-version: ${{ env.GO_VERSION }}
         id: go
 
-      - name: Check out code into the Go module directory
+      - name: Check out code
         uses: actions/checkout@v2
 
       - id: go-cache-paths
@@ -60,6 +51,11 @@ jobs:
 
       - name: Show project files before make
         run: tree .
+
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v2
+        with:
+          version: latest
 
       - name: Test
         run: make test
@@ -107,7 +103,6 @@ jobs:
           path: ${{ steps.go-cache-paths.outputs.go-mod }}
           key: ${{ runner.os }}-go-mod-${{ hashFiles('**/go.sum') }}
 
-      # Initializes the CodeQL tools for scanning.
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v1
         with:

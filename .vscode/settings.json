@@ -1,12 +1,18 @@
 {
   "cSpell.words": [
     "codecov",
+    "codeql",
     "Dockerfiles",
+    "dwenegar",
     "goarch",
+    "GOCACHE",
+    "golangci",
+    "GOMODCACHE",
     "idpscimcli",
     "ipid",
     "repositoryname",
     "scimid",
+    "softprops",
     "syslist"
   ]
 }
