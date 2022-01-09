@@ -16,8 +16,10 @@ GIT_BRANCH   ?= $(shell git rev-parse --abbrev-ref HEAD | tr -d '\040\011\012\01
 GIT_USER     ?= $(shell git config --get user.name | tr -d '\040\011\012\015\n')
 BUILD_DATE   ?= $(shell date +'%Y-%m-%dT%H:%M:%S')
 
-BUILD_DIR      := ./build
-DIST_DIR       := ./dist
+BUILD_DIR       := ./build
+DIST_DIR        := ./dist
+DIST_ASSEST_DIR := $(DIST_DIR)/assets
+
 GO_LDFLAGS     ?= -ldflags "-X github.com/$(PROJECT_NAMESPACE)/$(PROJECT_NAME)/internal/version.Version=$(GIT_VERSION) -X github.com/$(PROJECT_NAMESPACE)/$(PROJECT_NAME)/internal/version.Revision=$(GIT_REVISION) -X github.com/$(PROJECT_NAMESPACE)/$(PROJECT_NAME)/internal/version.Branch=$(GIT_BRANCH) -X github.com/$(PROJECT_NAMESPACE)/$(PROJECT_NAME)/internal/version.BuildUser=\"$(GIT_USER)\" -X github.com/$(PROJECT_NAMESPACE)/$(PROJECT_NAME)/internal/version.BuildDate=$(BUILD_DATE)"
 GO_CGO_ENABLED ?= 0
 GO_OPTS        ?= -v
@@ -64,13 +66,28 @@ test-coverage: test
 
 build:
 	$(foreach proj_mod, $(PROJECT_MODULES_NAME), \
-		$(shell CGO_ENABLED=$(GO_CGO_ENABLED) go build $(GO_LDFLAGS) $(GO_OPTS) -o ./$(BUILD_DIR)/$(proj_mod) ./cmd/$(proj_mod)/ ))
+		$(shell CGO_ENABLED=$(GO_CGO_ENABLED) go build $(GO_LDFLAGS) $(GO_OPTS) -o ./$(BUILD_DIR)/$(proj_mod) ./cmd/$(proj_mod)/ ) \
+	)
 
 build-dist: build
-	$(foreach GOOS, $(GO_OS),\
+	$(foreach GOOS, $(GO_OS), \
 		$(foreach GOARCH, $(GO_ARCH), \
 			$(foreach proj_mod, $(PROJECT_MODULES_NAME), \
-				$(shell GOOS=$(GOOS) GOARCH=$(GOARCH) CGO_ENABLED=$(GO_CGO_ENABLED) go build $(GO_LDFLAGS) $(GO_OPTS) -o ./$(DIST_DIR)/$(PROJECT_NAME)-$(GOOS)-$(GOARCH)/$(proj_mod) ./cmd/$(proj_mod)/ ))))
+				$(shell GOOS=$(GOOS) GOARCH=$(GOARCH) CGO_ENABLED=$(GO_CGO_ENABLED) go build $(GO_LDFLAGS) $(GO_OPTS) -o ./$(DIST_DIR)/$(PROJECT_NAME)-$(GOOS)-$(GOARCH)/$(proj_mod) ./cmd/$(proj_mod)/ ) \
+			) \
+		) \
+	)
+
+build-dist-zip: build-dist
+	mkdir ./$(DIST_ASSEST_DIR);
+	$(foreach GOOS, $(GO_OS), \
+		$(foreach GOARCH, $(GO_ARCH), \
+			$(foreach proj_mod, $(PROJECT_MODULES_NAME), \
+				zip --junk-paths -r ./$(DIST_ASSEST_DIR)/$(PROJECT_NAME)-$(GOOS)-$(GOARCH).zip ./$(DIST_DIR)/$(PROJECT_NAME)-$(GOOS)-$(GOARCH); \
+				shasum -a 256 ./$(DIST_ASSEST_DIR)/$(PROJECT_NAME)-$(GOOS)-$(GOARCH).zip | cut -d " " -f 1 > ./$(DIST_ASSEST_DIR)/$(PROJECT_NAME)-$(GOOS)-$(GOARCH).sha256; \
+			) \
+		) \
+	)
 
 clean:
 	rm -rf $(BUILD_DIR) $(DIST_DIR) ./*.out .aws-sam/ build.toml
@@ -110,7 +127,7 @@ container-publish-github: container-build
 			docker push "$(GITHUB_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME)-$(OS)-$(ARCH):$(GIT_VERSION)"; \
 			))
 
-container-publish-ecr: container-build
+container-publish-aws-ecr: container-build
 	$(foreach OS, $(CONTAINER_OS), \
 		$(foreach ARCH, $(CONTAINER_ARCH), \
 			$(if $(findstring $(ARCH), arm64v8), $(eval BIN_ARCH = arm64),$(eval BIN_ARCH = $(ARCH))) \

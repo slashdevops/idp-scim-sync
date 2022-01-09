@@ -1,0 +1,51 @@
+---
+name: Bug Report
+description: File a bug report
+about: Create a report to help us improve
+title: "bug: "
+labels: ["bug"]
+assignees: ""
+
+body:
+  - type: dropdown
+    id: component
+    attributes:
+      label: Component
+      description: What component of the project are you running?
+      options:
+        - idpscim
+        - idpscimcli
+
+  - type: markdown
+    attributes:
+      value: |
+        **Describe the bug**
+        A clear and concise description of what the bug is.
+
+        **To Reproduce**
+        Steps to reproduce the behavior if possible:
+
+        1. Go to '...'
+        2. Click on '....'
+        3. Scroll down to '....'
+        4. See error
+
+        **Expected behavior**
+        A clear and concise description of what you expected to happen.
+
+        **Screenshots**
+        If applicable, add screenshots to help explain your problem.
+
+        **Additional context**
+        Add any other context about the problem here.
+
+        **WARNING:** Protect sensitive information like passwords.
+
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Code of Conduct
+      description: By submitting this issue, you agree to follow our [CNCF Code of Conduct](https://github.com/cncf/foundation/blob/master/code-of-conduct.md)
+      options:
+        - label: I agree to follow this project's Code of Conduct
+          required: true

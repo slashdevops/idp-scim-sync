@@ -32,6 +32,8 @@ Deploy (Local way)
 sam deploy --guided --profile $AWS_PROFILE
 ```
 
+## Publish
+
 Package and Publish (Only project Owners)
 
 ```bash
@@ -39,10 +41,102 @@ sam package \
   --output-template-file packaged.yaml \
   --s3-bucket $SAM_APP_BUCKET \
   --profile $AWS_PROFILE
+```
 
-sam publish \
-  --semantic-version $SAM_APP_VERSION \
-  --template packaged.yaml \
-  --region $AWS_REGION \
-  --profile $AWS_PROFILE
+Buy default this is private the first time and depends on `AWS_REGION`
+
+```bash
+#export AWS_PUBLIC_REGIONS=($(aws ec2 describe-regions | jq -c -r '.Regions[] | .RegionName' | tr '\n' ' '))
+
+export AWS_PUBLIC_REGIONS=(\
+us-west-2 \
+us-west-1 \
+us-east-2 \
+us-east-1 \
+eu-central-1 \
+ap-southeast-2 \
+ap-southeast-1 \
+ca-central-1 \
+sa-east-1 \
+ap-northeast-1 \
+ap-northeast-2 \
+eu-west-1 \
+eu-west-2 \
+eu-west-3 \
+ap-south-1 \
+eu-north-1\
+)
+
+for AWS_PUBLIC_REGION in $AWS_PUBLIC_REGIONS; do
+  echo "Publishing in $AWS_PUBLIC_REGION ..."
+  sam publish \
+    --semantic-version $SAM_APP_VERSION \
+    --template packaged.yaml \
+    --region $AWS_PUBLIC_REGION \
+    --profile $AWS_PROFILE
+
+  sleep 2
+
+  export AWS_SAM_APP_ARN=$(\
+  aws serverlessrepo list-applications \
+    --max-items 100 \
+    --region $AWS_PUBLIC_REGION \
+    --profile $AWS_PROFILE \
+    | jq -c '.Applications[] | select(.ApplicationId | contains("idp-scim-sync"))' \
+    | jq -r '.ApplicationId' \
+  )
+
+  sleep 2
+
+  aws serverlessrepo put-application-policy \
+    --application-id $AWS_SAM_APP_ARN \
+    --statements Principals='*',Actions='Deploy' \
+    --region $AWS_PUBLIC_REGION \
+    --profile $AWS_PROFILE
+
+  sleep 1
+done
+```
+
+Delete Application
+
+```bash
+export AWS_PUBLIC_REGIONS=(\
+us-west-2 \
+us-west-1 \
+us-east-2 \
+us-east-1 \
+eu-central-1 \
+ap-southeast-2 \
+ap-southeast-1 \
+ca-central-1 \
+sa-east-1 \
+ap-northeast-1 \
+ap-northeast-2 \
+eu-west-1 \
+eu-west-2 \
+eu-west-3 \
+ap-south-1 \
+eu-north-1\
+)
+
+for AWS_PUBLIC_REGION in $AWS_PUBLIC_REGIONS; do
+  echo "Deleting in $AWS_PUBLIC_REGION ..."
+
+  export AWS_SAM_APP_ARN=$(\
+  aws serverlessrepo list-applications \
+    --max-items 100 \
+    --region $AWS_PUBLIC_REGION \
+    --profile $AWS_PROFILE \
+    | jq -c '.Applications[] | select(.ApplicationId | contains("idp-scim-sync"))' \
+    | jq -r '.ApplicationId' \
+  )
+
+  sleep 1
+
+  aws serverlessrepo delete-application \
+    --application-id $AWS_SAM_APP_ARN \
+    --region $AWS_PUBLIC_REGION \
+    --profile $AWS_PROFILE
+done
 ```

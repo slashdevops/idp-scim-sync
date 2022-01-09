@@ -58,6 +58,9 @@ Resources:
               - s3:GetObject
             Resource:
               - !Sub "arn:aws:s3:::${BucketNamePrefix}-${AWS::AccountId}-${AWS::Region}/*"
+            Condition:
+              StringEquals:
+                aws:SourceAccount: !Ref AWS::AccountId
           - Sid: AllowCloudFormationRead
             Principal:
               Service: cloudformation.amazonaws.com

@@ -6,9 +6,9 @@ Keep your [AWS Single Sign-On (SSO) groups and users](https://aws.amazon.com/sin
 
 ![On AWS](https://raw.githubusercontent.com/slashdevops/idp-scim-sync/main/docs/images/diagrams/ipd-scim-sync.drawio.png)
 
-As the image above shows, the `AWS Lambda function` is triggered by a [CloudWatch event rule](https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-create-rule-schedule.html).  The event rule is configured to run every [15 minutes (default in the cfn template)](template.yaml), and sync the `AWS Single Sign-On (SSO) groups and users` with `Google Workspace directory` using the respective `APIs`. During the `first sync`, the data of the `Groups and Users` are stored in the `AWS S3 bucket` as the [State file](docs/State%20File%20example.md)
+As the image above shows, the `AWS Lambda function` is triggered by a [CloudWatch event rule](https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-create-rule-schedule.html).  The event rule is configured to run every [15 minutes (default in the cfn template)](template.yaml), and sync the `AWS Single Sign-On (SSO) groups and users` with `Google Workspace directory` using the respective `APIs`. During the `first sync`, the data of the `Groups and Users` are stored in the `AWS S3 bucket` as the [State file](docs/State-File-example.md)
 
-[The State file](docs/State%20File%20example.md) is a custom implementation to save time and requests to the [AWS SSO SCIM API](https://docs.aws.amazon.com/singlesignon/latest/developerguide/what-is-scim.html), also mitigate some limitations of this.
+[The State file](docs/State-File-example.md) is a custom implementation to save time and requests to the [AWS SSO SCIM API](https://docs.aws.amazon.com/singlesignon/latest/developerguide/what-is-scim.html), also mitigate some limitations of this.
 
 This project is developed using the [Go language](https://go.dev/) and also use [AWS SAM](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-specification.html), a tool for creating and deploying `AWS Serverless Applications` in an easy way.
 
@@ -16,7 +16,7 @@ If you want to know what creates the [CloudFormation Template](template.yaml), p
 
 First time implementing [Single Sign-on on AWS](https://aws.amazon.com/single-sign-on)? please read [Using SSO](docs/Using-SSO.md)
 
-## Important notes
+## Important
 
 The documentation is a __WIP__ and you can contribute!
 
@@ -29,7 +29,7 @@ Most of the limitations of this project are due to [AWS SSO SCIM API Limitations
 
 NOTES:
 
-1. The use of the [The State file](docs/State%20File%20example.md) could mitigate the number `1`, but I recommend you be cautious of these limitations as well.
+1. The use of the [The State file](docs/State-File-example.md) could mitigate the number `1`, but I recommend you be cautious of these limitations as well.
 2. The project implements a `well-known HTTP Retryable client` to mitigate the number `2`, but I recommend you be cautious of these limitations as well.
 
 **Users that come from the project [SSO Sync](https://github.com/awslabs/ssosync)**
@@ -61,7 +61,9 @@ There are two ways to use this project in AWS and described below.
 
 This is the easy way, this project is deployed as a [AWS Serverless Application](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-apps-overview.html) in [AWS Serverless Application Repository](https://aws.amazon.com/es/serverless/serverlessrepo/).
 
-The public repository of the project is [slashdevops/idp-scim-sync]()
+The public repository of the project is [slashdevops/idp-scim-sync](https://serverlessrepo.aws.amazon.com/applications/us-east-1/889836709304/idp-scim-sync)
+
+NOTE: The repository depends on your `AWS Region`.
 
 #### Using AWS SAM
 
