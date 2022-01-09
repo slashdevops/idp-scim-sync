@@ -58,7 +58,7 @@ lint:
 generate:
 	go generate $(GO_FILES)
 
-test: generate tidy fmt vet
+test: tidy fmt vet
 	go test -race -covermode=atomic -coverprofile coverage.out -tags=unit $(GO_FILES)
 
 test-coverage: test
