@@ -15,7 +15,6 @@ on:
 jobs:
   codeql:
     name: CodeQL Analysis
-    needs: Test
     runs-on: ubuntu-latest
     steps:
       - name: Set up Go 1.x
