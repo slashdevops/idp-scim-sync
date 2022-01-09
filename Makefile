@@ -78,7 +78,7 @@ build-dist: build
 		) \
 	)
 
-build-dist-zip: build-dist
+build-dist-zip:
 	mkdir ./$(DIST_ASSEST_DIR);
 	$(foreach GOOS, $(GO_OS), \
 		$(foreach GOARCH, $(GO_ARCH), \
