@@ -185,7 +185,7 @@ jobs:
         run: make container-publish-docker GIT_VERSION=${{ steps.get_tag.outputs.name }}
 
       - name: Logging in GitHub Packages
-        run: echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ secrets.GH_USER }} --password-stdin
+        run: echo ${{ secrets.GH_PAT }} | docker login ghcr.io -u ${{ secrets.GH_USER }} --password-stdin
 
       - name: Publish Images in GitHub Packages
         run: make container-publish-github GIT_VERSION=${{ steps.get_tag.outputs.name }}
