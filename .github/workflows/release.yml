@@ -57,7 +57,6 @@ jobs:
 
   build:
     name: Build Distribution
-    needs: codeql
     runs-on: ubuntu-latest
     steps:
       - name: Set up Go 1.x
