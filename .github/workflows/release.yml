@@ -3,7 +3,7 @@ name: "Release"
 on:
   push:
     tags:
-      - v[0123456789].[0-9]+.[0-9]+ # https://help.github.com/es/actions/reference/workflow-syntax-for-github-actions#filter-pattern-cheat-sheet
+      - v[0-9].[0-9]+.[0-9]+ # https://help.github.com/es/actions/reference/workflow-syntax-for-github-actions#filter-pattern-cheat-sheet
 
 env:
   GO_VERSION: 1.17
