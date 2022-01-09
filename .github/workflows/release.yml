@@ -57,6 +57,7 @@ jobs:
 
   build:
     name: Build Distribution
+    needs: test
     runs-on: ubuntu-latest
     steps:
       - name: Set up Go 1.x
