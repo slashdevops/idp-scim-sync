@@ -13,7 +13,7 @@ permissions:
   id-token: write
   security-events: write
   actions: read
-  contents: read
+  contents: write
   pull-requests: read
 
 jobs:
@@ -187,8 +187,8 @@ jobs:
       - name: Logging in GitHub Packages
         run: echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ secrets.GH_USER }} --password-stdin
 
-      # - name: Publish Images in GitHub Packages
-      #   run: make container-publish-github GIT_VERSION=${{ steps.get_tag.outputs.name }}
+      - name: Publish Images in GitHub Packages
+        run: make container-publish-github GIT_VERSION=${{ steps.get_tag.outputs.name }}
 
       - name: configure aws credentials
         uses: aws-actions/configure-aws-credentials@master
