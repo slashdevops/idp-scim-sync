@@ -1,4 +1,4 @@
-name: "AWS SAM Publish"
+name: "AWS SAM"
 
 # https://docs.github.com/en/actions/learn-github-actions/events-that-trigger-workflows#workflow_run
 on:
