@@ -267,7 +267,7 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ steps.get_tag.outputs.name }}
-          name: Release ${{ steps.get_tag.outputs.name }}
+          name: ${{ steps.get_tag.outputs.name }}
           # body: |
           #   See the file: CHANGELOG.md
           draft: false
