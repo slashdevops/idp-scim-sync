@@ -95,11 +95,13 @@ clean:
 container-build: build-dist
 	$(foreach OS, $(CONTAINER_OS), \
 		$(foreach ARCH, $(CONTAINER_ARCH), \
-			$(if $(findstring $(ARCH), arm64v8), $(eval BIN_ARCH = arm64),$(eval BIN_ARCH = $(ARCH)) ) \
+			$(if $(findstring $(ARCH), arm64v8), $(eval BIN_ARCH = arm64), $(eval BIN_ARCH = $(ARCH)) ) \
+			  echo "Building $(PROJECT_NAME) for OS=$(OS) ARCH=$(ARCH) and BIN_ARCH=$(BIN_ARCH)"; \
 				docker build \
 					--build-arg ARCH=$(ARCH) \
 					--build-arg BIN_ARCH=$(BIN_ARCH) \
 					--build-arg OS=$(OS) \
+					--platform=$(OS)/$(BIN_ARCH) \
 					-t $(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME)-$(OS)-$(ARCH):latest \
 					-t $(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME)-$(OS)-$(ARCH):$(GIT_VERSION) \
 					-t $(DOCKER_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME)-$(OS)-$(ARCH):latest \
