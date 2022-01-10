@@ -28,16 +28,21 @@ Resources:
       PolicyDocument:
         Version: "2012-10-17"
         Statement:
-          - Effect: Allow
+          - Sid: AllowPushImage
+            Effect: Allow
             Action:
               - ecr:BatchCheckLayerAvailability
               - ecr:CompleteLayerUpload
               - ecr:InitiateLayerUpload
               - ecr:PutImage
               - ecr:UploadLayerPart
-              - ecr:GetAuthorizationToken
             Resource:
               - Fn::ImportValue: !Sub "${EcrRepositoryStackExportName}:RepositoryArn"
+          - Sid: AllowAuthorizationToken
+            Effect: Allow
+            Action:
+              - ecr:GetAuthorizationToken
+            Resource: "*"
 
 Outputs:
   PolicyName:
