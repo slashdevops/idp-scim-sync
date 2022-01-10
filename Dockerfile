@@ -1,6 +1,3 @@
-# ARG ARCH="amd64"
-# FROM ${ARCH}/alpine
-# using --platform in the docker build
 FROM alpine
 
 ARG OS="linux"

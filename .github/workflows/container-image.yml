@@ -1,0 +1,95 @@
+name: "Container Image"
+
+on:
+  workflow_dispatch:
+  release:
+    types: [published]
+
+env:
+  GO_VERSION: 1.17
+  AWS_REGION: us-east-1
+
+permissions:
+  actions: read
+
+jobs:
+  publish_container_images:
+    name: Publish Container Images
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Go 1.x
+        uses: actions/setup-go@v2
+        with:
+          go-version: ${{ env.GO_VERSION }}
+        id: go
+
+      - name: Check out code
+        uses: actions/checkout@v2
+
+      - id: go-cache-paths
+        run: |
+          echo "::set-output name=go-build::$(go env GOCACHE)"
+          echo "::set-output name=go-mod::$(go env GOMODCACHE)"
+
+      - name: Go Build Cache
+        uses: actions/cache@v2
+        with:
+          path: ${{ steps.go-cache-paths.outputs.go-build }}
+          key: ${{ runner.os }}-go-build-${{ hashFiles('**/go.sum') }}
+
+      - name: Go Mod Cache
+        uses: actions/cache@v2
+        with:
+          path: ${{ steps.go-cache-paths.outputs.go-mod }}
+          key: ${{ runner.os }}-go-mod-${{ hashFiles('**/go.sum') }}
+
+      - name: Set id for github tag version
+        id: get_tag
+        run: echo ::set-output name=name::$(echo $GITHUB_REF | cut -d / -f 3)
+
+      - name: Docker Version
+        run: docker version
+
+      - uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - name: Show workspace files
+        run: tree .
+
+      - name: Build container images
+        run: make container-build GIT_VERSION=${{ steps.get_tag.outputs.name }}
+
+      - name: Show local container images
+        run: docker images
+
+      - name: Logging in Docker Hub
+        run: echo ${{ secrets.DOCKER_HUB_TOKEN }} | docker login -u ${{ secrets.DOCKER_HUB_USER }} --password-stdin
+
+      - name: Publish Images in Docker Hub
+        run: make container-publish-docker GIT_VERSION=${{ steps.get_tag.outputs.name }}
+
+      - name: Logging in GitHub Packages
+        run: echo ${{ secrets.GH_PAT }} | docker login ghcr.io -u ${{ secrets.GH_USER }} --password-stdin
+
+      - name: Publish Images in GitHub Packages
+        run: make container-publish-github GIT_VERSION=${{ steps.get_tag.outputs.name }}
+
+      - name: configure aws credentials
+        uses: aws-actions/configure-aws-credentials@master
+        with:
+          role-to-assume: ${{ secrets.AWS_OIDC_ROLE_TO_ASSUME }}
+          role-session-name: publish-sam-app
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Publish Images in GitHub Packages
+        run: make container-publish-aws-ecr GIT_VERSION=${{ steps.get_tag.outputs.name }}

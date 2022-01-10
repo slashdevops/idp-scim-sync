@@ -29,7 +29,8 @@ GO_ARCH        ?= arm64 amd64
 GO_FILES       := $(shell go list ./... | grep -v /mocks/)
 
 CONTAINER_OS   ?= linux
-CONTAINER_ARCH ?= arm64v8 amd64
+CONTAINER_ARCH ?= amd64
+#CONTAINER_ARCH ?= arm64v8 amd64
 CONTAINER_NAMESPACE ?= $(PROJECT_NAMESPACE)
 CONTAINER_IMAGE_NAME ?= $(PROJECT_NAME)
 
