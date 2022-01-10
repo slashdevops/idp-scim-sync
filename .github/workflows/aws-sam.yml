@@ -1,11 +1,12 @@
 name: "AWS SAM"
 
 # https://docs.github.com/en/actions/learn-github-actions/events-that-trigger-workflows#workflow_run
-on:
-  workflow_run:
-    workflows: ["Release"]
-    types:
-      - completed
+# on:
+#   workflow_run:
+#     workflows: ["Release"]
+#     types:
+#       - completed
+on: workflow_dispatch
 
 permissions:
   id-token: write
