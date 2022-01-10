@@ -10,7 +10,8 @@ env:
   AWS_REGION: us-east-1
 
 permissions:
-  actions: read
+  id-token: write
+  contents: read
 
 jobs:
   publish_container_images:
