@@ -10,6 +10,11 @@ Parameters:
     Description: The base CloudFormation stack export name that contains the IAM Role for Github OIDC Provider
     Default: slashdevops-iam-role-idp-scim-sync
 
+  S3BucketStackExportName:
+    Type: String
+    Description: The base CloudFormation stack export name that contains the IAM Role for Github OIDC Provider
+    Default: slashdevops-s3-idp-scim-sync-sam
+
 Resources:
   Policy:
     Type: AWS::IAM::Policy
@@ -28,6 +33,7 @@ Resources:
             Action:
               - cloudformation:CreateChangeSet
               - cloudformation:CreateStack
+              - cloudformation:DeleteStack
               - cloudformation:DescribeChangeSet
               - cloudformation:DescribeStackEvents
               - cloudformation:DescribeStacks
@@ -36,13 +42,14 @@ Resources:
               - cloudformation:ListStackResources
               - cloudformation:UpdateStack
             Resource:
-              - !Sub "arn:aws:cloudformation:*:${AWS::AccountId}:stack/*/*"
-          - Sid: CloudFormationStack
+              - !Sub "arn:aws:cloudformation:*:${AWS::AccountId}:stack/*"
+          - Sid: AllowS3Publish
             Effect: Allow
             Action:
-              - cloudformation:CreateChangeSet
+              - s3:GetObject
+              - s3:PutObject
             Resource:
-              - !Sub "arn:aws:cloudformation:*:${AWS::AccountId}:stackset/*:*"
+              - Fn::ImportValue: !Sub "${S3BucketStackExportName}:BucketArn"
           - Sid: AllowCloudFormationValidate
             Effect: Allow
             Action:
