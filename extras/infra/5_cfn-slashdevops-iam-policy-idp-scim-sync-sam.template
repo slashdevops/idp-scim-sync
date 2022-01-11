@@ -28,21 +28,6 @@ Resources:
       PolicyDocument:
         Version: "2012-10-17"
         Statement:
-          - Sid: CloudFormationStack
-            Effect: Allow
-            Action:
-              - cloudformation:CreateChangeSet
-              - cloudformation:CreateStack
-              - cloudformation:DeleteStack
-              - cloudformation:DescribeChangeSet
-              - cloudformation:DescribeStackEvents
-              - cloudformation:DescribeStacks
-              - cloudformation:ExecuteChangeSet
-              - cloudformation:GetTemplateSummary
-              - cloudformation:ListStackResources
-              - cloudformation:UpdateStack
-            Resource:
-              - !Sub "arn:aws:cloudformation:*:${AWS::AccountId}:stack/*"
           - Sid: AllowS3Publish
             Effect: Allow
             Action:
@@ -50,6 +35,10 @@ Resources:
               - s3:PutObject
             Resource:
               - Fn::ImportValue: !Sub "${S3BucketStackExportName}:BucketArn"
+              - !Sub
+                - "${BucketARN}/*"
+                - BucketARN:
+                    Fn::ImportValue: !Sub "${S3BucketStackExportName}:BucketArn"
           - Sid: AllowCloudFormationValidate
             Effect: Allow
             Action:
@@ -59,6 +48,16 @@ Resources:
             Effect: Allow
             Action:
               - iam:ListPolicies
+            Resource: "*"
+          - Sid: AllowServerlessRepo
+            Effect: Allow
+            Action:
+              - serverlessrepo:SearchApplications
+              - serverlessrepo:CreateApplication
+              - serverlessrepo:CreateApplicationVersion
+              - serverlessrepo:ListApplicationVersions
+              - serverlessrepo:PutApplicationPolicy
+              - serverlessrepo:GetApplicationPolicy
             Resource: "*"
 
 Outputs:
