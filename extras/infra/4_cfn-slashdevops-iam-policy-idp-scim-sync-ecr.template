@@ -43,6 +43,11 @@ Resources:
             Action:
               - ecr:GetAuthorizationToken
             Resource: "*"
+          - Sid: AllowBearerToken
+            Effect: Allow
+            Action:
+              - sts:GetServiceBearerToken
+            Resource: "*"
 
 Outputs:
   PolicyName:
