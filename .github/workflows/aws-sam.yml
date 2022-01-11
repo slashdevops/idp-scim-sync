@@ -8,8 +8,8 @@ name: "AWS SAM"
 #       - completed
 on:
   workflow_dispatch:
-  release:
-    types: [published]
+  # release:
+  #   types: [published]
 
 permissions:
   id-token: write
