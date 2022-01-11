@@ -2,13 +2,13 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Description: >
   Creates an AWS ECR Repository
-  Deploy as: slashdevops-ecr-repo-idp-scim-sync
+  Deploy as: slashdevops-ecr-repo-idp-scim-sync-linux-amd64
 
 Parameters:
   RepositoryName:
     Type: String
     Description: Repository name, should follow the pattern namespace/repositoryname
-    Default: slashdevops/idp-scim-sync
+    Default: slashdevops/idp-scim-sync-linux-amd64
     MinLength: 2
     MaxLength: 100
     AllowedPattern: "(?:[a-z0-9]+(?:[._-][a-z0-9]+)*/)*[a-z0-9]+(?:[._-][a-z0-9]+)*"
@@ -35,7 +35,8 @@ Parameters:
       ## How to run SlashDevOps idp-scim-sync images?
 
       ```bash
-      docker run --rm slashdevops/idp-scim-sync --help
+      docker run --rm public.ecr.aws/l2n7y5s7/slashdevops/idp-scim-sync-linux-amd64 --help
+      docker run --rm public.ecr.aws/l2n7y5s7/slashdevops/idp-scim-sync-linux-arm64 --help
       ```
 
   AboutText:

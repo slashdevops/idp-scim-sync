@@ -28,7 +28,6 @@ Resources:
             Action:
               - cloudformation:CreateChangeSet
               - cloudformation:CreateStack
-              - cloudformation:DeleteStack
               - cloudformation:DescribeChangeSet
               - cloudformation:DescribeStackEvents
               - cloudformation:DescribeStacks
@@ -37,7 +36,23 @@ Resources:
               - cloudformation:ListStackResources
               - cloudformation:UpdateStack
             Resource:
-              - !Sub "arn:aws:cloudformation:*:${AWS::AccountId}:stack/*"
+              - !Sub "arn:aws:cloudformation:*:${AWS::AccountId}:stack/*/*"
+          - Sid: CloudFormationStack
+            Effect: Allow
+            Action:
+              - cloudformation:CreateChangeSet
+            Resource:
+              - !Sub "arn:aws:cloudformation:*:${AWS::AccountId}:stackset/*:*"
+          - Sid: AllowCloudFormationValidate
+            Effect: Allow
+            Action:
+              - cloudformation:ValidateTemplate
+            Resource: "*"
+          - Sid: AllowIamList
+            Effect: Allow
+            Action:
+              - iam:ListPolicies
+            Resource: "*"
 
 Outputs:
   PolicyName:

@@ -28,21 +28,6 @@ Resources:
       PolicyDocument:
         Version: "2012-10-17"
         Statement:
-          - Sid: AllowPushImage
-            Effect: Allow
-            Action:
-              - ecr:BatchCheckLayerAvailability
-              - ecr:CompleteLayerUpload
-              - ecr:InitiateLayerUpload
-              - ecr:PutImage
-              - ecr:UploadLayerPart
-            Resource:
-              - Fn::ImportValue: !Sub "${EcrRepositoryStackExportName}:RepositoryArn"
-          - Sid: AllowAuthorizationToken
-            Effect: Allow
-            Action:
-              - ecr:GetAuthorizationToken
-            Resource: "*"
           - Sid: AllowBearerToken
             Effect: Allow
             Action:
@@ -58,8 +43,16 @@ Resources:
               - ecr-public:PutImage
               - ecr-public:GetRepositoryCatalogData
               - ecr-public:CompleteLayerUpload
-            Resource:
-              - Fn::ImportValue: !Sub "${EcrRepositoryStackExportName}:RepositoryArn"
+              - ecr-public:InitiateLayerUpload
+            Resource: !Sub
+              - "${RepoARN}-*"
+              - RepoARN:
+                  Fn::ImportValue: !Sub "${EcrRepositoryStackExportName}:RepositoryArn"
+          - Sid: AllowGetAuthorizationToken
+            Effect: Allow
+            Action:
+              - ecr-public:GetAuthorizationToken
+            Resource: "*"
 
 Outputs:
   PolicyName:
