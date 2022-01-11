@@ -48,6 +48,18 @@ Resources:
             Action:
               - sts:GetServiceBearerToken
             Resource: "*"
+          - Sid: AllowPushPublicImage
+            Effect: Allow
+            Action:
+              - ecr-public:DescribeImages
+              - ecr-public:InitiateLayerUpload
+              - ecr-public:PutRepositoryCatalogData
+              - ecr-public:UploadLayerPart
+              - ecr-public:PutImage
+              - ecr-public:GetRepositoryCatalogData
+              - ecr-public:CompleteLayerUpload
+            Resource:
+              - Fn::ImportValue: !Sub "${EcrRepositoryStackExportName}:RepositoryArn"
 
 Outputs:
   PolicyName:

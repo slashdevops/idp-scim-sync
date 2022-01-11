@@ -72,6 +72,11 @@ Parameters:
     Description: The architectures supported by the repository
     Default: x86-64, ARM 64
 
+  GithubOpenidRoleStackExportName:
+    Type: String
+    Description: The base CloudFormation stack export name that contains the IAM Role for Github OIDC Provider
+    Default: slashdevops-iam-role-idp-scim-sync
+
   StackExportName:
     Description: This value will be used to prefix the export values of the template
     Type: String
@@ -92,6 +97,27 @@ Resources:
         OperatingSystems: !Ref OperatingSystems
         Architectures: !Ref Architectures
         RepositoryDescription: !Ref RepositoryDescription
+      RepositoryPolicyText:
+        Version: 2012-10-17
+        Statement:
+          - Sid: UpdatedRegistryPolicy
+            Effect: Allow
+            Principal:
+              AWS:
+                Fn::ImportValue: !Sub "${GithubOpenidRoleStackExportName}:RoleArn"
+            Action:
+              - ecr-public:BatchCheckLayerAvailability
+              - ecr-public:CompleteLayerUpload
+              - ecr-public:DescribeImageTags
+              - ecr-public:DescribeImages
+              - ecr-public:DescribeRepositories
+              - ecr-public:GetRepositoryCatalogData
+              - ecr-public:GetRepositoryPolicy
+              - ecr-public:InitiateLayerUpload
+              - ecr-public:ListImages
+              - ecr-public:PutImage
+              - ecr-public:PutRepositoryCatalogData
+              - ecr-public:UploadLayerPart
       Tags:
         - Key: Name
           Value: !Ref RepositoryName
