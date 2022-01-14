@@ -1,4 +1,5 @@
-FROM alpine
+ARG ARCH
+FROM ${ARCH}/alpine
 
 ARG OS="linux"
 ARG BIN_ARCH="amd64"

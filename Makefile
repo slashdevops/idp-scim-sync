@@ -29,14 +29,15 @@ GO_ARCH        ?= arm64 amd64
 GO_FILES       := $(shell go list ./... | grep -v /mocks/)
 
 CONTAINER_OS   ?= linux
-CONTAINER_ARCH ?= amd64
-#CONTAINER_ARCH ?= arm64v8 amd64
+#CONTAINER_ARCH ?= amd64
+CONTAINER_ARCH ?= arm64v8 amd64
 CONTAINER_NAMESPACE ?= $(PROJECT_NAMESPACE)
 CONTAINER_IMAGE_NAME ?= $(PROJECT_NAME)
 
-DOCKER_CONTAINER_REPO  ?= "docker.io"
-AWS_ECR_CONTAINER_REPO ?= "public.ecr.aws/l2n7y5s7"
-GITHUB_CONTAINER_REPO  ?= "ghcr.io"
+DOCKER_CONTAINER_REPO  ?= docker.io
+GITHUB_CONTAINER_REPO  ?= ghcr.io
+AWS_ECR_CONTAINER_REPO ?= public.ecr.aws/l2n7y5s7
+
 
 all: clean test build
 
@@ -96,44 +97,116 @@ clean:
 container-build: build-dist
 	$(foreach OS, $(CONTAINER_OS), \
 		$(foreach ARCH, $(CONTAINER_ARCH), \
-			$(if $(findstring $(ARCH), arm64v8), $(eval BIN_ARCH = arm64), $(eval BIN_ARCH = $(ARCH)) ) \
+			$(if $(findstring v, $(ARCH)), $(eval BIN_ARCH = arm64), $(eval BIN_ARCH = $(ARCH)) ) \
 			  echo "Building $(PROJECT_NAME) for OS=$(OS) ARCH=$(ARCH) and BIN_ARCH=$(BIN_ARCH)"; \
 				docker build \
 					--build-arg ARCH=$(ARCH) \
 					--build-arg BIN_ARCH=$(BIN_ARCH) \
 					--build-arg OS=$(OS) \
-					--platform=$(OS)/$(BIN_ARCH) \
-					-t $(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME)-$(OS)-$(ARCH):latest \
-					-t $(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME)-$(OS)-$(ARCH):$(GIT_VERSION) \
-					-t $(DOCKER_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME)-$(OS)-$(ARCH):latest \
-					-t $(DOCKER_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME)-$(OS)-$(ARCH):$(GIT_VERSION) \
-					-t $(GITHUB_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME)-$(OS)-$(ARCH):latest \
-					-t $(GITHUB_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME)-$(OS)-$(ARCH):$(GIT_VERSION) \
-					-t $(AWS_ECR_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME)-$(OS)-$(ARCH):latest \
-					-t $(AWS_ECR_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME)-$(OS)-$(ARCH):$(GIT_VERSION) \
+					--tag $(DOCKER_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME):$(GIT_VERSION)-$(OS)-$(ARCH) \
+					--tag $(DOCKER_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME):latest-$(OS)-$(ARCH) \
+					--tag $(GITHUB_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME):$(GIT_VERSION)-$(OS)-$(ARCH) \
+					--tag $(GITHUB_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME):latest-$(OS)-$(ARCH) \
+					--tag $(AWS_ECR_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME):$(GIT_VERSION)-$(OS)-$(ARCH) \
+					--tag $(AWS_ECR_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME):latest-$(OS)-$(ARCH) \
 					./.; \
 			))
 
 container-publish-docker: container-build
 	$(foreach OS, $(CONTAINER_OS), \
 		$(foreach ARCH, $(CONTAINER_ARCH), \
-			$(if $(findstring $(ARCH), arm64v8), $(eval BIN_ARCH = arm64),$(eval BIN_ARCH = $(ARCH)) ) \
-			docker push "$(DOCKER_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME)-$(OS)-$(ARCH):latest";  \
-			docker push "$(DOCKER_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME)-$(OS)-$(ARCH):$(GIT_VERSION)"; \
+			$(if $(findstring v, $(ARCH)), $(eval BIN_ARCH = arm64), $(eval BIN_ARCH = $(ARCH)) ) \
+				\
+			  echo "Building $(PROJECT_NAME) for OS=$(OS) ARCH=$(ARCH) and BIN_ARCH=$(BIN_ARCH)"; \
+				docker push "$(DOCKER_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME):$(GIT_VERSION)-$(OS)-$(ARCH)"; \
+				docker push "$(DOCKER_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME):latest-$(OS)-$(ARCH)"; \
+				\
+				docker manifest create --amend \
+					"$(DOCKER_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME):$(GIT_VERSION)" \
+					"$(DOCKER_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME):$(GIT_VERSION)-$(OS)-$(ARCH)"; \
+				docker manifest annotate \
+					"$(DOCKER_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME):$(GIT_VERSION)" \
+					"$(DOCKER_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME):$(GIT_VERSION)-$(OS)-$(ARCH)" \
+					--os $(OS) --arch $(BIN_ARCH) \
+					$(if $(findstring v, $(ARCH)), --variant "v8", ) \
+					; \
+				\
+				docker manifest create --amend \
+					"$(DOCKER_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME):latest" \
+					"$(DOCKER_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME):latest-$(OS)-$(ARCH)"; \
+				docker manifest annotate \
+					"$(DOCKER_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME):latest" \
+					"$(DOCKER_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME):latest-$(OS)-$(ARCH)" \
+					--os $(OS) --arch $(BIN_ARCH) \
+					$(if $(findstring v, $(ARCH)), --variant "v8", ) \
+					; \
+				\
+				docker manifest push "$(DOCKER_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME):latest"; \
+				docker manifest push "$(DOCKER_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME):$(GIT_VERSION)"; \
 			))
 
 container-publish-github: container-build
 	$(foreach OS, $(CONTAINER_OS), \
 		$(foreach ARCH, $(CONTAINER_ARCH), \
-			$(if $(findstring $(ARCH), arm64v8), $(eval BIN_ARCH = arm64),$(eval BIN_ARCH = $(ARCH))) \
-			docker push "$(GITHUB_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME)-$(OS)-$(ARCH):latest"; \
-			docker push "$(GITHUB_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME)-$(OS)-$(ARCH):$(GIT_VERSION)"; \
+			$(if $(findstring v, $(ARCH)), $(eval BIN_ARCH = arm64), $(eval BIN_ARCH = $(ARCH)) ) \
+				\
+			  echo "Building $(PROJECT_NAME) for OS=$(OS) ARCH=$(ARCH) and BIN_ARCH=$(BIN_ARCH)"; \
+				docker push "$(GITHUB_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME):$(GIT_VERSION)-$(OS)-$(ARCH)"; \
+				docker push "$(GITHUB_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME):latest-$(OS)-$(ARCH)"; \
+				\
+				docker manifest create --amend \
+					"$(GITHUB_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME):$(GIT_VERSION)" \
+					"$(GITHUB_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME):$(GIT_VERSION)-$(OS)-$(ARCH)"; \
+				docker manifest annotate \
+					"$(GITHUB_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME):$(GIT_VERSION)" \
+					"$(GITHUB_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME):$(GIT_VERSION)-$(OS)-$(ARCH)" \
+					--os $(OS) --arch $(BIN_ARCH) \
+					$(if $(findstring v, $(ARCH)), --variant "v8", ) \
+					; \
+				\
+				docker manifest create --amend \
+					"$(GITHUB_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME):latest" \
+					"$(GITHUB_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME):latest-$(OS)-$(ARCH)"; \
+				docker manifest annotate \
+					"$(GITHUB_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME):latest" \
+					"$(GITHUB_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME):latest-$(OS)-$(ARCH)" \
+					--os $(OS) --arch $(BIN_ARCH) \
+					$(if $(findstring v, $(ARCH)), --variant "v8", ) \
+					; \
+				\
+				docker manifest push "$(GITHUB_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME):latest"; \
+				docker manifest push "$(GITHUB_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME):$(GIT_VERSION)"; \
 			))
 
 container-publish-aws-ecr: container-build
 	$(foreach OS, $(CONTAINER_OS), \
 		$(foreach ARCH, $(CONTAINER_ARCH), \
-			$(if $(findstring $(ARCH), arm64v8), $(eval BIN_ARCH = arm64),$(eval BIN_ARCH = $(ARCH))) \
-			docker push "$(AWS_ECR_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME)-$(OS)-$(ARCH):latest"; \
-			docker push "$(AWS_ECR_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME)-$(OS)-$(ARCH):$(GIT_VERSION)"; \
+			$(if $(findstring v, $(ARCH)), $(eval BIN_ARCH = arm64), $(eval BIN_ARCH = $(ARCH)) ) \
+				\
+			  echo "Building $(PROJECT_NAME) for OS=$(OS) ARCH=$(ARCH) and BIN_ARCH=$(BIN_ARCH)"; \
+				docker push "$(AWS_ECR_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME):$(GIT_VERSION)-$(OS)-$(ARCH)"; \
+				docker push "$(AWS_ECR_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME):latest-$(OS)-$(ARCH)"; \
+				\
+				docker manifest create --amend \
+					"$(AWS_ECR_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME):$(GIT_VERSION)" \
+					"$(AWS_ECR_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME):$(GIT_VERSION)-$(OS)-$(ARCH)"; \
+				docker manifest annotate \
+					"$(AWS_ECR_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME):$(GIT_VERSION)" \
+					"$(AWS_ECR_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME):$(GIT_VERSION)-$(OS)-$(ARCH)" \
+					--os $(OS) --arch $(BIN_ARCH) \
+					$(if $(findstring v, $(ARCH)), --variant "v8", ) \
+					; \
+				\
+				docker manifest create --amend \
+					"$(AWS_ECR_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME):latest" \
+					"$(AWS_ECR_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME):latest-$(OS)-$(ARCH)"; \
+				docker manifest annotate \
+					"$(AWS_ECR_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME):latest" \
+					"$(AWS_ECR_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME):latest-$(OS)-$(ARCH)" \
+					--os $(OS) --arch $(BIN_ARCH) \
+					$(if $(findstring v, $(ARCH)), --variant "v8", ) \
+					; \
+				\
+				docker manifest push "$(AWS_ECR_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME):latest"; \
+				docker manifest push "$(AWS_ECR_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME):$(GIT_VERSION)"; \
 			))
