@@ -21,18 +21,6 @@ const (
 	// DefaultSyncMethod is the default sync method to use.
 	DefaultSyncMethod = "groups"
 
-	// DefaultGWSServiceAccountFileSecretARN is the name of the secret containing the service account credentials.
-	DefaultGWSServiceAccountFileSecretARN = "IDPSCIM_GWSServiceAccountFile"
-
-	// DefaultGWSUserEmailSecretARN is the name of the secret containing the user email.
-	DefaultGWSUserEmailSecretARN = "IDPSCIM_GWSUserEmail"
-
-	// DefaultAWSSCIMEndpointSecretARN is the name of the secret containing the SCIM endpoint.
-	DefaultAWSSCIMEndpointSecretARN = "IDPSCIM_SCIMEndpoint"
-
-	// DefaultAWSSCIMAccessTokenSecretARN is the name of the secret containing the SCIM access token.
-	DefaultAWSSCIMAccessTokenSecretARN = "IDPSCIM_SCIMAccessToken"
-
 	// DefaultDisableState is the default state status.
 	DefaultDisableState = false
 
@@ -76,18 +64,14 @@ type Config struct {
 // New returns a new Config
 func New() Config {
 	return Config{
-		ConfigFile:                     DefaultConfigFile,
-		IsLambda:                       DefaultIsLambda,
-		Debug:                          DefaultDebug,
-		LogLevel:                       DefaultLogLevel,
-		LogFormat:                      DefaultLogFormat,
-		GWSServiceAccountFile:          DefaultGWSServiceAccountFile,
-		SyncMethod:                     DefaultSyncMethod,
-		GWSServiceAccountFileSecretARN: DefaultGWSServiceAccountFileSecretARN,
-		GWSUserEmailSecretARN:          DefaultGWSUserEmailSecretARN,
-		AWSSCIMEndpointSecretARN:       DefaultAWSSCIMEndpointSecretARN,
-		AWSSCIMAccessTokenSecretARN:    DefaultAWSSCIMAccessTokenSecretARN,
-		DisableState:                   DefaultDisableState,
-		AWSS3BucketKey:                 DefaultAWSS3BucketKey,
+		ConfigFile:            DefaultConfigFile,
+		IsLambda:              DefaultIsLambda,
+		Debug:                 DefaultDebug,
+		LogLevel:              DefaultLogLevel,
+		LogFormat:             DefaultLogFormat,
+		GWSServiceAccountFile: DefaultGWSServiceAccountFile,
+		SyncMethod:            DefaultSyncMethod,
+		DisableState:          DefaultDisableState,
+		AWSS3BucketKey:        DefaultAWSS3BucketKey,
 	}
 }
