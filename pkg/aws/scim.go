@@ -163,7 +163,6 @@ func (s *SCIMService) checkHTTPResponse(resp *http.Response) error {
 			log.WithFields(log.Fields{
 				"status": resp.Status,
 				"method": resp.Request.Method,
-				"url":    resp.Request.URL,
 			}).Warnf("aws checkHTTPResponse: body: %s\n", string(body))
 			return nil
 		}
