@@ -6,6 +6,25 @@ on:
       version:
         required: true
         type: string
+    secrets:
+      GITHUB_TOKEN:
+        required: true
+        type: string
+      DOCKER_HUB_TOKEN:
+        required: true
+        type: string
+      DOCKER_HUB_USER:
+        required: true
+        type: string
+      GH_PAT:
+        required: true
+        type: string
+      GH_USER:
+        required: true
+        type: string
+      AWS_OIDC_ROLE_TO_ASSUME:
+        required: true
+        type: string
 
   workflow_dispatch:
 
@@ -51,6 +70,12 @@ jobs:
       - name: Set id for github tag version
         id: get_tag
         run: echo ::set-output name=name::$(echo $GITHUB_REF | cut -d / -f 3)
+
+      - name: Show the release version
+        run: echo ${{ steps.get_tag.outputs.name }}
+
+      - name: Show the release version 2
+        run: echo ${{ github.ref_name }}
 
       - name: Docker Version
         run: docker version

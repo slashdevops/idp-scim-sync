@@ -204,11 +204,21 @@ jobs:
     needs: create_github_release
     uses: slashdevops/idp-scim-sync/.github/workflows/container-image.yml@main
     with:
-      version: ${{ github.ref }}
+      version: ${{ github.ref_name }}
+    secrets:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      DOCKER_HUB_TOKEN: ${{ secrets.DOCKER_HUB_TOKEN }}
+      DOCKER_HUB_USER: ${{ secrets.DOCKER_HUB_USER }}
+      GH_PAT: ${{ secrets.GH_PAT }}
+      GH_USER: ${{ secrets.GH_USER }}
+      AWS_OIDC_ROLE_TO_ASSUME: ${{ secrets.AWS_OIDC_ROLE_TO_ASSUME }}
 
   aws_sam:
     name: Create and Publish AWS SAM Serverless Application
     needs: create_github_release
     uses: slashdevops/idp-scim-sync/.github/workflows/aws-sam.yml@main
     with:
-      version: ${{ github.ref }}
+      version: ${{ github.ref_name }}
+    secrets:
+      AWS_OIDC_ROLE_TO_ASSUME: ${{ secrets.AWS_OIDC_ROLE_TO_ASSUME }}
+      SAM_APP_BUCKET: ${{ secrets.SAM_APP_BUCKET }}

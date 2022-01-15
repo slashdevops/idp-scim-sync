@@ -100,9 +100,15 @@ jobs:
         run: |
           sam package --output-template-file packaged.yaml --s3-bucket $SAM_APP_BUCKET
 
-      # - name: Set id for github tag version
-      #   id: get_tag
-      #   run: echo ::set-output name=name::$(echo $GITHUB_REF | cut -d / -f 3)
+      - name: Set id for github tag version
+        id: get_tag
+        run: echo ::set-output name=name::$(echo $GITHUB_REF | cut -d / -f 3)
+
+      - name: Show the release version
+        run: echo ${{ steps.get_tag.outputs.name }}
+
+      - name: Show the release version 2
+        run: echo ${{ github.ref_name }}
 
       # iterate over regions
       - name: AWS SAM Publish
