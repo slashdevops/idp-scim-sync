@@ -11,6 +11,8 @@
     "GOCACHE",
     "golangci",
     "GOMODCACHE",
+    "goroot",
+    "GOROOT",
     "gosec",
     "Gosec",
     "idpscimcli",
