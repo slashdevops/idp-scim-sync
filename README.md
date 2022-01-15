@@ -2,7 +2,8 @@
 
 [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/5348/badge)](https://bestpractices.coreinfrastructure.org/projects/5348)
 [![CodeQL Analysis](https://github.com/slashdevops/idp-scim-sync/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/slashdevops/idp-scim-sync/actions/workflows/codeql-analysis.yml)
-[![Main](https://github.com/slashdevops/idp-scim-sync/actions/workflows/main.yml/badge.svg)](https://github.com/slashdevops/idp-scim-sync/actions/workflows/main.yml)
+[![Gosec](https://github.com/slashdevops/idp-scim-sync/actions/workflows/gosec.yml/badge.svg)](https://github.com/slashdevops/idp-scim-sync/actions/workflows/gosec.yml)
+[![Main branch CI](https://github.com/slashdevops/idp-scim-sync/actions/workflows/main.yml/badge.svg)](https://github.com/slashdevops/idp-scim-sync/actions/workflows/main.yml)
 ![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/slashdevops/idp-scim-sync?style=plastic)
 [![Go Report Card](https://goreportcard.com/badge/github.com/slashdevops/idp-scim-sync)](https://goreportcard.com/report/github.com/slashdevops/idp-scim-sync)
 [![license](https://img.shields.io/github/license/slashdevops/idp-scim-sync.svg)](https://github.com/slashdevops/idp-scim-sync/blob/main/LICENSE)
