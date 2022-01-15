@@ -7,7 +7,8 @@ ARG BIN_ARCH="amd64"
 ENV PROJECT_NAME="idp-scim-sync"
 ENV HOME="/app"
 
-LABEL name="${PROJECT_NAME}"
+LABEL name="${PROJECT_NAME}" \
+  org.opencontainers.image.source="https://github.com/slashdevops/idp-scim-sync"
 
 RUN apk add --no-cache --update \
   ca-certificates \
