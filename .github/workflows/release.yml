@@ -6,8 +6,6 @@ on:
     tags:
       - v[0-9].[0-9]+.[0-9]*
 
-  workflow_dispatch:
-
 env:
   GO_VERSION: 1.17
   AWS_REGION: us-east-1
