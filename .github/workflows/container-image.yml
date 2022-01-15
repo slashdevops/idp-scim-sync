@@ -9,19 +9,14 @@ on:
     secrets:
       DOCKER_HUB_TOKEN:
         required: true
-        type: string
       DOCKER_HUB_USER:
         required: true
-        type: string
       GH_PAT:
         required: true
-        type: string
       GH_USER:
         required: true
-        type: string
       AWS_OIDC_ROLE_TO_ASSUME:
         required: true
-        type: string
 
   workflow_dispatch:
 
