@@ -1,12 +1,21 @@
 # idp-scim-sync
 
-[![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/5348/badge)](https://bestpractices.coreinfrastructure.org/projects/5348) [![CodeQL Analysis](https://github.com/slashdevops/idp-scim-sync/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/slashdevops/idp-scim-sync/actions/workflows/codeql-analysis.yml) [![Main](https://github.com/slashdevops/idp-scim-sync/actions/workflows/main.yml/badge.svg)](https://github.com/slashdevops/idp-scim-sync/actions/workflows/main.yml) ![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/slashdevops/idp-scim-sync?style=plastic) [![Go Report Card](https://goreportcard.com/badge/github.com/slashdevops/idp-scim-sync)](https://goreportcard.com/report/github.com/slashdevops/idp-scim-sync) [![license](https://img.shields.io/github/license/slashdevops/idp-scim-sync.svg)](https://github.com/slashdevops/idp-scim-sync/blob/main/LICENSE) [![release](https://img.shields.io/github/release/slashdevops/idp-scim-sync/all.svg)](https://github.com/slashdevops/idp-scim-sync/releases) [![Maintainability](https://api.codeclimate.com/v1/badges/8f88180aebaca6fc4923/maintainability)](https://codeclimate.com/github/slashdevops/idp-scim-sync/maintainability) [![codecov](https://codecov.io/gh/slashdevops/idp-scim-sync/branch/main/graph/badge.svg?token=H72NWJGHZ0)](https://codecov.io/gh/slashdevops/idp-scim-sync)
+[![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/5348/badge)](https://bestpractices.coreinfrastructure.org/projects/5348)
+[![CodeQL Analysis](https://github.com/slashdevops/idp-scim-sync/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/slashdevops/idp-scim-sync/actions/workflows/codeql-analysis.yml)
+[![Main](https://github.com/slashdevops/idp-scim-sync/actions/workflows/main.yml/badge.svg)](https://github.com/slashdevops/idp-scim-sync/actions/workflows/main.yml)
+![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/slashdevops/idp-scim-sync?style=plastic)
+[![Go Report Card](https://goreportcard.com/badge/github.com/slashdevops/idp-scim-sync)](https://goreportcard.com/report/github.com/slashdevops/idp-scim-sync)
+[![license](https://img.shields.io/github/license/slashdevops/idp-scim-sync.svg)](https://github.com/slashdevops/idp-scim-sync/blob/main/LICENSE)
+[![Release](https://github.com/slashdevops/idp-scim-sync/actions/workflows/release.yml/badge.svg)](https://github.com/slashdevops/idp-scim-sync/actions/workflows/release.yml)
+[![release](https://img.shields.io/github/release/slashdevops/idp-scim-sync/all.svg)](https://github.com/slashdevops/idp-scim-sync/releases)
+[![Maintainability](https://api.codeclimate.com/v1/badges/8f88180aebaca6fc4923/maintainability)](https://codeclimate.com/github/slashdevops/idp-scim-sync/maintainability)
+[![codecov](https://codecov.io/gh/slashdevops/idp-scim-sync/branch/main/graph/badge.svg?token=H72NWJGHZ0)](https://codecov.io/gh/slashdevops/idp-scim-sync)
 
 Keep your [AWS Single Sign-On (SSO) groups and users](https://aws.amazon.com/single-sign-on/) in sync with your [Google Workspace directory](https://workspace.google.com/) using and [AWS Lambda function](https://aws.amazon.com/lambda/).
 
 ![On AWS](https://raw.githubusercontent.com/slashdevops/idp-scim-sync/main/docs/images/diagrams/ipd-scim-sync.drawio.png)
 
-As the image above shows, the `AWS Lambda function` is triggered by a [CloudWatch event rule](https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-create-rule-schedule.html).  The event rule is configured to run every [15 minutes (default in the cfn template)](template.yaml), and sync the `AWS Single Sign-On (SSO) groups and users` with `Google Workspace directory` using the respective `APIs`. During the `first sync`, the data of the `Groups and Users` are stored in the `AWS S3 bucket` as the [State file](docs/State-File-example.md)
+As the image above shows, the `AWS Lambda function` is triggered by a [CloudWatch event rule](https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-create-rule-schedule.html), the event rule is configured to run every [15 minutes (default in the cfn template)](template.yaml), and sync the `AWS Single Sign-On (SSO) groups and users` with `Google Workspace directory` using their respective `APIs`. During the `first sync`, the data of the `Groups and Users` are stored in the `AWS S3 bucket` as the [State file](docs/State-File-example.md)
 
 [The State file](docs/State-File-example.md) is a custom implementation to save time and requests to the [AWS SSO SCIM API](https://docs.aws.amazon.com/singlesignon/latest/developerguide/what-is-scim.html), also mitigate some limitations of this.
 
@@ -15,6 +24,8 @@ This project is developed using the [Go language](https://go.dev/) and also use 
 If you want to know what creates the [CloudFormation Template](template.yaml), please check the [AWS SAM Template](docs/AWS-SAM-Template.md)
 
 First time implementing [Single Sign-on on AWS](https://aws.amazon.com/single-sign-on)? please read [Using SSO](docs/Using-SSO.md)
+
+The best way to to deploy and use this is through the [AWS Serverless public repository - slashdevops/idp-scim-sync](https://serverlessrepo.aws.amazon.com/applications/us-east-1/889836709304/idp-scim-sync)
 
 ## Important
 
