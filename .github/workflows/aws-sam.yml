@@ -105,11 +105,21 @@ jobs:
         run: |
           echo ${{ github.ref_name }}
 
+      - name: Set semVer format version
+        id: semver
+        run: |
+          VERSION=$(echo ${{ github.ref_name }} | cut -d 'v' -f 2)
+          echo "::set-output name=version::$VERSION"
+
+      - name: semVer version
+        run: |
+          echo ${{ steps.semver.outputs.version }}
+
       # iterate over regions
       - name: AWS SAM Publish
         env:
           AWS_PUBLIC_REGION: ${{ matrix.AWS_REGIONS }}
-          SAM_APP_VERSION: ${{ github.ref_name }}
+          SAM_APP_VERSION: ${{ steps.semver.outputs.version }}
         run: |
           sam publish --semantic-version $SAM_APP_VERSION --template packaged.yaml --region $AWS_PUBLIC_REGION
 
