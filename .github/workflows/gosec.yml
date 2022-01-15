@@ -42,8 +42,8 @@ jobs:
       #   with:
       #     args: ./...
 
-    - name: Run Gosec Security Scanner
-      run: |
-        export PATH=$PATH:$(go env GOPATH)/bin
-        go get github.com/securego/gosec/cmd/gosec
-        gosec ./...
+      - name: Run Gosec Security Scanner
+        run: |
+          export PATH=$PATH:$(go env GOPATH)/bin
+          go get github.com/securego/gosec/cmd/gosec
+          gosec ./...
