@@ -5,6 +5,18 @@ Description: >
   Deploy as: slashdevops-iam-policy-idp-scim-sync-sam
 
 Parameters:
+  ApplicationName:
+    Type: String
+    Description: >
+      The name of the application.
+      NOTE: This template will use the 'AWS Region' and 'AWS Account ID' as a suffix to the 'application name' to avoid conflicts.
+      Example: 'ApplicationName-AWS::AccountId-AWS::Region'
+    Default: idp-scim-sync
+    MinLength: 5
+    MaxLength: 64
+    AllowedPattern: "^$|^[a-z0-9.\\-]+$"
+    ConstraintDescription: Must be in lower case, alphanumeric (including hyphen) and between 3 and 64 characters.
+
   GithubOpenidRoleStackExportName:
     Type: String
     Description: The base CloudFormation stack export name that contains the IAM Role for Github OIDC Provider
@@ -49,17 +61,22 @@ Resources:
             Action:
               - iam:ListPolicies
             Resource: "*"
-          - Sid: AllowServerlessRepo
+          - Sid: AllowServerlessRepoUpdate
+            Effect: Allow
+            Action:
+              - serverlessrepo:UpdateApplication
+              - serverlessrepo:PutApplicationPolicy
+            Resource: !Sub "arn:aws:serverlessrepo:*:${AWS::AccountId}:applications/${ApplicationName}"
+          - Sid: AllowServerlessRepositories
             Effect: Allow
             Action:
               - serverlessrepo:SearchApplications
               - serverlessrepo:CreateApplication
               - serverlessrepo:CreateApplicationVersion
               - serverlessrepo:ListApplicationVersions
-              - serverlessrepo:PutApplicationPolicy
               - serverlessrepo:GetApplicationPolicy
+              - serverlessrepo:ListApplications
             Resource: "*"
-
 Outputs:
   PolicyName:
     Description: Policy name

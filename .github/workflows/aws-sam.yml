@@ -135,6 +135,10 @@ jobs:
             )
           echo "::set-output name=arn::$AWS_SAM_APP_ARN"
 
+      - name: Show AWS SAM Application ARN
+        run: |
+          echo ${{ steps.set_arn.outputs.arn }}
+
       - name: Get the AWS SAM published application ARN
         env:
           AWS_PUBLIC_REGION: ${{ matrix.AWS_REGIONS }}
