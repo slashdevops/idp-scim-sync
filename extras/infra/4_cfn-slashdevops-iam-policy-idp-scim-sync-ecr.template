@@ -44,10 +44,8 @@ Resources:
               - ecr-public:GetRepositoryCatalogData
               - ecr-public:CompleteLayerUpload
               - ecr-public:InitiateLayerUpload
-            Resource: !Sub
-              - "${RepoARN}-*"
-              - RepoARN:
-                  Fn::ImportValue: !Sub "${EcrRepositoryStackExportName}:RepositoryArn"
+            Resource:
+              Fn::ImportValue: !Sub "${EcrRepositoryStackExportName}:RepositoryArn"
           - Sid: AllowGetAuthorizationToken
             Effect: Allow
             Action:
