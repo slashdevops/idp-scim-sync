@@ -5,7 +5,7 @@ on:
     inputs:
       version:
         required: true
-        type: String
+        type: string
 
   workflow_dispatch:
 
