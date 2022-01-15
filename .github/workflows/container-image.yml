@@ -1,14 +1,11 @@
 name: "Container Image"
 
 on:
-  push:
-    tags:
-      - v[0-9].[0-9]+.[0-9]*
-
-  workflow_run:
-    workflows: ["Release"]
-    types:
-      - completed
+  workflow_call:
+  # inputs:
+  #   version:
+  #     required: true
+  #     Type: String
 
   workflow_dispatch:
 

@@ -198,3 +198,17 @@ jobs:
         with:
           release_id: ${{ steps.create_github_release.outputs.id }}
           assets_path: dist/assets
+
+  container_image:
+    name: Create and Publish Container Image
+    needs: create_github_release
+    uses: slashdevops/idp-scim-sync/.github/workflows/container-image.yml@${{ steps.get_tag.outputs.name }}
+    # with:
+    #   version: ${{ steps.get_tag.outputs.name }}
+
+  aws_sam:
+    name: Create and Publish AWS SAM Serverless Application
+    needs: create_github_release
+    uses: slashdevops/idp-scim-sync/.github/workflows/aws-sam.yml@${{ steps.get_tag.outputs.name }}
+    # with:
+    #   version: ${{ steps.get_tag.outputs.name }}
