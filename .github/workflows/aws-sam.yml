@@ -3,10 +3,6 @@ name: "AWS SAM"
 # https://docs.github.com/en/actions/learn-github-actions/events-that-trigger-workflows#workflow_run
 on:
   workflow_call:
-    inputs:
-      version:
-        required: true
-        type: string
     secrets:
       AWS_OIDC_ROLE_TO_ASSUME:
         required: true
@@ -105,22 +101,15 @@ jobs:
         run: |
           sam package --output-template-file packaged.yaml --s3-bucket $SAM_APP_BUCKET
 
-      - name: Set id for github tag version
-        id: get_tag
-        run: echo ::set-output name=name::$(echo $GITHUB_REF | cut -d / -f 3)
-
-      - name: Show the release version
-        run: echo ${{ steps.get_tag.outputs.name }}
-
-      - name: Show the release version 2
-        run: echo ${{ github.ref_name }}
+      - name: Git Current branch name (Version)
+        run: |
+          echo ${{ github.ref_name }}
 
       # iterate over regions
       - name: AWS SAM Publish
         env:
           AWS_PUBLIC_REGION: ${{ matrix.AWS_REGIONS }}
-          SAM_APP_VERSION: ${{ inputs.version }}
-          #SAM_APP_VERSION: ${{ steps.get_tag.outputs.name }}
+          SAM_APP_VERSION: ${{ github.ref_name }}
         run: |
           sam publish --semantic-version $SAM_APP_VERSION --template packaged.yaml --region $AWS_PUBLIC_REGION
 

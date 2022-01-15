@@ -89,25 +89,9 @@ jobs:
           path: ${{ steps.go-cache-paths.outputs.go-mod }}
           key: ${{ runner.os }}-go-mod-${{ hashFiles('**/go.sum') }}
 
-      - name: Git Current Tag Version
+      - name: Git Current branch name (Version)
         run: |
-          echo ${{ env.GITHUB_REF }} | cut -d / -f 3
-
-      - name: Git Version
-        run: |
-          git rev-parse --abbrev-ref HEAD
-
-      - name: Git Revision
-        run: |
-          git rev-parse HEAD | tr -d '\040\011\012\015\n'
-
-      - name: Git Branch
-        run: |
-          git rev-parse --abbrev-ref HEAD | tr -d '\040\011\012\015\n'
-
-      - name: Git User
-        run: |
-          git config --get user.name | tr -d '\040\011\012\015\n'
+          echo ${{ github.ref_name }}
 
       - name: Build Distribution Cross-Platform
         run: make build-dist
@@ -151,12 +135,12 @@ jobs:
           path: ${{ steps.go-cache-paths.outputs.go-mod }}
           key: ${{ runner.os }}-go-mod-${{ hashFiles('**/go.sum') }}
 
-      - name: Set id for github tag version
-        id: get_tag
-        run: echo ::set-output name=name::$(echo $GITHUB_REF | cut -d / -f 3)
-
       - name: Docker Version
         run: docker version
+
+      - name: Git Current branch name (Version)
+        run: |
+          echo ${{ github.ref_name }}
 
       - uses: actions/cache@v2
         with:
@@ -182,8 +166,8 @@ jobs:
         id: create_github_release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: ${{ steps.get_tag.outputs.name }}
-          name: ${{ steps.get_tag.outputs.name }}
+          tag_name: ${{ github.ref_name }}
+          name: ${{ github.ref_name }}
           # body: |
           #   See the file: CHANGELOG.md
           draft: false
@@ -203,8 +187,6 @@ jobs:
     name: Create and Publish Container Image
     needs: create_github_release
     uses: slashdevops/idp-scim-sync/.github/workflows/container-image.yml@main
-    with:
-      version: ${{ github.ref_name }}
     secrets:
       GH_PAT: ${{ secrets.GH_PAT }}
       GH_USER: ${{ secrets.GH_USER }}
@@ -216,8 +198,6 @@ jobs:
     name: Create and Publish AWS SAM Serverless Application
     needs: create_github_release
     uses: slashdevops/idp-scim-sync/.github/workflows/aws-sam.yml@main
-    with:
-      version: ${{ github.ref_name }}
     secrets:
       AWS_OIDC_ROLE_TO_ASSUME: ${{ secrets.AWS_OIDC_ROLE_TO_ASSUME }}
       SAM_APP_BUCKET: ${{ secrets.SAM_APP_BUCKET }}

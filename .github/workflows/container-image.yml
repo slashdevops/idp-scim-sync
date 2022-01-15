@@ -2,10 +2,6 @@ name: "Container Image"
 
 on:
   workflow_call:
-    inputs:
-      version:
-        required: true
-        type: string
     secrets:
       DOCKER_HUB_TOKEN:
         required: true
@@ -59,15 +55,9 @@ jobs:
           path: ${{ steps.go-cache-paths.outputs.go-mod }}
           key: ${{ runner.os }}-go-mod-${{ hashFiles('**/go.sum') }}
 
-      - name: Set id for github tag version
-        id: get_tag
-        run: echo ::set-output name=name::$(echo $GITHUB_REF | cut -d / -f 3)
-
-      - name: Show the release version
-        run: echo ${{ steps.get_tag.outputs.name }}
-
-      - name: Show the release version 2
-        run: echo ${{ github.ref_name }}
+      - name: Git Current branch name (Version)
+        run: |
+          echo ${{ github.ref_name }}
 
       - name: Docker Version
         run: docker version
@@ -85,7 +75,7 @@ jobs:
         run: tree .
 
       - name: Build container images
-        run: make container-build GIT_VERSION=${{ steps.get_tag.outputs.name }}
+        run: make container-build GIT_VERSION=${{ github.ref_name }}
 
       - name: Show local container images
         run: docker images
@@ -94,13 +84,13 @@ jobs:
         run: echo ${{ secrets.DOCKER_HUB_TOKEN }} | docker login -u ${{ secrets.DOCKER_HUB_USER }} --password-stdin
 
       - name: Publish Images in Docker Hub
-        run: make container-publish-docker GIT_VERSION=${{ steps.get_tag.outputs.name }}
+        run: make container-publish-docker GIT_VERSION=${{ github.ref_name }}
 
       - name: Logging in GitHub Registry
         run: echo ${{ secrets.GH_PAT }} | docker login ghcr.io -u ${{ secrets.GH_USER }} --password-stdin
 
       - name: Publish Images in GitHub Registry
-        run: make container-publish-github GIT_VERSION=${{ steps.get_tag.outputs.name }}
+        run: make container-publish-github GIT_VERSION=${{ github.ref_name }}
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@master
@@ -120,4 +110,4 @@ jobs:
       #   uses: aws-actions/amazon-ecr-login@v1
 
       - name: Publish Images in GitHub Packages
-        run: make container-publish-aws-ecr GIT_VERSION=${{ steps.get_tag.outputs.name }}
+        run: make container-publish-aws-ecr GIT_VERSION=${{ github.ref_name }}
