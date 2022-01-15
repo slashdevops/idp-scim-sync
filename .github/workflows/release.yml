@@ -202,13 +202,13 @@ jobs:
   container_image:
     name: Create and Publish Container Image
     needs: create_github_release
-    uses: slashdevops/idp-scim-sync/.github/workflows/container-image.yml@${{ steps.get_tag.outputs.name }}
-    # with:
-    #   version: ${{ steps.get_tag.outputs.name }}
+    uses: slashdevops/idp-scim-sync/.github/workflows/container-image.yml@main
+    with:
+      version: ${{ steps.get_tag.outputs.name }}
 
   aws_sam:
     name: Create and Publish AWS SAM Serverless Application
     needs: create_github_release
-    uses: slashdevops/idp-scim-sync/.github/workflows/aws-sam.yml@${{ steps.get_tag.outputs.name }}
-    # with:
-    #   version: ${{ steps.get_tag.outputs.name }}
+    uses: slashdevops/idp-scim-sync/.github/workflows/aws-sam.yml@main
+    with:
+      version: ${{ steps.get_tag.outputs.name }}
