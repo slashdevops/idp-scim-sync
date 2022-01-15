@@ -19,6 +19,7 @@
     "softprops",
     "stackset",
     "syslist",
-    "vuln"
+    "vuln",
+    "Warnf"
   ]
 }
