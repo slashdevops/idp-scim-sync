@@ -40,7 +40,7 @@ func NewSecretsManagerService(svc SecretsManagerClientAPI) (*SecretsManagerServi
 	}, nil
 }
 
-// GetSecretValue returns the secret value for the given secret name.
+// GetSecretValue returns the secret value for the given secret name or arn.
 func (s *SecretsManagerService) GetSecretValue(ctx context.Context, secretKey string) (string, error) {
 	vIn := &secretsmanager.GetSecretValueInput{
 		SecretId:     aws.String(secretKey),

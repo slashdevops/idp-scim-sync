@@ -257,10 +257,10 @@ Resources:
           IDPSCIM_AWS_S3_BUCKET_KEY: !Ref BucketKey
           IDPSCIM_GWS_GROUPS_FILTER: !Ref GWSGroupsFilter
           IDPSCIM_GWS_USERS_FILTER: !Ref GWSUsersFilter
-          IDPSCIM_GWS_USER_EMAIL_SECRET_ARN: !Ref AWSGWSUserEmailSecret
-          IDPSCIM_GWS_SERVICE_ACCOUNT_FILE_SECRET_ARN: !Ref AWSGWSServiceAccountFileSecret
-          IDPSCIM_SCIM_ENDPOINT_SECRET_ARN: !Ref AWSSCIMEndpointSecret
-          IDPSCIM_SCIM_ACCESS_TOKEN_SECRET_ARN: !Ref AWSSCIMAccessTokenSecret
+          IDPSCIM_GWS_USER_EMAIL_SECRET_NAME: !Ref AWSGWSUserEmailSecret
+          IDPSCIM_GWS_SERVICE_ACCOUNT_FILE_SECRET_NAME: !Ref AWSGWSServiceAccountFileSecret
+          IDPSCIM_AWS_SCIM_ENDPOINT_SECRET_NAME: !Ref AWSSCIMEndpointSecret
+          IDPSCIM_AWS_SCIM_ACCESS_TOKEN_SECRET_NAME: !Ref AWSSCIMAccessTokenSecret
       Role: !GetAtt LambdaFunctionRole.Arn
       Events:
         SyncScheduledEvent:
