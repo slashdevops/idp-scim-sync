@@ -7,9 +7,6 @@ on:
         required: true
         type: string
     secrets:
-      GITHUB_TOKEN:
-        required: true
-        type: string
       DOCKER_HUB_TOKEN:
         required: true
         type: string

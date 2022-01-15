@@ -206,11 +206,10 @@ jobs:
     with:
       version: ${{ github.ref_name }}
     secrets:
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      DOCKER_HUB_TOKEN: ${{ secrets.DOCKER_HUB_TOKEN }}
-      DOCKER_HUB_USER: ${{ secrets.DOCKER_HUB_USER }}
       GH_PAT: ${{ secrets.GH_PAT }}
       GH_USER: ${{ secrets.GH_USER }}
+      DOCKER_HUB_TOKEN: ${{ secrets.DOCKER_HUB_TOKEN }}
+      DOCKER_HUB_USER: ${{ secrets.DOCKER_HUB_USER }}
       AWS_OIDC_ROLE_TO_ASSUME: ${{ secrets.AWS_OIDC_ROLE_TO_ASSUME }}
 
   aws_sam:
