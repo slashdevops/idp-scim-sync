@@ -14,38 +14,45 @@ Also the `State file` contains some `metadata`:
 * codeVersion --> this inform you about the version of the code that generated the `state file`
 * lastSync --> this is the date and time when the `state file` was generated
 
-and the `most important feature here` is the `hashCode` field, this is a `SHA1` hash of the each element of the `state file` content, and it is used to `save time in the operations` when we want to `detect changes`, also we can use that to checks `data integrity`.
+and the `most important feature here` is the `hashCode` field, this is a `SHA256` hash of the each element of the `state file` content, and it is used to `save time in the operations` when we want to `detect changes`, also we can use that to checks `data integrity`.
 
 ```json
 {
   "schemaVersion": "1.0.0",
-  "codeVersion": "0.0.1",
-  "lastSync": "2022-01-08T18:35:16Z",
-  "hashCode": "152814f8e5a3401080a03a91c3f1ec9d245be05b",
+  "codeVersion": "v0.0.1",
+  "lastSync": "2022-01-15T17:55:36+01:00",
+  "hashCode": "1be3807fa0a69ea22251f4ed71aee4c4c1bf0aa9a163a5c24f8ac4425e6f0d69",
   "resources": {
     "groups": {
-      "items": 2,
-      "hashCode": "84f8a793162a18e5ea66c4f15f9d4ec1b6441e45",
+      "items": 3,
+      "hashCode": "251033ebdbcecb157b6d989c2847f1912c3460eab7a56eb4081f4d912e5145b1",
       "resources": [
+        {
+          "ipid": "00nmf14n0mfn3n3",
+          "scimid": "90675b464e-5251235c-1f8c-4607-906e-015d9efc29a2",
+          "name": "Administrators",
+          "email": "administrators@<your domain here>",
+          "hashCode": "f87938591c76e34cce90f79d86e14f9280a8bb2052c92d577f3705c3b681aefa"
+        },
         {
           "ipid": "00ihv63633k64om",
           "scimid": "90675b464e-0880a5e4-6601-4138-91a8-b599aedf7a83",
           "name": "AWS Administrators",
-          "email": "aws-administrators@<your email domain>",
-          "hashCode": "aa7d1b4f76148dfc0ca6513ed1181dd1f73801ba"
+          "email": "aws-administrators@<your domain here>",
+          "hashCode": "eb3e4b4061c3781aac2ba3228b3c0d9a763909c326aeb7106460d72eb062657c"
         },
         {
           "ipid": "019c6y180i470k3",
           "scimid": "90675b464e-79914545-790b-4171-9142-36a55acf5a39",
           "name": "AWS DevOps",
-          "email": "aws-devops@<your email domain>",
-          "hashCode": "a0950ba2b70c751a8f5e34260d54b3b61734f990"
+          "email": "aws-devops@<your domain here>",
+          "hashCode": "ca1462c1188f8e583fa0e79ae9f4a06651f188c4e3a6809387a29bbe243ab38f"
         }
       ]
     },
     "users": {
-      "items": 3,
-      "hashCode": "1aabe861b2d7f76d841e4cd17918062d9ecf74ef",
+      "items": 1,
+      "hashCode": "82da67ab6b9c0576b727fe4053c4d7c3ba0c3a7f0e88115920f76706411901f8",
       "resources": [
         {
           "ipid": "100439965050892133351",
@@ -56,82 +63,64 @@ and the `most important feature here` is the `hashCode` field, this is a `SHA1` 
           },
           "displayName": "Christian González Di Antonio",
           "active": true,
-          "email": "administrator@<your email domain>",
-          "hashCode": "76cd8b44628099358d2d6e6b616e306e1d04412a"
-        },
-        {
-          "ipid": "113635714534969451687",
-          "scimid": "90675b464e-803cfb36-4b44-47c2-b2bc-30dbb26c435d",
-          "name": {
-            "familyName": "user 2",
-            "givenName": "test"
-          },
-          "displayName": "test user 2",
-          "active": true,
-          "email": "test.user2@<your email domain>",
-          "hashCode": "af65f4d493bc415bf8dbd9db01fd45aa3895ccfb"
-        },
-        {
-          "ipid": "106605753848140623644",
-          "scimid": "90675b464e-f52d738f-4140-4c25-a904-7f70a4aa7e15",
-          "name": {
-            "familyName": "user 1",
-            "givenName": "test"
-          },
-          "displayName": "test user 1",
-          "active": true,
-          "email": "test@<your email domain>",
-          "hashCode": "4c274b0b85ffc0d6daba552dc03c5b2ff13113d6"
+          "email": "christian@<your domain here>",
+          "hashCode": "7a0c55f4941d4512b9cdb8880e5e61130d089b96e7547d6df9ad2e38c2932f49"
         }
       ]
     },
     "groupsMembers": {
-      "items": 2,
-      "hashCode": "4c6206f888592fa8c8fab9a08445b8cd5743cbab",
+      "items": 3,
+      "hashCode": "c7ed0e0b713310d4fb503e6cc8d4bde397766a9dab486e18df3a47d3881c237e",
       "resources": [
         {
-          "items": 2,
-          "hashCode": "e46da18f2f3915727585de60bf131c44e068632f",
+          "items": 1,
+          "hashCode": "8f2632a7e5c1fba4360066bdf69729f213f12037b825d25be29f682844751644",
           "group": {
-            "ipid": "00ihv63633k64om",
-            "scimid": "90675b464e-0880a5e4-6601-4138-91a8-b599aedf7a83",
-            "name": "AWS Administrators",
-            "email": "aws-administrators@<your email domain>",
-            "hashCode": "aa7d1b4f76148dfc0ca6513ed1181dd1f73801ba"
+            "ipid": "00nmf14n0mfn3n3",
+            "scimid": "90675b464e-5251235c-1f8c-4607-906e-015d9efc29a2",
+            "name": "Administrators",
+            "email": "administrators@<your domain here>",
+            "hashCode": "f87938591c76e34cce90f79d86e14f9280a8bb2052c92d577f3705c3b681aefa"
           },
           "resources": [
             {
               "ipid": "100439965050892133351",
               "scimid": "90675b464e-11025ca4-0a49-480e-afd5-5eda1ae3fc3c",
-              "email": "administrator@<your email domain>",
-              "hashCode": "abd437534e201e974335561543b5a2b8084cbc8a"
-            },
-            {
-              "ipid": "106605753848140623644",
-              "scimid": "90675b464e-f52d738f-4140-4c25-a904-7f70a4aa7e15",
-              "email": "test@<your email domain>",
-              "hashCode": "9c72d5480a4f5a9a849f43036508244f616aa5f6"
+              "email": "christian@<your domain here>",
+              "hashCode": "0563204b5acd6ce1f481e86b29ea4b4b5feab0cf84799f143c191bfe912ec571"
             }
           ]
         },
         {
           "items": 1,
-          "hashCode": "066a9818c508574523245424a557471f8175ad4f",
+          "hashCode": "80902e649cd990205eeed09e3e2d3714ea273c28f2ccd7af976f04606f2153c8",
+          "group": {
+            "ipid": "00ihv63633k64om",
+            "scimid": "90675b464e-0880a5e4-6601-4138-91a8-b599aedf7a83",
+            "name": "AWS Administrators",
+            "email": "aws-administrators@<your domain here>",
+            "hashCode": "eb3e4b4061c3781aac2ba3228b3c0d9a763909c326aeb7106460d72eb062657c"
+          },
+          "resources": [
+            {
+              "ipid": "100439965050892133351",
+              "scimid": "90675b464e-11025ca4-0a49-480e-afd5-5eda1ae3fc3c",
+              "email": "christian@<your domain here>",
+              "hashCode": "0563204b5acd6ce1f481e86b29ea4b4b5feab0cf84799f143c191bfe912ec571"
+            }
+          ]
+        },
+        {
+          "items": 0,
+          "hashCode": "9e27fbd3e3ae6ba1a115fe95e01ae2009bdc0a9d953ba83139911903cc5e34d9",
           "group": {
             "ipid": "019c6y180i470k3",
             "scimid": "90675b464e-79914545-790b-4171-9142-36a55acf5a39",
             "name": "AWS DevOps",
-            "email": "aws-devops@<your email domain>",
-            "hashCode": "a0950ba2b70c751a8f5e34260d54b3b61734f990"
+            "email": "aws-devops@<your domain here>",
+            "hashCode": "ca1462c1188f8e583fa0e79ae9f4a06651f188c4e3a6809387a29bbe243ab38f"
           },
-          "resources": [
-            {
-              "ipid": "113635714534969451687",
-              "scimid": "90675b464e-803cfb36-4b44-47c2-b2bc-30dbb26c435d",
-              "email": "test.user2@<your email domain>",
-              "hashCode": "50dcf8623cefa264ef484c8aa6cced324d783585"
-            }
-          ]
+          "resources": []
         }
       ]
     }

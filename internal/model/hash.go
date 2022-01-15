@@ -2,14 +2,14 @@ package model
 
 import (
 	"bytes"
-	"crypto/sha1"
+	"crypto/sha256"
 	"encoding/gob"
 	"fmt"
 
 	log "github.com/sirupsen/logrus"
 )
 
-// Hash returns a SHA1 hash of value pass as argument
+// Hash returns a sha256 hash of value pass as argument
 func Hash(value interface{}) string {
 	if value == nil {
 		log.Fatal("value is nil")
@@ -21,5 +21,5 @@ func Hash(value interface{}) string {
 		log.Panic(err)
 	}
 
-	return fmt.Sprintf("%x", sha1.Sum(buf.Bytes()))
+	return fmt.Sprintf("%x", sha256.Sum256(buf.Bytes()))
 }

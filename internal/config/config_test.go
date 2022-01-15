@@ -19,8 +19,4 @@ func TestNew(t *testing.T) {
 	assert.Equal(cfg.LogFormat, DefaultLogFormat)
 	assert.Equal(cfg.GWSServiceAccountFile, DefaultGWSServiceAccountFile)
 	assert.Equal(cfg.SyncMethod, DefaultSyncMethod)
-	assert.Equal(cfg.GWSServiceAccountFileSecretARN, DefaultGWSServiceAccountFileSecretARN)
-	assert.Equal(cfg.GWSUserEmailSecretARN, DefaultGWSUserEmailSecretARN)
-	assert.Equal(cfg.AWSSCIMEndpointSecretARN, DefaultAWSSCIMEndpointSecretARN)
-	assert.Equal(cfg.AWSSCIMAccessTokenSecretARN, DefaultAWSSCIMAccessTokenSecretARN)
 }
