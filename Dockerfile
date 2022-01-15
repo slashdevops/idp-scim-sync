@@ -1,4 +1,4 @@
-ARG ARCH
+ARG ARCH="amd64"
 FROM ${ARCH}/alpine
 
 ARG OS="linux"
@@ -8,6 +8,7 @@ ENV PROJECT_NAME="idp-scim-sync"
 ENV HOME="/app"
 
 LABEL name="${PROJECT_NAME}" \
+  org.opencontainers.image.url="https://github.com/slashdevops/idp-scim-sync" \
   org.opencontainers.image.source="https://github.com/slashdevops/idp-scim-sync"
 
 RUN apk add --no-cache --update \
