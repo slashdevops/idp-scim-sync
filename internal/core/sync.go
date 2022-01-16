@@ -149,7 +149,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers(ctx context.Context) error {
 	newState.LastSync = time.Now().Format(time.RFC3339)
 
 	log.WithFields(log.Fields{
-		"lastSycn": newState.LastSync,
+		"lastSync": newState.LastSync,
 		"groups":   totalGroupsResult.Items,
 		"users":    totalUsersResult.Items,
 	}).Info("storing the new state")
