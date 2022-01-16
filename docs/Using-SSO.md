@@ -6,20 +6,46 @@ Start using [Single Sign-On (SSO)](https://en.wikipedia.org/wiki/Single_sign-on)
 
 >For me, __technical things__ are just things that are going to work sooner or later or as soon you understand how to use these.  But __non-technical things__ are just things that most of the time you will improve according to __your time__ implementing __technical things__ and this could we call __"experience"__.
 
-So, said that, let me help you with my "experience" using SSO.
+So, said that, let me help you with my `"experience"` using SSO.
 
 ## Recommendations
 
 Before start
 
 * Do a planning of `how many services` you will need to integrate with your `Identity Provider using SSO`, and `how many users and Groups you will need to create`.
-* Use `Groups and their members` to create Users in your SSO integration, `avoid the integration directly with users`.
+* Use `Groups and their Members` to create `Users` in your SSO integration, `avoid the integration directly with Users`.
 * Establish a `Naming Convention` for your `SSO Groups`.
-* Use prefixes for your SSO Groups name.
+* Use prefixes for your `SSO Groups name`.
+
+A little bit more
+
+* Google Workspace Groups and AWS Single Sign-On are free of charge, so take advantage of this
+* Filter the data in the `source` is always better than in the `process`
+* [WYSIWYG](https://dictionary.cambridge.org/es/diccionario/ingles/wysiwyg) is better than `opaque or shadowed process`, I mean, if you have 1 group called `My Group` with `2 members`, `user.1@mydomain.com` and `user.2@mydomain.com` in the `Google Workspace`, everybody is expecting to see the same in `AWS SSO side` regardless of what this program does
+* A process that scales independently of the `source` is better than a `process that needs too many changes during its escalation`
+
+### Example
+
+Given Google Workspace Groups with these conditions:
+
+| Group Name         | Group Email                    | Members                  |
+| ------------------ | ------------------------------ | ------------------------ |
+| AWS Administrators | aws-administrator@mydomain.com | [a,b,c,d]@mydomain.com   |
+| AWS DevOps         | aws-devops@mydomain.com        | [f,g,h]@mydomain.com     |
+| AWS Developers     | aws-developers@mydomain.com    | [k,j,z,a,g]@mydomain.com |
+| ...                | ...                            | ...                      |
+
+your [idpscim](https://github.com/slashdevops/idp-scim-sync/blob/main/docs/idpscim.md) `[AWS Lambda function|container image|cli]` could use `--gws-groups-filter 'name=AWS* email:aws-*'`
+
+This is easy and it is in compliance with the previous recommendations, but I think the most important ones are:
+> You can `increase or decrease` the number of `groups and their members` in __Google Workspace__ and never need to `change the parameters` of the __idpscim__ `[AWS Lambda function|container image|cli]`
 
 ## TL;DR
 
-__NOTE:__ [TL;DR means: Too Long Didn't Read](https://en.wikipedia.org/wiki/TL;DR)
+__NOTES:__
+
+* This is a `WIP`, keep calm and don't panic
+* [TL;DR means: Too Long Didn't Read](https://en.wikipedia.org/wiki/TL;DR)
 
 ### Planning
 

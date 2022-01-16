@@ -16,15 +16,15 @@ Keep your [AWS Single Sign-On (SSO) groups and users](https://aws.amazon.com/sin
 
 ![On AWS](https://raw.githubusercontent.com/slashdevops/idp-scim-sync/main/docs/images/diagrams/ipd-scim-sync.drawio.png)
 
-As the image above shows, the `AWS Lambda function` is triggered by a [CloudWatch event rule](https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-create-rule-schedule.html), the event rule is configured to run every [15 minutes (default in the cfn template)](template.yaml), and sync the `AWS Single Sign-On (SSO) groups and users` with `Google Workspace directory` using their respective `APIs`. During the `first sync`, the data of the `Groups and Users` are stored in the `AWS S3 bucket` as the [State file](docs/State-File-example.md)
+As the image above shows, the [AWS Lambda function](https://aws.amazon.com/lambda) is triggered by a [CloudWatch event rule](https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-create-rule-schedule.html), the event rule is configured to run every [15 minutes (default in the cfn template)](template.yaml), and `sync` the `AWS Single Sign-On (SSO) groups and users` with `Google Workspace directory` using their respective `APIs`.  During the `first sync`, the data of the `Groups and Users` are stored in the `AWS S3 bucket` as [the State file](docs/State-File-example.md)
 
 [The State file](docs/State-File-example.md) is a custom implementation to save time and requests to the [AWS SSO SCIM API](https://docs.aws.amazon.com/singlesignon/latest/developerguide/what-is-scim.html), also mitigate some limitations of this.
 
-This project is developed using the [Go language](https://go.dev/) and also use [AWS SAM](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-specification.html), a tool for creating and deploying `AWS Serverless Applications` in an easy way.
+This project is developed using the [Go language](https://go.dev/) and [AWS SAM](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-specification.html), a tool for creating, [publishing](https://aws.amazon.com/serverless/serverlessrepo) and deploying `AWS Serverless Applications` in an easy way.
 
 If you want to know what creates the [CloudFormation Template](template.yaml), please check the [AWS SAM Template](docs/AWS-SAM-Template.md)
 
-First time implementing [Single Sign-on on AWS](https://aws.amazon.com/single-sign-on)? please read [Using SSO](docs/Using-SSO.md)
+__First time implementing [Single Sign-on on AWS](https://aws.amazon.com/single-sign-on)? please read [Using SSO](docs/Using-SSO.md)__
 
 The best way to to deploy and use this is through the [AWS Serverless public repository - slashdevops/idp-scim-sync](https://serverlessrepo.aws.amazon.com/applications/us-east-1/889836709304/idp-scim-sync)
 
