@@ -233,8 +233,7 @@ func sync() error {
 
 func syncGroups() error {
 	log.Info("starting sync groups")
-
-	ctx := context.Background()
+	timeStart := time.Now()
 
 	// cfg.GWSServiceAccountFile could be a file path or a content of the file
 	gwsServiceAccountContent := []byte(cfg.GWSServiceAccountFile)
@@ -252,6 +251,8 @@ func syncGroups() error {
 		"https://www.googleapis.com/auth/admin.directory.group.member.readonly",
 		"https://www.googleapis.com/auth/admin.directory.user.readonly",
 	}
+
+	ctx := context.Background()
 
 	// Google Client Service
 	gwsService, err := google.NewService(ctx, cfg.GWSUserEmail, gwsServiceAccountContent, gwsAPIScopes...)
@@ -316,6 +317,10 @@ func syncGroups() error {
 	if err := ss.SyncGroupsAndTheirMembers(ctx); err != nil {
 		return errors.Wrap(err, "cannot sync groups and their members")
 	}
+
+	log.WithFields(log.Fields{
+		"duration": time.Since(timeStart).String(),
+	}).Info("sync groups completed")
 
 	return nil
 }
