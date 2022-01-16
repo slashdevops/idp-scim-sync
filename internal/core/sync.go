@@ -13,8 +13,8 @@ import (
 )
 
 var (
-	// ErrIdentiyProviderServiceNil is returned when the Identity Provider Service is nil
-	ErrIdentiyProviderServiceNil = errors.New("identity provider service cannot be nil")
+	// ErrIdentityProviderServiceNil is returned when the Identity Provider Service is nil
+	ErrIdentityProviderServiceNil = errors.New("identity provider service cannot be nil")
 
 	// ErrSCIMServiceNil is returned when the SCIM Service is nil
 	ErrSCIMServiceNil = errors.New("SCIM service cannot be nil")
@@ -35,7 +35,7 @@ type SyncService struct {
 // NewSyncService creates a new sync service.
 func NewSyncService(prov IdentityProviderService, scim SCIMService, repo StateRepository, opts ...SyncServiceOption) (*SyncService, error) {
 	if prov == nil {
-		return nil, ErrIdentiyProviderServiceNil
+		return nil, ErrIdentityProviderServiceNil
 	}
 	if scim == nil {
 		return nil, ErrSCIMServiceNil
@@ -149,7 +149,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers(ctx context.Context) error {
 	newState.LastSync = time.Now().Format(time.RFC3339)
 
 	log.WithFields(log.Fields{
-		"lastSycn": newState.LastSync,
+		"lastSync": newState.LastSync,
 		"groups":   totalGroupsResult.Items,
 		"users":    totalUsersResult.Items,
 	}).Info("storing the new state")
@@ -163,7 +163,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers(ctx context.Context) error {
 	return nil
 }
 
-// SyncGroupsAndUsers this method is used to sync the usersm groups and their members from the identity provider to the SCIM
+// SyncGroupsAndUsers this method is used to sync the users groups and their members from the identity provider to the SCIM
 func (ss *SyncService) SyncGroupsAndUsers(ctx context.Context) error {
 	return errors.New("not implemented yet")
 }
