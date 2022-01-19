@@ -36,7 +36,7 @@ The documentation is a __WIP__ and you can contribute!
 
 * [AWS Serverless public repository - slashdevops/idp-scim-sync](https://serverlessrepo.aws.amazon.com/applications/us-east-1/889836709304/idp-scim-sync)
 * [AWS ECR public repository - slashdevops/idp-scim-sync](https://gallery.ecr.aws/l2n7y5s7/slashdevops/idp-scim-sync)
-* [GitHub public repository - slashdevops/idp-scim-sync](https://ghcr.io/slashdevops/idp-scim-sync)
+* [GitHub public repository - slashdevops/idp-scim-sync](https://github.com/slashdevops/idp-scim-sync/pkgs/container/idp-scim-sync)
 * [Docker Hub public repository - slashdevops/idp-scim-sync](https://hub.docker.com/r/slashdevops/idp-scim-sync)
 
 ## Limitations
