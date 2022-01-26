@@ -149,7 +149,7 @@ func (s *Provider) UpdateGroups(ctx context.Context, gr *model.GroupsResult) (*m
 						OP: "replace",
 						Value: map[string]string{
 							"id":         group.SCIMID,
-							"ExternalID": group.IPID,
+							"externalId": group.IPID,
 						},
 					},
 				},
