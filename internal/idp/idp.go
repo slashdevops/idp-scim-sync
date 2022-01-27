@@ -159,28 +159,32 @@ func (i *IdentityProvider) GetGroupMembers(ctx context.Context, groupID string) 
 	return syncMembersResult, nil
 }
 
-// GetUsersByGroupMembers returns a list of users from the Identity Provider API.
-func (i *IdentityProvider) GetUsersByGroupMembers(ctx context.Context, mbr *model.MembersResult) (*model.UsersResult, error) {
+// GetUsersByGroupsMembers returns a list of users from the Identity Provider API.
+func (i *IdentityProvider) GetUsersByGroupsMembers(ctx context.Context, gmr *model.GroupsMembersResult) (*model.UsersResult, error) {
 	pUsers := make([]*model.User, 0)
+	uniqUsers := make(map[string]struct{})
 
-	for _, member := range mbr.Resources {
-		u, err := i.ps.GetUser(ctx, member.IPID)
-		if err != nil {
-			return nil, fmt.Errorf("idp: error getting user: %+v, email: %s, error: %w", member.IPID, member.Email, err)
+	for _, groupMembers := range gmr.Resources {
+		for _, member := range groupMembers.Resources {
+			u, err := i.ps.GetUser(ctx, member.Email)
+			if err != nil {
+				return nil, fmt.Errorf("idp: error getting user: %+v, email: %s, error: %w", member.IPID, member.Email, err)
+			}
+
+			e := &model.User{
+				IPID:        u.Id,
+				Name:        model.Name{FamilyName: u.Name.FamilyName, GivenName: u.Name.GivenName},
+				DisplayName: fmt.Sprintf("%s %s", u.Name.GivenName, u.Name.FamilyName),
+				Active:      !u.Suspended,
+				Email:       u.PrimaryEmail,
+			}
+			e.SetHashCode()
+			if _, ok := uniqUsers[e.Email]; !ok {
+				uniqUsers[e.Email] = struct{}{}
+				pUsers = append(pUsers, e)
+			}
 		}
-
-		e := &model.User{
-			IPID:        u.Id,
-			Name:        model.Name{FamilyName: u.Name.FamilyName, GivenName: u.Name.GivenName},
-			DisplayName: fmt.Sprintf("%s %s", u.Name.GivenName, u.Name.FamilyName),
-			Active:      !u.Suspended,
-			Email:       u.PrimaryEmail,
-		}
-		e.SetHashCode()
-
-		pUsers = append(pUsers, e)
 	}
-
 	pUsersResult := &model.UsersResult{
 		Items:     len(pUsers),
 		Resources: pUsers,

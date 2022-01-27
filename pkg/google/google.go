@@ -145,6 +145,7 @@ func (ds *DirectoryService) ListGroupMembers(ctx context.Context, groupID string
 }
 
 // GetUser return a user given a user ID.
+// userID: the user's primary email address, alias email address, or unique user ID.
 func (ds *DirectoryService) GetUser(ctx context.Context, userID string) (*admin.User, error) {
 	if userID == "" {
 		return nil, ErrUserIDNil

@@ -341,14 +341,14 @@ func TestGoogleProvider_GetGroupMembers(t *testing.T) {
 	}
 }
 
-func TestGoogleProvider_GetUsersByGroupMembers(t *testing.T) {
+func TestGoogleProvider_GetUsersByGroupsMembers(t *testing.T) {
 	type fields struct {
 		ds *mocks.MockGoogleProviderService
 	}
 
 	type args struct {
 		ctx context.Context
-		mbr *model.MembersResult
+		gmr *model.GroupsMembersResult
 	}
 
 	tests := []struct {
@@ -363,7 +363,7 @@ func TestGoogleProvider_GetUsersByGroupMembers(t *testing.T) {
 			prepare: func(f *fields) {},
 			args: args{
 				ctx: context.Background(),
-				mbr: &model.MembersResult{},
+				gmr: &model.GroupsMembersResult{},
 			},
 			want: &model.UsersResult{
 				Items:     0,
@@ -378,27 +378,47 @@ func TestGoogleProvider_GetUsersByGroupMembers(t *testing.T) {
 				ctx := context.Background()
 				googleUser1 := &admin.User{PrimaryEmail: "user.1@mail.com", Id: "1", Name: &admin.UserName{GivenName: "user", FamilyName: "1"}, Suspended: false}
 				googleUser2 := &admin.User{PrimaryEmail: "user.2@mail.com", Id: "2", Name: &admin.UserName{GivenName: "user", FamilyName: "2"}, Suspended: true}
+				googleUser3 := &admin.User{PrimaryEmail: "user.3@mail.com", Id: "3", Name: &admin.UserName{GivenName: "user", FamilyName: "3"}, Suspended: true}
+				googleUser4 := &admin.User{PrimaryEmail: "user.4@mail.com", Id: "4", Name: &admin.UserName{GivenName: "user", FamilyName: "4"}, Suspended: true}
 
 				gomock.InOrder(
-					f.ds.EXPECT().GetUser(ctx, gomock.Eq("1")).Return(googleUser1, nil).Times(1),
-					f.ds.EXPECT().GetUser(ctx, gomock.Eq("2")).Return(googleUser2, nil).Times(1),
+					f.ds.EXPECT().GetUser(ctx, gomock.Eq("user.1@mail.com")).Return(googleUser1, nil).Times(1),
+					f.ds.EXPECT().GetUser(ctx, gomock.Eq("user.2@mail.com")).Return(googleUser2, nil).Times(1),
+					f.ds.EXPECT().GetUser(ctx, gomock.Eq("user.3@mail.com")).Return(googleUser3, nil).Times(1),
+					f.ds.EXPECT().GetUser(ctx, gomock.Eq("user.4@mail.com")).Return(googleUser4, nil).Times(1),
 				)
 			},
 			args: args{
 				ctx: context.Background(),
-				mbr: &model.MembersResult{
+				gmr: &model.GroupsMembersResult{
 					Items: 2,
-					Resources: []*model.Member{
-						{IPID: "1", Email: "user.1@mail.com"},
-						{IPID: "2", Email: "user.2@mail.com"},
+					Resources: []*model.GroupMembers{
+						{
+							Items: 2,
+							Group: model.Group{IPID: "1", Name: "group 1", Email: "group1@mail.com"},
+							Resources: []*model.Member{
+								{IPID: "1", Email: "user.1@mail.com"},
+								{IPID: "2", Email: "user.2@mail.com"},
+							},
+						},
+						{
+							Items: 2,
+							Group: model.Group{IPID: "1", Name: "group 1", Email: "group1@mail.com"},
+							Resources: []*model.Member{
+								{IPID: "3", Email: "user.3@mail.com"},
+								{IPID: "4", Email: "user.4@mail.com"},
+							},
+						},
 					},
 				},
 			},
 			want: &model.UsersResult{
-				Items: 2,
+				Items: 4,
 				Resources: []*model.User{
 					{IPID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com", DisplayName: "user 1", Active: true, HashCode: model.Hash(&model.User{IPID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com", DisplayName: "user 1", Active: true})},
 					{IPID: "2", Name: model.Name{GivenName: "user", FamilyName: "2"}, Email: "user.2@mail.com", DisplayName: "user 2", Active: false, HashCode: model.Hash(&model.User{IPID: "2", Name: model.Name{GivenName: "user", FamilyName: "2"}, Email: "user.2@mail.com", DisplayName: "user 2", Active: false})},
+					{IPID: "3", Name: model.Name{GivenName: "user", FamilyName: "3"}, Email: "user.3@mail.com", DisplayName: "user 3", Active: false, HashCode: model.Hash(&model.User{IPID: "3", Name: model.Name{GivenName: "user", FamilyName: "3"}, Email: "user.3@mail.com", DisplayName: "user 3", Active: false})},
+					{IPID: "4", Name: model.Name{GivenName: "user", FamilyName: "4"}, Email: "user.4@mail.com", DisplayName: "user 4", Active: false, HashCode: model.Hash(&model.User{IPID: "4", Name: model.Name{GivenName: "user", FamilyName: "4"}, Email: "user.4@mail.com", DisplayName: "user 4", Active: false})},
 				},
 			},
 			wantErr: false,
@@ -407,14 +427,19 @@ func TestGoogleProvider_GetUsersByGroupMembers(t *testing.T) {
 			name: "Should return error",
 			prepare: func(f *fields) {
 				ctx := context.Background()
-				f.ds.EXPECT().GetUser(ctx, gomock.Eq("")).Return(nil, errors.New("test error")).Times(1)
+				f.ds.EXPECT().GetUser(ctx, gomock.Eq("user.1@mail.com")).Return(nil, errors.New("test error")).Times(1)
 			},
 			args: args{
 				ctx: context.Background(),
-				mbr: &model.MembersResult{
-					Items: 0,
-					Resources: []*model.Member{
-						{IPID: "", Email: "user.1@mail.com"},
+				gmr: &model.GroupsMembersResult{
+					Resources: []*model.GroupMembers{
+						{
+							Items: 2,
+							Group: model.Group{IPID: "1", Name: "group 1", Email: "group1@mail.com"},
+							Resources: []*model.Member{
+								{IPID: "1", Email: "user.1@mail.com"},
+							},
+						},
 					},
 				},
 			},
@@ -442,7 +467,7 @@ func TestGoogleProvider_GetUsersByGroupMembers(t *testing.T) {
 				tt.want.SetHashCode()
 			}
 
-			got, err := g.GetUsersByGroupMembers(tt.args.ctx, tt.args.mbr)
+			got, err := g.GetUsersByGroupsMembers(tt.args.ctx, tt.args.gmr)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("GoogleProvider.GetUsersFromGroupMembers() error = %v, wantErr %v", err, tt.wantErr)
 				return

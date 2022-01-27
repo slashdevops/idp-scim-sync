@@ -159,6 +159,7 @@ func (s *SCIMService) checkHTTPResponse(resp *http.Response) error {
 		// in case somebody delete/create elements manually from AWS SCIM API
 		// or if this program broke at some moment and create inconsistent state and now
 		// so is better to avoid errors here to be self-healing
+		// TODO: this broke the code upstream, so we need to fix it
 		if resp.StatusCode == http.StatusNotFound || resp.StatusCode == http.StatusConflict {
 			log.WithFields(log.Fields{
 				"status": resp.Status,

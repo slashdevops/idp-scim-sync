@@ -20,8 +20,8 @@ type IdentityProviderService interface {
 	// GetGroupMembers returns the members of the given group in the Identity provider side.
 	GetGroupMembers(ctx context.Context, id string) (*model.MembersResult, error)
 
-	// GetUsersByGroupMembers returns the users belongs to the given group in the Identity provider side.
-	GetUsersByGroupMembers(ctx context.Context, mbr *model.MembersResult) (*model.UsersResult, error)
+	// GetUsersByGroupsMembers returns the users belongs to the given group in the Identity provider side.
+	GetUsersByGroupsMembers(ctx context.Context, gmr *model.GroupsMembersResult) (*model.UsersResult, error)
 
 	// GetGroupsMembers returns the groups and their members from the Identity provider side.
 	GetGroupsMembers(ctx context.Context, gr *model.GroupsResult) (*model.GroupsMembersResult, error)
