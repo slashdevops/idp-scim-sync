@@ -70,14 +70,14 @@ func (ss *SyncService) SyncGroupsAndTheirMembers(ctx context.Context) error {
 		return fmt.Errorf("error getting groups from the identity provider: %w", err)
 	}
 
-	idpUsersResult, err := ss.prov.GetUsers(ctx, []string{""})
-	if err != nil {
-		return fmt.Errorf("error getting users from the identity provider: %w", err)
-	}
-
 	idpGroupsMembersResult, err := ss.prov.GetGroupsMembers(ctx, idpGroupsResult)
 	if err != nil {
 		return fmt.Errorf("error getting groups members: %w", err)
+	}
+
+	idpUsersResult, err := ss.prov.GetUsersByGroupsMembers(ctx, idpGroupsMembersResult)
+	if err != nil {
+		return fmt.Errorf("error getting users from the identity provider: %w", err)
 	}
 
 	if idpUsersResult.Items == 0 {
