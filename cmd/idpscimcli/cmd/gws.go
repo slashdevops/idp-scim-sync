@@ -18,14 +18,14 @@ var (
 	gwsCmd = &cobra.Command{
 		Use:   "gws",
 		Short: "Google Workspace commands",
-		Long:  `available commands to validate Google Worspace Directory API.`,
+		Long:  `available commands to validate Google Workspace Directory API.`,
 	}
 
 	// groups command
 	gwsGroupsCmd = &cobra.Command{
 		Use:   "groups",
 		Short: "Google Workspace Groups commands",
-		Long:  `available commands to validate Google Worspace Directory Groups API.`,
+		Long:  `available commands to validate Google Workspace Directory Groups API.`,
 	}
 
 	// groups list command
@@ -41,7 +41,7 @@ var (
 	gwsUsersCmd = &cobra.Command{
 		Use:   "users",
 		Short: "Google Workspace Users commands",
-		Long:  `available commands to validate Google Worspace Directory Users API.`,
+		Long:  `available commands to validate Google Workspace Directory Users API.`,
 	}
 
 	// user list command

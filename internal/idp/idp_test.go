@@ -285,7 +285,7 @@ func TestGoogleProvider_GetGroupMembers(t *testing.T) {
 			prepare: func(f *fields) {
 				ctx := context.Background()
 
-				f.ds.EXPECT().ListGroupMembers(ctx, gomock.Eq("1")).Return(nil, errors.New("test error")).Times(1)
+				f.ds.EXPECT().ListGroupMembers(ctx, gomock.Eq("1"), gomock.Any()).Return(nil, errors.New("test error")).Times(1)
 			},
 			args:    args{ctx: context.Background(), id: "1"},
 			want:    nil,
@@ -299,7 +299,7 @@ func TestGoogleProvider_GetGroupMembers(t *testing.T) {
 				googleGroupMembers = append(googleGroupMembers, &admin.Member{Email: "user.1@mail.com", Id: "1"})
 				googleGroupMembers = append(googleGroupMembers, &admin.Member{Email: "user.2@mail.com", Id: "2"})
 
-				f.ds.EXPECT().ListGroupMembers(ctx, gomock.Eq("1")).Return(googleGroupMembers, nil).Times(1)
+				f.ds.EXPECT().ListGroupMembers(ctx, gomock.Eq("1"), gomock.Any()).Return(googleGroupMembers, nil).Times(1)
 			},
 			args: args{ctx: context.Background(), id: "1"},
 			want: &model.MembersResult{

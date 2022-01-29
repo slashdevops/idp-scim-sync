@@ -7,18 +7,19 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"github.com/slashdevops/idp-scim-sync/internal/model"
+	"github.com/slashdevops/idp-scim-sync/pkg/google"
 	admin "google.golang.org/api/admin/directory/v1"
 )
 
 var (
 	// ErrDirectoryServiceNil is returned when the GoogleProviderService is nil.
-	ErrDirectoryServiceNil = errors.New("provoder: directory service is nil")
+	ErrDirectoryServiceNil = errors.New("provider: directory service is nil")
 
 	// ErrGroupIDNil is returned when the groupID is nil.
-	ErrGroupIDNil = errors.New("provoder: group id is nil")
+	ErrGroupIDNil = errors.New("provider: group id is nil")
 
 	// ErrGroupResultNil is returned when the group result is nil.
-	ErrGroupResultNil = errors.New("provoder: group result is nil")
+	ErrGroupResultNil = errors.New("provider: group result is nil")
 )
 
 //go:generate go run github.com/golang/mock/mockgen@v1.6.0 -package=mocks -destination=../../mocks/idp/idp_mocks.go -source=idp.go GoogleProviderService
@@ -27,7 +28,7 @@ var (
 type GoogleProviderService interface {
 	ListUsers(ctx context.Context, query []string) ([]*admin.User, error)
 	ListGroups(ctx context.Context, query []string) ([]*admin.Group, error)
-	ListGroupMembers(ctx context.Context, groupID string) ([]*admin.Member, error)
+	ListGroupMembers(ctx context.Context, groupID string, queries ...google.GetGroupMembersOption) ([]*admin.Member, error)
 	GetUser(ctx context.Context, userID string) (*admin.User, error)
 }
 
@@ -135,12 +136,20 @@ func (i *IdentityProvider) GetGroupMembers(ctx context.Context, groupID string) 
 
 	syncMembers := make([]*model.Member, 0)
 
-	pMembers, err := i.ps.ListGroupMembers(ctx, groupID)
+	pMembers, err := i.ps.ListGroupMembers(ctx, groupID, google.WithIncludeDerivedMembership(true))
 	if err != nil {
 		return nil, fmt.Errorf("idp: error listing group members: %w", err)
 	}
 
 	for _, member := range pMembers {
+		// avoid nested groups, but members are included thanks to the google.WithIncludeDerivedMembership option above
+		if member.Type == "GROUP" {
+			log.WithFields(log.Fields{
+				"id":    member.Id,
+				"email": member.Email,
+			}).Warn("skipping member because is a group, but group members will be included")
+			continue
+		}
 		e := &model.Member{
 			IPID:  member.Id,
 			Email: member.Email,

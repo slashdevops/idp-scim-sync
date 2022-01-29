@@ -12,9 +12,10 @@ import (
 
 const (
 	// https://cloud.google.com/storage/docs/json_api
-	groupsRequiredFields  googleapi.Field = "groups(id,name,email)"
-	membersRequiredFields googleapi.Field = "members(id,email)"
-	usersRequiredFields   googleapi.Field = "users(id,name,primaryEmail,suspended)"
+	groupsRequiredFields    googleapi.Field = "groups(id,name,email,etag)"
+	membersRequiredFields   googleapi.Field = "members(id,email,status,type,etag)"
+	listUsersRequiredFields googleapi.Field = "users(id,name,primaryEmail,suspended,etag)"
+	getUsersRequiredFields  googleapi.Field = "id,name,primaryEmail,etag"
 )
 
 var (
@@ -78,19 +79,19 @@ func (ds *DirectoryService) ListUsers(ctx context.Context, query []string) ([]*a
 	if len(query) > 0 {
 		for _, q := range query {
 			if q != "" {
-				err = ds.svc.Users.List().Query(q).Customer("my_customer").Fields(usersRequiredFields).Pages(ctx, func(users *admin.Users) error {
+				err = ds.svc.Users.List().Query(q).Customer("my_customer").Fields(listUsersRequiredFields).Pages(ctx, func(users *admin.Users) error {
 					u = append(u, users.Users...)
 					return nil
 				})
 			} else {
-				err = ds.svc.Users.List().Customer("my_customer").Fields(usersRequiredFields).Pages(ctx, func(users *admin.Users) error {
+				err = ds.svc.Users.List().Customer("my_customer").Fields(listUsersRequiredFields).Pages(ctx, func(users *admin.Users) error {
 					u = append(u, users.Users...)
 					return nil
 				})
 			}
 		}
 	} else {
-		err = ds.svc.Users.List().Customer("my_customer").Fields(usersRequiredFields).Pages(ctx, func(users *admin.Users) error {
+		err = ds.svc.Users.List().Customer("my_customer").Fields(listUsersRequiredFields).Pages(ctx, func(users *admin.Users) error {
 			u = append(u, users.Users...)
 			return nil
 		})
@@ -129,14 +130,37 @@ func (ds *DirectoryService) ListGroups(ctx context.Context, query []string) ([]*
 }
 
 // ListGroupMembers return a list of all members given a group ID.
-func (ds *DirectoryService) ListGroupMembers(ctx context.Context, groupID string) ([]*admin.Member, error) {
+// references:
+// - https://developers.google.com/admin-sdk/directory/reference/rest/v1/members/list
+// - https://developers.google.com/admin-sdk/directory/v1/guides/manage-group-members
+// - https://cloud.google.com/identity/docs/how-to/query-memberships
+func (ds *DirectoryService) ListGroupMembers(ctx context.Context, groupID string, queries ...GetGroupMembersOption) ([]*admin.Member, error) {
 	if groupID == "" {
 		return nil, ErrGroupIDNil
 	}
 
-	m := make([]*admin.Member, 0)
+	qs := getGroupMembersOptions{}
+	for _, q := range queries {
+		q(&qs)
+	}
 
-	err := ds.svc.Members.List(groupID).Fields(membersRequiredFields).Pages(ctx, func(members *admin.Members) error {
+	m := make([]*admin.Member, 0)
+	mlc := ds.svc.Members.List(groupID)
+
+	if qs.includeDerivedMembership {
+		mlc = mlc.IncludeDerivedMembership(true)
+	}
+	if qs.maxResults > 0 {
+		mlc = mlc.MaxResults(qs.maxResults)
+	}
+	if qs.pageToken != "" {
+		mlc = mlc.PageToken(qs.pageToken)
+	}
+	if qs.roles != "" {
+		mlc = mlc.Roles(qs.roles)
+	}
+
+	err := mlc.Fields(membersRequiredFields).Pages(ctx, func(members *admin.Members) error {
 		m = append(m, members.Members...)
 		return nil
 	})
@@ -151,8 +175,7 @@ func (ds *DirectoryService) GetUser(ctx context.Context, userID string) (*admin.
 		return nil, ErrUserIDNil
 	}
 
-	// TODO: u, err := ds.svc.Users.Get(userID).Fields(usersRequiredFields).Context(ctx).Do()
-	u, err := ds.svc.Users.Get(userID).Context(ctx).Do()
+	u, err := ds.svc.Users.Get(userID).Fields(getUsersRequiredFields).Context(ctx).Do()
 	if err != nil {
 		return nil, fmt.Errorf("google: error getting user %s: %v", userID, err)
 	}

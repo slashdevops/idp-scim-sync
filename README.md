@@ -28,6 +28,13 @@ __First time implementing [Single Sign-on on AWS](https://aws.amazon.com/single-
 
 The best way to to deploy and use this is through the [AWS Serverless public repository - slashdevops/idp-scim-sync](https://serverlessrepo.aws.amazon.com/applications/us-east-1/889836709304/idp-scim-sync)
 
+## Features
+
+* Efficient data retrieval from Google Workspace API using [Partial response](https://cloud.google.com/storage/docs/json_api#partial-response)
+* Supported nested groups in Google Workspace thanks to [includeDerivedMembership](https://developers.google.com/admin-sdk/directory/reference/rest/v1/members/list#query-parameters) API Query Parameter
+* Could be used or deployed via `AWS Serverless repository (Public)`, `Container Image` or `CLI`. See [Repositories](#Repositories)
+* Incremental changes, drastically reduced the number of requests to the [AWS SSO SCIM API](https://docs.aws.amazon.com/singlesignon/latest/developerguide/what-is-scim.html) thanks to the implementation of [State file](docs/State-File-example.md)
+
 ## Important
 
 The documentation is a __WIP__ and you can contribute!

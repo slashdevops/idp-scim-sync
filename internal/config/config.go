@@ -21,9 +21,6 @@ const (
 	// DefaultSyncMethod is the default sync method to use.
 	DefaultSyncMethod = "groups"
 
-	// DefaultDisableState is the default state status.
-	DefaultDisableState = false
-
 	// DefaultAWSS3BucketKey is the key of the AWS S3 bucket.
 	DefaultAWSS3BucketKey = "state.json"
 
@@ -69,8 +66,6 @@ type Config struct {
 
 	// SyncMethod allow to defined the sync method used to get the user and groups from Google Workspace
 	SyncMethod string `mapstructure:"sync_method" json:"sync_method" yaml:"sync_method"`
-
-	DisableState bool `mapstructure:"disable_state" json:"disable_state" yaml:"disable_state"`
 }
 
 // New returns a new Config
@@ -83,7 +78,6 @@ func New() Config {
 		LogFormat:                       DefaultLogFormat,
 		GWSServiceAccountFile:           DefaultGWSServiceAccountFile,
 		SyncMethod:                      DefaultSyncMethod,
-		DisableState:                    DefaultDisableState,
 		AWSS3BucketKey:                  DefaultAWSS3BucketKey,
 		GWSServiceAccountFileSecretName: DefaultGWSServiceAccountFileSecretName,
 		GWSUserEmailSecretName:          DefaultGWSUserEmailSecretName,
