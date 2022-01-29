@@ -7,6 +7,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"github.com/slashdevops/idp-scim-sync/internal/model"
+	"github.com/slashdevops/idp-scim-sync/pkg/google"
 	admin "google.golang.org/api/admin/directory/v1"
 )
 
@@ -27,7 +28,7 @@ var (
 type GoogleProviderService interface {
 	ListUsers(ctx context.Context, query []string) ([]*admin.User, error)
 	ListGroups(ctx context.Context, query []string) ([]*admin.Group, error)
-	ListGroupMembers(ctx context.Context, groupID string) ([]*admin.Member, error)
+	ListGroupMembers(ctx context.Context, groupID string, queries ...google.GetGroupMembersOption) ([]*admin.Member, error)
 	GetUser(ctx context.Context, userID string) (*admin.User, error)
 }
 
@@ -135,12 +136,20 @@ func (i *IdentityProvider) GetGroupMembers(ctx context.Context, groupID string) 
 
 	syncMembers := make([]*model.Member, 0)
 
-	pMembers, err := i.ps.ListGroupMembers(ctx, groupID)
+	pMembers, err := i.ps.ListGroupMembers(ctx, groupID, google.WithIncludeDerivedMembership(true))
 	if err != nil {
 		return nil, fmt.Errorf("idp: error listing group members: %w", err)
 	}
 
 	for _, member := range pMembers {
+		// avoid nested groups, but members are included thanks to the google.WithIncludeDerivedMembership option above
+		if member.Type == "GROUP" {
+			log.WithFields(log.Fields{
+				"id":    member.Id,
+				"email": member.Email,
+			}).Warn("skipping member because is a group, but group members will be included")
+			continue
+		}
 		e := &model.Member{
 			IPID:  member.Id,
 			Email: member.Email,

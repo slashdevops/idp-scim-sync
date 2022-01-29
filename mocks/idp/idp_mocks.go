@@ -9,6 +9,7 @@ import (
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"
+	google "github.com/slashdevops/idp-scim-sync/pkg/google"
 	admin "google.golang.org/api/admin/directory/v1"
 )
 
@@ -51,18 +52,23 @@ func (mr *MockGoogleProviderServiceMockRecorder) GetUser(ctx, userID interface{}
 }
 
 // ListGroupMembers mocks base method.
-func (m *MockGoogleProviderService) ListGroupMembers(ctx context.Context, groupID string) ([]*admin.Member, error) {
+func (m *MockGoogleProviderService) ListGroupMembers(ctx context.Context, groupID string, queries ...google.GetGroupMembersOption) ([]*admin.Member, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListGroupMembers", ctx, groupID)
+	varargs := []interface{}{ctx, groupID}
+	for _, a := range queries {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "ListGroupMembers", varargs...)
 	ret0, _ := ret[0].([]*admin.Member)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // ListGroupMembers indicates an expected call of ListGroupMembers.
-func (mr *MockGoogleProviderServiceMockRecorder) ListGroupMembers(ctx, groupID interface{}) *gomock.Call {
+func (mr *MockGoogleProviderServiceMockRecorder) ListGroupMembers(ctx, groupID interface{}, queries ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListGroupMembers", reflect.TypeOf((*MockGoogleProviderService)(nil).ListGroupMembers), ctx, groupID)
+	varargs := append([]interface{}{ctx, groupID}, queries...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListGroupMembers", reflect.TypeOf((*MockGoogleProviderService)(nil).ListGroupMembers), varargs...)
 }
 
 // ListGroups mocks base method.
