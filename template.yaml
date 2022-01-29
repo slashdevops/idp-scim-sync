@@ -16,7 +16,6 @@ Metadata:
         Parameters:
           - SyncMethod
           - DisableState
-          - GWSUsersFilter
           - GWSGroupsFilter
           - LogLevel
           - LogFormat
@@ -161,12 +160,6 @@ Parameters:
       The AWS SSO SCIM AccessToken secret name
     Default: IDPSCIM_SCIMAccessToken
 
-  GWSUsersFilter:
-    Type: String
-    Description: |
-      The Google Workspace user filter query parameter, example: 'name:John* email:admin*', see: https://developers.google.com/admin-sdk/directory/v1/guides/search-users
-    Default: ""
-
   GWSGroupsFilter:
     Type: String
     Description: |
@@ -256,7 +249,6 @@ Resources:
           IDPSCIM_AWS_S3_BUCKET_NAME: !Sub "${BucketNamePrefix}-${AWS::AccountId}-${AWS::Region}"
           IDPSCIM_AWS_S3_BUCKET_KEY: !Ref BucketKey
           IDPSCIM_GWS_GROUPS_FILTER: !Ref GWSGroupsFilter
-          IDPSCIM_GWS_USERS_FILTER: !Ref GWSUsersFilter
           IDPSCIM_GWS_USER_EMAIL_SECRET_NAME: !Ref AWSGWSUserEmailSecret
           IDPSCIM_GWS_SERVICE_ACCOUNT_FILE_SECRET_NAME: !Ref AWSGWSServiceAccountFileSecret
           IDPSCIM_AWS_SCIM_ENDPOINT_SECRET_NAME: !Ref AWSSCIMEndpointSecret

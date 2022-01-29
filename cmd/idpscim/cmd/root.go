@@ -79,13 +79,8 @@ func init() {
 		&cfg.GWSGroupsFilter, "gws-groups-filter", "q", []string{""},
 		"GWS Groups query parameter, example: --gws-groups-filter 'name:Admin* email:admin*' --gws-groups-filter 'name:Power* email:power*'",
 	)
-	rootCmd.Flags().StringSliceVarP(
-		&cfg.GWSUsersFilter, "gws-users-filter", "r", []string{""},
-		"GWS Users query parameter, example: --gws-users-filter 'name:Admin* email:admin*' --gws-users-filter 'name:Power* email:power*'",
-	)
 
 	rootCmd.PersistentFlags().StringVarP(&cfg.SyncMethod, "sync-method", "m", config.DefaultSyncMethod, "Sync method to use [groups]")
-	rootCmd.PersistentFlags().BoolVarP(&cfg.DisableState, "disable-state", "n", config.DefaultDisableState, "state status [true|false]")
 }
 
 // initConfig reads in config file and ENV variables if set.
@@ -103,12 +98,10 @@ func initConfig() {
 		"gws_service_account_file_secret_name",
 		"gws_user_email_secret_name",
 		"gws_groups_filter",
-		"gws_users_filter",
 		"aws_scim_access_token",
 		"aws_scim_endpoint",
 		"aws_scim_endpoint_secret_name",
 		"aws_scim_access_token_secret_name",
-		"disable_state",
 	}
 	for _, e := range envVars {
 		if err := viper.BindEnv(e); err != nil {
@@ -167,16 +160,8 @@ func initConfig() {
 	}
 
 	// not implemented yet block
-	if cfg.GWSUsersFilter[0] != "" {
-		log.Fatal("'gws-users-filter' feature not implemented yet")
-	}
-
 	if cfg.SyncMethod != "groups" {
 		log.Fatal("only 'sync-method=groups' are implemented")
-	}
-
-	if cfg.DisableState {
-		log.Warn("'disable-state=true' feature not implemented yet")
 	}
 }
 
