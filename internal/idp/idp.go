@@ -12,13 +12,13 @@ import (
 
 var (
 	// ErrDirectoryServiceNil is returned when the GoogleProviderService is nil.
-	ErrDirectoryServiceNil = errors.New("provoder: directory service is nil")
+	ErrDirectoryServiceNil = errors.New("provider: directory service is nil")
 
 	// ErrGroupIDNil is returned when the groupID is nil.
-	ErrGroupIDNil = errors.New("provoder: group id is nil")
+	ErrGroupIDNil = errors.New("provider: group id is nil")
 
 	// ErrGroupResultNil is returned when the group result is nil.
-	ErrGroupResultNil = errors.New("provoder: group result is nil")
+	ErrGroupResultNil = errors.New("provider: group result is nil")
 )
 
 //go:generate go run github.com/golang/mock/mockgen@v1.6.0 -package=mocks -destination=../../mocks/idp/idp_mocks.go -source=idp.go GoogleProviderService
