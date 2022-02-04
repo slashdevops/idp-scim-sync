@@ -15,7 +15,6 @@ Metadata:
           default: "Lambda Function - Configuration"
         Parameters:
           - SyncMethod
-          - DisableState
           - GWSGroupsFilter
           - LogLevel
           - LogFormat
@@ -174,15 +173,6 @@ Parameters:
     AllowedValues:
       - groups
 
-  DisableState:
-    Type: String
-    Description: |
-      Disable the state file?
-    Default: false
-    AllowedValues:
-      - true
-      - false
-
   MemorySize:
     Type: Number
     Description: |
@@ -245,7 +235,6 @@ Resources:
           IDPSCIM_LOG_LEVEL: !Ref LogLevel
           IDPSCIM_LOG_FORMAT: !Ref LogFormat
           IDPSCIM_SYNC_METHOD: !Ref SyncMethod
-          IDPSCIM_DISABLE_STATE: !Ref DisableState
           IDPSCIM_AWS_S3_BUCKET_NAME: !Sub "${BucketNamePrefix}-${AWS::AccountId}-${AWS::Region}"
           IDPSCIM_AWS_S3_BUCKET_KEY: !Ref BucketKey
           IDPSCIM_GWS_GROUPS_FILTER: !Ref GWSGroupsFilter
