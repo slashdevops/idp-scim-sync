@@ -217,7 +217,9 @@ func sync() error {
 }
 
 func syncGroups() error {
-	log.Info("starting sync groups")
+	log.WithFields(
+		log.Fields{"codeVersion": version.Version},
+	).Info("starting sync groups")
 	timeStart := time.Now()
 
 	// cfg.GWSServiceAccountFile could be a file path or a content of the file

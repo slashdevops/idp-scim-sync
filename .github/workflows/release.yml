@@ -92,7 +92,7 @@ jobs:
           echo ${{ github.ref_name }}
 
       - name: Build Distribution Cross-Platform
-        run: make build-dist
+        run: GIT_VERSION=${{ github.ref_name }} make build-dist
 
       - name: Show workspace files
         run: tree .
@@ -158,7 +158,7 @@ jobs:
         run: tree .
 
       - name: Build Distribution zip Assets
-        run: make build-dist-zip
+        run: GIT_VERSION=${{ github.ref_name }} make build-dist-zip
 
       - name: Create Release
         id: create_github_release
