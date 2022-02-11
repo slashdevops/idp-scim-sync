@@ -15,7 +15,7 @@ const (
 	groupsRequiredFields    googleapi.Field = "groups(id,name,email,etag)"
 	membersRequiredFields   googleapi.Field = "members(id,email,status,type,etag)"
 	listUsersRequiredFields googleapi.Field = "users(id,name,primaryEmail,suspended,etag)"
-	getUsersRequiredFields  googleapi.Field = "id,name,primaryEmail,etag"
+	getUsersRequiredFields  googleapi.Field = "id,name,primaryEmail,suspended,etag"
 )
 
 var (
