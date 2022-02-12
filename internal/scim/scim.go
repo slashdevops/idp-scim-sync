@@ -535,7 +535,7 @@ func (s *Provider) DeleteGroupsMembers(ctx context.Context, gmr *model.GroupsMem
 }
 
 // GetGroupsMembers returns a list of groups and their members from the SCIM Provider
-// NOTE: this method doesn't work becuae unfortunately the SCIM API doesn't support
+// NOTE: this method doesn't work because unfortunately the SCIM API doesn't support
 // list the members of a group, or get a group and their members at the same time
 // reference: https://docs.aws.amazon.com/singlesignon/latest/developerguide/listgroups.html
 func (s *Provider) GetGroupsMembers(ctx context.Context, gr *model.GroupsResult) (*model.GroupsMembersResult, error) {
@@ -604,7 +604,7 @@ func (s *Provider) GetGroupsMembersBruteForce(ctx context.Context, gr *model.Gro
 				return nil, fmt.Errorf("scim: error listing groups: %w", err)
 			}
 
-			if lgr.TotalResults > 0 { // crazy thing of the AWS SSO SCIM API, it doesn't return the memnber into the Resources array
+			if lgr.TotalResults > 0 { // crazy thing of the AWS SSO SCIM API, it doesn't return the member into the Resources array
 				m := &model.Member{
 					IPID:   user.IPID,
 					SCIMID: user.SCIMID,
