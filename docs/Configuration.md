@@ -7,6 +7,30 @@ NOTES:
 * The configuration could result in a merge of the three sources.
 * The precedence order is `configuration file`, `command line arguments` and `environment variables`.
 
+## Prerequisites
+
+To have access to the `AWS Resources` like `AWS S3` you will need `AWS Credentials`, so, before execute the `idpscim` or `idpscimcli` program use one of the following configuration methods:
+
+Using `AWS_ACCESS_KEY`
+
+```bash
+export AWS_ACCESS_KEY_ID="<your access key>"
+export AWS_SECRET_ACCESS_KEY="<your secret key>"
+export AWS_REGION="<your region>"
+```
+
+Using `profiles`
+
+```bash
+export AWS_PROFILE="slashdevops"
+export AWS_REGION="<your region>"
+export AWS_ROLE_SESSION_NAME="idp-scim-sync"
+```
+
+__NOTES:__
+
+* This support profiles with and without `role` and `mfa`
+
 ## Configuration file
 
 create a `.idpscim.yaml` file in the `$HOME/` directory or in the same path where the `idpscim` program is.
