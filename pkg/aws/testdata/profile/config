@@ -2,11 +2,8 @@
 region = us-east-1
 
 
-[slashdevops]
+[profile slashdevops]
+role_arn = arn:aws:iam::123456789102:role/aws-administrator
+source_profile = slashdevops
+;mfa_serial = arn:aws:iam::123456789102:mfa/slashdevops
 region = us-east-1
-
-; [profile slashdevops]
-; role_arn = arn:aws:iam::123456789102:role/aws-administrator
-; source_profile = slashdevops
-; mfa_serial = arn:aws:iam::123456789102:mfa/slashdevops
-; region = us-east-1
