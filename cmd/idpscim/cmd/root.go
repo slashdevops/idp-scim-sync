@@ -25,7 +25,6 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	awsconf "github.com/aws/aws-sdk-go-v2/config"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -166,7 +165,7 @@ func initConfig() {
 }
 
 func getSecrets() {
-	awsConf, err := awsconf.LoadDefaultConfig(context.Background())
+	awsConf, err := aws.NewDefaultConf(context.Background())
 	if err != nil {
 		log.Fatalf(errors.Wrap(err, "cannot load aws config").Error())
 	}
@@ -283,7 +282,7 @@ func syncGroups() error {
 		return errors.Wrap(err, "cannot create scim provider")
 	}
 
-	awsConf, err := awsconf.LoadDefaultConfig(context.Background())
+	awsConf, err := aws.NewDefaultConf(context.Background())
 	if err != nil {
 		log.Fatalf(errors.Wrap(err, "cannot load aws config").Error())
 	}
