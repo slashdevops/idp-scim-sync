@@ -85,7 +85,7 @@ There are two ways to use this project in AWS and described below.
 
 #### Using AWS Serverless Repository
 
-This is the easy way, this project is deployed as a [AWS Serverless Application](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-apps-overview.html) in [AWS Serverless Application Repository](https://aws.amazon.com/es/serverless/serverlessrepo/).
+This is the easy way, this project is deployed as an [AWS Serverless Application](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-apps-overview.html) in [AWS Serverless Application Repository](https://aws.amazon.com/es/serverless/serverlessrepo/).
 
 The public repository of the project is [slashdevops/idp-scim-sync](https://serverlessrepo.aws.amazon.com/applications/us-east-1/889836709304/idp-scim-sync)
 
