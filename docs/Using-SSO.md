@@ -64,7 +64,7 @@ Because one you `sync the groups and users` the first time with [AWS SSO](https:
 | Groups | Name           |
 | Users  | Email          |
 
-Of course, you can change the `Groups and Users main attributes` but after that you will lose the `Permission sets` assigned to them, so __you should not change them__.
+Of course, you can change the `Groups and Users main attributes` but after that you will lose the `Permission sets` assigned to them, so __you should not change these__.
 
 __Again, Why?__
 
