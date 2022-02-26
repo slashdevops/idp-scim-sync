@@ -93,7 +93,7 @@ jobs:
 
       - name: AWS SAM Validate template
         run: |
-          sam build --base-dir cmd/idpscim/
+          GIT_VERSION=${{ github.ref_name }} sam build --base-dir cmd/idpscim/
 
       - name: AWS SAM Package
         env:
