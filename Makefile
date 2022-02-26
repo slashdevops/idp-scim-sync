@@ -29,7 +29,6 @@ GO_ARCH        ?= arm64 amd64
 GO_FILES       := $(shell go list ./... | grep -v /mocks/)
 
 CONTAINER_OS   ?= linux
-#CONTAINER_ARCH ?= amd64
 CONTAINER_ARCH ?= arm64v8 amd64
 CONTAINER_NAMESPACE ?= $(PROJECT_NAMESPACE)
 CONTAINER_IMAGE_NAME ?= $(PROJECT_NAME)
@@ -38,6 +37,9 @@ DOCKER_CONTAINER_REPO  ?= docker.io
 GITHUB_CONTAINER_REPO  ?= ghcr.io
 AWS_ECR_CONTAINER_REPO ?= public.ecr.aws/l2n7y5s7
 
+AWS_SAM_PROJECT_NAME ?= idpscim
+AWS_SAM_OS           ?= linux
+AWS_SAM_ARCH         ?= amd64
 
 all: clean test build
 
@@ -92,7 +94,17 @@ build-dist-zip:
 	)
 
 clean:
-	rm -rf $(BUILD_DIR) $(DIST_DIR) ./*.out .aws-sam/ build.toml
+	rm -rf $(BUILD_DIR) $(DIST_DIR) ./*.out .aws-sam/ build.toml ./packaged.yaml
+
+# This target is used by AWS SAM build command
+# and was added to build the binary using custom flags
+# Ref:
+# + https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/building-custom-runtimes.html
+# + https://jiangsc.me/2021/01/24/Lessons-Learnt-On-Deploying-GO-Lambda-Application-on-AWS/
+build-LambdaFunction:
+	CGO_ENABLED=$(GO_CGO_ENABLED) GOOS=$(AWS_SAM_OS) GOARCH=$(AWS_SAM_ARCH) go build $(GO_LDFLAGS) $(GO_OPTS) -o ./$(BUILD_DIR)/AWS_SAM/$(AWS_SAM_PROJECT_NAME) ./cmd/$(AWS_SAM_PROJECT_NAME)/
+	mkdir -p $(ARTIFACTS_DIR)/dist/$(AWS_SAM_PROJECT_NAME)-$(AWS_SAM_OS)-$(AWS_SAM_ARCH)
+	cp ./$(BUILD_DIR)/AWS_SAM/$(AWS_SAM_PROJECT_NAME) $(ARTIFACTS_DIR)/dist/$(AWS_SAM_PROJECT_NAME)-$(AWS_SAM_OS)-$(AWS_SAM_ARCH)/
 
 container-build: build-dist
 	$(foreach OS, $(CONTAINER_OS), \

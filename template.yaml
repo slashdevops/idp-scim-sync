@@ -227,8 +227,9 @@ Resources:
         Project: https://github.com/slashdevops/idp-scim-sync
       Runtime: go1.x
       MemorySize: !Ref MemorySize
-      Handler: dist/idpscim-linux-amd64/idpscim
+      Handler: dist/idpscim-linux-amd64/idpscim # depends on the path inside .aws-sam/build/LambdaFunction/ during the build process using sam build
       Timeout: !Ref Timeout
+      CodeUri: ../../. # see Metadata section
       Tracing: Active
       Environment:
         Variables:
@@ -250,6 +251,8 @@ Resources:
           Properties:
             Enabled: true
             Schedule: !Ref ScheduleExpression
+    Metadata: # https://jiangsc.me/2021/01/24/Lessons-Learnt-On-Deploying-GO-Lambda-Application-on-AWS/
+      BuildMethod: makefile
 
   LambdaFunctionRole:
     Type: AWS::IAM::Role
