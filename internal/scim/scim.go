@@ -22,6 +22,9 @@ type AWSSCIMProvider interface {
 	// CreateUser creates a user in SCIM Provider
 	CreateUser(ctx context.Context, u *aws.CreateUserRequest) (*aws.CreateUserResponse, error)
 
+	// CreateOrGerUser creates a user in SCIM Provider
+	CreateOrGerUser(ctx context.Context, u *aws.CreateUserRequest) (*aws.CreateUserResponse, error)
+
 	// PutUser updates a user in SCIM Provider
 	PutUser(ctx context.Context, usr *aws.PutUserRequest) (*aws.PutUserResponse, error)
 
@@ -277,7 +280,8 @@ func (s *Provider) CreateUsers(ctx context.Context, ur *model.UsersResult) (*mod
 			"ipdid": user.IPID,
 		}).Trace("creating user")
 
-		r, err := s.scim.CreateUser(ctx, userRequest)
+		// TODO: r, err := s.scim.CreateUser(ctx, userRequest)
+		r, err := s.scim.CreateOrGerUser(ctx, userRequest)
 		if err != nil {
 			return nil, fmt.Errorf("scim: error creating user: %w", err)
 		}

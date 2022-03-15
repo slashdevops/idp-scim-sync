@@ -156,19 +156,12 @@ func (s *SCIMService) checkHTTPResponse(resp *http.Response) error {
 			return fmt.Errorf("aws checkHTTPResponse: error reading response body: %w", err)
 		}
 
-		// in case somebody delete/create elements manually from AWS SCIM API
-		// or if this program broke at some moment and create inconsistent state and now
-		// so is better to avoid errors here to be self-healing
-		// TODO: this broke the code upstream, so we need to fix it
-		if resp.StatusCode == http.StatusNotFound || resp.StatusCode == http.StatusConflict {
-			log.WithFields(log.Fields{
-				"status": resp.Status,
-				"method": resp.Request.Method,
-			}).Warnf("aws checkHTTPResponse: body: %s\n", string(body))
-			return nil
-		}
-
-		return fmt.Errorf("aws checkHTTPResponse: error code: %s, body: %s", resp.Status, string(body))
+		log.WithFields(log.Fields{
+			"statusCode": resp.StatusCode,
+			"status":     resp.Status,
+			"method":     resp.Request.Method,
+		}).Warnf("aws checkHTTPResponse: body: %s\n", string(body))
+		return &HTTPResponseError{resp.StatusCode, resp.Status, resp.Request.Method, string(body)}
 	}
 
 	return nil
@@ -219,6 +212,94 @@ func (s *SCIMService) CreateUser(ctx context.Context, usr *CreateUserRequest) (*
 	defer resp.Body.Close()
 
 	if e := s.checkHTTPResponse(resp); e != nil {
+		return nil, e
+	}
+
+	var response CreateUserResponse
+	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
+		return nil, fmt.Errorf("aws CreateUser: error decoding response body: %w", err)
+	}
+
+	return &response, nil
+}
+
+// CreateOrGerUser creates a new user or get the user informaion in the AWS SSO Using the API.
+// This function will try to create a new user but if received a 409 http error (ConflictException	User already exists.)
+// execute a request to get the user information and return it.
+//
+// NOTE: this function is created to avoid the existing problem with the limitation of the
+// AWS SCIM API about retrieve a maximum of 50 users at a time.
+//
+// references:
+// + https://docs.aws.amazon.com/singlesignon/latest/developerguide/createuser.html
+// + https://docs.aws.amazon.com/singlesignon/latest/developerguide/getuser.html
+func (s *SCIMService) CreateOrGerUser(ctx context.Context, usr *CreateUserRequest) (*CreateUserResponse, error) {
+	if usr == nil {
+		return nil, ErrCreateUserRequestEmpty
+	}
+	// Check constraints in the reference document
+	if usr.UserName == "" {
+		return nil, ErrUserNameEmpty
+	}
+	if usr.DisplayName == "" {
+		return nil, ErrDisplayNameEmpty
+	}
+	if usr.Name.GivenName == "" {
+		return nil, ErrGivenNameEmpty
+	}
+	if usr.Name.FamilyName == "" {
+		return nil, ErrFamilyNameEmpty
+	}
+
+	if len(usr.Emails) > 1 {
+		return nil, ErrEmailsTooMany
+	}
+	usr.Emails[0].Primary = true
+
+	reqURL, err := url.Parse(s.url.String())
+	if err != nil {
+		return nil, fmt.Errorf("aws CreateUser: error parsing url: %w", err)
+	}
+
+	reqURL.Path = path.Join(reqURL.Path, "/Users")
+
+	req, err := s.newRequest(ctx, http.MethodPost, reqURL, *usr)
+	if err != nil {
+		return nil, fmt.Errorf("aws CreateUser: error creating request, http method: %s, url: %v, error: %w", http.MethodPost, reqURL.String(), err)
+	}
+
+	resp, err := s.do(ctx, req)
+	if err != nil {
+		return nil, fmt.Errorf("aws CreateUser: error sending request, http method: %s, url: %v, error: %w", http.MethodPost, reqURL.String(), err)
+	}
+	defer resp.Body.Close()
+
+	if e := s.checkHTTPResponse(resp); e != nil {
+		httpErr := new(HTTPResponseError)
+
+		// http.StatusConflict is 409
+		if errors.As(e, httpErr) && httpErr.StatusCode == http.StatusConflict {
+			log.WithFields(log.Fields{
+				"user": usr.UserName,
+			}).Warn("aws CreateOrGerUser: user already exists")
+
+			response, err := s.GetUser(ctx, usr.UserName)
+			if err != nil {
+				return nil, fmt.Errorf("aws CreateOrGerUser: error getting user information: %w", err)
+			}
+
+			return &CreateUserResponse{
+				ID:          response.ID,
+				ExternalID:  response.ExternalID,
+				Meta:        response.Meta,
+				Schemas:     response.Schemas,
+				UserName:    response.UserName,
+				Name:        response.Name,
+				DisplayName: response.DisplayName,
+				Active:      response.Active,
+				Emails:      response.Emails,
+			}, nil
+		}
 		return nil, e
 	}
 

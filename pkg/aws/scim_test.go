@@ -118,7 +118,6 @@ func TestCreateUser(t *testing.T) {
 
 	t.Run("should return a valid response with a valid request", func(t *testing.T) {
 		mockHTTPCLient := mocks.NewMockHTTPClient(mockCtrl)
-
 		jsonResp := ReadJSONFIleAsString(t, CreateUserResponseFile)
 
 		httpResp := &http.Response{
