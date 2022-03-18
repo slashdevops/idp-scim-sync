@@ -159,9 +159,8 @@ func (s *SCIMService) checkHTTPResponse(resp *http.Response) error {
 		log.WithFields(log.Fields{
 			"statusCode": resp.StatusCode,
 			"status":     resp.Status,
-			"method":     resp.Request.Method,
 		}).Warnf("aws checkHTTPResponse: body: %s\n", string(body))
-		return &HTTPResponseError{resp.StatusCode, resp.Status, resp.Request.Method, string(body)}
+		return &HTTPResponseError{resp.StatusCode, resp.Status, string(body)}
 	}
 
 	return nil
@@ -202,12 +201,12 @@ func (s *SCIMService) CreateUser(ctx context.Context, usr *CreateUserRequest) (*
 
 	req, err := s.newRequest(ctx, http.MethodPost, reqURL, *usr)
 	if err != nil {
-		return nil, fmt.Errorf("aws CreateUser: error creating request, http method: %s, url: %v, error: %w", http.MethodPost, reqURL.String(), err)
+		return nil, fmt.Errorf("aws CreateUser: error creating request, user: %s, http method: %s, url: %v, error: %w", usr.UserName, http.MethodPost, reqURL.String(), err)
 	}
 
 	resp, err := s.do(ctx, req)
 	if err != nil {
-		return nil, fmt.Errorf("aws CreateUser: error sending request, http method: %s, url: %v, error: %w", http.MethodPost, reqURL.String(), err)
+		return nil, fmt.Errorf("aws CreateUser: error sending request, user: %s, http method: %s, url: %v, error: %w", usr.UserName, http.MethodPost, reqURL.String(), err)
 	}
 	defer resp.Body.Close()
 
@@ -217,13 +216,13 @@ func (s *SCIMService) CreateUser(ctx context.Context, usr *CreateUserRequest) (*
 
 	var response CreateUserResponse
 	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
-		return nil, fmt.Errorf("aws CreateUser: error decoding response body: %w", err)
+		return nil, fmt.Errorf("aws CreateUser: user: %s, error decoding response body: %w", usr.UserName, err)
 	}
 
 	return &response, nil
 }
 
-// CreateOrGerUser creates a new user or get the user informaion in the AWS SSO Using the API.
+// CreateOrGetUser creates a new user or get the user informaion in the AWS SSO Using the API.
 // This function will try to create a new user but if received a 409 http error (ConflictException	User already exists.)
 // execute a request to get the user information and return it.
 //
@@ -233,7 +232,7 @@ func (s *SCIMService) CreateUser(ctx context.Context, usr *CreateUserRequest) (*
 // references:
 // + https://docs.aws.amazon.com/singlesignon/latest/developerguide/createuser.html
 // + https://docs.aws.amazon.com/singlesignon/latest/developerguide/getuser.html
-func (s *SCIMService) CreateOrGerUser(ctx context.Context, usr *CreateUserRequest) (*CreateUserResponse, error) {
+func (s *SCIMService) CreateOrGetUser(ctx context.Context, usr *CreateUserRequest) (*CreateUserResponse, error) {
 	if usr == nil {
 		return nil, ErrCreateUserRequestEmpty
 	}
@@ -265,12 +264,12 @@ func (s *SCIMService) CreateOrGerUser(ctx context.Context, usr *CreateUserReques
 
 	req, err := s.newRequest(ctx, http.MethodPost, reqURL, *usr)
 	if err != nil {
-		return nil, fmt.Errorf("aws CreateUser: error creating request, http method: %s, url: %v, error: %w", http.MethodPost, reqURL.String(), err)
+		return nil, fmt.Errorf("aws CreateUser: error creating request,user: %s, http method: %s, url: %v, error: %w", usr.UserName, http.MethodPost, reqURL.String(), err)
 	}
 
 	resp, err := s.do(ctx, req)
 	if err != nil {
-		return nil, fmt.Errorf("aws CreateUser: error sending request, http method: %s, url: %v, error: %w", http.MethodPost, reqURL.String(), err)
+		return nil, fmt.Errorf("aws CreateUser: error sending request, user: %s, http method: %s, url: %v, error: %w", usr.UserName, http.MethodPost, reqURL.String(), err)
 	}
 	defer resp.Body.Close()
 
@@ -278,15 +277,22 @@ func (s *SCIMService) CreateOrGerUser(ctx context.Context, usr *CreateUserReques
 		httpErr := new(HTTPResponseError)
 
 		// http.StatusConflict is 409
-		if errors.As(e, httpErr) && httpErr.StatusCode == http.StatusConflict {
+		if errors.As(e, &httpErr) && httpErr.StatusCode == http.StatusConflict {
 			log.WithFields(log.Fields{
 				"user": usr.UserName,
-			}).Warn("aws CreateOrGerUser: user already exists")
+			}).Warn("aws CreateOrGetUser: user already exists, trying to get the user information")
 
-			response, err := s.GetUser(ctx, usr.UserName)
+			response, err := s.GetUserByUserName(ctx, usr.UserName)
 			if err != nil {
-				return nil, fmt.Errorf("aws CreateOrGerUser: error getting user information: %w", err)
+				return nil, fmt.Errorf("aws CreateOrGetUser: error getting user information: %w", err)
 			}
+
+			log.WithFields(log.Fields{
+				"user":       usr.UserName,
+				"id":         response.ID,
+				"externalId": response.ExternalID,
+				"active":     response.Active,
+			}).Warn("aws CreateOrGetUser: obtained user information")
 
 			return &CreateUserResponse{
 				ID:          response.ID,
@@ -305,7 +311,7 @@ func (s *SCIMService) CreateOrGerUser(ctx context.Context, usr *CreateUserReques
 
 	var response CreateUserResponse
 	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
-		return nil, fmt.Errorf("aws CreateUser: error decoding response body: %w", err)
+		return nil, fmt.Errorf("aws CreateOrGetUser: user: %s, error decoding response body: %w", usr.UserName, err)
 	}
 
 	return &response, nil

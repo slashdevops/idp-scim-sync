@@ -373,7 +373,7 @@ func TestSCIMProvider_CreateUsers(t *testing.T) {
 		resp := &aws.CreateUserResponse{}
 		ctx := context.TODO()
 
-		mockSCIM.EXPECT().CreateUser(ctx, cur).Return(resp, nil).Times(1)
+		mockSCIM.EXPECT().CreateOrGetUser(ctx, cur).Return(resp, nil).Times(1)
 
 		usr := &model.UsersResult{
 			Items: 1,
@@ -410,7 +410,7 @@ func TestSCIMProvider_CreateUsers(t *testing.T) {
 		resp := &aws.CreateUserResponse{}
 		ctx := context.TODO()
 
-		mockSCIM.EXPECT().CreateUser(ctx, cur).Return(resp, errors.New("test error")).Times(1)
+		mockSCIM.EXPECT().CreateOrGetUser(ctx, cur).Return(resp, errors.New("test error")).Times(1)
 
 		usr := &model.UsersResult{
 			Items: 1,
@@ -478,8 +478,8 @@ func TestSCIMProvider_CreateUsers(t *testing.T) {
 		ctx := context.TODO()
 
 		gomock.InOrder(
-			mockSCIM.EXPECT().CreateUser(ctx, cur1).Return(resp1, nil).Times(1),
-			mockSCIM.EXPECT().CreateUser(ctx, cur2).Return(resp2, nil).Times(1),
+			mockSCIM.EXPECT().CreateOrGetUser(ctx, cur1).Return(resp1, nil).Times(1),
+			mockSCIM.EXPECT().CreateOrGetUser(ctx, cur2).Return(resp2, nil).Times(1),
 		)
 
 		usr := &model.UsersResult{
