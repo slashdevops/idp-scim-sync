@@ -69,6 +69,14 @@ type Group struct {
 	Members     []Member `json:"members"`
 }
 
+func (g *Group) String() string {
+	JSON, err := json.Marshal(g)
+	if err != nil {
+		log.Fatalf(err.Error())
+	}
+	return string(JSON)
+}
+
 // User represent a user entity
 type User struct {
 	ID          string   `json:"id"`
@@ -83,23 +91,12 @@ type User struct {
 }
 
 func (u *User) String() string {
-	return string(u.ToJSON(u))
-}
-
-// ToJSON returns the JSON representation of the User
-func (u *User) ToJSON(stc interface{}) []byte {
-	if stc == nil {
-		return []byte("")
-	}
-	if stc == "" {
-		return []byte("")
-	}
-
-	JSON, err := json.Marshal(stc)
+	JSON, err := json.Marshal(u)
 	if err != nil {
 		log.Fatalf(err.Error())
 	}
-	return JSON
+
+	return string(JSON)
 }
 
 // ServiceProviderConfig represent a service provider config entity
@@ -143,6 +140,14 @@ type GeneralResponse struct {
 	ItemsPerPage int      `json:"itemsPerPage"`
 	StartIndex   int      `json:"startIndex"`
 	Schemas      []string `json:"schemas"`
+}
+
+// GetGroupResponse represent a group user response entity
+type GetGroupResponse struct {
+	ID          string   `json:"id"`
+	Meta        Meta     `json:"meta"`
+	Schemas     []string `json:"schemas"`
+	DisplayName string   `json:"displayName"`
 }
 
 // ListGroupsResponse represent a list groups response entity

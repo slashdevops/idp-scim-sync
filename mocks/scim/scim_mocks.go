@@ -50,6 +50,21 @@ func (mr *MockAWSSCIMProviderMockRecorder) CreateGroup(ctx, g interface{}) *gomo
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateGroup", reflect.TypeOf((*MockAWSSCIMProvider)(nil).CreateGroup), ctx, g)
 }
 
+// CreateOrGetGroup mocks base method.
+func (m *MockAWSSCIMProvider) CreateOrGetGroup(ctx context.Context, g *aws.CreateGroupRequest) (*aws.CreateGroupResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateOrGetGroup", ctx, g)
+	ret0, _ := ret[0].(*aws.CreateGroupResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateOrGetGroup indicates an expected call of CreateOrGetGroup.
+func (mr *MockAWSSCIMProviderMockRecorder) CreateOrGetGroup(ctx, g interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateOrGetGroup", reflect.TypeOf((*MockAWSSCIMProvider)(nil).CreateOrGetGroup), ctx, g)
+}
+
 // CreateOrGetUser mocks base method.
 func (m *MockAWSSCIMProvider) CreateOrGetUser(ctx context.Context, u *aws.CreateUserRequest) (*aws.CreateUserResponse, error) {
 	m.ctrl.T.Helper()

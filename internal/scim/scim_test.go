@@ -229,7 +229,7 @@ func TestSCIMProvider_CreateGroups(t *testing.T) {
 		resp := &aws.CreateGroupResponse{}
 		ctx := context.TODO()
 
-		mockSCIM.EXPECT().CreateGroup(ctx, cgr).Return(resp, nil).Times(1)
+		mockSCIM.EXPECT().CreateOrGetGroup(ctx, cgr).Return(resp, nil).Times(1)
 
 		gr := &model.GroupsResult{
 			Items: 1,
@@ -257,7 +257,7 @@ func TestSCIMProvider_CreateGroups(t *testing.T) {
 		resp := &aws.CreateGroupResponse{}
 		ctx := context.TODO()
 
-		mockSCIM.EXPECT().CreateGroup(ctx, cgr).Return(resp, errors.New("test error")).Times(1)
+		mockSCIM.EXPECT().CreateOrGetGroup(ctx, cgr).Return(resp, errors.New("test error")).Times(1)
 
 		gr := &model.GroupsResult{
 			Items: 1,
@@ -308,8 +308,8 @@ func TestSCIMProvider_CreateGroups(t *testing.T) {
 		}
 		ctx := context.TODO()
 
-		mockSCIM.EXPECT().CreateGroup(ctx, cgr1).Return(resp1, nil).Times(1)
-		mockSCIM.EXPECT().CreateGroup(ctx, cgr2).Return(resp2, nil).Times(1)
+		mockSCIM.EXPECT().CreateOrGetGroup(ctx, cgr1).Return(resp1, nil).Times(1)
+		mockSCIM.EXPECT().CreateOrGetGroup(ctx, cgr2).Return(resp2, nil).Times(1)
 
 		gr := &model.GroupsResult{
 			Items: 1,

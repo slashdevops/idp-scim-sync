@@ -43,6 +43,9 @@ type AWSSCIMProvider interface {
 	// CreateGroup creates a group in SCIM Provider
 	CreateGroup(ctx context.Context, g *aws.CreateGroupRequest) (*aws.CreateGroupResponse, error)
 
+	// CreateOrGetGroup creates a group in SCIM Provider
+	CreateOrGetGroup(ctx context.Context, g *aws.CreateGroupRequest) (*aws.CreateGroupResponse, error)
+
 	// DeleteGroup deletes a group in SCIM Provider
 	DeleteGroup(ctx context.Context, id string) error
 
@@ -115,7 +118,8 @@ func (s *Provider) CreateGroups(ctx context.Context, gr *model.GroupsResult) (*m
 			"group": group.Name,
 		}).Warn("creating group")
 
-		r, err := s.scim.CreateGroup(ctx, groupRequest)
+		// TODO: r, err := s.scim.CreateGroup(ctx, groupRequest)
+		r, err := s.scim.CreateOrGetGroup(ctx, groupRequest)
 		if err != nil {
 			return nil, fmt.Errorf("scim: error creating group: %w", err)
 		}

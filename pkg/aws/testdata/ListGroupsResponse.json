@@ -1,0 +1,23 @@
+{
+    "totalResults": 1,
+    "itemsPerPage": 1,
+    "startIndex": 1,
+    "schemas": [
+        "urn:ietf:params:scim:api:messages:2.0:ListResponse"
+    ],
+    "Resources": [
+        {
+            "id": "90677c608a-ef9cb2da-d480-422b-9901-451b1bf9e607",
+            "meta": {
+                "resourceType": "Group",
+                "created": "2020-07-22T23:10:21Z",
+                "lastModified": "2020-07-22T23:10:21Z"
+            },
+            "schemas": [
+                "urn:ietf:params:scim:schemas:core:2.0:Group"
+            ],
+            "displayName": "Group Foo",
+            "members": []
+        }
+    ]
+}

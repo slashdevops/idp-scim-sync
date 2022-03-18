@@ -1,6 +1,6 @@
 {
-    "totalResults": 5,
-    "itemsPerPage": 5,
+    "totalResults": 1,
+    "itemsPerPage": 1,
     "startIndex": 1,
     "schemas": [
         "urn:ietf:params:scim:api:messages:2.0:ListResponse"

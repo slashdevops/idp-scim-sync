@@ -63,6 +63,9 @@ var (
 
 	// ErrUserUserNameEmpty is returned when the userName is empty.
 	ErrUserUserNameEmpty = errors.Errorf("aws: userName may not be empty")
+
+	// ErrGroupDisplayNameEmpty is returned when the userName is empty.
+	ErrGroupDisplayNameEmpty = errors.Errorf("aws: displayName may not be empty")
 )
 
 //go:generate go run github.com/golang/mock/mockgen@v1.6.0 -package=mocks -destination=../../mocks/aws/scim_mocks.go -source=scim.go HTTPClient
@@ -264,7 +267,7 @@ func (s *SCIMService) CreateOrGetUser(ctx context.Context, usr *CreateUserReques
 
 	req, err := s.newRequest(ctx, http.MethodPost, reqURL, *usr)
 	if err != nil {
-		return nil, fmt.Errorf("aws CreateUser: error creating request,user: %s, http method: %s, url: %v, error: %w", usr.UserName, http.MethodPost, reqURL.String(), err)
+		return nil, fmt.Errorf("aws CreateUser: error creating request, user: %s, http method: %s, url: %v, error: %w", usr.UserName, http.MethodPost, reqURL.String(), err)
 	}
 
 	resp, err := s.do(ctx, req)
@@ -368,12 +371,12 @@ func (s *SCIMService) GetUserByUserName(ctx context.Context, userName string) (*
 
 	req, err := s.newRequest(ctx, http.MethodGet, reqURL, nil)
 	if err != nil {
-		return nil, fmt.Errorf("aws GetUserByUserName: error creating request, http method: %s, url: %v, error: %w", http.MethodGet, reqURL.String(), err)
+		return nil, fmt.Errorf("aws GetUserByUserName: error creating request, userName: %s, http method: %s, url: %v, error: %w", userName, http.MethodGet, reqURL.String(), err)
 	}
 
 	resp, err := s.do(ctx, req)
 	if err != nil {
-		return nil, fmt.Errorf("aws GetUserByUserName: error sending request, http method: %s, url: %v, error: %w", http.MethodGet, reqURL.String(), err)
+		return nil, fmt.Errorf("aws GetUserByUserName: error sending request, userName: %s, http method: %s, url: %v, error: %w", userName, http.MethodGet, reqURL.String(), err)
 	}
 	defer resp.Body.Close()
 
@@ -383,20 +386,20 @@ func (s *SCIMService) GetUserByUserName(ctx context.Context, userName string) (*
 
 	var lur ListUsersResponse
 	if err = json.NewDecoder(resp.Body).Decode(&lur); err != nil {
-		return nil, fmt.Errorf("aws GetUserByUserName: error decoding response body: %w", err)
+		return nil, fmt.Errorf("aws GetUserByUserName: userName: %s, error decoding response body: %w", userName, err)
 	}
 
 	var response GetUserResponse
 
-	dataJSON := lur.Resources[0].String()
-	if err != nil {
-		return nil, fmt.Errorf("aws GetUserByUserName: error decoding response body: %w", err)
-	}
-
-	data := strings.NewReader(dataJSON)
 	if len(lur.Resources) > 0 {
+		dataJSON := lur.Resources[0].String()
+		if err != nil {
+			return nil, fmt.Errorf("aws GetUserByUserName: userName: %s, error decoding response body: %w", userName, err)
+		}
+
+		data := strings.NewReader(dataJSON)
 		if err = json.NewDecoder(data).Decode(&response); err != nil {
-			return nil, fmt.Errorf("aws GetUserByUserName: error decoding response body: %w", err)
+			return nil, fmt.Errorf("aws GetUserByUserName: userName: %s, error decoding response body: %w", userName, err)
 		}
 	}
 
@@ -561,6 +564,61 @@ func (s *SCIMService) PutUser(ctx context.Context, usr *PutUserRequest) (*PutUse
 	return &response, nil
 }
 
+// GetGroupByDisplayName gets a group by display name from AWS SSO Using the API.
+func (s *SCIMService) GetGroupByDisplayName(ctx context.Context, displayName string) (*GetGroupResponse, error) {
+	if displayName == "" {
+		return nil, ErrGroupDisplayNameEmpty
+	}
+
+	reqURL, err := url.Parse(s.url.String())
+	if err != nil {
+		return nil, fmt.Errorf("aws GetGroupByDisplayName: error parsing url: %w", err)
+	}
+
+	reqURL.Path = path.Join(reqURL.Path, "/Groups")
+
+	filter := fmt.Sprintf("displayName eq %q", displayName)
+	q := reqURL.Query()
+	q.Add("filter", filter)
+	reqURL.RawQuery = q.Encode()
+
+	req, err := s.newRequest(ctx, http.MethodGet, reqURL, nil)
+	if err != nil {
+		return nil, fmt.Errorf("aws GetGroupByDisplayName: error creating request, displayName: %s, http method: %s, url: %v, error: %w", displayName, http.MethodGet, reqURL.String(), err)
+	}
+
+	resp, err := s.do(ctx, req)
+	if err != nil {
+		return nil, fmt.Errorf("aws GetGroupByDisplayName: error sending request, displayName: %s, http method: %s, url: %v, error: %w", displayName, http.MethodGet, reqURL.String(), err)
+	}
+	defer resp.Body.Close()
+
+	if e := s.checkHTTPResponse(resp); e != nil {
+		return nil, e
+	}
+
+	var lgr ListGroupsResponse
+	if err = json.NewDecoder(resp.Body).Decode(&lgr); err != nil {
+		return nil, fmt.Errorf("aws GetGroupByDisplayName: displayName: %s, error decoding response body: %w", displayName, err)
+	}
+
+	var response GetGroupResponse
+
+	if len(lgr.Resources) > 0 {
+		dataJSON := lgr.Resources[0].String()
+		if err != nil {
+			return nil, fmt.Errorf("aws GetGroupByDisplayName: displayName: %s, error decoding response body: %w", displayName, err)
+		}
+
+		data := strings.NewReader(dataJSON)
+		if err = json.NewDecoder(data).Decode(&response); err != nil {
+			return nil, fmt.Errorf("aws GetGroupByDisplayName: displayName: %s, error decoding response body: %w", displayName, err)
+		}
+	}
+
+	return &response, nil
+}
+
 // ListGroups returns a list of groups from the AWS SSO Using the API
 func (s *SCIMService) ListGroups(ctx context.Context, filter string) (*ListGroupsResponse, error) {
 	reqURL, err := url.Parse(s.url.String())
@@ -640,6 +698,84 @@ func (s *SCIMService) CreateGroup(ctx context.Context, g *CreateGroupRequest) (*
 		}
 
 		return nil, fmt.Errorf("aws CreateGroup: error decoding response body: %w, body: %s", err, string(b))
+	}
+
+	return &response, nil
+}
+
+// CreateOrGetGroup creates a new group in the AWS SSO Using the API
+// This function will try to create a new group but if received a 409 http error (ConflictException	User already exists.)
+// execute a request to get the group information and return it.
+//
+// NOTE: this function is created to avoid the existing problem with the limitation of the
+// AWS SCIM API about retrieve a maximum of 50 groups at a time.
+//
+// references:
+// + https://docs.aws.amazon.com/singlesignon/latest/developerguide/creategroup.html
+// + https://docs.aws.amazon.com/singlesignon/latest/developerguide/getgroup.html
+func (s *SCIMService) CreateOrGetGroup(ctx context.Context, g *CreateGroupRequest) (*CreateGroupResponse, error) {
+	if g == nil {
+		return nil, ErrCreateGroupRequestEmpty
+	}
+	if g.DisplayName == "" {
+		return nil, ErrDisplayNameEmpty
+	}
+
+	reqURL, err := url.Parse(s.url.String())
+	if err != nil {
+		return nil, fmt.Errorf("aws CreateOrGetGroup: error parsing url: %w", err)
+	}
+
+	reqURL.Path = path.Join(reqURL.Path, "/Groups")
+
+	req, err := s.newRequest(ctx, http.MethodPost, reqURL, *g)
+	if err != nil {
+		return nil, fmt.Errorf("aws CreateOrGetGroup: error creating request, group: %s, http method: %s, url: %v, error: %w", g.DisplayName, http.MethodPost, reqURL.String(), err)
+	}
+
+	resp, err := s.do(ctx, req)
+	if err != nil {
+		return nil, fmt.Errorf("aws CreateOrGetGroup: error sending request, group: %s, http method: %s, url: %v, error: %w", g.DisplayName, http.MethodPost, reqURL.String(), err)
+	}
+	defer resp.Body.Close()
+
+	if e := s.checkHTTPResponse(resp); e != nil {
+		httpErr := new(HTTPResponseError)
+
+		// http.StatusConflict is 409
+		if errors.As(e, &httpErr) && httpErr.StatusCode == http.StatusConflict {
+			log.WithFields(log.Fields{
+				"name": g.DisplayName,
+			}).Warn("aws CreateOrGetGroup: groups already exists, trying to get the group information")
+
+			response, err := s.GetGroupByDisplayName(ctx, g.DisplayName)
+			if err != nil {
+				return nil, fmt.Errorf("aws CreateOrGetGroup: error getting group information: %w", err)
+			}
+
+			log.WithFields(log.Fields{
+				"group": g.DisplayName,
+				"id":    response.ID,
+			}).Warn("aws CreateOrGetGroup: obtained group information")
+
+			return &CreateGroupResponse{
+				ID:          response.ID,
+				Meta:        response.Meta,
+				Schemas:     response.Schemas,
+				DisplayName: response.DisplayName,
+			}, nil
+		}
+		return nil, e
+	}
+
+	var response CreateGroupResponse
+	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
+		b, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return nil, fmt.Errorf("aws CreateOrGetGroup: group: %s, error reading response body: %w", g.DisplayName, err)
+		}
+
+		return nil, fmt.Errorf("aws CreateOrGetGroup: group: %s, error decoding response body: %w, body: %s", g.DisplayName, err, string(b))
 	}
 
 	return &response, nil
