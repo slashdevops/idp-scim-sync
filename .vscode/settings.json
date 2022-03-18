@@ -1,5 +1,6 @@
 {
   "cSpell.words": [
+    "amzn",
     "awsconf",
     "AWSS",
     "christiangda",
@@ -22,6 +23,7 @@
     "GOROOT",
     "gosec",
     "Gosec",
+    "grpr",
     "hashicorp",
     "idpid",
     "idpscimcli",
@@ -31,6 +33,7 @@
     "ipid",
     "liberapay",
     "logrus",
+    "mjack",
     "mydomain",
     "patreon",
     "repositoryname",
@@ -44,6 +47,7 @@
     "stscreds",
     "syslist",
     "Tracef",
+    "usrr",
     "vuln",
     "Warnf"
   ]

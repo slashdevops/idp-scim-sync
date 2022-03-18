@@ -22,6 +22,9 @@ type AWSSCIMProvider interface {
 	// CreateUser creates a user in SCIM Provider
 	CreateUser(ctx context.Context, u *aws.CreateUserRequest) (*aws.CreateUserResponse, error)
 
+	// CreateOrGetUser creates a user in SCIM Provider
+	CreateOrGetUser(ctx context.Context, u *aws.CreateUserRequest) (*aws.CreateUserResponse, error)
+
 	// PutUser updates a user in SCIM Provider
 	PutUser(ctx context.Context, usr *aws.PutUserRequest) (*aws.PutUserResponse, error)
 
@@ -39,6 +42,9 @@ type AWSSCIMProvider interface {
 
 	// CreateGroup creates a group in SCIM Provider
 	CreateGroup(ctx context.Context, g *aws.CreateGroupRequest) (*aws.CreateGroupResponse, error)
+
+	// CreateOrGetGroup creates a group in SCIM Provider
+	CreateOrGetGroup(ctx context.Context, g *aws.CreateGroupRequest) (*aws.CreateGroupResponse, error)
 
 	// DeleteGroup deletes a group in SCIM Provider
 	DeleteGroup(ctx context.Context, id string) error
@@ -112,7 +118,8 @@ func (s *Provider) CreateGroups(ctx context.Context, gr *model.GroupsResult) (*m
 			"group": group.Name,
 		}).Warn("creating group")
 
-		r, err := s.scim.CreateGroup(ctx, groupRequest)
+		// TODO: r, err := s.scim.CreateGroup(ctx, groupRequest)
+		r, err := s.scim.CreateOrGetGroup(ctx, groupRequest)
 		if err != nil {
 			return nil, fmt.Errorf("scim: error creating group: %w", err)
 		}
@@ -277,7 +284,8 @@ func (s *Provider) CreateUsers(ctx context.Context, ur *model.UsersResult) (*mod
 			"ipdid": user.IPID,
 		}).Trace("creating user")
 
-		r, err := s.scim.CreateUser(ctx, userRequest)
+		// TODO: r, err := s.scim.CreateUser(ctx, userRequest)
+		r, err := s.scim.CreateOrGetUser(ctx, userRequest)
 		if err != nil {
 			return nil, fmt.Errorf("scim: error creating user: %w", err)
 		}

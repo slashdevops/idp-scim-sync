@@ -1,0 +1,12 @@
+{
+  "schema": [
+    "urn:ietf:params:scim:api:messages:2.0:Error"
+  ],
+  "schemas": [
+    "urn:ietf:params:scim:api:messages:2.0:Error"
+  ],
+  "detail": "Refused to create a new, duplicate resource.",
+  "status": "409",
+  "exceptionRequestId": "81abca44-4ee3-47fa-b4d9-729908ef1dd9",
+  "timeStamp": "2022-03-18 10:57:08.014"
+}

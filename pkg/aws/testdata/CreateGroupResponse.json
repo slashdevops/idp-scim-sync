@@ -1,0 +1,12 @@
+{
+    "id": "9067729b3d-a2cfc8a5-f4ab-4443-9d7d-b32a9013c554",
+    "meta": {
+        "resourceType": "Group",
+        "created": "2020-04-06T16:48:19Z",
+        "lastModified": "2020-04-06T16:48:19Z"
+    },
+    "schemas": [
+        "urn:ietf:params:scim:schemas:core:2.0:Group"
+    ],
+    "displayName": "Group Bar"
+}
