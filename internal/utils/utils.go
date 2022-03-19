@@ -18,7 +18,7 @@ func ToJSON(stc interface{}) []byte {
 
 	JSON, err := json.MarshalIndent(stc, "", "  ")
 	if err != nil {
-		log.Fatalf(err.Error())
+		log.Panic(err.Error())
 	}
 	return JSON
 }
@@ -34,7 +34,7 @@ func ToYAML(stc interface{}) []byte {
 
 	YAML, err := yaml.Marshal(stc)
 	if err != nil {
-		log.Fatalf(err.Error())
+		log.Panic(err.Error())
 	}
 	return YAML
 }
