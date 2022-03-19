@@ -101,6 +101,7 @@ func NewSCIMService(httpClient HTTPClient, urlStr, token string) (*SCIMService, 
 	return &SCIMService{
 		httpClient:  httpClient,
 		url:         u,
+		UserAgent:   "", // TODO: set user agent
 		bearerToken: token,
 	}, nil
 }

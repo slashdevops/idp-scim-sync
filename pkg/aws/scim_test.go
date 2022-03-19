@@ -61,6 +61,100 @@ func TestNewSCIMService(t *testing.T) {
 	})
 }
 
+func TestNewRequest(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	endpoint := "https://testing.com"
+
+	t.Run("valid GET method should return valid request", func(t *testing.T) {
+		mockHTTPCLient := mocks.NewMockHTTPClient(mockCtrl)
+
+		service, err := NewSCIMService(mockHTTPCLient, endpoint, "MyToken")
+		assert.NoError(t, err)
+		assert.NotNil(t, service)
+
+		mockMethod := http.MethodGet
+
+		mockURL, err := url.Parse(endpoint)
+		assert.NoError(t, err)
+		assert.NotNil(t, mockURL)
+
+		got, err := service.newRequest(context.Background(), mockMethod, mockURL, nil)
+		assert.NoError(t, err)
+		assert.NotNil(t, got)
+
+		assert.Equal(t, mockMethod, got.Method)
+		assert.Equal(t, mockURL, got.URL)
+		assert.Equal(t, "application/json", got.Header.Get("Accept"))
+		assert.Nil(t, got.Body)
+	})
+
+	t.Run("valid POST method should return valid request", func(t *testing.T) {
+		mockHTTPCLient := mocks.NewMockHTTPClient(mockCtrl)
+
+		service, err := NewSCIMService(mockHTTPCLient, endpoint, "MyToken")
+		assert.NoError(t, err)
+		assert.NotNil(t, service)
+
+		mockMethod := http.MethodPost
+
+		mockURL, err := url.Parse(endpoint)
+		assert.NoError(t, err)
+		assert.NotNil(t, mockURL)
+
+		mockBody := io.NopCloser(strings.NewReader("Hello, test world!"))
+
+		got, err := service.newRequest(context.Background(), mockMethod, mockURL, mockBody)
+		assert.NoError(t, err)
+		assert.NotNil(t, got)
+
+		assert.Equal(t, mockMethod, got.Method)
+		assert.Equal(t, mockURL, got.URL)
+		assert.Equal(t, "application/json", got.Header.Get("Accept"))
+		assert.NotNil(t, got.Body)
+	})
+
+	t.Run("invalid method should return error", func(t *testing.T) {
+		mockHTTPCLient := mocks.NewMockHTTPClient(mockCtrl)
+
+		service, err := NewSCIMService(mockHTTPCLient, endpoint, "MyToken")
+		assert.NoError(t, err)
+		assert.NotNil(t, service)
+
+		mockMethod := "this is and invalid method"
+
+		mockURL, err := url.Parse(endpoint)
+		assert.NoError(t, err)
+		assert.NotNil(t, mockURL)
+
+		got, err := service.newRequest(context.Background(), mockMethod, mockURL, nil)
+		assert.Error(t, err)
+		assert.Nil(t, got)
+	})
+
+	t.Run("valid method should return error when body is wrong", func(t *testing.T) {
+		mockHTTPCLient := mocks.NewMockHTTPClient(mockCtrl)
+
+		service, err := NewSCIMService(mockHTTPCLient, endpoint, "MyToken")
+		assert.NoError(t, err)
+		assert.NotNil(t, service)
+
+		mockMethod := http.MethodPost
+
+		mockURL, err := url.Parse(endpoint)
+		assert.NoError(t, err)
+		assert.NotNil(t, mockURL)
+
+		mockBody := map[string]interface{}{
+			"this will fail when is serialize": make(chan int),
+		}
+
+		got, err := service.newRequest(context.Background(), mockMethod, mockURL, mockBody)
+		assert.Error(t, err)
+		assert.Nil(t, got)
+	})
+}
+
 func TestDo(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
@@ -71,16 +165,16 @@ func TestDo(t *testing.T) {
 
 		mockHTTPCLient.EXPECT().Do(gomock.Any()).Return(nil, errors.New("test error"))
 
-		got, err := NewSCIMService(mockHTTPCLient, endpoint, "MyToken")
+		service, err := NewSCIMService(mockHTTPCLient, endpoint, "MyToken")
 		assert.NoError(t, err)
-		assert.NotNil(t, got)
+		assert.NotNil(t, service)
 
 		req := httptest.NewRequest(http.MethodGet, endpoint, nil)
 
-		resp, err := got.do(context.Background(), req)
+		got, err := service.do(context.Background(), req)
 		assert.Error(t, err)
 
-		assert.Nil(t, resp)
+		assert.Nil(t, got)
 	})
 
 	t.Run("should return valid response", func(t *testing.T) {
