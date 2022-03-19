@@ -16,7 +16,7 @@ env:
 
 jobs:
   codeql:
-    name: CodeQL Analysis
+    name: golangci-lint Analysis
     runs-on: ubuntu-latest
     steps:
       - name: Set up Go 1.x
