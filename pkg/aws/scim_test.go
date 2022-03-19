@@ -110,6 +110,142 @@ func TestDo(t *testing.T) {
 	})
 }
 
+func TestCheckHTTPResponse(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	endpoint := "https://testing.com"
+
+	type httpCodes struct {
+		code    int
+		message string
+	}
+
+	validHTTPCodesList := []httpCodes{
+		{code: http.StatusOK, message: "200 OK"},
+		{code: http.StatusCreated, message: "201 Created"},
+		{code: http.StatusAccepted, message: "202 Accepted"},
+		{code: http.StatusNonAuthoritativeInfo, message: "203 Partial Information"},
+		{code: http.StatusNoContent, message: "204 No Response"},
+		{code: http.StatusResetContent, message: "205 Reset Content"},
+		{code: http.StatusPartialContent, message: "206 Partial Content"},
+		{code: http.StatusMultiStatus, message: "207 Multi Status"},
+		{code: http.StatusAlreadyReported, message: "208 Already Reported"},
+		{code: http.StatusIMUsed, message: "226 IM Used"},
+		{code: http.StatusMultipleChoices, message: "300 Multiple Choices"},
+		{code: http.StatusMovedPermanently, message: "301 Moved Permanently"},
+		{code: http.StatusFound, message: "302 Found"},
+		{code: http.StatusSeeOther, message: "303 See Other"},
+		{code: http.StatusNotModified, message: "304 Not Modified"},
+		{code: http.StatusUseProxy, message: "305 Use Proxy"},
+		{code: http.StatusTemporaryRedirect, message: "307 Temporary Redirect"},
+		{code: http.StatusPermanentRedirect, message: "308 Permanent Redirect"},
+	}
+
+	invalidHTTPCodesList := []httpCodes{
+		{code: http.StatusBadRequest, message: "400 Bad Request"},
+		{code: http.StatusUnauthorized, message: "401 Unauthorized"},
+		{code: http.StatusPaymentRequired, message: "402 Payment Required"},
+		{code: http.StatusForbidden, message: "403 Forbidden"},
+		{code: http.StatusNotFound, message: "404 Not Found"},
+		{code: http.StatusMethodNotAllowed, message: "405 Method Not Allowed"},
+		{code: http.StatusNotAcceptable, message: "406 Not Acceptable"},
+		{code: http.StatusProxyAuthRequired, message: "407 Proxy Authentication Required"},
+		{code: http.StatusRequestTimeout, message: "408 Request Timeout"},
+		{code: http.StatusConflict, message: "409 Conflict"},
+		{code: http.StatusGone, message: "410 Gone"},
+		{code: http.StatusLengthRequired, message: "411 Length Required"},
+		{code: http.StatusPreconditionFailed, message: "412 Precondition Failed"},
+		{code: http.StatusRequestEntityTooLarge, message: "413 Request Entity Too Large"},
+		{code: http.StatusRequestURITooLong, message: "414 Request URI Too Long"},
+		{code: http.StatusUnsupportedMediaType, message: "415 Unsupported Media Type"},
+		{code: http.StatusRequestedRangeNotSatisfiable, message: "416 Requested Range Not Satisfiable"},
+		{code: http.StatusExpectationFailed, message: "417 Expectation Failed"},
+		{code: http.StatusTeapot, message: "418 I'm a teapot"},
+		{code: http.StatusUnprocessableEntity, message: "422 Unprocessable Entity"},
+		{code: http.StatusLocked, message: "423 Locked"},
+		{code: http.StatusFailedDependency, message: "424 Failed Dependency"},
+		{code: http.StatusUpgradeRequired, message: "426 Upgrade Required"},
+		{code: http.StatusPreconditionRequired, message: "428 Precondition Required"},
+		{code: http.StatusTooManyRequests, message: "429 Too Many Requests"},
+		{code: http.StatusRequestHeaderFieldsTooLarge, message: "431 Request Header Fields Too Large"},
+		{code: http.StatusUnavailableForLegalReasons, message: "451 Unavailable For Legal Reasons"},
+		{code: http.StatusInternalServerError, message: "500 Internal Server Error"},
+		{code: http.StatusNotImplemented, message: "501 Not Implemented"},
+		{code: http.StatusBadGateway, message: "502 Bad Gateway"},
+		{code: http.StatusServiceUnavailable, message: "503 Service Unavailable"},
+		{code: http.StatusGatewayTimeout, message: "504 Gateway Timeout"},
+		{code: http.StatusHTTPVersionNotSupported, message: "505 HTTP Version Not Supported"},
+	}
+
+	t.Run("should return nil error when respond is 200", func(t *testing.T) {
+		mockHTTPCLient := mocks.NewMockHTTPClient(mockCtrl)
+
+		got, err := NewSCIMService(mockHTTPCLient, endpoint, "MyToken")
+		assert.NoError(t, err)
+		assert.NotNil(t, got)
+
+		mockBody := `{"Message": "Hello, test world!"}`
+
+		mockResp := &http.Response{
+			Status:        "200 OK",
+			StatusCode:    http.StatusOK,
+			Proto:         "HTTP/1.1",
+			Body:          io.NopCloser(strings.NewReader(mockBody)),
+			ContentLength: int64(len(mockBody)),
+		}
+
+		err = got.checkHTTPResponse(mockResp)
+		assert.NoError(t, err)
+	})
+
+	t.Run("should return nil error when respond code >= 200 and < 400", func(t *testing.T) {
+		mockHTTPCLient := mocks.NewMockHTTPClient(mockCtrl)
+
+		got, err := NewSCIMService(mockHTTPCLient, endpoint, "MyToken")
+		assert.NoError(t, err)
+		assert.NotNil(t, got)
+
+		for _, httpCode := range validHTTPCodesList {
+			mockResp := &http.Response{
+				Status:        httpCode.message,
+				StatusCode:    httpCode.code,
+				Proto:         "HTTP/1.1",
+				Body:          io.NopCloser(strings.NewReader(httpCode.message)),
+				ContentLength: int64(len(httpCode.message)),
+			}
+
+			err = got.checkHTTPResponse(mockResp)
+			assert.NoError(t, err)
+		}
+	})
+
+	t.Run("should return error when respond code < 200 and >= 400", func(t *testing.T) {
+		mockHTTPCLient := mocks.NewMockHTTPClient(mockCtrl)
+
+		got, err := NewSCIMService(mockHTTPCLient, endpoint, "MyToken")
+		assert.NoError(t, err)
+		assert.NotNil(t, got)
+
+		for _, httpCode := range invalidHTTPCodesList {
+			mockResp := &http.Response{
+				Status:        httpCode.message,
+				StatusCode:    httpCode.code,
+				Proto:         "HTTP/1.1",
+				Body:          io.NopCloser(strings.NewReader(httpCode.message)),
+				ContentLength: int64(len(httpCode.message)),
+			}
+
+			gotErr := got.checkHTTPResponse(mockResp)
+			assert.Error(t, gotErr)
+
+			httpErr := new(HTTPResponseError)
+			if errors.As(gotErr, &httpErr) {
+				assert.Equal(t, httpCode.code, httpErr.StatusCode)
+			}
+		}
+	})
+}
+
 func TestCreateUser(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
