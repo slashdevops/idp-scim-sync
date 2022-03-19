@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -76,22 +75,28 @@ func initConfig() {
 
 	home, err := os.UserHomeDir()
 	cobra.CheckErr(err)
+	viper.AddConfigPath(home)
 
 	currentDir, err := os.Getwd()
 	cobra.CheckErr(err)
-
-	viper.AddConfigPath(home)
 	viper.AddConfigPath(currentDir)
-	viper.SetConfigType("yaml")
+
+	fileDir := filepath.Dir(cfg.ConfigFile)
+	viper.AddConfigPath(fileDir)
 
 	// Search config in home directory with name "downloader" (without extension).
 	fileExtension := filepath.Ext(cfg.ConfigFile)
-	fileName := cfg.ConfigFile[0 : len(cfg.ConfigFile)-len(fileExtension)]
+	fileExtensionName := fileExtension[1:]
+	viper.SetConfigType(fileExtensionName)
+
+	fileNameExt := filepath.Base(cfg.ConfigFile)
+	fileName := fileNameExt[0 : len(fileNameExt)-len(fileExtension)]
 	viper.SetConfigName(fileName)
 
-	// If a config file is found, read it in.
+	log.Debugf("configuration file: dir: %s, name: %s, ext: %s", fileDir, fileName, fileExtension)
+
 	if err := viper.ReadInConfig(); err == nil {
-		fmt.Fprintln(os.Stderr, "using config file:", viper.ConfigFileUsed())
+		log.Infof("using config file: %s", viper.ConfigFileUsed())
 	}
 
 	if err := viper.Unmarshal(&cfg); err != nil {
