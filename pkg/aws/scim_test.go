@@ -18,6 +18,12 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+type mockErrReader int
+
+func (e mockErrReader) Read(b []byte) (n int, err error) {
+	return 0, errors.New("test error")
+}
+
 func ReadJSONFIleAsString(t *testing.T, fileName string) string {
 	bytes, err := ioutil.ReadFile(fileName)
 	assert.NoError(t, err)
@@ -61,6 +67,127 @@ func TestNewSCIMService(t *testing.T) {
 	})
 }
 
+func TestNewRequest(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	endpoint := "https://testing.com"
+
+	t.Run("valid GET method should return valid request", func(t *testing.T) {
+		mockHTTPCLient := mocks.NewMockHTTPClient(mockCtrl)
+
+		service, err := NewSCIMService(mockHTTPCLient, endpoint, "MyToken")
+		assert.NoError(t, err)
+		assert.NotNil(t, service)
+
+		mockMethod := http.MethodGet
+
+		mockURL, err := url.Parse(endpoint)
+		assert.NoError(t, err)
+		assert.NotNil(t, mockURL)
+
+		got, err := service.newRequest(context.Background(), mockMethod, mockURL, nil)
+		assert.NoError(t, err)
+		assert.NotNil(t, got)
+
+		assert.Equal(t, mockMethod, got.Method)
+		assert.Equal(t, mockURL, got.URL)
+		assert.Equal(t, "application/json", got.Header.Get("Accept"))
+		assert.Nil(t, got.Body)
+	})
+
+	t.Run("valid POST method should return valid request", func(t *testing.T) {
+		mockHTTPCLient := mocks.NewMockHTTPClient(mockCtrl)
+
+		service, err := NewSCIMService(mockHTTPCLient, endpoint, "MyToken")
+		assert.NoError(t, err)
+		assert.NotNil(t, service)
+
+		mockMethod := http.MethodPost
+
+		mockURL, err := url.Parse(endpoint)
+		assert.NoError(t, err)
+		assert.NotNil(t, mockURL)
+
+		mockBody := io.NopCloser(strings.NewReader("Hello, test world!"))
+
+		got, err := service.newRequest(context.Background(), mockMethod, mockURL, mockBody)
+		assert.NoError(t, err)
+		assert.NotNil(t, got)
+
+		assert.Equal(t, mockMethod, got.Method)
+		assert.Equal(t, mockURL, got.URL)
+		assert.Equal(t, "application/json", got.Header.Get("Accept"))
+		assert.NotNil(t, got.Body)
+	})
+
+	t.Run("invalid method should return error", func(t *testing.T) {
+		mockHTTPCLient := mocks.NewMockHTTPClient(mockCtrl)
+
+		service, err := NewSCIMService(mockHTTPCLient, endpoint, "MyToken")
+		assert.NoError(t, err)
+		assert.NotNil(t, service)
+
+		mockMethod := "this is and invalid method"
+
+		mockURL, err := url.Parse(endpoint)
+		assert.NoError(t, err)
+		assert.NotNil(t, mockURL)
+
+		got, err := service.newRequest(context.Background(), mockMethod, mockURL, nil)
+		assert.Error(t, err)
+		assert.Nil(t, got)
+	})
+
+	t.Run("valid method should return error when body is wrong", func(t *testing.T) {
+		mockHTTPCLient := mocks.NewMockHTTPClient(mockCtrl)
+
+		service, err := NewSCIMService(mockHTTPCLient, endpoint, "MyToken")
+		assert.NoError(t, err)
+		assert.NotNil(t, service)
+
+		mockMethod := http.MethodPost
+
+		mockURL, err := url.Parse(endpoint)
+		assert.NoError(t, err)
+		assert.NotNil(t, mockURL)
+
+		mockBody := map[string]interface{}{
+			"this will fail when is serialize": make(chan int),
+		}
+
+		got, err := service.newRequest(context.Background(), mockMethod, mockURL, mockBody)
+		assert.Error(t, err)
+		assert.Nil(t, got)
+	})
+
+	t.Run("valid POST method should return valid request and valid userAgent", func(t *testing.T) {
+		mockHTTPCLient := mocks.NewMockHTTPClient(mockCtrl)
+
+		service, err := NewSCIMService(mockHTTPCLient, endpoint, "MyToken")
+		assert.NoError(t, err)
+		assert.NotNil(t, service)
+
+		mockMethod := http.MethodPost
+		service.UserAgent = "MyUserAgent"
+
+		mockURL, err := url.Parse(endpoint)
+		assert.NoError(t, err)
+		assert.NotNil(t, mockURL)
+
+		mockBody := io.NopCloser(strings.NewReader("Hello, test world!"))
+
+		got, err := service.newRequest(context.Background(), mockMethod, mockURL, mockBody)
+		assert.NoError(t, err)
+		assert.NotNil(t, got)
+
+		assert.Equal(t, mockMethod, got.Method)
+		assert.Equal(t, mockURL, got.URL)
+		assert.Equal(t, "application/json", got.Header.Get("Accept"))
+		assert.Equal(t, "MyUserAgent", got.Header.Get("User-Agent"))
+		assert.NotNil(t, got.Body)
+	})
+}
+
 func TestDo(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
@@ -71,16 +198,16 @@ func TestDo(t *testing.T) {
 
 		mockHTTPCLient.EXPECT().Do(gomock.Any()).Return(nil, errors.New("test error"))
 
-		got, err := NewSCIMService(mockHTTPCLient, endpoint, "MyToken")
+		service, err := NewSCIMService(mockHTTPCLient, endpoint, "MyToken")
 		assert.NoError(t, err)
-		assert.NotNil(t, got)
+		assert.NotNil(t, service)
 
 		req := httptest.NewRequest(http.MethodGet, endpoint, nil)
 
-		resp, err := got.do(context.Background(), req)
+		got, err := service.do(context.Background(), req)
 		assert.Error(t, err)
 
-		assert.Nil(t, resp)
+		assert.Nil(t, got)
 	})
 
 	t.Run("should return valid response", func(t *testing.T) {
@@ -107,6 +234,161 @@ func TestDo(t *testing.T) {
 
 		assert.NotNil(t, got)
 		assert.Equal(t, mockResp, got)
+	})
+}
+
+func TestCheckHTTPResponse(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	endpoint := "https://testing.com"
+
+	type httpCodes struct {
+		code    int
+		message string
+	}
+
+	validHTTPCodesList := []httpCodes{
+		{code: http.StatusOK, message: "200 OK"},
+		{code: http.StatusCreated, message: "201 Created"},
+		{code: http.StatusAccepted, message: "202 Accepted"},
+		{code: http.StatusNonAuthoritativeInfo, message: "203 Partial Information"},
+		{code: http.StatusNoContent, message: "204 No Response"},
+		{code: http.StatusResetContent, message: "205 Reset Content"},
+		{code: http.StatusPartialContent, message: "206 Partial Content"},
+		{code: http.StatusMultiStatus, message: "207 Multi Status"},
+		{code: http.StatusAlreadyReported, message: "208 Already Reported"},
+		{code: http.StatusIMUsed, message: "226 IM Used"},
+		{code: http.StatusMultipleChoices, message: "300 Multiple Choices"},
+		{code: http.StatusMovedPermanently, message: "301 Moved Permanently"},
+		{code: http.StatusFound, message: "302 Found"},
+		{code: http.StatusSeeOther, message: "303 See Other"},
+		{code: http.StatusNotModified, message: "304 Not Modified"},
+		{code: http.StatusUseProxy, message: "305 Use Proxy"},
+		{code: http.StatusTemporaryRedirect, message: "307 Temporary Redirect"},
+		{code: http.StatusPermanentRedirect, message: "308 Permanent Redirect"},
+	}
+
+	invalidHTTPCodesList := []httpCodes{
+		{code: http.StatusBadRequest, message: "400 Bad Request"},
+		{code: http.StatusUnauthorized, message: "401 Unauthorized"},
+		{code: http.StatusPaymentRequired, message: "402 Payment Required"},
+		{code: http.StatusForbidden, message: "403 Forbidden"},
+		{code: http.StatusNotFound, message: "404 Not Found"},
+		{code: http.StatusMethodNotAllowed, message: "405 Method Not Allowed"},
+		{code: http.StatusNotAcceptable, message: "406 Not Acceptable"},
+		{code: http.StatusProxyAuthRequired, message: "407 Proxy Authentication Required"},
+		{code: http.StatusRequestTimeout, message: "408 Request Timeout"},
+		{code: http.StatusConflict, message: "409 Conflict"},
+		{code: http.StatusGone, message: "410 Gone"},
+		{code: http.StatusLengthRequired, message: "411 Length Required"},
+		{code: http.StatusPreconditionFailed, message: "412 Precondition Failed"},
+		{code: http.StatusRequestEntityTooLarge, message: "413 Request Entity Too Large"},
+		{code: http.StatusRequestURITooLong, message: "414 Request URI Too Long"},
+		{code: http.StatusUnsupportedMediaType, message: "415 Unsupported Media Type"},
+		{code: http.StatusRequestedRangeNotSatisfiable, message: "416 Requested Range Not Satisfiable"},
+		{code: http.StatusExpectationFailed, message: "417 Expectation Failed"},
+		{code: http.StatusTeapot, message: "418 I'm a teapot"},
+		{code: http.StatusUnprocessableEntity, message: "422 Unprocessable Entity"},
+		{code: http.StatusLocked, message: "423 Locked"},
+		{code: http.StatusFailedDependency, message: "424 Failed Dependency"},
+		{code: http.StatusUpgradeRequired, message: "426 Upgrade Required"},
+		{code: http.StatusPreconditionRequired, message: "428 Precondition Required"},
+		{code: http.StatusTooManyRequests, message: "429 Too Many Requests"},
+		{code: http.StatusRequestHeaderFieldsTooLarge, message: "431 Request Header Fields Too Large"},
+		{code: http.StatusUnavailableForLegalReasons, message: "451 Unavailable For Legal Reasons"},
+		{code: http.StatusInternalServerError, message: "500 Internal Server Error"},
+		{code: http.StatusNotImplemented, message: "501 Not Implemented"},
+		{code: http.StatusBadGateway, message: "502 Bad Gateway"},
+		{code: http.StatusServiceUnavailable, message: "503 Service Unavailable"},
+		{code: http.StatusGatewayTimeout, message: "504 Gateway Timeout"},
+		{code: http.StatusHTTPVersionNotSupported, message: "505 HTTP Version Not Supported"},
+	}
+
+	t.Run("should return nil error when respond is 200", func(t *testing.T) {
+		mockHTTPCLient := mocks.NewMockHTTPClient(mockCtrl)
+
+		got, err := NewSCIMService(mockHTTPCLient, endpoint, "MyToken")
+		assert.NoError(t, err)
+		assert.NotNil(t, got)
+
+		mockBody := `{"Message": "Hello, test world!"}`
+
+		mockResp := &http.Response{
+			Status:        "200 OK",
+			StatusCode:    http.StatusOK,
+			Proto:         "HTTP/1.1",
+			Body:          io.NopCloser(strings.NewReader(mockBody)),
+			ContentLength: int64(len(mockBody)),
+		}
+
+		err = got.checkHTTPResponse(mockResp)
+		assert.NoError(t, err)
+	})
+
+	t.Run("should return nil error when respond code >= 200 and < 400", func(t *testing.T) {
+		mockHTTPCLient := mocks.NewMockHTTPClient(mockCtrl)
+
+		got, err := NewSCIMService(mockHTTPCLient, endpoint, "MyToken")
+		assert.NoError(t, err)
+		assert.NotNil(t, got)
+
+		for _, httpCode := range validHTTPCodesList {
+			mockResp := &http.Response{
+				Status:        httpCode.message,
+				StatusCode:    httpCode.code,
+				Proto:         "HTTP/1.1",
+				Body:          io.NopCloser(strings.NewReader(httpCode.message)),
+				ContentLength: int64(len(httpCode.message)),
+			}
+
+			err = got.checkHTTPResponse(mockResp)
+			assert.NoError(t, err)
+		}
+	})
+
+	t.Run("should return error when respond code < 200 and >= 400", func(t *testing.T) {
+		mockHTTPCLient := mocks.NewMockHTTPClient(mockCtrl)
+
+		got, err := NewSCIMService(mockHTTPCLient, endpoint, "MyToken")
+		assert.NoError(t, err)
+		assert.NotNil(t, got)
+
+		for _, httpCode := range invalidHTTPCodesList {
+			mockResp := &http.Response{
+				Status:        httpCode.message,
+				StatusCode:    httpCode.code,
+				Proto:         "HTTP/1.1",
+				Body:          io.NopCloser(strings.NewReader(httpCode.message)),
+				ContentLength: int64(len(httpCode.message)),
+			}
+
+			gotErr := got.checkHTTPResponse(mockResp)
+			assert.Error(t, gotErr)
+
+			httpErr := new(HTTPResponseError)
+			if errors.As(gotErr, &httpErr) {
+				assert.Equal(t, httpCode.code, httpErr.StatusCode)
+			}
+		}
+	})
+
+	t.Run("should return error when response and body has error", func(t *testing.T) {
+		mockHTTPCLient := mocks.NewMockHTTPClient(mockCtrl)
+
+		got, err := NewSCIMService(mockHTTPCLient, endpoint, "MyToken")
+		assert.NoError(t, err)
+		assert.NotNil(t, got)
+
+		mockResp := &http.Response{
+			Status:        "400 Bad Request",
+			StatusCode:    http.StatusBadRequest,
+			Proto:         "HTTP/1.1",
+			Body:          io.NopCloser(mockErrReader(0)),
+			ContentLength: int64(0),
+		}
+
+		gotErr := got.checkHTTPResponse(mockResp)
+		assert.Error(t, gotErr)
 	})
 }
 
@@ -172,6 +454,184 @@ func TestCreateUser(t *testing.T) {
 		assert.Equal(t, "work", got.Emails[0].Type)
 		assert.Equal(t, true, got.Emails[0].Primary)
 		assert.Equal(t, true, got.Active)
+	})
+
+	t.Run("should return an error when usr is nil", func(t *testing.T) {
+		mockHTTPCLient := mocks.NewMockHTTPClient(mockCtrl)
+
+		service, err := NewSCIMService(mockHTTPCLient, endpoint, "MyToken")
+		assert.NoError(t, err)
+		assert.NotNil(t, service)
+
+		got, err := service.CreateUser(context.Background(), nil)
+		assert.Error(t, err)
+		assert.Nil(t, got)
+		assert.ErrorIs(t, err, ErrCreateUserRequestEmpty)
+	})
+
+	t.Run("should return an error when usr.UserName is empty", func(t *testing.T) {
+		mockHTTPCLient := mocks.NewMockHTTPClient(mockCtrl)
+
+		service, err := NewSCIMService(mockHTTPCLient, endpoint, "MyToken")
+		assert.NoError(t, err)
+		assert.NotNil(t, service)
+
+		usrr := &CreateUserRequest{
+			ID:         "1",
+			ExternalID: "1",
+			UserName:   "",
+			Name: Name{
+				FamilyName: "1",
+				GivenName:  "test",
+			},
+			DisplayName: "user 1",
+			Emails: []Email{
+				{
+					Value:   "user.1@mail.com",
+					Type:    "work",
+					Primary: true,
+				},
+			},
+			Active: true,
+		}
+
+		got, err := service.CreateUser(context.Background(), usrr)
+		assert.Error(t, err)
+		assert.Nil(t, got)
+		assert.ErrorIs(t, err, ErrUserNameEmpty)
+	})
+
+	t.Run("should return an error when usr.DisplayName is empty", func(t *testing.T) {
+		mockHTTPCLient := mocks.NewMockHTTPClient(mockCtrl)
+
+		service, err := NewSCIMService(mockHTTPCLient, endpoint, "MyToken")
+		assert.NoError(t, err)
+		assert.NotNil(t, service)
+
+		usrr := &CreateUserRequest{
+			ID:         "1",
+			ExternalID: "1",
+			UserName:   "user.1",
+			Name: Name{
+				FamilyName: "1",
+				GivenName:  "test",
+			},
+			DisplayName: "",
+			Emails: []Email{
+				{
+					Value:   "user.1@mail.com",
+					Type:    "work",
+					Primary: true,
+				},
+			},
+			Active: true,
+		}
+
+		got, err := service.CreateUser(context.Background(), usrr)
+		assert.Error(t, err)
+		assert.Nil(t, got)
+		assert.ErrorIs(t, err, ErrDisplayNameEmpty)
+	})
+
+	t.Run("should return an error when usr.GivenName is empty", func(t *testing.T) {
+		mockHTTPCLient := mocks.NewMockHTTPClient(mockCtrl)
+
+		service, err := NewSCIMService(mockHTTPCLient, endpoint, "MyToken")
+		assert.NoError(t, err)
+		assert.NotNil(t, service)
+
+		usrr := &CreateUserRequest{
+			ID:         "1",
+			ExternalID: "1",
+			UserName:   "user.1",
+			Name: Name{
+				FamilyName: "1",
+				GivenName:  "",
+			},
+			DisplayName: "user 1",
+			Emails: []Email{
+				{
+					Value:   "user.1@mail.com",
+					Type:    "work",
+					Primary: true,
+				},
+			},
+			Active: true,
+		}
+
+		got, err := service.CreateUser(context.Background(), usrr)
+		assert.Error(t, err)
+		assert.Nil(t, got)
+		assert.ErrorIs(t, err, ErrGivenNameEmpty)
+	})
+
+	t.Run("should return an error when usr.FamilyName is empty", func(t *testing.T) {
+		mockHTTPCLient := mocks.NewMockHTTPClient(mockCtrl)
+
+		service, err := NewSCIMService(mockHTTPCLient, endpoint, "MyToken")
+		assert.NoError(t, err)
+		assert.NotNil(t, service)
+
+		usrr := &CreateUserRequest{
+			ID:         "1",
+			ExternalID: "1",
+			UserName:   "user.1",
+			Name: Name{
+				FamilyName: "",
+				GivenName:  "user",
+			},
+			DisplayName: "user 1",
+			Emails: []Email{
+				{
+					Value:   "user.1@mail.com",
+					Type:    "work",
+					Primary: true,
+				},
+			},
+			Active: true,
+		}
+
+		got, err := service.CreateUser(context.Background(), usrr)
+		assert.Error(t, err)
+		assert.Nil(t, got)
+		assert.ErrorIs(t, err, ErrFamilyNameEmpty)
+	})
+
+	t.Run("should return an error when usr.Emails > 1", func(t *testing.T) {
+		mockHTTPCLient := mocks.NewMockHTTPClient(mockCtrl)
+
+		service, err := NewSCIMService(mockHTTPCLient, endpoint, "MyToken")
+		assert.NoError(t, err)
+		assert.NotNil(t, service)
+
+		usrr := &CreateUserRequest{
+			ID:         "1",
+			ExternalID: "1",
+			UserName:   "user.1",
+			Name: Name{
+				FamilyName: "1",
+				GivenName:  "user",
+			},
+			DisplayName: "user 1",
+			Emails: []Email{
+				{
+					Value:   "user.1@mail.com",
+					Type:    "work",
+					Primary: true,
+				},
+				{
+					Value:   "alias+user.1@mail.com",
+					Type:    "work",
+					Primary: false,
+				},
+			},
+			Active: true,
+		}
+
+		got, err := service.CreateUser(context.Background(), usrr)
+		assert.Error(t, err)
+		assert.Nil(t, got)
+		assert.ErrorIs(t, err, ErrEmailsTooMany)
 	})
 }
 
@@ -696,5 +1156,211 @@ func TestCreateOrGetGroup(t *testing.T) {
 
 		assert.Equal(t, "90677c608a-ef9cb2da-d480-422b-9901-451b1bf9e607", got.ID)
 		assert.Equal(t, "Group Foo", got.DisplayName)
+	})
+}
+
+func TestPutUser(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	endpoint := "https://testing.com"
+	PutUserResponseFile := "testdata/PutUserResponse.json"
+
+	t.Run("should return a valid response with a valid request", func(t *testing.T) {
+		mockHTTPCLient := mocks.NewMockHTTPClient(mockCtrl)
+		jsonResp := ReadJSONFIleAsString(t, PutUserResponseFile)
+
+		httpResp := &http.Response{
+			Status:     "201 OK",
+			StatusCode: http.StatusCreated,
+			Header: http.Header{
+				"Date":             []string{"Tue, 31 Mar 2020 02:36:15 GMT"},
+				"Content-Type":     []string{"application/json"},
+				"x-amzn-RequestId": []string{"abbf9e53-9ecc-46d2-8efe-104a66ff128f"},
+			},
+			Proto:         "HTTP/1.1",
+			Body:          io.NopCloser(strings.NewReader(jsonResp)),
+			ContentLength: int64(len(jsonResp)),
+		}
+
+		mockHTTPCLient.EXPECT().Do(gomock.Any()).Return(httpResp, nil)
+
+		service, err := NewSCIMService(mockHTTPCLient, endpoint, "MyToken")
+		assert.NoError(t, err)
+		assert.NotNil(t, service)
+
+		pusrr := &PutUserRequest{
+			ID:         "9067729b3d-94f1e0b3-c394-48d5-8ab1-2c122a167074",
+			ExternalID: "701984",
+			UserName:   "bjensen",
+			Name: Name{
+				FamilyName: "Jensen",
+				GivenName:  "Barbara",
+			},
+			DisplayName: "Babs Jensen",
+			Emails: []Email{
+				{
+					Value:   "bjensen@example.com",
+					Type:    "work",
+					Primary: true,
+				},
+			},
+			Active: true,
+		}
+
+		got, err := service.PutUser(context.Background(), pusrr)
+		assert.NoError(t, err)
+		assert.NotNil(t, got)
+
+		assert.Equal(t, "9067729b3d-94f1e0b3-c394-48d5-8ab1-2c122a167074", got.ID)
+		assert.Equal(t, "701984", got.ExternalID)
+		assert.Equal(t, "bjensen", got.UserName)
+		assert.Equal(t, "Babs Jensen", got.DisplayName)
+		assert.Equal(t, true, got.Active)
+	})
+
+	t.Run("should return an error when usr is nil", func(t *testing.T) {
+		mockHTTPCLient := mocks.NewMockHTTPClient(mockCtrl)
+
+		service, err := NewSCIMService(mockHTTPCLient, endpoint, "MyToken")
+		assert.NoError(t, err)
+		assert.NotNil(t, service)
+
+		got, err := service.PutUser(context.Background(), nil)
+		assert.Error(t, err)
+		assert.Nil(t, got)
+		assert.ErrorIs(t, err, ErrPutUserRequestEmpty)
+	})
+
+	t.Run("should return an error when usr.DisplayName is empty", func(t *testing.T) {
+		mockHTTPCLient := mocks.NewMockHTTPClient(mockCtrl)
+
+		service, err := NewSCIMService(mockHTTPCLient, endpoint, "MyToken")
+		assert.NoError(t, err)
+		assert.NotNil(t, service)
+
+		pusrr := &PutUserRequest{
+			ID:         "1",
+			ExternalID: "1",
+			UserName:   "user.1",
+			Name: Name{
+				FamilyName: "1",
+				GivenName:  "test",
+			},
+			DisplayName: "",
+			Emails: []Email{
+				{
+					Value:   "user.1@mail.com",
+					Type:    "work",
+					Primary: true,
+				},
+			},
+			Active: true,
+		}
+
+		got, err := service.PutUser(context.Background(), pusrr)
+		assert.Error(t, err)
+		assert.Nil(t, got)
+		assert.ErrorIs(t, err, ErrDisplayNameEmpty)
+	})
+
+	t.Run("should return an error when usr.GivenName is empty", func(t *testing.T) {
+		mockHTTPCLient := mocks.NewMockHTTPClient(mockCtrl)
+
+		service, err := NewSCIMService(mockHTTPCLient, endpoint, "MyToken")
+		assert.NoError(t, err)
+		assert.NotNil(t, service)
+
+		usrr := &PutUserRequest{
+			ID:         "1",
+			ExternalID: "1",
+			UserName:   "user.1",
+			Name: Name{
+				FamilyName: "1",
+				GivenName:  "",
+			},
+			DisplayName: "user 1",
+			Emails: []Email{
+				{
+					Value:   "user.1@mail.com",
+					Type:    "work",
+					Primary: true,
+				},
+			},
+			Active: true,
+		}
+
+		got, err := service.PutUser(context.Background(), usrr)
+		assert.Error(t, err)
+		assert.Nil(t, got)
+		assert.ErrorIs(t, err, ErrGivenNameEmpty)
+	})
+
+	t.Run("should return an error when usr.FamilyName is empty", func(t *testing.T) {
+		mockHTTPCLient := mocks.NewMockHTTPClient(mockCtrl)
+
+		service, err := NewSCIMService(mockHTTPCLient, endpoint, "MyToken")
+		assert.NoError(t, err)
+		assert.NotNil(t, service)
+
+		usrr := &PutUserRequest{
+			ID:         "1",
+			ExternalID: "1",
+			UserName:   "user.1",
+			Name: Name{
+				FamilyName: "",
+				GivenName:  "user",
+			},
+			DisplayName: "user 1",
+			Emails: []Email{
+				{
+					Value:   "user.1@mail.com",
+					Type:    "work",
+					Primary: true,
+				},
+			},
+			Active: true,
+		}
+
+		got, err := service.PutUser(context.Background(), usrr)
+		assert.Error(t, err)
+		assert.Nil(t, got)
+		assert.ErrorIs(t, err, ErrFamilyNameEmpty)
+	})
+
+	t.Run("should return an error when usr.Emails > 1", func(t *testing.T) {
+		mockHTTPCLient := mocks.NewMockHTTPClient(mockCtrl)
+
+		service, err := NewSCIMService(mockHTTPCLient, endpoint, "MyToken")
+		assert.NoError(t, err)
+		assert.NotNil(t, service)
+
+		usrr := &PutUserRequest{
+			ID:         "1",
+			ExternalID: "1",
+			UserName:   "user.1",
+			Name: Name{
+				FamilyName: "1",
+				GivenName:  "user",
+			},
+			DisplayName: "user 1",
+			Emails: []Email{
+				{
+					Value:   "user.1@mail.com",
+					Type:    "work",
+					Primary: true,
+				},
+				{
+					Value:   "alias+user.1@mail.com",
+					Type:    "work",
+					Primary: false,
+				},
+			},
+			Active: true,
+		}
+
+		got, err := service.PutUser(context.Background(), usrr)
+		assert.Error(t, err)
+		assert.Nil(t, got)
+		assert.ErrorIs(t, err, ErrEmailsTooMany)
 	})
 }

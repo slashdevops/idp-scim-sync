@@ -51,15 +51,15 @@ The documentation is a __WIP__ and you can contribute!
 
 Most of the limitations of this project are due to [AWS SSO SCIM API Limitations](https://docs.aws.amazon.com/singlesignon/latest/developerguide/what-is-scim.html).
 
-* Use less than 50 Groups -->  [AWS SSO SCIM API (ListGroups)](https://docs.aws.amazon.com/singlesignon/latest/developerguide/listgroups.html#Constraints) has a limit of 50 Groups per request.
+* Use less than 50 Groups -->  [AWS SSO SCIM API (ListGroups)](https://docs.aws.amazon.com/singlesignon/latest/developerguide/listgroups.html#Constraints) has a limit of 50 Groups per request.  I created these tickets in AWS Support site [AWS SSO SCIM API pagination for methods](https://repost.aws/questions/QUqqnVkIo_SYyF_SlX5LcUjg/aws-sso-scim-api-pagination-for-methods) and [AWS SSO SCIM API ListGroups members](https://repost.aws/questions/QURqsaKxH9SqWYsBJ9UDdAPg/aws-sso-scim-api-list-groups-members), `please considere supporting this ticket with your` 👍.
 * Too much Users and Groups could generate a `ThrottlingException` of the some [AWS SSO SCIM API methods](https://docs.aws.amazon.com/singlesignon/latest/developerguide/what-is-scim.html)
 
 NOTES:
 
 1. The use of the [The State file](docs/State-File-example.md) could mitigate the number `1`, but I recommend you be cautious of these limitations as well.
-2. The project implements a `well-known HTTP Retryable client` to mitigate the number `2`, but I recommend you be cautious of these limitations as well.
+2. The project implements a [well-known HTTP Retryable client](https://github.com/hashicorp/go-retryablehttp) to mitigate the number `2`, but I recommend you be cautious of these limitations as well.
 
-**Users that come from the project [SSO Sync](https://github.com/awslabs/ssosync)**
+### Users that coming from the project [SSO Sync](https://github.com/awslabs/ssosync)
 
 * This project only implement the `--sync-method` `groups`, so if you are using the `--sync-method` `users_groups` you can't use it, because this is going to delete and recreate your data in the AWS SSO side.
 * This project only implement the `filter` for the `Google Workspace Groups`, so if you are using the `filter` for the `Google Workspace Users`, you can't use it. Please see [Using SSO](docs/Using-SSO.md) for more information.

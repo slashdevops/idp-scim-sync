@@ -5,9 +5,9 @@ import (
 	"os"
 
 	"github.com/slashdevops/idp-scim-sync/internal/config"
-	"github.com/slashdevops/idp-scim-sync/internal/utils"
 	"github.com/slashdevops/idp-scim-sync/pkg/google"
 	"github.com/spf13/cobra"
+	admin "google.golang.org/api/admin/directory/v1"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -35,6 +35,22 @@ var (
 		Short:   "list Groups",
 		Long:    `This command is used to list the groups from Google Workspace Directory Servive`,
 		RunE:    execGWSGroupsList,
+	}
+
+	// groups members command
+	gwsGroupsMembersCmd = &cobra.Command{
+		Use:   "members",
+		Short: "Google Workspace Groups Members commands",
+		Long:  `available commands to validate Google Workspace Directory Groups Members API.`,
+	}
+
+	// groups list command
+	gwsGroupsMembersListCmd = &cobra.Command{
+		Use:     "list",
+		Aliases: []string{"ls"},
+		Short:   "list Members",
+		Long:    `This command is used to list the groups members from Google Workspace Directory Servive`,
+		RunE:    execGWSGroupsMembersList,
 	}
 
 	// users command
@@ -73,7 +89,15 @@ func init() {
 
 	// groups command
 	gwsGroupsCmd.AddCommand(gwsGroupsListCmd)
+	gwsGroupsCmd.AddCommand(gwsGroupsMembersCmd)
+	gwsGroupsMembersCmd.AddCommand(gwsGroupsMembersListCmd)
+
 	gwsGroupsListCmd.Flags().StringSliceVarP(
+		&cfg.GWSGroupsFilter, "gws-groups-filter", "q", []string{""},
+		"GWS Groups query parameter, example: --gws-groups-filter 'name:Admin* email:admin*' --gws-groups-filter 'name:Power* email:power*'",
+	)
+
+	gwsGroupsMembersListCmd.Flags().StringSliceVarP(
 		&cfg.GWSGroupsFilter, "gws-groups-filter", "q", []string{""},
 		"GWS Groups query parameter, example: --gws-groups-filter 'name:Admin* email:admin*' --gws-groups-filter 'name:Power* email:power*'",
 	)
@@ -124,14 +148,7 @@ func execGWSGroupsList(cmd *cobra.Command, args []string) error {
 	}
 	log.Infof("%d groups found", len(gGroups))
 
-	switch outFormat {
-	case "json":
-		log.Infof("%s", utils.ToJSON(gGroups))
-	case "yaml":
-		log.Infof("%s", utils.ToYAML(gGroups))
-	default:
-		log.Infof("%s", utils.ToJSON(gGroups))
-	}
+	show(outFormat, gGroups)
 
 	return nil
 }
@@ -149,14 +166,46 @@ func execGWSUsersList(cmd *cobra.Command, args []string) error {
 	}
 	log.Infof("%d users found", len(gUsers))
 
-	switch outFormat {
-	case "json":
-		log.Infof("%s", utils.ToJSON(gUsers))
-	case "yaml":
-		log.Infof("%s", utils.ToYAML(gUsers))
-	default:
-		log.Infof("%s", utils.ToJSON(gUsers))
+	show(outFormat, gUsers)
+
+	return nil
+}
+
+type gwsGroupMembers struct {
+	Group   *admin.Group
+	Members []*admin.Member
+}
+
+func execGWSGroupsMembersList(cmd *cobra.Command, args []string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), reqTimeout)
+	defer cancel()
+
+	gDirService := getGWSDirectoryService(ctx)
+
+	gGroups, err := gDirService.ListGroups(ctx, cfg.GWSGroupsFilter)
+	if err != nil {
+		log.Errorf("error listing groups: %s", err)
+		return err
 	}
+
+	log.Infof("%d groups found", len(gGroups))
+
+	gMembers := make([]gwsGroupMembers, 0)
+
+	for _, group := range gGroups {
+		members, err := gDirService.ListGroupMembers(ctx, group.Id)
+		if err != nil {
+			log.Errorf("error listing group members: %s", err)
+			return err
+		}
+		e := gwsGroupMembers{
+			Group:   group,
+			Members: members,
+		}
+		gMembers = append(gMembers, e)
+	}
+
+	show(outFormat, gMembers)
 
 	return nil
 }

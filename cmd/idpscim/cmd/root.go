@@ -281,6 +281,7 @@ func syncGroups() error {
 	if err != nil {
 		return errors.Wrap(err, "cannot create aws scim service")
 	}
+	awsSCIM.UserAgent = "idp-scim-sync/" + version.Version
 
 	scimService, err := scim.NewProvider(awsSCIM)
 	if err != nil {
