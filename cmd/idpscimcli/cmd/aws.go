@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	log "github.com/sirupsen/logrus"
-	"github.com/slashdevops/idp-scim-sync/internal/utils"
 	"github.com/slashdevops/idp-scim-sync/internal/version"
 	"github.com/slashdevops/idp-scim-sync/pkg/aws"
 	"github.com/spf13/cobra"
@@ -114,14 +113,7 @@ func runAWSServiceConfig(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	switch outFormat {
-	case "json":
-		log.Infof("%s", utils.ToJSON(awsServiceConfig))
-	case "yaml":
-		log.Infof("%s", utils.ToYAML(awsServiceConfig))
-	default:
-		log.Infof("%s", utils.ToJSON(awsServiceConfig))
-	}
+	show(outFormat, awsServiceConfig)
 
 	return nil
 }
@@ -154,14 +146,8 @@ func runAWSGroupsList(cmd *cobra.Command, args []string) error {
 	}
 	log.Infof("%d groups found", awsGroupsResponse.TotalResults)
 
-	switch outFormat {
-	case "json":
-		log.Infof("%s", utils.ToJSON(awsGroupsResponse))
-	case "yaml":
-		log.Infof("%s", utils.ToYAML(awsGroupsResponse))
-	default:
-		log.Infof("%s", utils.ToJSON(awsGroupsResponse))
-	}
+	show(outFormat, awsGroupsResponse)
+
 	return nil
 }
 
@@ -193,13 +179,7 @@ func runAWSUsersList(cmd *cobra.Command, args []string) error {
 	}
 	log.Infof("%d users found", awsUsersResponse.TotalResults)
 
-	switch outFormat {
-	case "json":
-		log.Infof("%s", utils.ToJSON(awsUsersResponse))
-	case "yaml":
-		log.Infof("%s", utils.ToYAML(awsUsersResponse))
-	default:
-		log.Infof("%s", utils.ToJSON(awsUsersResponse))
-	}
+	show(outFormat, awsUsersResponse)
+
 	return nil
 }

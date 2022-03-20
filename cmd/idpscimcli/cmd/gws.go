@@ -5,7 +5,6 @@ import (
 	"os"
 
 	"github.com/slashdevops/idp-scim-sync/internal/config"
-	"github.com/slashdevops/idp-scim-sync/internal/utils"
 	"github.com/slashdevops/idp-scim-sync/pkg/google"
 	"github.com/spf13/cobra"
 	admin "google.golang.org/api/admin/directory/v1"
@@ -149,14 +148,7 @@ func execGWSGroupsList(cmd *cobra.Command, args []string) error {
 	}
 	log.Infof("%d groups found", len(gGroups))
 
-	switch outFormat {
-	case "json":
-		log.Infof("%s", utils.ToJSON(gGroups))
-	case "yaml":
-		log.Infof("%s", utils.ToYAML(gGroups))
-	default:
-		log.Infof("%s", utils.ToJSON(gGroups))
-	}
+	show(outFormat, gGroups)
 
 	return nil
 }
@@ -174,14 +166,7 @@ func execGWSUsersList(cmd *cobra.Command, args []string) error {
 	}
 	log.Infof("%d users found", len(gUsers))
 
-	switch outFormat {
-	case "json":
-		log.Infof("%s", utils.ToJSON(gUsers))
-	case "yaml":
-		log.Infof("%s", utils.ToYAML(gUsers))
-	default:
-		log.Infof("%s", utils.ToJSON(gUsers))
-	}
+	show(outFormat, gUsers)
 
 	return nil
 }
@@ -210,14 +195,7 @@ func execGWSGroupsMembersList(cmd *cobra.Command, args []string) error {
 		gMembers = append(gMembers, members...)
 	}
 
-	switch outFormat {
-	case "json":
-		log.Infof("%s", utils.ToJSON(gMembers))
-	case "yaml":
-		log.Infof("%s", utils.ToYAML(gMembers))
-	default:
-		log.Infof("%s", utils.ToJSON(gMembers))
-	}
+	show(outFormat, gMembers)
 
 	return nil
 }
