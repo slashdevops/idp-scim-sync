@@ -6,6 +6,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"github.com/slashdevops/idp-scim-sync/internal/utils"
+	"github.com/slashdevops/idp-scim-sync/internal/version"
 	"github.com/slashdevops/idp-scim-sync/pkg/aws"
 	"github.com/spf13/cobra"
 )
@@ -105,6 +106,7 @@ func runAWSServiceConfig(cmd *cobra.Command, args []string) error {
 		log.Errorf("error creating SCIM service: %s", err.Error())
 		return err
 	}
+	awsSCIMService.UserAgent = "idp-scim-sync/" + version.Version
 
 	awsServiceConfig, err := awsSCIMService.ServiceProviderConfig(ctx)
 	if err != nil {
@@ -143,6 +145,7 @@ func runAWSGroupsList(cmd *cobra.Command, args []string) error {
 		log.Errorf("error creating SCIM service: %s", err.Error())
 		return err
 	}
+	awsSCIMService.UserAgent = "idp-scim-sync/" + version.Version
 
 	awsGroupsResponse, err := awsSCIMService.ListGroups(ctx, filter)
 	if err != nil {
@@ -181,6 +184,7 @@ func runAWSUsersList(cmd *cobra.Command, args []string) error {
 		log.Errorf("error creating SCIM service: %s", err.Error())
 		return err
 	}
+	awsSCIMService.UserAgent = "idp-scim-sync/" + version.Version
 
 	awsUsersResponse, err := awsSCIMService.ListUsers(ctx, filter)
 	if err != nil {

@@ -153,6 +153,33 @@ func TestNewRequest(t *testing.T) {
 		assert.Error(t, err)
 		assert.Nil(t, got)
 	})
+
+	t.Run("valid POST method should return valid request and valid userAgent", func(t *testing.T) {
+		mockHTTPCLient := mocks.NewMockHTTPClient(mockCtrl)
+
+		service, err := NewSCIMService(mockHTTPCLient, endpoint, "MyToken")
+		assert.NoError(t, err)
+		assert.NotNil(t, service)
+
+		mockMethod := http.MethodPost
+		service.UserAgent = "MyUserAgent"
+
+		mockURL, err := url.Parse(endpoint)
+		assert.NoError(t, err)
+		assert.NotNil(t, mockURL)
+
+		mockBody := io.NopCloser(strings.NewReader("Hello, test world!"))
+
+		got, err := service.newRequest(context.Background(), mockMethod, mockURL, mockBody)
+		assert.NoError(t, err)
+		assert.NotNil(t, got)
+
+		assert.Equal(t, mockMethod, got.Method)
+		assert.Equal(t, mockURL, got.URL)
+		assert.Equal(t, "application/json", got.Header.Get("Accept"))
+		assert.Equal(t, "MyUserAgent", got.Header.Get("User-Agent"))
+		assert.NotNil(t, got.Body)
+	})
 }
 
 func TestDo(t *testing.T) {
