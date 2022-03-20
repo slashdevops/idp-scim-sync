@@ -171,6 +171,11 @@ func execGWSUsersList(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
+type gwsGroupMembers struct {
+	Group   *admin.Group
+	Members []*admin.Member
+}
+
 func execGWSGroupsMembersList(cmd *cobra.Command, args []string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), reqTimeout)
 	defer cancel()
@@ -184,7 +189,8 @@ func execGWSGroupsMembersList(cmd *cobra.Command, args []string) error {
 	}
 
 	log.Infof("%d groups found", len(gGroups))
-	var gMembers []*admin.Member
+
+	var gMembers []gwsGroupMembers
 
 	for _, group := range gGroups {
 		members, err := gDirService.ListGroupMembers(ctx, group.Id)
@@ -192,7 +198,11 @@ func execGWSGroupsMembersList(cmd *cobra.Command, args []string) error {
 			log.Errorf("error listing group members: %s", err)
 			return err
 		}
-		gMembers = append(gMembers, members...)
+		e := gwsGroupMembers{
+			Group:   group,
+			Members: members,
+		}
+		gMembers = append(gMembers, e)
 	}
 
 	show(outFormat, gMembers)
