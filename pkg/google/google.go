@@ -8,6 +8,8 @@ import (
 	admin "google.golang.org/api/admin/directory/v1"
 	"google.golang.org/api/googleapi"
 	"google.golang.org/api/option"
+
+	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -161,7 +163,14 @@ func (ds *DirectoryService) ListGroupMembers(ctx context.Context, groupID string
 	}
 
 	err := mlc.Fields(membersRequiredFields).Pages(ctx, func(members *admin.Members) error {
-		m = append(m, members.Members...)
+		for _, member := range members.Members {
+			// Add only active members to list
+			if member.Status == "ACTIVE" {
+				m = append(m, member)
+			} else {
+				log.Warnf("google: not including %s to group %s members due to incorrect status %s (not ACTIVE)", member.Email, groupID, member.Status)
+			}
+		}
 		return nil
 	})
 

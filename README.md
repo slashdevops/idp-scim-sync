@@ -53,6 +53,7 @@ Most of the limitations of this project are due to [AWS SSO SCIM API Limitations
 
 * Use less than 50 Groups -->  [AWS SSO SCIM API (ListGroups)](https://docs.aws.amazon.com/singlesignon/latest/developerguide/listgroups.html#Constraints) has a limit of 50 Groups per request.  I created these tickets in AWS Support site [AWS SSO SCIM API pagination for methods](https://repost.aws/questions/QUqqnVkIo_SYyF_SlX5LcUjg/aws-sso-scim-api-pagination-for-methods) and [AWS SSO SCIM API ListGroups members](https://repost.aws/questions/QURqsaKxH9SqWYsBJ9UDdAPg/aws-sso-scim-api-list-groups-members), `please considere supporting this ticket with your` 👍.
 * Too much Users and Groups could generate a `ThrottlingException` of the some [AWS SSO SCIM API methods](https://docs.aws.amazon.com/singlesignon/latest/developerguide/what-is-scim.html)
+* Google Workspace API doesn't separate normal and guest users expect for status (guest miss status), so only `ACTIVE` users are collected to model as group members. Logically all users who are wanted (and capable of) to sign in are `ACTIVE`.
 
 NOTES:
 
