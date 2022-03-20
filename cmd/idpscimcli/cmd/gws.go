@@ -190,7 +190,7 @@ func execGWSGroupsMembersList(cmd *cobra.Command, args []string) error {
 
 	log.Infof("%d groups found", len(gGroups))
 
-	var gMembers []gwsGroupMembers
+	gMembers := make([]gwsGroupMembers, 0)
 
 	for _, group := range gGroups {
 		members, err := gDirService.ListGroupMembers(ctx, group.Id)
