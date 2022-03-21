@@ -168,6 +168,7 @@ type Member struct {
 	IPID     string `json:"ipid"`
 	SCIMID   string `json:"scimid"`
 	Email    string `json:"email"`
+	Status   string `json:"status"`
 	HashCode string `json:"hashCode"`
 }
 
