@@ -33,7 +33,7 @@ func TestNewProvider(t *testing.T) {
 	})
 }
 
-func TestSCIMProvider_GetGroups(t *testing.T) {
+func TestGetGroups(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
@@ -117,7 +117,7 @@ func TestSCIMProvider_GetGroups(t *testing.T) {
 	// TODO: test with a list of groups passing filter
 }
 
-func TestSCIMProvider_GetUsers(t *testing.T) {
+func TestGetUsers(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
@@ -206,7 +206,7 @@ func TestSCIMProvider_GetUsers(t *testing.T) {
 	})
 }
 
-func TestSCIMProvider_CreateGroups(t *testing.T) {
+func TestCreateGroups(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
@@ -343,7 +343,7 @@ func TestSCIMProvider_CreateGroups(t *testing.T) {
 	})
 }
 
-func TestSCIMProvider_CreateUsers(t *testing.T) {
+func TestCreateUsers(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
