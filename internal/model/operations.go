@@ -24,14 +24,14 @@ var (
 	ErrSCIMUsersNil = errors.New("scim users is nil")
 )
 
-// MembersOperations returns datasets used to perform differents operations over the SCIM side
+// MembersOperations returns datasets used to perform different operations over the SCIM side
 // return 4 objest of GroupsMembersResult
 // create: groups that exist in "idp" but not in "scim" or "state"
 // update: groups that exist in "idp" and in "scim" or "state" but attributes changed in idp
 // equal: groups that exist in both "idp" and "scim" or "state" and their attributes are equal
 // remove: groups that exist in "scim" or "state" but not in "idp"
 //
-// also this extract the id from scim to fill the resutls
+// also this extract the id from scim to fill the results
 func MembersOperations(idp, scim *GroupsMembersResult) (create, equal, remove *GroupsMembersResult, err error) {
 	if idp == nil {
 		create, equal, remove, err = nil, nil, nil, ErrIdentityProviderGroupsMembersNil
@@ -74,7 +74,7 @@ func MembersOperations(idp, scim *GroupsMembersResult) (create, equal, remove *G
 // equal: groups that exist in both "idp" and "scim" or "state" and their attributes are equal
 // remove: groups that exist in "scim" or "state" but not in "idp"
 //
-// also this extract the id from scim to fill the resutls
+// also this extract the id from scim to fill the results
 func GroupsOperations(idp, scim *GroupsResult) (create, update, equal, remove *GroupsResult, err error) {
 	if idp == nil {
 		create, update, equal, remove, err = nil, nil, nil, nil, ErrIdentityProviderGroupsNil
@@ -87,6 +87,7 @@ func GroupsOperations(idp, scim *GroupsResult) (create, update, equal, remove *G
 
 	idpGroups := make(map[string]struct{})
 	scimGroups := make(map[string]Group)
+
 	toCreate := make([]*Group, 0)
 	toUpdate := make([]*Group, 0)
 	toEqual := make([]*Group, 0)
@@ -149,7 +150,7 @@ func GroupsOperations(idp, scim *GroupsResult) (create, update, equal, remove *G
 	return
 }
 
-// UsersOperations returns datasets used to perform differents operations over the SCIM side
+// UsersOperations returns datasets used to perform different operations over the SCIM side
 // return 4 objest of UsersResult
 // create: users that exist in "idp" but not in "scim" or "state"
 // update: users that exist in "idp" and in "scim" or "state" but attributes changed in idp
