@@ -52,7 +52,7 @@ func TestNewS3Repository(t *testing.T) {
 	})
 }
 
-func TestS3Repository_GetState(t *testing.T) {
+func TestGetState(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
@@ -130,7 +130,7 @@ func TestS3Repository_GetState(t *testing.T) {
 	})
 }
 
-func TestS3Repository_SetState(t *testing.T) {
+func TestS3SetState(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
