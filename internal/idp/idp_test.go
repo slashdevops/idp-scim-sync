@@ -34,7 +34,7 @@ func TestNewGoogleIdentityProvider(t *testing.T) {
 	})
 }
 
-func TestGoogleProvider_GetGroups(t *testing.T) {
+func TestGetGroups(t *testing.T) {
 	g1 := &model.Group{IPID: "1", Name: "group 1", Email: "group1@mail.com"}
 	g1.SetHashCode()
 	g2 := &model.Group{IPID: "2", Name: "group 2", Email: "group2@mail.com"}
@@ -152,7 +152,7 @@ func TestGoogleProvider_GetGroups(t *testing.T) {
 	}
 }
 
-func TestGoogleProvider_GetUsers(t *testing.T) {
+func TestGetUsers(t *testing.T) {
 	u1 := &model.User{IPID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, DisplayName: "user 1", Active: true, Email: "user.1@mail.com"}
 	u1.SetHashCode()
 	u2 := &model.User{IPID: "2", Name: model.Name{GivenName: "user", FamilyName: "2"}, DisplayName: "user 2", Active: false, Email: "user.2@mail.com"}
@@ -251,7 +251,7 @@ func TestGoogleProvider_GetUsers(t *testing.T) {
 	}
 }
 
-func TestGoogleProvider_GetGroupMembers(t *testing.T) {
+func TestGetGroupMembers(t *testing.T) {
 	m1 := &model.Member{IPID: "1", Email: "user.1@mail.com"}
 	m1.SetHashCode()
 	m2 := &model.Member{IPID: "2", Email: "user.2@mail.com"}
@@ -341,7 +341,7 @@ func TestGoogleProvider_GetGroupMembers(t *testing.T) {
 	}
 }
 
-func TestGoogleProvider_GetUsersByGroupsMembers(t *testing.T) {
+func TestGetUsersByGroupsMembers(t *testing.T) {
 	type fields struct {
 		ds *mocks.MockGoogleProviderService
 	}
@@ -479,7 +479,7 @@ func TestGoogleProvider_GetUsersByGroupsMembers(t *testing.T) {
 	}
 }
 
-func TestGoogleProvider_GetGroupsMembers(t *testing.T) {
+func TestGetGroupsMembers(t *testing.T) {
 	m1 := model.Member{IPID: "1", Email: "user.1@mail.com"}
 	m1.SetHashCode()
 	m2 := model.Member{IPID: "2", Email: "user.2@mail.com"}
@@ -523,13 +523,13 @@ func TestGoogleProvider_GetGroupsMembers(t *testing.T) {
 		// 	prepare: func(f *fields) {
 		// 		ctx := context.Background()
 
-		// 		f.ds.EXPECT().ListGroupMembers(ctx, gomock.Eq("1")).Return(nil, errors.New("test error")).Times(1)
+		// 		f.ds.EXPECT().ListGroupMembers(ctx, "1", google.WithIncludeDerivedMembership(true)).Return(nil, errors.New("test error")).Times(1)
 		// 	},
 		// 	args: args{
 		// 		ctx: context.Background(),
 		// 		gr: &model.GroupsResult{
 		// 			Items: 1,
-		// 			Resources: []model.Group{
+		// 			Resources: []*model.Group{
 		// 				{IPID: "1"},
 		// 			},
 		// 		},
