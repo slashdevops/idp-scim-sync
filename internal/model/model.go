@@ -246,7 +246,7 @@ func (gm *GroupMembers) SetHashCode() {
 	}
 
 	// to order the members of the group we used the email of the members
-	// because this never coulb be empty and it is unique
+	// because this never could be empty and it is unique
 	sort.Slice(copyStruct.Resources, func(i, j int) bool {
 		return copyStruct.Resources[i].Email < copyStruct.Resources[j].Email
 	})
@@ -283,7 +283,7 @@ func (gmr *GroupsMembersResult) SetHashCode() {
 	}
 
 	// to order the members of the group we used the email of the members
-	// because this never coulb be empty and it is unique
+	// because this never could be empty and it is unique
 	sort.Slice(copyStruct.Resources, func(i, j int) bool {
 		return copyStruct.Resources[i].HashCode < copyStruct.Resources[j].HashCode
 	})
