@@ -295,7 +295,7 @@ func (s *SCIMService) CreateOrGetUser(ctx context.Context, usr *CreateUserReques
 				"id":         response.ID,
 				"externalId": response.ExternalID,
 				"active":     response.Active,
-			}).Warn("aws CreateOrGetUser: obtained user information")
+			}).Trace("aws CreateOrGetUser: obtained user information")
 
 			return &CreateUserResponse{
 				ID:          response.ID,
