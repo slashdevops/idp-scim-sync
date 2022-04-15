@@ -53,6 +53,9 @@ type AWSSCIMProvider interface {
 	PatchGroup(ctx context.Context, pgr *aws.PatchGroupRequest) error
 }
 
+// MaxPatchGroupMembersPerRequest is the Maximum members in group members in a single request.
+const MaxPatchGroupMembersPerRequest = 100
+
 // ErrSCIMProviderNil is returned when the SCIMProvider is nil
 var ErrSCIMProviderNil = fmt.Errorf("scim: Provider is nil")
 
@@ -464,25 +467,63 @@ func (s *Provider) CreateGroupsMembers(ctx context.Context, gmr *model.GroupsMem
 
 		groupsMembers = append(groupsMembers, e)
 
-		patchGroupRequest := &aws.PatchGroupRequest{
-			Group: aws.Group{
-				ID:          groupMembers.Group.SCIMID,
-				DisplayName: groupMembers.Group.Name,
-			},
-			Patch: aws.PatchGroup{
-				Schemas: []string{"urn:ietf:params:scim:api:messages:2.0:PatchOp"},
-				Operations: []aws.OperationGroup{
-					{
-						OP:    "add",
-						Path:  "members",
-						Value: membersIDValue,
+		patchOperations := []*aws.PatchGroupRequest{}
+		if len(membersIDValue) > MaxPatchGroupMembersPerRequest {
+			for i := 0; i < len(membersIDValue); i += MaxPatchGroupMembersPerRequest {
+				end := i + MaxPatchGroupMembersPerRequest
+				if end > len(membersIDValue) {
+					end = len(membersIDValue)
+				}
+
+				patchGroupRequest := &aws.PatchGroupRequest{
+					Group: aws.Group{
+						ID:          groupMembers.Group.SCIMID,
+						DisplayName: groupMembers.Group.Name,
+					},
+					Patch: aws.PatchGroup{
+						Schemas: []string{"urn:ietf:params:scim:api:messages:2.0:PatchOp"},
+						Operations: []aws.OperationGroup{
+							{
+								OP:    "add",
+								Path:  "members",
+								Value: membersIDValue[i:end],
+							},
+						},
+					},
+				}
+				patchOperations = append(patchOperations, patchGroupRequest)
+			}
+		} else {
+			patchGroupRequest := &aws.PatchGroupRequest{
+				Group: aws.Group{
+					ID:          groupMembers.Group.SCIMID,
+					DisplayName: groupMembers.Group.Name,
+				},
+				Patch: aws.PatchGroup{
+					Schemas: []string{"urn:ietf:params:scim:api:messages:2.0:PatchOp"},
+					Operations: []aws.OperationGroup{
+						{
+							OP:    "add",
+							Path:  "members",
+							Value: membersIDValue,
+						},
 					},
 				},
-			},
+			}
+			patchOperations = append(patchOperations, patchGroupRequest)
 		}
 
-		if err := s.scim.PatchGroup(ctx, patchGroupRequest); err != nil {
-			return nil, fmt.Errorf("scim: error patching group: %w", err)
+		if len(patchOperations) > 1 {
+			log.WithFields(log.Fields{
+				"group":    groupMembers.Group.Name,
+				"members":  len(membersIDValue),
+				"requests": len(patchOperations),
+			}).Warnf("group with more than %d members, sending multiple requests", MaxPatchGroupMembersPerRequest)
+		}
+		for _, patchGroupRequest := range patchOperations {
+			if err := s.scim.PatchGroup(ctx, patchGroupRequest); err != nil {
+				return nil, fmt.Errorf("scim: error patching group: %w", err)
+			}
 		}
 	}
 
@@ -523,25 +564,64 @@ func (s *Provider) DeleteGroupsMembers(ctx context.Context, gmr *model.GroupsMem
 			}).Warn("removing member from group")
 		}
 
-		patchGroupRequest := &aws.PatchGroupRequest{
-			Group: aws.Group{
-				ID:          groupMembers.Group.SCIMID,
-				DisplayName: groupMembers.Group.Name,
-			},
-			Patch: aws.PatchGroup{
-				Schemas: []string{"urn:ietf:params:scim:api:messages:2.0:PatchOp"},
-				Operations: []aws.OperationGroup{
-					{
-						OP:    "remove",
-						Path:  "members",
-						Value: membersIDValue,
+		patchOperations := []*aws.PatchGroupRequest{}
+		if len(membersIDValue) > MaxPatchGroupMembersPerRequest {
+			for i := 0; i < len(membersIDValue); i += MaxPatchGroupMembersPerRequest {
+				end := i + MaxPatchGroupMembersPerRequest
+				if end > len(membersIDValue) {
+					end = len(membersIDValue)
+				}
+
+				patchGroupRequest := &aws.PatchGroupRequest{
+					Group: aws.Group{
+						ID:          groupMembers.Group.SCIMID,
+						DisplayName: groupMembers.Group.Name,
+					},
+					Patch: aws.PatchGroup{
+						Schemas: []string{"urn:ietf:params:scim:api:messages:2.0:PatchOp"},
+						Operations: []aws.OperationGroup{
+							{
+								OP:    "remove",
+								Path:  "members",
+								Value: membersIDValue[i:end],
+							},
+						},
+					},
+				}
+
+				patchOperations = append(patchOperations, patchGroupRequest)
+			}
+		} else {
+			patchGroupRequest := &aws.PatchGroupRequest{
+				Group: aws.Group{
+					ID:          groupMembers.Group.SCIMID,
+					DisplayName: groupMembers.Group.Name,
+				},
+				Patch: aws.PatchGroup{
+					Schemas: []string{"urn:ietf:params:scim:api:messages:2.0:PatchOp"},
+					Operations: []aws.OperationGroup{
+						{
+							OP:    "remove",
+							Path:  "members",
+							Value: membersIDValue,
+						},
 					},
 				},
-			},
+			}
+			patchOperations = append(patchOperations, patchGroupRequest)
 		}
 
-		if err := s.scim.PatchGroup(ctx, patchGroupRequest); err != nil {
-			return fmt.Errorf("scim: error patching group: %w", err)
+		if len(patchOperations) > 1 {
+			log.WithFields(log.Fields{
+				"group":    groupMembers.Group.Name,
+				"members":  len(membersIDValue),
+				"requests": len(patchOperations),
+			}).Warnf("group with more than %d members, sending multiple requests", MaxPatchGroupMembersPerRequest)
+		}
+		for _, patchGroupRequest := range patchOperations {
+			if err := s.scim.PatchGroup(ctx, patchGroupRequest); err != nil {
+				return fmt.Errorf("scim: error patching group: %w", err)
+			}
 		}
 	}
 
