@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/slashdevops/idp-scim-sync/internal/model"
+	"github.com/slashdevops/idp-scim-sync/internal/utils"
 	"github.com/slashdevops/idp-scim-sync/pkg/aws"
 
 	log "github.com/sirupsen/logrus"
@@ -284,6 +285,11 @@ func (s *Provider) CreateUsers(ctx context.Context, ur *model.UsersResult) (*mod
 			"ipdid": user.IPID,
 		}).Trace("creating user")
 
+		log.WithFields(log.Fields{
+			"user":  user.DisplayName,
+			"email": user.Email,
+		}).Warn("creating user")
+
 		// TODO: r, err := s.scim.CreateUser(ctx, userRequest)
 		r, err := s.scim.CreateOrGetUser(ctx, userRequest)
 		if err != nil {
@@ -444,6 +450,7 @@ func (s *Provider) CreateGroupsMembers(ctx context.Context, gmr *model.GroupsMem
 				"idpid":  member.IPID,
 				"scimid": member.SCIMID,
 				"email":  member.Email,
+				"status": member.Status,
 			}).Trace("adding member to group (details)")
 
 			log.WithFields(log.Fields{
@@ -474,6 +481,8 @@ func (s *Provider) CreateGroupsMembers(ctx context.Context, gmr *model.GroupsMem
 				},
 			},
 		}
+
+		log.Warnf("patchGroupRequest: %s", utils.ToJSON(patchGroupRequest))
 
 		if err := s.scim.PatchGroup(ctx, patchGroupRequest); err != nil {
 			return nil, fmt.Errorf("scim: error patching group: %w", err)

@@ -162,7 +162,7 @@ func (s *SCIMService) checkHTTPResponse(resp *http.Response) error {
 		log.WithFields(log.Fields{
 			"statusCode": resp.StatusCode,
 			"status":     resp.Status,
-		}).Warnf("aws checkHTTPResponse: body: %s\n", string(body))
+		}).Tracef("aws checkHTTPResponse: body: %s\n", string(body))
 		return &HTTPResponseError{resp.StatusCode, resp.Status, string(body)}
 	}
 
@@ -345,9 +345,16 @@ func (s *SCIMService) DeleteUser(ctx context.Context, id string) error {
 	defer resp.Body.Close()
 
 	if e := s.checkHTTPResponse(resp); e != nil {
+		httpErr := new(HTTPResponseError)
+
+		// http.StatusNotFound is 404
+		if errors.As(e, &httpErr) && httpErr.StatusCode == http.StatusNotFound {
+			log.WithFields(log.Fields{
+				"user_id": id,
+			}).Warnf("aws DeleteUser: user not found, operation discarded")
+		}
 		return e
 	}
-
 	return nil
 }
 
