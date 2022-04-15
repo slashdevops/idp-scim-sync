@@ -167,7 +167,7 @@ func reconcilingGroupsMembers(ctx context.Context, scim SCIMService, create, rem
 	if remove.Items == 0 {
 		log.Info("no users to be removed from groups")
 	} else {
-		log.WithField("quantity", remove.Items).Warn("removing users to groups")
+		log.WithField("quantity", remove.Items).Warn("removing users from groups")
 		if err := scim.DeleteGroupsMembers(ctx, remove); err != nil {
 			return nil, fmt.Errorf("error removing users from groups in SCIM Provider: %w", err)
 		}
