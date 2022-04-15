@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/slashdevops/idp-scim-sync/internal/model"
-	"github.com/slashdevops/idp-scim-sync/internal/utils"
 	"github.com/slashdevops/idp-scim-sync/pkg/aws"
 
 	log "github.com/sirupsen/logrus"
@@ -481,8 +480,6 @@ func (s *Provider) CreateGroupsMembers(ctx context.Context, gmr *model.GroupsMem
 				},
 			},
 		}
-
-		log.Warnf("patchGroupRequest: %s", utils.ToJSON(patchGroupRequest))
 
 		if err := s.scim.PatchGroup(ctx, patchGroupRequest); err != nil {
 			return nil, fmt.Errorf("scim: error patching group: %w", err)
