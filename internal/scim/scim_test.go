@@ -13,6 +13,30 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func GroupMembersGenerator(numMembers int, scimID bool, idpID bool) []*model.Member {
+	members := make([]*model.Member, numMembers)
+
+	for i := 1; i <= numMembers; i++ {
+		var scim string
+		var idp string
+
+		if scimID {
+			scim = fmt.Sprintf("%d", i)
+		}
+		if idpID {
+			idp = fmt.Sprintf("%d", i)
+		}
+
+		members[i-1] = &model.Member{
+			IPID:   idp,
+			SCIMID: scim,
+			Email:  fmt.Sprintf("user.%d@mail.com", i),
+			Status: "enabled",
+		}
+	}
+	return members
+}
+
 func TestNewProvider(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
@@ -1303,6 +1327,55 @@ func TestCreateGroupsMembers(t *testing.T) {
 		assert.Error(t, err)
 		assert.Nil(t, got)
 	})
+
+	t.Run("Should call GetUserByUserName 1 time and PatchGroup 3 times and no return error", func(t *testing.T) {
+		mockSCIM := mocks.NewMockAWSSCIMProvider(mockCtrl)
+		numUsers := 207
+		members := GroupMembersGenerator(numUsers, false, true)
+
+		getUserByUserNameResp := &aws.GetUserResponse{
+			ID:         "1",
+			ExternalID: "1",
+			UserName:   "",
+			Name: aws.Name{
+				FamilyName: "1",
+				GivenName:  "user",
+			},
+			DisplayName: "user 1",
+			Emails: []aws.Email{
+				{
+					Value:   "user.1@mailcom",
+					Type:    "work",
+					Primary: true,
+				},
+			},
+		}
+		ctx := context.TODO()
+
+		mockSCIM.EXPECT().GetUserByUserName(ctx, gomock.Any()).Return(getUserByUserNameResp, nil).Times(numUsers)
+		mockSCIM.EXPECT().PatchGroup(ctx, gomock.Any()).Return(nil).Times(3)
+
+		gmr := &model.GroupsMembersResult{
+			Items: 1,
+			Resources: []*model.GroupMembers{
+				{
+					Items: len(members),
+					Group: model.Group{
+						IPID:   "1",
+						SCIMID: "1",
+						Name:   "group 1",
+						Email:  "group.1@mail.com",
+					},
+					Resources: members,
+				},
+			},
+		}
+
+		svc, _ := NewProvider(mockSCIM)
+		got, err := svc.CreateGroupsMembers(ctx, gmr)
+		assert.NoError(t, err)
+		assert.NotNil(t, got)
+	})
 }
 
 func TestDeleteGroupsMembers(t *testing.T) {
@@ -1318,7 +1391,7 @@ func TestDeleteGroupsMembers(t *testing.T) {
 		assert.NoError(t, err)
 	})
 
-	t.Run("Should call GetUserByUserName and PatchGroup 1 time and no return error", func(t *testing.T) {
+	t.Run("Should call PatchGroup 1 time and no return error", func(t *testing.T) {
 		mockSCIM := mocks.NewMockAWSSCIMProvider(mockCtrl)
 		userName := "user.1@mail.com"
 
@@ -1432,6 +1505,35 @@ func TestDeleteGroupsMembers(t *testing.T) {
 		svc, _ := NewProvider(mockSCIM)
 		err := svc.DeleteGroupsMembers(ctx, gmr)
 		assert.Error(t, err)
+	})
+	t.Run("Should call PatchGroup 2 times and no return error", func(t *testing.T) {
+		mockSCIM := mocks.NewMockAWSSCIMProvider(mockCtrl)
+		numUsers := 155
+		members := GroupMembersGenerator(numUsers, false, true)
+
+		ctx := context.TODO()
+
+		mockSCIM.EXPECT().PatchGroup(ctx, gomock.Any()).Return(nil).Times(2)
+
+		gmr := &model.GroupsMembersResult{
+			Items: 1,
+			Resources: []*model.GroupMembers{
+				{
+					Items: len(members),
+					Group: model.Group{
+						IPID:   "1",
+						SCIMID: "1",
+						Name:   "group 1",
+						Email:  "group.1@mail.com",
+					},
+					Resources: members,
+				},
+			},
+		}
+
+		svc, _ := NewProvider(mockSCIM)
+		err := svc.DeleteGroupsMembers(ctx, gmr)
+		assert.NoError(t, err)
 	})
 }
 
