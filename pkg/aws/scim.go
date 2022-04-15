@@ -162,7 +162,7 @@ func (s *SCIMService) checkHTTPResponse(resp *http.Response) error {
 		log.WithFields(log.Fields{
 			"statusCode": resp.StatusCode,
 			"status":     resp.Status,
-		}).Warnf("aws checkHTTPResponse: body: %s\n", string(body))
+		}).Tracef("aws checkHTTPResponse: body: %s\n", string(body))
 		return &HTTPResponseError{resp.StatusCode, resp.Status, string(body)}
 	}
 
