@@ -284,6 +284,11 @@ func (s *Provider) CreateUsers(ctx context.Context, ur *model.UsersResult) (*mod
 			"ipdid": user.IPID,
 		}).Trace("creating user")
 
+		log.WithFields(log.Fields{
+			"user":  user.DisplayName,
+			"email": user.Email,
+		}).Warn("creating user")
+
 		// TODO: r, err := s.scim.CreateUser(ctx, userRequest)
 		r, err := s.scim.CreateOrGetUser(ctx, userRequest)
 		if err != nil {
