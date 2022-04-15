@@ -58,7 +58,7 @@ Most of the limitations of this project are due to [AWS SSO SCIM API Limitations
 NOTES:
 
 1. The use of the [The State file](docs/State-File-example.md) could mitigate the number `1`, but I recommend you be cautious of these limitations as well.
-2. The project implements a [well-known HTTP Retryable client](https://github.com/hashicorp/go-retryablehttp) to mitigate the number `2`, but I recommend you be cautious of these limitations as well.
+2. The project implements a [well-known HTTP Retryable client (/go-retryablehttp)](https://github.com/hashicorp/go-retryablehttp) to mitigate the number `2`, but I recommend you be cautious of these limitations as well.
 
 ### Users that coming from the project [SSO Sync](https://github.com/awslabs/ssosync)
 
