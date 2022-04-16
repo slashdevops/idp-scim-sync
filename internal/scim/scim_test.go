@@ -13,7 +13,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func GroupMembersGenerator(numMembers int, scimID bool, idpID bool) []*model.Member {
+// groupMembersGenerator helper function to generate test data for GetGroupMembers
+func groupMembersGenerator(numMembers int, scimID bool, idpID bool) []*model.Member {
 	members := make([]*model.Member, numMembers)
 
 	for i := 1; i <= numMembers; i++ {
@@ -1327,7 +1328,7 @@ func TestCreateGroupsMembers(t *testing.T) {
 	t.Run("Should call GetUserByUserName 1 time and PatchGroup 3 times and no return error", func(t *testing.T) {
 		mockSCIM := mocks.NewMockAWSSCIMProvider(mockCtrl)
 		numUsers := 207
-		members := GroupMembersGenerator(numUsers, false, true)
+		members := groupMembersGenerator(numUsers, false, true)
 
 		getUserByUserNameResp := &aws.GetUserResponse{
 			ID:         "1",
@@ -1501,7 +1502,7 @@ func TestDeleteGroupsMembers(t *testing.T) {
 	t.Run("Should call PatchGroup 2 times and no return error", func(t *testing.T) {
 		mockSCIM := mocks.NewMockAWSSCIMProvider(mockCtrl)
 		numUsers := 155
-		members := GroupMembersGenerator(numUsers, false, true)
+		members := groupMembersGenerator(numUsers, false, true)
 
 		ctx := context.TODO()
 
