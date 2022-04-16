@@ -5,6 +5,8 @@ import (
 	"github.com/slashdevops/idp-scim-sync/pkg/aws"
 )
 
+// patchGroupOperations assembles the operations for patch groups
+// bases in the limits of operations we can execute in a single request.
 func patchGroupOperations(op, path string, pvs []patchValue, gms *model.GroupMembers) []*aws.PatchGroupRequest {
 	patchOperations := []*aws.PatchGroupRequest{}
 

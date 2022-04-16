@@ -63,7 +63,7 @@ func NewSyncService(prov IdentityProviderService, scim SCIMService, repo StateRe
 func (ss *SyncService) SyncGroupsAndTheirMembers(ctx context.Context) error {
 	log.WithFields(log.Fields{
 		"group_filter": ss.provGroupsFilter,
-	}).Info("getting Identity Provider data")
+	}).Info("getting identity provider data")
 
 	idpGroupsResult, err := ss.prov.GetGroups(ctx, ss.provGroupsFilter)
 	if err != nil {
@@ -81,7 +81,10 @@ func (ss *SyncService) SyncGroupsAndTheirMembers(ctx context.Context) error {
 	}
 
 	if idpUsersResult.Items == 0 {
-		log.Warn("there are no users in the identity provider")
+		log.WithFields(
+			log.Fields{
+				"group_filter": ss.provGroupsFilter,
+			}).Warn("there are no users in the identity provider")
 	}
 
 	if idpGroupsResult.Items == 0 {
@@ -92,7 +95,10 @@ func (ss *SyncService) SyncGroupsAndTheirMembers(ctx context.Context) error {
 	}
 
 	if idpGroupsMembersResult.Items == 0 {
-		log.Warn("there are no groups with members in the identity provider")
+		log.WithFields(
+			log.Fields{
+				"group_filter": ss.provGroupsFilter,
+			}).Warn("there are no groups with members in the identity provider")
 	}
 
 	log.Info("getting state data")
@@ -100,7 +106,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers(ctx context.Context) error {
 	if err != nil {
 		var nsk *types.NoSuchKey
 		if errors.As(err, &nsk) {
-			log.Warn("no state file found in the state repository, creating this")
+			log.Warn("no state file found in the state repository, creating a new one")
 			state = &model.State{}
 		} else {
 			return fmt.Errorf("error getting state data from the repository: %w", err)
@@ -115,25 +121,37 @@ func (ss *SyncService) SyncGroupsAndTheirMembers(ctx context.Context) error {
 
 	// first time syncing
 	if state.LastSync == "" {
-		// check SCIM side to see if there are elements to be
-		// reconciled. Basically, checks if SCIM is not clean before the first sync
+		// Check SCIM side to see if there are elements to be reconciled.
+		// Basically, checks if SCIM is not clean before the first sync
 		// and we need to reconcile the SCIM side with the identity provider side.
 		// In case of migration from a different tool and we want to keep the state
-		// of the users and groups in the SCIM side, just no recreation, keep the existing ones when the:n
+		// of the users and groups in the SCIM side, just no recreation, keep the existing ones when:
 		// - Groups names are equals on both sides, update only the external id (coming from the identity provider)
 		// - Users emails are equals on both sides, update only the external id (coming from the identity provider)
-		totalGroupsResult, totalUsersResult, totalGroupsMembersResult, err = scimSync(ctx, ss.scim, idpGroupsResult, idpUsersResult, idpGroupsMembersResult)
+		totalGroupsResult, totalUsersResult, totalGroupsMembersResult, err = scimSync(
+			ctx, ss.scim,
+			idpGroupsResult,
+			idpUsersResult,
+			idpGroupsMembersResult,
+		)
 		if err != nil {
 			return fmt.Errorf("error doing the first sync: %w", err)
 		}
 	} else {
-		totalGroupsResult, totalUsersResult, totalGroupsMembersResult, err = stateSync(ctx, state, ss.scim, idpGroupsResult, idpUsersResult, idpGroupsMembersResult)
+		totalGroupsResult, totalUsersResult, totalGroupsMembersResult, err = stateSync(
+			ctx,
+			state,
+			ss.scim,
+			idpGroupsResult,
+			idpUsersResult,
+			idpGroupsMembersResult,
+		)
 		if err != nil {
 			return fmt.Errorf("error syncing state: %w", err)
 		}
 	}
 
-	// after be sure all the SCIM side is aligned with the Identity Provider side
+	// after be sure all the SCIM side is aligned with the identity provider side
 	// we can update the state with the last data coming from the reconciliation
 	newState := &model.State{
 		Resources: model.StateResources{
@@ -142,7 +160,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers(ctx context.Context) error {
 			GroupsMembers: *totalGroupsMembersResult,
 		},
 	}
-
+	// update metadata information
 	newState.SetHashCode()
 	newState.SchemaVersion = model.StateSchemaVersion
 	newState.CodeVersion = version.Version
@@ -159,11 +177,14 @@ func (ss *SyncService) SyncGroupsAndTheirMembers(ctx context.Context) error {
 		return fmt.Errorf("error storing the state: %w", err)
 	}
 
-	log.Info("sync completed")
+	log.WithFields(log.Fields{
+		"date": time.Now().Format(time.RFC3339),
+	}).Info("sync completed")
 	return nil
 }
 
-// SyncGroupsAndUsers this method is used to sync the users groups and their members from the identity provider to the SCIM
+// SyncGroupsAndUsers this method is used to sync
+// the users groups and their members from the identity provider to the SCIM
 func (ss *SyncService) SyncGroupsAndUsers(ctx context.Context) error {
 	return errors.New("not implemented yet")
 }

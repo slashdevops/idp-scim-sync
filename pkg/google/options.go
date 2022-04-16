@@ -7,6 +7,8 @@ type getGroupMembersOptions struct {
 	roles                    string
 }
 
+// GetGroupMembersOption is a function that can be used to configure the Google provider
+// following the Option pattern.
 type GetGroupMembersOption func(*getGroupMembersOptions)
 
 // WithIncludeDerivedMembership is a GetGroupMembersOption that can be used to provide a filter for members by include derived membership.

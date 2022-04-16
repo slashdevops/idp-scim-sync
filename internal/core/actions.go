@@ -9,6 +9,8 @@ import (
 	"github.com/slashdevops/idp-scim-sync/internal/model"
 )
 
+// scimSync executes the sync of the data on the SCIM side and
+// returns the datasets synced
 func scimSync(
 	ctx context.Context,
 	scim SCIMService,
@@ -98,6 +100,8 @@ func scimSync(
 	return totalGroupsResult, totalUsersResult, totalGroupsMembersResult, nil
 }
 
+// stateSync executes the sync of the data on the state side and
+// returns the datasets synced
 func stateSync(
 	ctx context.Context,
 	state *model.State,

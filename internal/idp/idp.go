@@ -11,6 +11,8 @@ import (
 	admin "google.golang.org/api/admin/directory/v1"
 )
 
+// This implement core.IdentityProviderService interface
+
 var (
 	// ErrDirectoryServiceNil is returned when the GoogleProviderService is nil.
 	ErrDirectoryServiceNil = errors.New("provider: directory service is nil")
