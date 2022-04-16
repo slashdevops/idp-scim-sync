@@ -1136,9 +1136,7 @@ func TestCreateGroupsMembers(t *testing.T) {
 		mockSCIM := mocks.NewMockAWSSCIMProvider(mockCtrl)
 		userName := "user.1@mail.com"
 
-		membersIDValue := []struct {
-			Value string `json:"value"`
-		}{
+		membersIDValue := []patchValue{
 			{Value: "1"},
 		}
 
@@ -1256,9 +1254,7 @@ func TestCreateGroupsMembers(t *testing.T) {
 		mockSCIM := mocks.NewMockAWSSCIMProvider(mockCtrl)
 		userName := "user.1@mail.com"
 
-		membersIDValue := []struct {
-			Value string `json:"value"`
-		}{
+		membersIDValue := []patchValue{
 			{Value: "1"},
 		}
 
@@ -1395,9 +1391,7 @@ func TestDeleteGroupsMembers(t *testing.T) {
 		mockSCIM := mocks.NewMockAWSSCIMProvider(mockCtrl)
 		userName := "user.1@mail.com"
 
-		membersIDValue := []struct {
-			Value string `json:"value"`
-		}{
+		membersIDValue := []patchValue{
 			{Value: "1"},
 		}
 
@@ -1453,9 +1447,7 @@ func TestDeleteGroupsMembers(t *testing.T) {
 		mockSCIM := mocks.NewMockAWSSCIMProvider(mockCtrl)
 		userName := "user.1@mail.com"
 
-		membersIDValue := []struct {
-			Value string `json:"value"`
-		}{
+		membersIDValue := []patchValue{
 			{Value: "1"},
 		}
 

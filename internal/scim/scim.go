@@ -412,17 +412,17 @@ func (s *Provider) DeleteUsers(ctx context.Context, ur *model.UsersResult) error
 	return nil
 }
 
+type patchValue struct {
+	Value string `json:"value"`
+}
+
 // CreateGroupsMembers creates groups members in SCIM Provider given a list of groups members
 func (s *Provider) CreateGroupsMembers(ctx context.Context, gmr *model.GroupsMembersResult) (*model.GroupsMembersResult, error) {
 	groupsMembers := make([]*model.GroupMembers, 0)
 
 	for _, groupMembers := range gmr.Resources {
 		members := make([]*model.Member, 0)
-
-		// https://talks.golang.org/2012/10things.slide#2
-		membersIDValue := []struct {
-			Value string `json:"value"`
-		}{}
+		membersIDValue := []patchValue{}
 
 		for _, member := range groupMembers.Resources {
 			if member.SCIMID == "" {
@@ -433,9 +433,7 @@ func (s *Provider) CreateGroupsMembers(ctx context.Context, gmr *model.GroupsMem
 				member.SCIMID = u.ID
 			}
 
-			membersIDValue = append(membersIDValue, struct {
-				Value string `json:"value"`
-			}{
+			membersIDValue = append(membersIDValue, patchValue{
 				Value: member.SCIMID,
 			})
 
@@ -467,51 +465,7 @@ func (s *Provider) CreateGroupsMembers(ctx context.Context, gmr *model.GroupsMem
 
 		groupsMembers = append(groupsMembers, e)
 
-		patchOperations := []*aws.PatchGroupRequest{}
-		if len(membersIDValue) > MaxPatchGroupMembersPerRequest {
-			for i := 0; i < len(membersIDValue); i += MaxPatchGroupMembersPerRequest {
-				end := i + MaxPatchGroupMembersPerRequest
-				if end > len(membersIDValue) {
-					end = len(membersIDValue)
-				}
-
-				patchGroupRequest := &aws.PatchGroupRequest{
-					Group: aws.Group{
-						ID:          groupMembers.Group.SCIMID,
-						DisplayName: groupMembers.Group.Name,
-					},
-					Patch: aws.PatchGroup{
-						Schemas: []string{"urn:ietf:params:scim:api:messages:2.0:PatchOp"},
-						Operations: []aws.OperationGroup{
-							{
-								OP:    "add",
-								Path:  "members",
-								Value: membersIDValue[i:end],
-							},
-						},
-					},
-				}
-				patchOperations = append(patchOperations, patchGroupRequest)
-			}
-		} else {
-			patchGroupRequest := &aws.PatchGroupRequest{
-				Group: aws.Group{
-					ID:          groupMembers.Group.SCIMID,
-					DisplayName: groupMembers.Group.Name,
-				},
-				Patch: aws.PatchGroup{
-					Schemas: []string{"urn:ietf:params:scim:api:messages:2.0:PatchOp"},
-					Operations: []aws.OperationGroup{
-						{
-							OP:    "add",
-							Path:  "members",
-							Value: membersIDValue,
-						},
-					},
-				},
-			}
-			patchOperations = append(patchOperations, patchGroupRequest)
-		}
+		patchOperations := patchGroupOperations("add", "members", membersIDValue, groupMembers)
 
 		if len(patchOperations) > 1 {
 			log.WithFields(log.Fields{
@@ -520,6 +474,7 @@ func (s *Provider) CreateGroupsMembers(ctx context.Context, gmr *model.GroupsMem
 				"requests": len(patchOperations),
 			}).Warnf("group with more than %d members, sending multiple requests", MaxPatchGroupMembersPerRequest)
 		}
+
 		for _, patchGroupRequest := range patchOperations {
 			if err := s.scim.PatchGroup(ctx, patchGroupRequest); err != nil {
 				return nil, fmt.Errorf("scim: error patching group: %w", err)
@@ -539,15 +494,10 @@ func (s *Provider) CreateGroupsMembers(ctx context.Context, gmr *model.GroupsMem
 // DeleteGroupsMembers deletes groups members in SCIM Provider given a list of groups members
 func (s *Provider) DeleteGroupsMembers(ctx context.Context, gmr *model.GroupsMembersResult) error {
 	for _, groupMembers := range gmr.Resources {
-		// https://talks.golang.org/2012/10things.slide#2
-		membersIDValue := []struct {
-			Value string `json:"value"`
-		}{}
+		membersIDValue := []patchValue{}
 
 		for _, member := range groupMembers.Resources {
-			membersIDValue = append(membersIDValue, struct {
-				Value string `json:"value"`
-			}{
+			membersIDValue = append(membersIDValue, patchValue{
 				Value: member.SCIMID,
 			})
 
@@ -564,52 +514,7 @@ func (s *Provider) DeleteGroupsMembers(ctx context.Context, gmr *model.GroupsMem
 			}).Warn("removing member from group")
 		}
 
-		patchOperations := []*aws.PatchGroupRequest{}
-		if len(membersIDValue) > MaxPatchGroupMembersPerRequest {
-			for i := 0; i < len(membersIDValue); i += MaxPatchGroupMembersPerRequest {
-				end := i + MaxPatchGroupMembersPerRequest
-				if end > len(membersIDValue) {
-					end = len(membersIDValue)
-				}
-
-				patchGroupRequest := &aws.PatchGroupRequest{
-					Group: aws.Group{
-						ID:          groupMembers.Group.SCIMID,
-						DisplayName: groupMembers.Group.Name,
-					},
-					Patch: aws.PatchGroup{
-						Schemas: []string{"urn:ietf:params:scim:api:messages:2.0:PatchOp"},
-						Operations: []aws.OperationGroup{
-							{
-								OP:    "remove",
-								Path:  "members",
-								Value: membersIDValue[i:end],
-							},
-						},
-					},
-				}
-
-				patchOperations = append(patchOperations, patchGroupRequest)
-			}
-		} else {
-			patchGroupRequest := &aws.PatchGroupRequest{
-				Group: aws.Group{
-					ID:          groupMembers.Group.SCIMID,
-					DisplayName: groupMembers.Group.Name,
-				},
-				Patch: aws.PatchGroup{
-					Schemas: []string{"urn:ietf:params:scim:api:messages:2.0:PatchOp"},
-					Operations: []aws.OperationGroup{
-						{
-							OP:    "remove",
-							Path:  "members",
-							Value: membersIDValue,
-						},
-					},
-				},
-			}
-			patchOperations = append(patchOperations, patchGroupRequest)
-		}
+		patchOperations := patchGroupOperations("remove", "members", membersIDValue, groupMembers)
 
 		if len(patchOperations) > 1 {
 			log.WithFields(log.Fields{
@@ -618,6 +523,7 @@ func (s *Provider) DeleteGroupsMembers(ctx context.Context, gmr *model.GroupsMem
 				"requests": len(patchOperations),
 			}).Warnf("group with more than %d members, sending multiple requests", MaxPatchGroupMembersPerRequest)
 		}
+
 		for _, patchGroupRequest := range patchOperations {
 			if err := s.scim.PatchGroup(ctx, patchGroupRequest); err != nil {
 				return fmt.Errorf("scim: error patching group: %w", err)
