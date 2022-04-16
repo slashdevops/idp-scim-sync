@@ -34,15 +34,6 @@ jobs:
       - name: Show project files before make
         run: tree .
 
-      - name: Test
-        run: make test
-
-      - name: Build code
-        run: make
-
-      - name: Show project files after make
-        run: tree .
-
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v2
         with:
@@ -50,8 +41,10 @@ jobs:
           config-file: ./.github/codeql/codeql-config.yml
 
       - name: Build code
-        run: |
-          make
+        run: make
+
+      - name: Show project files after make
+        run: tree .
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v2
