@@ -44,10 +44,14 @@ jobs:
         run: tree .
 
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v1
+        uses: github/codeql-action/init@v2
         with:
           languages: go
           config-file: ./.github/codeql/codeql-config.yml
 
+      - name: Build code
+        run: |
+          make
+
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v1
+        uses: github/codeql-action/analyze@v2
