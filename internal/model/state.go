@@ -43,7 +43,7 @@ func (s *State) MarshalJSON() ([]byte, error) {
 // only fields coming from the Identity Provider are used.
 func (s *State) SetHashCode() {
 	// we need to do a deep copy of the state struct to avoid SCIMID in the hash calculation
-	// because every time the idp data iscompared with the state data, the SCIMID doesn't compute in the hash
+	// because every time the idp data is compared with the state data, the SCIMID doesn't compute in the hash
 
 	groups := make([]*Group, 0)
 	for _, group := range s.Resources.Groups.Resources {
