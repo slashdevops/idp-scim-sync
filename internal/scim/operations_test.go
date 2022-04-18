@@ -57,9 +57,9 @@ func Test_patchGroupOperations(t *testing.T) {
 						ID:          "016722b2be-ee23ed58-6e4e-4b2f-a94a-3ace8456a36d",
 						DisplayName: "group 1",
 					},
-					Patch: aws.PatchGroup{
+					Patch: aws.Patch{
 						Schemas: []string{"urn:ietf:params:scim:api:messages:2.0:PatchOp"},
-						Operations: []aws.OperationGroup{
+						Operations: []*aws.Operation{
 							{
 								OP:   "add",
 								Path: "members",
@@ -93,9 +93,9 @@ func Test_patchGroupOperations(t *testing.T) {
 						ID:          "016722b2be-ee23ed58-6e4e-4b2f-a94a-3ace8456a36e",
 						DisplayName: "group 1",
 					},
-					Patch: aws.PatchGroup{
+					Patch: aws.Patch{
 						Schemas: []string{"urn:ietf:params:scim:api:messages:2.0:PatchOp"},
-						Operations: []aws.OperationGroup{
+						Operations: []*aws.Operation{
 							{
 								OP:    "add",
 								Path:  "members",
@@ -109,9 +109,9 @@ func Test_patchGroupOperations(t *testing.T) {
 						ID:          "016722b2be-ee23ed58-6e4e-4b2f-a94a-3ace8456a36e",
 						DisplayName: "group 1",
 					},
-					Patch: aws.PatchGroup{
+					Patch: aws.Patch{
 						Schemas: []string{"urn:ietf:params:scim:api:messages:2.0:PatchOp"},
-						Operations: []aws.OperationGroup{
+						Operations: []*aws.Operation{
 							{
 								OP:    "add",
 								Path:  "members",

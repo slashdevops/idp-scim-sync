@@ -152,9 +152,9 @@ func (s *Provider) UpdateGroups(ctx context.Context, gr *model.GroupsResult) (*m
 				ID:          group.SCIMID,
 				DisplayName: group.Name,
 			},
-			Patch: aws.PatchGroup{
+			Patch: aws.Patch{
 				Schemas: []string{"urn:ietf:params:scim:api:messages:2.0:PatchOp"},
-				Operations: []aws.OperationGroup{
+				Operations: []*aws.Operation{
 					{
 						OP: "replace",
 						Value: map[string]string{
@@ -272,7 +272,7 @@ func (s *Provider) CreateUsers(ctx context.Context, ur *model.UsersResult) (*mod
 				FamilyName: user.Name.FamilyName,
 				GivenName:  user.Name.GivenName,
 			},
-			Emails: []aws.Email{
+			Emails: []*aws.Email{
 				{
 					Value: user.Email,
 					Type:  "work",
@@ -338,7 +338,7 @@ func (s *Provider) UpdateUsers(ctx context.Context, ur *model.UsersResult) (*mod
 				FamilyName: user.Name.FamilyName,
 				GivenName:  user.Name.GivenName,
 			},
-			Emails: []aws.Email{
+			Emails: []*aws.Email{
 				{
 					Value:   user.Email,
 					Type:    "work",
@@ -358,7 +358,7 @@ func (s *Provider) UpdateUsers(ctx context.Context, ur *model.UsersResult) (*mod
 		log.WithFields(log.Fields{
 			"user":  user.DisplayName,
 			"email": user.Email,
-		}).Debug("updating user")
+		}).Warn("updating user")
 
 		r, err := s.scim.PutUser(ctx, userRequest)
 		if err != nil {

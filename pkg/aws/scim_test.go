@@ -430,7 +430,7 @@ func TestCreateUser(t *testing.T) {
 				GivenName:  "test",
 			},
 			DisplayName: "user 1",
-			Emails: []Email{
+			Emails: []*Email{
 				{
 					Value:   "user.1@mail.com",
 					Type:    "work",
@@ -485,7 +485,7 @@ func TestCreateUser(t *testing.T) {
 				GivenName:  "test",
 			},
 			DisplayName: "user 1",
-			Emails: []Email{
+			Emails: []*Email{
 				{
 					Value:   "user.1@mail.com",
 					Type:    "work",
@@ -517,7 +517,7 @@ func TestCreateUser(t *testing.T) {
 				GivenName:  "test",
 			},
 			DisplayName: "",
-			Emails: []Email{
+			Emails: []*Email{
 				{
 					Value:   "user.1@mail.com",
 					Type:    "work",
@@ -549,7 +549,7 @@ func TestCreateUser(t *testing.T) {
 				GivenName:  "",
 			},
 			DisplayName: "user 1",
-			Emails: []Email{
+			Emails: []*Email{
 				{
 					Value:   "user.1@mail.com",
 					Type:    "work",
@@ -581,7 +581,7 @@ func TestCreateUser(t *testing.T) {
 				GivenName:  "user",
 			},
 			DisplayName: "user 1",
-			Emails: []Email{
+			Emails: []*Email{
 				{
 					Value:   "user.1@mail.com",
 					Type:    "work",
@@ -613,7 +613,7 @@ func TestCreateUser(t *testing.T) {
 				GivenName:  "user",
 			},
 			DisplayName: "user 1",
-			Emails: []Email{
+			Emails: []*Email{
 				{
 					Value:   "user.1@mail.com",
 					Type:    "work",
@@ -675,7 +675,7 @@ func TestCreateOrGetUser(t *testing.T) {
 				GivenName:  "test",
 			},
 			DisplayName: "user 1",
-			Emails: []Email{
+			Emails: []*Email{
 				{
 					Value:   "user.1@mail.com",
 					Type:    "work",
@@ -748,7 +748,7 @@ func TestCreateOrGetUser(t *testing.T) {
 				GivenName:  "Jackson",
 			},
 			DisplayName: "mjack",
-			Emails: []Email{
+			Emails: []*Email{
 				{
 					Value:   "mjack@example.com",
 					Type:    "work",
@@ -1197,7 +1197,7 @@ func TestPutUser(t *testing.T) {
 				GivenName:  "Barbara",
 			},
 			DisplayName: "Babs Jensen",
-			Emails: []Email{
+			Emails: []*Email{
 				{
 					Value:   "bjensen@example.com",
 					Type:    "work",
@@ -1247,7 +1247,7 @@ func TestPutUser(t *testing.T) {
 				GivenName:  "test",
 			},
 			DisplayName: "",
-			Emails: []Email{
+			Emails: []*Email{
 				{
 					Value:   "user.1@mail.com",
 					Type:    "work",
@@ -1279,7 +1279,7 @@ func TestPutUser(t *testing.T) {
 				GivenName:  "",
 			},
 			DisplayName: "user 1",
-			Emails: []Email{
+			Emails: []*Email{
 				{
 					Value:   "user.1@mail.com",
 					Type:    "work",
@@ -1311,7 +1311,7 @@ func TestPutUser(t *testing.T) {
 				GivenName:  "user",
 			},
 			DisplayName: "user 1",
-			Emails: []Email{
+			Emails: []*Email{
 				{
 					Value:   "user.1@mail.com",
 					Type:    "work",
@@ -1343,7 +1343,7 @@ func TestPutUser(t *testing.T) {
 				GivenName:  "user",
 			},
 			DisplayName: "user 1",
-			Emails: []Email{
+			Emails: []*Email{
 				{
 					Value:   "user.1@mail.com",
 					Type:    "work",
@@ -1362,5 +1362,91 @@ func TestPutUser(t *testing.T) {
 		assert.Error(t, err)
 		assert.Nil(t, got)
 		assert.ErrorIs(t, err, ErrEmailsTooMany)
+	})
+}
+
+func TestPatchUser(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	endpoint := "https://testing.com"
+	PatchUserResponseFile := "testdata/PatchUserResponse.json"
+
+	t.Run("should return an error when usr is nil", func(t *testing.T) {
+		mockHTTPCLient := mocks.NewMockHTTPClient(mockCtrl)
+
+		service, err := NewSCIMService(mockHTTPCLient, endpoint, "MyToken")
+		assert.NoError(t, err)
+		assert.NotNil(t, service)
+
+		err = service.PatchUser(context.Background(), nil)
+		assert.Error(t, err)
+	})
+
+	t.Run("should return a valid response with a valid request", func(t *testing.T) {
+		mockHTTPCLient := mocks.NewMockHTTPClient(mockCtrl)
+		jsonResp := ReadJSONFIleAsString(t, PatchUserResponseFile)
+
+		httpResp := &http.Response{
+			Status:     "200 OK",
+			StatusCode: http.StatusCreated,
+			Header: http.Header{
+				"Date":             []string{"Tue, 31 Mar 2020 02:36:15 GMT"},
+				"Content-Type":     []string{"application/json"},
+				"x-amzn-RequestId": []string{"abbf9e53-9ecc-46d2-8efe-104a66ff128f"},
+			},
+			Proto:         "HTTP/1.1",
+			Body:          io.NopCloser(strings.NewReader(jsonResp)),
+			ContentLength: int64(len(jsonResp)),
+		}
+
+		mockHTTPCLient.EXPECT().Do(gomock.Any()).Return(httpResp, nil)
+
+		service, err := NewSCIMService(mockHTTPCLient, endpoint, "MyToken")
+		assert.NoError(t, err)
+		assert.NotNil(t, service)
+
+		pur := &PatchUserRequest{
+			User: User{
+				ID: "9067729b3d-94f1e0b3-c394-48d5-8ab1-2c122a167074",
+			},
+			Patch: Patch{
+				Schemas: []string{"urn:ietf:params:scim:api:messages:2.0:PatchOp"},
+				Operations: []*Operation{
+					{
+						OP:    "replace",
+						Path:  "active",
+						Value: true,
+					},
+				},
+			},
+		}
+
+		err = service.PatchUser(context.Background(), pur)
+		assert.NoError(t, err)
+	})
+
+	t.Run("should return an error when usr.ID is empty", func(t *testing.T) {
+		mockHTTPCLient := mocks.NewMockHTTPClient(mockCtrl)
+
+		service, err := NewSCIMService(mockHTTPCLient, endpoint, "MyToken")
+		assert.NoError(t, err)
+		assert.NotNil(t, service)
+
+		pur := &PatchUserRequest{
+			User: User{},
+			Patch: Patch{
+				Schemas: []string{"urn:ietf:params:scim:api:messages:2.0:PatchOp"},
+				Operations: []*Operation{
+					{
+						OP:    "replace",
+						Path:  "active",
+						Value: true,
+					},
+				},
+			},
+		}
+
+		err = service.PatchUser(context.Background(), pur)
+		assert.Error(t, err)
 	})
 }

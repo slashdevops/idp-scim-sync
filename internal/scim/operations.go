@@ -22,9 +22,9 @@ func patchGroupOperations(op, path string, pvs []patchValue, gms *model.GroupMem
 					ID:          gms.Group.SCIMID,
 					DisplayName: gms.Group.Name,
 				},
-				Patch: aws.PatchGroup{
+				Patch: aws.Patch{
 					Schemas: []string{"urn:ietf:params:scim:api:messages:2.0:PatchOp"},
-					Operations: []aws.OperationGroup{
+					Operations: []*aws.Operation{
 						{
 							OP:    op,
 							Path:  path,
@@ -41,9 +41,9 @@ func patchGroupOperations(op, path string, pvs []patchValue, gms *model.GroupMem
 				ID:          gms.Group.SCIMID,
 				DisplayName: gms.Group.Name,
 			},
-			Patch: aws.PatchGroup{
+			Patch: aws.Patch{
 				Schemas: []string{"urn:ietf:params:scim:api:messages:2.0:PatchOp"},
-				Operations: []aws.OperationGroup{
+				Operations: []*aws.Operation{
 					{
 						OP:    op,
 						Path:  path,
