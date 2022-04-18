@@ -1,6 +1,6 @@
 package core
 
-// SyncServiceOption is a function that can be used to modify the SyncService
+// SyncServiceOption is a function that can be used to configure the SyncService
 // following the Option pattern.
 type SyncServiceOption func(*SyncService)
 

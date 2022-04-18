@@ -13,7 +13,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func GroupMembersGenerator(numMembers int, scimID bool, idpID bool) []*model.Member {
+// groupMembersGenerator helper function to generate test data for GetGroupMembers
+func groupMembersGenerator(numMembers int, scimID bool, idpID bool) []*model.Member {
 	members := make([]*model.Member, numMembers)
 
 	for i := 1; i <= numMembers; i++ {
@@ -91,7 +92,7 @@ func TestGetGroups(t *testing.T) {
 	t.Run("Should return a list of groups and no error", func(t *testing.T) {
 		mockSCIM := mocks.NewMockAWSSCIMProvider(mockCtrl)
 		groups := &aws.ListGroupsResponse{
-			GeneralResponse: aws.GeneralResponse{
+			ListResponse: aws.ListResponse{
 				TotalResults: 2,
 				ItemsPerPage: 2,
 				StartIndex:   0,
@@ -102,14 +103,14 @@ func TestGetGroups(t *testing.T) {
 					ID:          "1",
 					DisplayName: "group 1",
 					Schemas:     []string{"urn:ietf:params:scim:schemas:core:2.0:Group"},
-					Members:     []aws.Member{},
+					Members:     []*aws.Member{},
 					Meta:        aws.Meta{ResourceType: "Group", Created: "2020-04-01T12:00:00Z", LastModified: "2020-04-01T12:00:00Z"},
 				},
 				{
 					ID:          "2",
 					DisplayName: "group 2",
 					Schemas:     []string{"urn:ietf:params:scim:schemas:core:2.0:Group"},
-					Members:     []aws.Member{},
+					Members:     []*aws.Member{},
 					Meta:        aws.Meta{ResourceType: "Group", Created: "2020-04-02T12:00:00Z", LastModified: "2020-04-02T12:00:00Z"},
 				},
 			},
@@ -297,9 +298,9 @@ func TestUpdateGroups(t *testing.T) {
 				ID:          "1",
 				DisplayName: "group 1",
 			},
-			Patch: aws.PatchGroup{
+			Patch: aws.Patch{
 				Schemas: []string{"urn:ietf:params:scim:api:messages:2.0:PatchOp"},
-				Operations: []aws.OperationGroup{
+				Operations: []*aws.Operation{
 					{
 						OP: "replace",
 						Value: map[string]string{
@@ -344,9 +345,9 @@ func TestUpdateGroups(t *testing.T) {
 				ID:          "1",
 				DisplayName: "group 1",
 			},
-			Patch: aws.PatchGroup{
+			Patch: aws.Patch{
 				Schemas: []string{"urn:ietf:params:scim:api:messages:2.0:PatchOp"},
-				Operations: []aws.OperationGroup{
+				Operations: []*aws.Operation{
 					{
 						OP: "replace",
 						Value: map[string]string{
@@ -386,9 +387,9 @@ func TestUpdateGroups(t *testing.T) {
 				ID:          "1",
 				DisplayName: "group 1",
 			},
-			Patch: aws.PatchGroup{
+			Patch: aws.Patch{
 				Schemas: []string{"urn:ietf:params:scim:api:messages:2.0:PatchOp"},
-				Operations: []aws.OperationGroup{
+				Operations: []*aws.Operation{
 					{
 						OP: "replace",
 						Value: map[string]string{
@@ -404,9 +405,9 @@ func TestUpdateGroups(t *testing.T) {
 				ID:          "2",
 				DisplayName: "group 2",
 			},
-			Patch: aws.PatchGroup{
+			Patch: aws.Patch{
 				Schemas: []string{"urn:ietf:params:scim:api:messages:2.0:PatchOp"},
-				Operations: []aws.OperationGroup{
+				Operations: []*aws.Operation{
 					{
 						OP: "replace",
 						Value: map[string]string{
@@ -579,7 +580,7 @@ func TestGetUsers(t *testing.T) {
 	t.Run("Should return a list of users and no error", func(t *testing.T) {
 		mockSCIM := mocks.NewMockAWSSCIMProvider(mockCtrl)
 		users := &aws.ListUsersResponse{
-			GeneralResponse: aws.GeneralResponse{
+			ListResponse: aws.ListResponse{
 				TotalResults: 2,
 				ItemsPerPage: 2,
 				StartIndex:   0,
@@ -593,7 +594,7 @@ func TestGetUsers(t *testing.T) {
 					DisplayName: "group 1",
 					Schemas:     []string{"urn:ietf:params:scim:schemas:core:2.0:User"},
 					Meta:        aws.Meta{ResourceType: "User", Created: "2020-04-01T12:00:00Z", LastModified: "2020-04-01T12:00:00Z"},
-					Emails:      []aws.Email{{Value: "user.1@mail.com", Type: "work", Primary: true}},
+					Emails:      []*aws.Email{{Value: "user.1@mail.com", Type: "work", Primary: true}},
 				},
 				{
 					ID:          "2",
@@ -602,7 +603,7 @@ func TestGetUsers(t *testing.T) {
 					DisplayName: "group 2",
 					Schemas:     []string{"urn:ietf:params:scim:schemas:core:2.0:User"},
 					Meta:        aws.Meta{ResourceType: "User", Created: "2020-04-02T12:00:00Z", LastModified: "2020-04-02T12:00:00Z"},
-					Emails:      []aws.Email{{Value: "user.2@mail.com", Type: "work", Primary: true}},
+					Emails:      []*aws.Email{{Value: "user.2@mail.com", Type: "work", Primary: true}},
 				},
 			},
 		}
@@ -653,7 +654,7 @@ func TestCreateUsers(t *testing.T) {
 			DisplayName: "user 1",
 			ExternalID:  "1",
 			Name:        aws.Name{FamilyName: "1", GivenName: "user"},
-			Emails: []aws.Email{
+			Emails: []*aws.Email{
 				{Value: "user.1@mail.com", Type: "work"},
 			},
 			Active: true,
@@ -690,7 +691,7 @@ func TestCreateUsers(t *testing.T) {
 			DisplayName: "user 1",
 			ExternalID:  "1",
 			Name:        aws.Name{FamilyName: "1", GivenName: "user"},
-			Emails: []aws.Email{
+			Emails: []*aws.Email{
 				{Value: "user.1@mail.com", Type: "work"},
 			},
 			Active: false,
@@ -726,7 +727,7 @@ func TestCreateUsers(t *testing.T) {
 			DisplayName: "user 1",
 			ExternalID:  "1",
 			Name:        aws.Name{FamilyName: "1", GivenName: "user"},
-			Emails: []aws.Email{
+			Emails: []*aws.Email{
 				{Value: "user.1@mail.com", Type: "work"},
 			},
 			Active: true,
@@ -736,7 +737,7 @@ func TestCreateUsers(t *testing.T) {
 			DisplayName: "user 2",
 			ExternalID:  "2",
 			Name:        aws.Name{FamilyName: "2", GivenName: "user"},
-			Emails: []aws.Email{
+			Emails: []*aws.Email{
 				{Value: "user.2@mail.com", Type: "work"},
 			},
 			Active: true,
@@ -750,7 +751,7 @@ func TestCreateUsers(t *testing.T) {
 			},
 			DisplayName: "user 1",
 			Active:      true,
-			Emails:      []aws.Email{{Value: "user.1@mail.com", Type: "work"}},
+			Emails:      []*aws.Email{{Value: "user.1@mail.com", Type: "work"}},
 		}
 		resp2 := &aws.CreateUserResponse{
 			ID:         "22",
@@ -761,7 +762,7 @@ func TestCreateUsers(t *testing.T) {
 			},
 			DisplayName: "user 2",
 			Active:      true,
-			Emails:      []aws.Email{{Value: "user.2@mail.com", Type: "work"}},
+			Emails:      []*aws.Email{{Value: "user.2@mail.com", Type: "work"}},
 		}
 		ctx := context.TODO()
 
@@ -833,7 +834,7 @@ func TestUpdateUsers(t *testing.T) {
 			DisplayName: "user 1",
 			ExternalID:  "1",
 			Name:        aws.Name{FamilyName: "1", GivenName: "user"},
-			Emails: []aws.Email{
+			Emails: []*aws.Email{
 				{Value: "user.1@mail.com", Type: "work", Primary: true},
 			},
 			Active: true,
@@ -886,7 +887,7 @@ func TestUpdateUsers(t *testing.T) {
 			DisplayName: "user 1",
 			ExternalID:  "1",
 			Name:        aws.Name{FamilyName: "1", GivenName: "user"},
-			Emails: []aws.Email{
+			Emails: []*aws.Email{
 				{Value: "user.1@mail.com", Type: "work", Primary: true},
 			},
 			Active: false,
@@ -932,7 +933,7 @@ func TestUpdateUsers(t *testing.T) {
 			DisplayName: "user 1",
 			ExternalID:  "1",
 			Name:        aws.Name{FamilyName: "1", GivenName: "user"},
-			Emails: []aws.Email{
+			Emails: []*aws.Email{
 				{Value: "user.1@mail.com", Type: "work", Primary: true},
 			},
 			Active: true,
@@ -943,7 +944,7 @@ func TestUpdateUsers(t *testing.T) {
 			DisplayName: "user 2",
 			ExternalID:  "2",
 			Name:        aws.Name{FamilyName: "2", GivenName: "user"},
-			Emails: []aws.Email{
+			Emails: []*aws.Email{
 				{Value: "user.2@mail.com", Type: "work", Primary: true},
 			},
 			Active: true,
@@ -957,7 +958,7 @@ func TestUpdateUsers(t *testing.T) {
 			},
 			DisplayName: "user 1",
 			Active:      true,
-			Emails:      []aws.Email{{Value: "user.1@mail.com", Type: "work"}},
+			Emails:      []*aws.Email{{Value: "user.1@mail.com", Type: "work"}},
 		}
 		resp2 := &aws.PutUserResponse{
 			ID:         "22",
@@ -968,7 +969,7 @@ func TestUpdateUsers(t *testing.T) {
 			},
 			DisplayName: "user 2",
 			Active:      true,
-			Emails:      []aws.Email{{Value: "user.2@mail.com", Type: "work"}},
+			Emails:      []*aws.Email{{Value: "user.2@mail.com", Type: "work"}},
 		}
 		ctx := context.TODO()
 
@@ -1136,9 +1137,7 @@ func TestCreateGroupsMembers(t *testing.T) {
 		mockSCIM := mocks.NewMockAWSSCIMProvider(mockCtrl)
 		userName := "user.1@mail.com"
 
-		membersIDValue := []struct {
-			Value string `json:"value"`
-		}{
+		membersIDValue := []patchValue{
 			{Value: "1"},
 		}
 
@@ -1151,7 +1150,7 @@ func TestCreateGroupsMembers(t *testing.T) {
 				GivenName:  "user",
 			},
 			DisplayName: "user 1",
-			Emails: []aws.Email{
+			Emails: []*aws.Email{
 				{
 					Value:   "user.1@mailcom",
 					Type:    "work",
@@ -1164,9 +1163,9 @@ func TestCreateGroupsMembers(t *testing.T) {
 				ID:          "1",
 				DisplayName: "group 1",
 			},
-			Patch: aws.PatchGroup{
+			Patch: aws.Patch{
 				Schemas: []string{"urn:ietf:params:scim:api:messages:2.0:PatchOp"},
-				Operations: []aws.OperationGroup{
+				Operations: []*aws.Operation{
 					{
 						OP:    "add",
 						Path:  "members",
@@ -1256,9 +1255,7 @@ func TestCreateGroupsMembers(t *testing.T) {
 		mockSCIM := mocks.NewMockAWSSCIMProvider(mockCtrl)
 		userName := "user.1@mail.com"
 
-		membersIDValue := []struct {
-			Value string `json:"value"`
-		}{
+		membersIDValue := []patchValue{
 			{Value: "1"},
 		}
 
@@ -1271,7 +1268,7 @@ func TestCreateGroupsMembers(t *testing.T) {
 				GivenName:  "user",
 			},
 			DisplayName: "user 1",
-			Emails: []aws.Email{
+			Emails: []*aws.Email{
 				{
 					Value:   "user.1@mailcom",
 					Type:    "work",
@@ -1284,9 +1281,9 @@ func TestCreateGroupsMembers(t *testing.T) {
 				ID:          "1",
 				DisplayName: "group 1",
 			},
-			Patch: aws.PatchGroup{
+			Patch: aws.Patch{
 				Schemas: []string{"urn:ietf:params:scim:api:messages:2.0:PatchOp"},
-				Operations: []aws.OperationGroup{
+				Operations: []*aws.Operation{
 					{
 						OP:    "add",
 						Path:  "members",
@@ -1331,7 +1328,7 @@ func TestCreateGroupsMembers(t *testing.T) {
 	t.Run("Should call GetUserByUserName 1 time and PatchGroup 3 times and no return error", func(t *testing.T) {
 		mockSCIM := mocks.NewMockAWSSCIMProvider(mockCtrl)
 		numUsers := 207
-		members := GroupMembersGenerator(numUsers, false, true)
+		members := groupMembersGenerator(numUsers, false, true)
 
 		getUserByUserNameResp := &aws.GetUserResponse{
 			ID:         "1",
@@ -1342,7 +1339,7 @@ func TestCreateGroupsMembers(t *testing.T) {
 				GivenName:  "user",
 			},
 			DisplayName: "user 1",
-			Emails: []aws.Email{
+			Emails: []*aws.Email{
 				{
 					Value:   "user.1@mailcom",
 					Type:    "work",
@@ -1395,9 +1392,7 @@ func TestDeleteGroupsMembers(t *testing.T) {
 		mockSCIM := mocks.NewMockAWSSCIMProvider(mockCtrl)
 		userName := "user.1@mail.com"
 
-		membersIDValue := []struct {
-			Value string `json:"value"`
-		}{
+		membersIDValue := []patchValue{
 			{Value: "1"},
 		}
 
@@ -1406,9 +1401,9 @@ func TestDeleteGroupsMembers(t *testing.T) {
 				ID:          "1",
 				DisplayName: "group 1",
 			},
-			Patch: aws.PatchGroup{
+			Patch: aws.Patch{
 				Schemas: []string{"urn:ietf:params:scim:api:messages:2.0:PatchOp"},
-				Operations: []aws.OperationGroup{
+				Operations: []*aws.Operation{
 					{
 						OP:    "remove",
 						Path:  "members",
@@ -1453,9 +1448,7 @@ func TestDeleteGroupsMembers(t *testing.T) {
 		mockSCIM := mocks.NewMockAWSSCIMProvider(mockCtrl)
 		userName := "user.1@mail.com"
 
-		membersIDValue := []struct {
-			Value string `json:"value"`
-		}{
+		membersIDValue := []patchValue{
 			{Value: "1"},
 		}
 
@@ -1464,9 +1457,9 @@ func TestDeleteGroupsMembers(t *testing.T) {
 				ID:          "1",
 				DisplayName: "group 1",
 			},
-			Patch: aws.PatchGroup{
+			Patch: aws.Patch{
 				Schemas: []string{"urn:ietf:params:scim:api:messages:2.0:PatchOp"},
-				Operations: []aws.OperationGroup{
+				Operations: []*aws.Operation{
 					{
 						OP:    "remove",
 						Path:  "members",
@@ -1509,7 +1502,7 @@ func TestDeleteGroupsMembers(t *testing.T) {
 	t.Run("Should call PatchGroup 2 times and no return error", func(t *testing.T) {
 		mockSCIM := mocks.NewMockAWSSCIMProvider(mockCtrl)
 		numUsers := 155
-		members := GroupMembersGenerator(numUsers, false, true)
+		members := groupMembersGenerator(numUsers, false, true)
 
 		ctx := context.TODO()
 
@@ -1569,7 +1562,7 @@ func TestGetGroupsMembers(t *testing.T) {
 				{
 					ID:          "1",
 					DisplayName: grp.Resources[0].Name,
-					Members: []aws.Member{
+					Members: []*aws.Member{
 						{
 							Value: "1",
 						},
@@ -1578,7 +1571,7 @@ func TestGetGroupsMembers(t *testing.T) {
 			},
 		}
 		gur := &aws.GetUserResponse{
-			Emails: []aws.Email{
+			Emails: []*aws.Email{
 				{
 					Value: "user.1@mail.com",
 				},
@@ -1652,7 +1645,7 @@ func TestGetGroupsMembers(t *testing.T) {
 				{
 					ID:          "1",
 					DisplayName: grp.Resources[0].Name,
-					Members: []aws.Member{
+					Members: []*aws.Member{
 						{
 							Value: "1",
 						},
@@ -1734,7 +1727,7 @@ func TestGetGroupsMembersBruteForce(t *testing.T) {
 				{
 					ID:          "1",
 					DisplayName: grp.Resources[0].Name,
-					Members: []aws.Member{
+					Members: []*aws.Member{
 						{
 							Value: "1",
 						},
@@ -1879,14 +1872,14 @@ func TestGetGroupsMembersBruteForce(t *testing.T) {
 		}
 		filter := fmt.Sprintf("id eq %q and members eq %q", grp.Resources[0].SCIMID, usr.Resources[0].SCIMID)
 		lgr := &aws.ListGroupsResponse{
-			GeneralResponse: aws.GeneralResponse{
+			ListResponse: aws.ListResponse{
 				TotalResults: 1,
 			},
 			Resources: []*aws.Group{
 				{
 					ID:          "1",
 					DisplayName: grp.Resources[0].Name,
-					Members: []aws.Member{
+					Members: []*aws.Member{
 						{
 							Value: "1",
 						},
