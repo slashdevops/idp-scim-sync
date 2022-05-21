@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -217,7 +218,7 @@ func sync() error {
 	if cfg.SyncMethod == "groups" {
 		return syncGroups()
 	}
-	return nil
+	return fmt.Errorf("unknown sync method: %s", cfg.SyncMethod)
 }
 
 func syncGroups() error {

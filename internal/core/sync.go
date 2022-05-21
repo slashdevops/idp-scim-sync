@@ -182,9 +182,3 @@ func (ss *SyncService) SyncGroupsAndTheirMembers(ctx context.Context) error {
 	}).Info("sync completed")
 	return nil
 }
-
-// SyncGroupsAndUsers this method is used to sync
-// the users groups and their members from the identity provider to the SCIM
-func (ss *SyncService) SyncGroupsAndUsers(ctx context.Context) error {
-	return errors.New("not implemented yet")
-}
