@@ -45,6 +45,7 @@
     "retryablehttp",
     "scimid",
     "securego",
+    "sirupsen",
     "softprops",
     "stackset",
     "stretchr",

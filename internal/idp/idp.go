@@ -162,7 +162,7 @@ func (i *IdentityProvider) GetGroupMembers(ctx context.Context, groupID string) 
 	}
 
 	syncMembersResult := &model.MembersResult{
-		Items:     len(pMembers),
+		Items:     len(syncMembers),
 		Resources: syncMembers,
 	}
 	syncMembersResult.SetHashCode()

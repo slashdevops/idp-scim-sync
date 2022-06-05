@@ -308,6 +308,23 @@ func TestGetGroupMembers(t *testing.T) {
 			},
 			wantErr: false,
 		},
+		{
+			name: "Should return MembersResult with only one member when member type is GROUP",
+			prepare: func(f *fields) {
+				ctx := context.Background()
+				googleGroupMembers := make([]*admin.Member, 0)
+				googleGroupMembers = append(googleGroupMembers, &admin.Member{Email: "group.1@mail.com", Id: "1", Type: "GROUP"})
+				googleGroupMembers = append(googleGroupMembers, &admin.Member{Email: "user.2@mail.com", Id: "2"})
+
+				f.ds.EXPECT().ListGroupMembers(ctx, gomock.Eq("1"), gomock.Any()).Return(googleGroupMembers, nil).Times(1)
+			},
+			args: args{ctx: context.Background(), id: "1"},
+			want: &model.MembersResult{
+				Items:     1,
+				Resources: []*model.Member{m2},
+			},
+			wantErr: false,
+		},
 	}
 
 	for _, tt := range tests {
@@ -486,7 +503,7 @@ func TestGetGroupsMembers(t *testing.T) {
 	m2.SetHashCode()
 	g1 := model.Group{IPID: "1", Name: "group 1", Email: "group.1@mail.com"}
 	g1.SetHashCode()
-	gm := &model.GroupMembers{
+	gm1 := &model.GroupMembers{
 		Items: 2,
 		Group: g1,
 		Resources: []*model.Member{
@@ -494,14 +511,27 @@ func TestGetGroupsMembers(t *testing.T) {
 			&m2,
 		},
 	}
-	gm.SetHashCode()
-	gmr := &model.GroupsMembersResult{
+	gm1.SetHashCode()
+	gm2 := &model.GroupMembers{
+		Items:     0,
+		Group:     g1,
+		Resources: []*model.Member{},
+	}
+	gm2.SetHashCode()
+	gmr1 := &model.GroupsMembersResult{
 		Items: 1,
 		Resources: []*model.GroupMembers{
-			gm,
+			gm1,
 		},
 	}
-	gmr.SetHashCode()
+	gmr1.SetHashCode()
+	gmr2 := &model.GroupsMembersResult{
+		Items: 1,
+		Resources: []*model.GroupMembers{
+			gm2,
+		},
+	}
+	gmr2.SetHashCode()
 
 	type fields struct {
 		ds *mocks.MockGoogleProviderService
@@ -574,7 +604,26 @@ func TestGetGroupsMembers(t *testing.T) {
 					},
 				},
 			},
-			want:    gmr,
+			want:    gmr1,
+			wantErr: false,
+		},
+		{
+			name: "Should return MembersResult and no error when members is empty",
+			prepare: func(f *fields) {
+				ctx := context.Background()
+				googleGroupMembers := make([]*admin.Member, 0)
+				f.ds.EXPECT().ListGroupMembers(ctx, "1", gomock.Any()).Return(googleGroupMembers, nil).Times(1)
+			},
+			args: args{
+				ctx: context.Background(),
+				gr: &model.GroupsResult{
+					Items: 1,
+					Resources: []*model.Group{
+						{IPID: "1", Name: "group 1", Email: "group.1@mail.com"},
+					},
+				},
+			},
+			want:    gmr2,
 			wantErr: false,
 		},
 	}
