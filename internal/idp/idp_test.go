@@ -484,6 +484,24 @@ func TestGetGroupsMembers(t *testing.T) {
 	m1.SetHashCode()
 	m2 := model.Member{IPID: "2", Email: "user.2@mail.com"}
 	m2.SetHashCode()
+	g1 := model.Group{IPID: "1", Name: "group 1", Email: "group.1@mail.com"}
+	g1.SetHashCode()
+	gm := &model.GroupMembers{
+		Items: 2,
+		Group: g1,
+		Resources: []*model.Member{
+			&m1,
+			&m2,
+		},
+	}
+	gm.SetHashCode()
+	gmr := &model.GroupsMembersResult{
+		Items: 1,
+		Resources: []*model.GroupMembers{
+			gm,
+		},
+	}
+	gmr.SetHashCode()
 
 	type fields struct {
 		ds *mocks.MockGoogleProviderService
@@ -518,50 +536,47 @@ func TestGetGroupsMembers(t *testing.T) {
 			want:    &model.GroupsMembersResult{Items: 0, Resources: []*model.GroupMembers{}},
 			wantErr: false,
 		},
-		// {
-		// 	name: "Should return error when ListGroupMembers return error",
-		// 	prepare: func(f *fields) {
-		// 		ctx := context.Background()
+		{
+			name: "Should return error when ListGroupMembers return error",
+			prepare: func(f *fields) {
+				ctx := context.Background()
 
-		// 		f.ds.EXPECT().ListGroupMembers(ctx, "1", google.WithIncludeDerivedMembership(true)).Return(nil, errors.New("test error")).Times(1)
-		// 	},
-		// 	args: args{
-		// 		ctx: context.Background(),
-		// 		gr: &model.GroupsResult{
-		// 			Items: 1,
-		// 			Resources: []*model.Group{
-		// 				{IPID: "1"},
-		// 			},
-		// 		},
-		// 	},
-		// 	want:    nil,
-		// 	wantErr: true,
-		// },
-		// {
-		// 	name: "Should return MembersResult and no error",
-		// 	prepare: func(f *fields) {
-		// 		ctx := context.Background()
-		// 		googleGroupMembers := make([]*admin.Member, 0)
-		// 		googleGroupMembers = append(googleGroupMembers, &admin.Member{Email: "user.1@mail.com", Id: "1"})
-		// 		googleGroupMembers = append(googleGroupMembers, &admin.Member{Email: "user.2@mail.com", Id: "2"})
+				f.ds.EXPECT().ListGroupMembers(ctx, "1", gomock.Any()).Return(nil, errors.New("test error")).Times(1)
+			},
+			args: args{
+				ctx: context.Background(),
+				gr: &model.GroupsResult{
+					Items: 1,
+					Resources: []*model.Group{
+						{IPID: "1", Name: "group 1", Email: "group.1@mail.com"},
+					},
+				},
+			},
+			want:    nil,
+			wantErr: true,
+		},
+		{
+			name: "Should return MembersResult and no error",
+			prepare: func(f *fields) {
+				ctx := context.Background()
+				googleGroupMembers := make([]*admin.Member, 0)
+				googleGroupMembers = append(googleGroupMembers, &admin.Member{Email: "user.1@mail.com", Id: "1"})
+				googleGroupMembers = append(googleGroupMembers, &admin.Member{Email: "user.2@mail.com", Id: "2"})
 
-		// 		f.ds.EXPECT().ListGroupMembers(ctx, gomock.Eq("1")).Return(googleGroupMembers, nil).Times(1)
-		// 	},
-		// 	args: args{
-		// 		ctx: context.Background(),
-		// 		gr: &model.GroupsResult{
-		// 			Items: 1,
-		// 			Resources: []model.Group{
-		// 				{IPID: "1"},
-		// 			},
-		// 		},
-		// 	},
-		// 	want: &model.MembersResult{
-		// 		Items:     2,
-		// 		Resources: []*model.Member{m1, m2},
-		// 	},
-		// 	wantErr: false,
-		// },
+				f.ds.EXPECT().ListGroupMembers(ctx, "1", gomock.Any()).Return(googleGroupMembers, nil).Times(1)
+			},
+			args: args{
+				ctx: context.Background(),
+				gr: &model.GroupsResult{
+					Items: 1,
+					Resources: []*model.Group{
+						{IPID: "1", Name: "group 1", Email: "group.1@mail.com"},
+					},
+				},
+			},
+			want:    gmr,
+			wantErr: false,
+		},
 	}
 
 	for _, tt := range tests {
