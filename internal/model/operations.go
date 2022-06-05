@@ -25,7 +25,7 @@ var (
 )
 
 // MembersOperations returns datasets used to perform different operations over the SCIM side
-// return 4 objest of GroupsMembersResult
+// return 4 objet of GroupsMembersResult
 // create: groups that exist in "idp" but not in "scim" or "state"
 // update: groups that exist in "idp" and in "scim" or "state" but attributes changed in idp
 // equal: groups that exist in both "idp" and "scim" or "state" and their attributes are equal
@@ -68,7 +68,7 @@ func MembersOperations(idp, scim *GroupsMembersResult) (create, equal, remove *G
 // GroupsOperations returns the differences between the groups in the
 // this use the Groups Name as the key.
 // SCIM Groups cannot be updated.
-// return 4 objest of GroupsResult
+// return 4 objet of GroupsResult
 // create: groups that exist in "idp" but not in "scim" or "state"
 // update: groups that exist in "idp" and in "scim" or "state" but attributes changed in idp
 // equal: groups that exist in both "idp" and "scim" or "state" and their attributes are equal
@@ -151,7 +151,7 @@ func GroupsOperations(idp, scim *GroupsResult) (create, update, equal, remove *G
 }
 
 // UsersOperations returns datasets used to perform different operations over the SCIM side
-// return 4 objest of UsersResult
+// return 4 objet of UsersResult
 // create: users that exist in "idp" but not in "scim" or "state"
 // update: users that exist in "idp" and in "scim" or "state" but attributes changed in idp
 // equal: users that exist in both "idp" and "scim" or "state" and their attributes are equal
