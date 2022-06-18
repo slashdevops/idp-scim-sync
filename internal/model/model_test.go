@@ -401,6 +401,7 @@ func TestMember_SetHashCode(t *testing.T) {
 				IPID:     "1",
 				SCIMID:   "1",
 				Email:    "user.1@mail.com",
+				Status:   "ACTIVE",
 				HashCode: "test",
 			},
 			want: Member{
@@ -435,18 +436,18 @@ func TestGroupMembers_SetHashCode(t *testing.T) {
 				HashCode: "test",
 				Group:    Group{IPID: "1", SCIMID: "1", Name: "group", Email: "group.1@mail.com"},
 				Resources: []*Member{
-					{IPID: "1", SCIMID: "1", Email: "group.1@mail.com"},
-					{IPID: "2", SCIMID: "2", Email: "group.2@mail.com"},
-					{IPID: "3", SCIMID: "3", Email: "group.3@mail.com"},
+					{IPID: "1", SCIMID: "1", Email: "group.1@mail.com", Status: "ACTIVE"},
+					{IPID: "2", SCIMID: "2", Email: "group.2@mail.com", Status: "ACTIVE"},
+					{IPID: "3", SCIMID: "3", Email: "group.3@mail.com", Status: "ACTIVE"},
 				},
 			},
 			want: GroupMembers{
 				Items: 3,
 				Group: Group{IPID: "1", SCIMID: "1", Name: "group", Email: "group.1@mail.com"},
 				Resources: []*Member{
-					{IPID: "3", SCIMID: "3", Email: "group.3@mail.com"},
-					{IPID: "1", SCIMID: "1", Email: "group.1@mail.com"},
-					{IPID: "2", SCIMID: "2", Email: "group.2@mail.com"},
+					{IPID: "3", SCIMID: "3", Email: "group.3@mail.com", Status: "ACTIVE"},
+					{IPID: "1", SCIMID: "1", Email: "group.1@mail.com", Status: "ACTIVE"},
+					{IPID: "2", SCIMID: "2", Email: "group.2@mail.com", Status: "ACTIVE"},
 				},
 			},
 		},
@@ -573,9 +574,9 @@ func TestGroupsResult_SetHashCode(t *testing.T) {
 }
 
 func TestMembersResult_SetHashCode(t *testing.T) {
-	m1 := &Member{IPID: "1", SCIMID: "1", Email: "group.1@mail.com"}
-	m2 := &Member{IPID: "2", SCIMID: "2", Email: "group.2@mail.com"}
-	m3 := &Member{IPID: "3", SCIMID: "3", Email: "group.3@mail.com"}
+	m1 := &Member{IPID: "1", SCIMID: "1", Email: "group.1@mail.com", Status: "ACTIVE"}
+	m2 := &Member{IPID: "2", SCIMID: "2", Email: "group.2@mail.com", Status: "ACTIVE"}
+	m3 := &Member{IPID: "3", SCIMID: "3", Email: "group.3@mail.com", Status: "ACTIVE"}
 
 	m1.SetHashCode()
 	m2.SetHashCode()

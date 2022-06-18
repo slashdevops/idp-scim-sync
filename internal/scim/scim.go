@@ -441,6 +441,7 @@ func (s *Provider) CreateGroupsMembers(ctx context.Context, gmr *model.GroupsMem
 				IPID:   member.IPID,
 				SCIMID: member.SCIMID,
 				Email:  member.Email,
+				Status: member.Status,
 			}
 			e.SetHashCode()
 			members = append(members, e)

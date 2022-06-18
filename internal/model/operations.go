@@ -322,6 +322,7 @@ func UpdateGroupsMembersSCIMID(idp *GroupsMembersResult, scimGroups *GroupsResul
 				IPID:   member.IPID,
 				SCIMID: users[member.Email].SCIMID,
 				Email:  member.Email,
+				Status: member.Status,
 			}
 			m.SetHashCode()
 			mbs = append(mbs, m)
