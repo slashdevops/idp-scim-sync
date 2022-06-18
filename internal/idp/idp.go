@@ -153,8 +153,9 @@ func (i *IdentityProvider) GetGroupMembers(ctx context.Context, groupID string) 
 			continue
 		}
 		e := &model.Member{
-			IPID:  member.Id,
-			Email: member.Email,
+			IPID:   member.Id,
+			Email:  member.Email,
+			Status: member.Status,
 		}
 		e.SetHashCode()
 

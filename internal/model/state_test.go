@@ -186,13 +186,13 @@ func TestState_SetHashCode(t *testing.T) {
 		grs := GroupsResult{Items: 3, Resources: []*Group{&g1, &g2, &g3}}
 		grs.SetHashCode()
 
-		m1 := Member{IPID: "1", SCIMID: "1", Email: u1.Email, Status: "active"}
+		m1 := Member{IPID: "1", SCIMID: "1", Email: u1.Email, Status: "ACTIVE"}
 		m1.SetHashCode()
 
-		m2 := Member{IPID: "2", SCIMID: "2", Email: u2.Email, Status: "active"}
+		m2 := Member{IPID: "2", SCIMID: "2", Email: u2.Email, Status: "ACTIVE"}
 		m2.SetHashCode()
 
-		m3 := Member{IPID: "2", SCIMID: "2", Email: u3.Email, Status: "active"}
+		m3 := Member{IPID: "2", SCIMID: "2", Email: u3.Email, Status: "ACTIVE"}
 		m3.SetHashCode()
 
 		gm1 := GroupMembers{Items: 1, Group: g1, Resources: []*Member{&m1}}

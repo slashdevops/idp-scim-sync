@@ -32,7 +32,7 @@ func groupMembersGenerator(numMembers int, scimID bool, idpID bool) []*model.Mem
 			IPID:   idp,
 			SCIMID: scim,
 			Email:  fmt.Sprintf("user.%d@mail.com", i),
-			Status: "enabled",
+			Status: "ACTIVE",
 		}
 	}
 	return members
@@ -1194,7 +1194,7 @@ func TestCreateGroupsMembers(t *testing.T) {
 						{
 							IPID:   "1",
 							Email:  userName,
-							Status: "active",
+							Status: "ACTIVE",
 						},
 					},
 				},
@@ -1238,7 +1238,7 @@ func TestCreateGroupsMembers(t *testing.T) {
 						{
 							IPID:   "1",
 							Email:  userName,
-							Status: "active",
+							Status: "ACTIVE",
 						},
 					},
 				},
@@ -1312,7 +1312,7 @@ func TestCreateGroupsMembers(t *testing.T) {
 						{
 							IPID:   "1",
 							Email:  userName,
-							Status: "active",
+							Status: "ACTIVE",
 						},
 					},
 				},
@@ -1432,7 +1432,7 @@ func TestDeleteGroupsMembers(t *testing.T) {
 							IPID:   "1",
 							SCIMID: "1",
 							Email:  userName,
-							Status: "active",
+							Status: "ACTIVE",
 						},
 					},
 				},
@@ -1488,7 +1488,7 @@ func TestDeleteGroupsMembers(t *testing.T) {
 							IPID:   "1",
 							SCIMID: "1",
 							Email:  userName,
-							Status: "active",
+							Status: "ACTIVE",
 						},
 					},
 				},

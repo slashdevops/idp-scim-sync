@@ -252,9 +252,9 @@ func TestGetUsers(t *testing.T) {
 }
 
 func TestGetGroupMembers(t *testing.T) {
-	m1 := &model.Member{IPID: "1", Email: "user.1@mail.com"}
+	m1 := &model.Member{IPID: "1", Email: "user.1@mail.com", Status: "ACTIVE"}
 	m1.SetHashCode()
-	m2 := &model.Member{IPID: "2", Email: "user.2@mail.com"}
+	m2 := &model.Member{IPID: "2", Email: "user.2@mail.com", Status: "suspended"}
 	m2.SetHashCode()
 
 	type fields struct {
@@ -296,8 +296,8 @@ func TestGetGroupMembers(t *testing.T) {
 			prepare: func(f *fields) {
 				ctx := context.Background()
 				googleGroupMembers := make([]*admin.Member, 0)
-				googleGroupMembers = append(googleGroupMembers, &admin.Member{Email: "user.1@mail.com", Id: "1"})
-				googleGroupMembers = append(googleGroupMembers, &admin.Member{Email: "user.2@mail.com", Id: "2"})
+				googleGroupMembers = append(googleGroupMembers, &admin.Member{Email: "user.1@mail.com", Id: "1", Status: "ACTIVE"})
+				googleGroupMembers = append(googleGroupMembers, &admin.Member{Email: "user.2@mail.com", Id: "2", Status: "suspended"})
 
 				f.ds.EXPECT().ListGroupMembers(ctx, gomock.Eq("1"), gomock.Any()).Return(googleGroupMembers, nil).Times(1)
 			},
@@ -314,7 +314,7 @@ func TestGetGroupMembers(t *testing.T) {
 				ctx := context.Background()
 				googleGroupMembers := make([]*admin.Member, 0)
 				googleGroupMembers = append(googleGroupMembers, &admin.Member{Email: "group.1@mail.com", Id: "1", Type: "GROUP"})
-				googleGroupMembers = append(googleGroupMembers, &admin.Member{Email: "user.2@mail.com", Id: "2"})
+				googleGroupMembers = append(googleGroupMembers, &admin.Member{Email: "user.2@mail.com", Id: "2", Status: "suspended"})
 
 				f.ds.EXPECT().ListGroupMembers(ctx, gomock.Eq("1"), gomock.Any()).Return(googleGroupMembers, nil).Times(1)
 			},
@@ -414,16 +414,16 @@ func TestGetUsersByGroupsMembers(t *testing.T) {
 							Items: 2,
 							Group: model.Group{IPID: "1", Name: "group 1", Email: "group1@mail.com"},
 							Resources: []*model.Member{
-								{IPID: "1", Email: "user.1@mail.com"},
-								{IPID: "2", Email: "user.2@mail.com"},
+								{IPID: "1", Email: "user.1@mail.com", Status: "ACTIVE"},
+								{IPID: "2", Email: "user.2@mail.com", Status: "ACTIVE"},
 							},
 						},
 						{
 							Items: 2,
 							Group: model.Group{IPID: "1", Name: "group 1", Email: "group1@mail.com"},
 							Resources: []*model.Member{
-								{IPID: "3", Email: "user.3@mail.com"},
-								{IPID: "4", Email: "user.4@mail.com"},
+								{IPID: "3", Email: "user.3@mail.com", Status: "ACTIVE"},
+								{IPID: "4", Email: "user.4@mail.com", Status: "ACTIVE"},
 							},
 						},
 					},
@@ -454,7 +454,7 @@ func TestGetUsersByGroupsMembers(t *testing.T) {
 							Items: 2,
 							Group: model.Group{IPID: "1", Name: "group 1", Email: "group1@mail.com"},
 							Resources: []*model.Member{
-								{IPID: "1", Email: "user.1@mail.com"},
+								{IPID: "1", Email: "user.1@mail.com", Status: "ACTIVE"},
 							},
 						},
 					},
@@ -497,9 +497,9 @@ func TestGetUsersByGroupsMembers(t *testing.T) {
 }
 
 func TestGetGroupsMembers(t *testing.T) {
-	m1 := model.Member{IPID: "1", Email: "user.1@mail.com"}
+	m1 := model.Member{IPID: "1", Email: "user.1@mail.com", Status: "ACTIVE"}
 	m1.SetHashCode()
-	m2 := model.Member{IPID: "2", Email: "user.2@mail.com"}
+	m2 := model.Member{IPID: "2", Email: "user.2@mail.com", Status: "ACTIVE"}
 	m2.SetHashCode()
 	g1 := model.Group{IPID: "1", Name: "group 1", Email: "group.1@mail.com"}
 	g1.SetHashCode()
@@ -590,8 +590,8 @@ func TestGetGroupsMembers(t *testing.T) {
 			prepare: func(f *fields) {
 				ctx := context.Background()
 				googleGroupMembers := make([]*admin.Member, 0)
-				googleGroupMembers = append(googleGroupMembers, &admin.Member{Email: "user.1@mail.com", Id: "1"})
-				googleGroupMembers = append(googleGroupMembers, &admin.Member{Email: "user.2@mail.com", Id: "2"})
+				googleGroupMembers = append(googleGroupMembers, &admin.Member{Email: "user.1@mail.com", Id: "1", Status: "ACTIVE"})
+				googleGroupMembers = append(googleGroupMembers, &admin.Member{Email: "user.2@mail.com", Id: "2", Status: "ACTIVE"})
 
 				f.ds.EXPECT().ListGroupMembers(ctx, "1", gomock.Any()).Return(googleGroupMembers, nil).Times(1)
 			},
