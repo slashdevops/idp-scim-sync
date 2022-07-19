@@ -133,6 +133,15 @@ func (s *SCIMService) newRequest(ctx context.Context, method string, u *url.URL,
 	if s.UserAgent != "" {
 		req.Header.Set("User-Agent", s.UserAgent)
 	}
+
+	log.WithFields(log.Fields{
+		"method": method,
+		"url":    u.String(),
+		"query":  u.RawQuery,
+		"path":   u.Path,
+		"body":   body,
+	}).Trace("aws newRequest: request")
+
 	return req, nil
 }
 
@@ -163,6 +172,7 @@ func (s *SCIMService) checkHTTPResponse(resp *http.Response) error {
 			"statusCode": resp.StatusCode,
 			"status":     resp.Status,
 		}).Tracef("aws checkHTTPResponse: body: %s\n", string(body))
+
 		return &HTTPResponseError{resp.StatusCode, resp.Status, string(body)}
 	}
 
@@ -225,7 +235,7 @@ func (s *SCIMService) CreateUser(ctx context.Context, usr *CreateUserRequest) (*
 	return &response, nil
 }
 
-// CreateOrGetUser creates a new user or get the user informaion in the AWS SSO Using the API.
+// CreateOrGetUser creates a new user or get the user information in the AWS SSO Using the API.
 // This function will try to create a new user but if received a 409 http error (ConflictException	User already exists.)
 // execute a request to get the user information and return it.
 //
