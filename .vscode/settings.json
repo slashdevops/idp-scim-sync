@@ -35,6 +35,7 @@
     "Infof",
     "ipdid",
     "ipid",
+    "lastsync",
     "liberapay",
     "logrus",
     "mjack",
