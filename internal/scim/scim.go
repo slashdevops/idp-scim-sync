@@ -309,7 +309,6 @@ func (s *Provider) CreateUsers(ctx context.Context, ur *model.UsersResult) (*mod
 			Active:      user.Active,
 			Email:       user.Email,
 		}
-		e.SCIMID = r.ID
 		e.SetHashCode()
 
 		users = append(users, e)
