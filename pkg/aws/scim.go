@@ -293,6 +293,8 @@ func (s *SCIMService) CreateOrGetUser(ctx context.Context, usr *CreateUserReques
 		if errors.As(e, &httpErr) && httpErr.StatusCode == http.StatusConflict {
 			log.WithFields(log.Fields{
 				"user": usr.UserName,
+				"name": usr.DisplayName,
+				"id":   usr.ID,
 			}).Warn("aws CreateOrGetUser: user already exists, trying to get the user information")
 
 			response, err := s.GetUserByUserName(ctx, usr.UserName)
@@ -399,6 +401,17 @@ func (s *SCIMService) GetUserByUserName(ctx context.Context, userName string) (*
 
 	if e := s.checkHTTPResponse(resp); e != nil {
 		return nil, e
+	}
+
+	if resp.StatusCode == http.StatusOK && log.GetLevel() == log.TraceLevel {
+		bodyBytes, er := io.ReadAll(resp.Body)
+		if er != nil {
+			log.Error(er)
+		}
+
+		log.WithFields(log.Fields{
+			"body": string(bodyBytes),
+		}).Trace("aws GetUserByUserName: response raw body data")
 	}
 
 	var lur ListUsersResponse
