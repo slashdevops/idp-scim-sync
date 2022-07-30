@@ -133,6 +133,15 @@ func (s *SCIMService) newRequest(ctx context.Context, method string, u *url.URL,
 	if s.UserAgent != "" {
 		req.Header.Set("User-Agent", s.UserAgent)
 	}
+
+	log.WithFields(log.Fields{
+		"method": method,
+		"url":    u.String(),
+		"query":  u.RawQuery,
+		"path":   u.Path,
+		"body":   body,
+	}).Trace("aws newRequest: request")
+
 	return req, nil
 }
 
@@ -163,6 +172,7 @@ func (s *SCIMService) checkHTTPResponse(resp *http.Response) error {
 			"statusCode": resp.StatusCode,
 			"status":     resp.Status,
 		}).Tracef("aws checkHTTPResponse: body: %s\n", string(body))
+
 		return &HTTPResponseError{resp.StatusCode, resp.Status, string(body)}
 	}
 
@@ -225,7 +235,7 @@ func (s *SCIMService) CreateUser(ctx context.Context, usr *CreateUserRequest) (*
 	return &response, nil
 }
 
-// CreateOrGetUser creates a new user or get the user informaion in the AWS SSO Using the API.
+// CreateOrGetUser creates a new user or get the user information in the AWS SSO Using the API.
 // This function will try to create a new user but if received a 409 http error (ConflictException	User already exists.)
 // execute a request to get the user information and return it.
 //
@@ -283,11 +293,44 @@ func (s *SCIMService) CreateOrGetUser(ctx context.Context, usr *CreateUserReques
 		if errors.As(e, &httpErr) && httpErr.StatusCode == http.StatusConflict {
 			log.WithFields(log.Fields{
 				"user": usr.UserName,
+				"name": usr.DisplayName,
+				"id":   usr.ID,
 			}).Warn("aws CreateOrGetUser: user already exists, trying to get the user information")
 
 			response, err := s.GetUserByUserName(ctx, usr.UserName)
 			if err != nil {
 				return nil, fmt.Errorf("aws CreateOrGetUser: error getting user information: %w", err)
+			}
+
+			// check if the user attributes are the same
+			// maybe the user in the SCIM Side was changed, so we need to update the user in the SCIM Side
+			if usr.Name.FamilyName != response.Name.FamilyName || usr.Name.GivenName != response.Name.GivenName ||
+				usr.Active != response.Active || usr.ExternalID != response.ExternalID || usr.DisplayName != response.DisplayName {
+				log.WithFields(log.Fields{
+					"user":        usr.UserName,
+					"id":          response.ID,
+					"externalId":  response.ExternalID,
+					"active":      response.Active,
+					"displayName": response.DisplayName,
+				}).Warn("aws CreateOrGetUser: user already exists, but the user attributes are different, updating the user")
+
+				pur := &PutUserRequest{
+					ID:          response.ID,
+					DisplayName: usr.DisplayName,
+					UserName:    usr.UserName,
+					ExternalID:  usr.ExternalID,
+					Name: Name{
+						FamilyName: usr.Name.FamilyName,
+						GivenName:  usr.Name.GivenName,
+					},
+					Emails: usr.Emails,
+					Active: usr.Active,
+				}
+
+				_, err := s.PutUser(ctx, pur)
+				if err != nil {
+					return nil, fmt.Errorf("aws CreateOrGetUser: error updating user: %w", err)
+				}
 			}
 
 			log.WithFields(log.Fields{
@@ -389,6 +432,17 @@ func (s *SCIMService) GetUserByUserName(ctx context.Context, userName string) (*
 
 	if e := s.checkHTTPResponse(resp); e != nil {
 		return nil, e
+	}
+
+	if resp.StatusCode == http.StatusOK && log.GetLevel() == log.TraceLevel {
+		bodyBytes, er := io.ReadAll(resp.Body)
+		if er != nil {
+			log.Error(er)
+		}
+
+		log.WithFields(log.Fields{
+			"body": string(bodyBytes),
+		}).Trace("aws GetUserByUserName: response raw body data")
 	}
 
 	var lur ListUsersResponse
@@ -501,7 +555,7 @@ func (s *SCIMService) PatchUser(ctx context.Context, pur *PatchUserRequest) erro
 		return fmt.Errorf("aws: error parsing url: %w", err)
 	}
 
-	reqURL.Path = path.Join(reqURL.Path, fmt.Sprintf("/Groups/%s", pur.User.ID))
+	reqURL.Path = path.Join(reqURL.Path, fmt.Sprintf("/Users/%s", pur.User.ID))
 
 	req, err := s.newRequest(ctx, http.MethodPatch, reqURL, pur.Patch)
 	if err != nil {

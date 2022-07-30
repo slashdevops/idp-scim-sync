@@ -1,4 +1,7 @@
 linters-settings:
+  nestif:
+    min-complexity: 10
+
   dupl:
     threshold: 300
 

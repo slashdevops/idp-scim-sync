@@ -309,7 +309,6 @@ func (s *Provider) CreateUsers(ctx context.Context, ur *model.UsersResult) (*mod
 			Active:      user.Active,
 			Email:       user.Email,
 		}
-		e.SCIMID = r.ID
 		e.SetHashCode()
 
 		users = append(users, e)
@@ -598,6 +597,13 @@ func (s *Provider) GetGroupsMembersBruteForce(ctx context.Context, gr *model.Gro
 		members := make([]*model.Member, 0)
 
 		for _, user := range ur.Resources {
+			log.WithFields(log.Fields{
+				"group":  group.Name,
+				"user":   user.Email,
+				"SCIMID": user.SCIMID,
+				"IPID":   user.IPID,
+			}).Trace("scim GetGroupsMembersBruteForce: checking if user is member of group")
+
 			// https://docs.aws.amazon.com/singlesignon/latest/developerguide/listgroups.html
 			f := fmt.Sprintf("id eq %q and members eq %q", group.SCIMID, user.SCIMID)
 			lgr, err := s.scim.ListGroups(ctx, f)
