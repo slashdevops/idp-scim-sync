@@ -640,8 +640,6 @@ func TestCreateOrGetUser(t *testing.T) {
 	defer mockCtrl.Finish()
 	endpoint := "https://testing.com"
 	CreateUserResponseFile := "testdata/CreateUserResponse_Active.json"
-	CreateUserResponseConflictFile := "testdata/CreateUserResponse_Conflict.json"
-	ListUserResponseFile := "testdata/ListUserResponse.json"
 
 	t.Run("should return a valid response with a valid request", func(t *testing.T) {
 		mockHTTPCLient := mocks.NewMockHTTPClient(mockCtrl)
@@ -702,9 +700,14 @@ func TestCreateOrGetUser(t *testing.T) {
 	})
 
 	t.Run("should return a 409 response and execute the get user", func(t *testing.T) {
+		CreateUserResponseConflictFile := "testdata/CreateUserResponse_Conflict.json"
+		ListUserResponseFile := "testdata/ListUserResponse.json"
+		PutUserResponseFile := "testdata/PutUserResponse.json"
+
 		mockHTTPCLient := mocks.NewMockHTTPClient(mockCtrl)
 		jsonRespConflict := ReadJSONFIleAsString(t, CreateUserResponseConflictFile)
 		jsonRespOK := ReadJSONFIleAsString(t, ListUserResponseFile)
+		jsonPutUserRespOK := ReadJSONFIleAsString(t, PutUserResponseFile)
 
 		httpRespConflict := &http.Response{
 			Status:     "409 Conflict",
@@ -732,8 +735,22 @@ func TestCreateOrGetUser(t *testing.T) {
 			ContentLength: int64(len(jsonRespOK)),
 		}
 
+		PutUserRespOK := &http.Response{
+			Status:     "201 OK",
+			StatusCode: http.StatusCreated,
+			Header: http.Header{
+				"Date":             []string{"Tue, 31 Mar 2020 02:36:15 GMT"},
+				"Content-Type":     []string{"application/json"},
+				"x-amzn-RequestId": []string{"abbf9e53-9ecc-46d2-8efe-104a66ff128f"},
+			},
+			Proto:         "HTTP/1.1",
+			Body:          io.NopCloser(strings.NewReader(jsonPutUserRespOK)),
+			ContentLength: int64(len(jsonPutUserRespOK)),
+		}
+
 		mockHTTPCLient.EXPECT().Do(gomock.Any()).Return(httpRespConflict, nil).Times(1)
 		mockHTTPCLient.EXPECT().Do(gomock.Any()).Return(httpRespOK, nil).Times(1)
+		mockHTTPCLient.EXPECT().Do(gomock.Any()).Return(PutUserRespOK, nil).Times(1)
 
 		service, err := NewSCIMService(mockHTTPCLient, endpoint, "MyToken")
 		assert.NoError(t, err)
