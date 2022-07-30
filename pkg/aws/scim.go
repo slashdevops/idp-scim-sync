@@ -302,6 +302,18 @@ func (s *SCIMService) CreateOrGetUser(ctx context.Context, usr *CreateUserReques
 				return nil, fmt.Errorf("aws CreateOrGetUser: error getting user information: %w", err)
 			}
 
+			cur := &CreateUserResponse{
+				ID:          response.ID,
+				ExternalID:  response.ExternalID,
+				Meta:        response.Meta,
+				Schemas:     response.Schemas,
+				UserName:    response.UserName,
+				Name:        response.Name,
+				DisplayName: response.DisplayName,
+				Active:      response.Active,
+				Emails:      response.Emails,
+			}
+
 			// check if the user attributes are the same
 			// maybe the user in the SCIM Side was changed, so we need to update the user in the SCIM Side
 			if usr.Name.FamilyName != response.Name.FamilyName || usr.Name.GivenName != response.Name.GivenName ||
@@ -327,10 +339,19 @@ func (s *SCIMService) CreateOrGetUser(ctx context.Context, usr *CreateUserReques
 					Active: usr.Active,
 				}
 
-				_, err := s.PutUser(ctx, pur)
+				resp, err := s.PutUser(ctx, pur)
 				if err != nil {
 					return nil, fmt.Errorf("aws CreateOrGetUser: error updating user: %w", err)
 				}
+				cur.ID = resp.ID
+				cur.ExternalID = resp.ExternalID
+				cur.Meta = resp.Meta
+				cur.Schemas = resp.Schemas
+				cur.UserName = resp.UserName
+				cur.Name = resp.Name
+				cur.DisplayName = resp.DisplayName
+				cur.Active = resp.Active
+				cur.Emails = resp.Emails
 			}
 
 			log.WithFields(log.Fields{
@@ -340,17 +361,7 @@ func (s *SCIMService) CreateOrGetUser(ctx context.Context, usr *CreateUserReques
 				"active":     response.Active,
 			}).Trace("aws CreateOrGetUser: obtained user information")
 
-			return &CreateUserResponse{
-				ID:          response.ID,
-				ExternalID:  response.ExternalID,
-				Meta:        response.Meta,
-				Schemas:     response.Schemas,
-				UserName:    response.UserName,
-				Name:        response.Name,
-				DisplayName: response.DisplayName,
-				Active:      response.Active,
-				Emails:      response.Emails,
-			}, nil
+			return cur, nil
 		}
 		return nil, e
 	}
