@@ -757,17 +757,17 @@ func TestCreateOrGetUser(t *testing.T) {
 		assert.NotNil(t, service)
 
 		usrr := &CreateUserRequest{
-			ID:         "90677c608a-7afcdc23-0bd4-4fb7-b2ff-10ccffdff447",
-			ExternalID: "702135",
-			UserName:   "mjack",
+			ID:         "9067729b3d-94f1e0b3-c394-48d5-8ab1-2c122a167074",
+			ExternalID: "701984",
+			UserName:   "bjensen",
 			Name: Name{
-				FamilyName: "Mark",
-				GivenName:  "Jackson",
+				FamilyName: "Jensen",
+				GivenName:  "Barbara",
 			},
-			DisplayName: "mjack",
+			DisplayName: "Barbara Jensen",
 			Emails: []*Email{
 				{
-					Value:   "mjack@example.com",
+					Value:   "bjensen@example.com",
 					Type:    "work",
 					Primary: true,
 				},
@@ -779,16 +779,16 @@ func TestCreateOrGetUser(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, got)
 
-		assert.Equal(t, "90677c608a-7afcdc23-0bd4-4fb7-b2ff-10ccffdff447", got.ID)
-		assert.Equal(t, "702135", got.ExternalID)
-		assert.Equal(t, "mjack", got.UserName)
-		assert.Equal(t, "Jackson", got.Name.GivenName)
-		assert.Equal(t, "Mark", got.Name.FamilyName)
-		assert.Equal(t, "mjack", got.DisplayName)
-		assert.Equal(t, "mjack@example.com", got.Emails[0].Value)
+		assert.Equal(t, "9067729b3d-94f1e0b3-c394-48d5-8ab1-2c122a167074", got.ID)
+		assert.Equal(t, "701984", got.ExternalID)
+		assert.Equal(t, "bjensen", got.UserName)
+		assert.Equal(t, "Barbara", got.Name.GivenName)
+		assert.Equal(t, "Jensen", got.Name.FamilyName)
+		assert.Equal(t, "Barbara Jensen", got.DisplayName)
+		assert.Equal(t, "bjensen@example.com", got.Emails[0].Value)
 		assert.Equal(t, "work", got.Emails[0].Type)
 		assert.Equal(t, true, got.Emails[0].Primary)
-		assert.Equal(t, false, got.Active)
+		assert.Equal(t, true, got.Active)
 	})
 }
 
@@ -1213,7 +1213,7 @@ func TestPutUser(t *testing.T) {
 				FamilyName: "Jensen",
 				GivenName:  "Barbara",
 			},
-			DisplayName: "Babs Jensen",
+			DisplayName: "Barbara Jensen",
 			Emails: []*Email{
 				{
 					Value:   "bjensen@example.com",
@@ -1231,7 +1231,7 @@ func TestPutUser(t *testing.T) {
 		assert.Equal(t, "9067729b3d-94f1e0b3-c394-48d5-8ab1-2c122a167074", got.ID)
 		assert.Equal(t, "701984", got.ExternalID)
 		assert.Equal(t, "bjensen", got.UserName)
-		assert.Equal(t, "Babs Jensen", got.DisplayName)
+		assert.Equal(t, "Barbara Jensen", got.DisplayName)
 		assert.Equal(t, true, got.Active)
 	})
 
