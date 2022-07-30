@@ -302,6 +302,14 @@ func (s *SCIMService) CreateOrGetUser(ctx context.Context, usr *CreateUserReques
 				return nil, fmt.Errorf("aws CreateOrGetUser: error getting user information: %w", err)
 			}
 
+			log.WithFields(log.Fields{
+				"user":        usr.UserName,
+				"id":          response.ID,
+				"externalId":  response.ExternalID,
+				"active":      response.Active,
+				"displayName": response.DisplayName,
+			}).Trace("aws CreateOrGetUser: obtained user information")
+
 			cur := &CreateUserResponse{
 				ID:          response.ID,
 				ExternalID:  response.ExternalID,
@@ -318,13 +326,23 @@ func (s *SCIMService) CreateOrGetUser(ctx context.Context, usr *CreateUserReques
 			// maybe the user in the SCIM Side was changed, so we need to update the user in the SCIM Side
 			if usr.Name.FamilyName != response.Name.FamilyName || usr.Name.GivenName != response.Name.GivenName ||
 				usr.Active != response.Active || usr.ExternalID != response.ExternalID || usr.DisplayName != response.DisplayName {
+				log.Warn("aws CreateOrGetUser: user already exists, but the user attributes are different, updating the user")
+
 				log.WithFields(log.Fields{
-					"user":        usr.UserName,
+					"user":        response.UserName,
 					"id":          response.ID,
 					"externalId":  response.ExternalID,
 					"active":      response.Active,
 					"displayName": response.DisplayName,
-				}).Warn("aws CreateOrGetUser: user already exists, but the user attributes are different, updating the user")
+				}).Warn("aws CreateOrGetUser: attributes before update")
+
+				log.WithFields(log.Fields{
+					"user":        usr.UserName,
+					"id":          usr.ID,
+					"externalId":  usr.ExternalID,
+					"active":      usr.Active,
+					"displayName": usr.DisplayName,
+				}).Warn("aws CreateOrGetUser: attributes after update")
 
 				pur := &PutUserRequest{
 					ID:          response.ID,
@@ -353,13 +371,6 @@ func (s *SCIMService) CreateOrGetUser(ctx context.Context, usr *CreateUserReques
 				cur.Active = resp.Active
 				cur.Emails = resp.Emails
 			}
-
-			log.WithFields(log.Fields{
-				"user":       usr.UserName,
-				"id":         response.ID,
-				"externalId": response.ExternalID,
-				"active":     response.Active,
-			}).Trace("aws CreateOrGetUser: obtained user information")
 
 			return cur, nil
 		}
