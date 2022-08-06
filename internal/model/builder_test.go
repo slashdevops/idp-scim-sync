@@ -134,3 +134,54 @@ func TestGroupsResultBuilder(t *testing.T) {
 		assert.Equal(t, gr.HashCode, grb.gr.HashCode)
 	})
 }
+
+func TestMemberBuilder(t *testing.T) {
+	t.Run("empty", func(t *testing.T) {
+		mb := NewMemberBuilder().Build()
+
+		m := &Member{}
+		m.SetHashCode()
+
+		assert.Equal(t, "", mb.IPID)
+		assert.Equal(t, "", mb.SCIMID)
+		assert.Equal(t, "", mb.Email)
+		assert.Equal(t, "", mb.Status)
+		assert.Equal(t, m.HashCode, mb.HashCode)
+	})
+
+	t.Run("all options", func(t *testing.T) {
+		mb := NewMemberBuilder()
+		mb.WithIPID("ipid").WithSCIMID("scimid").WithEmail("email").WithStatus("status").Build()
+
+		m := &Member{
+			IPID:   "ipid",
+			SCIMID: "scimid",
+			Email:  "email",
+			Status: "status",
+		}
+		m.SetHashCode()
+
+		assert.Equal(t, "ipid", mb.m.IPID)
+		assert.Equal(t, "scimid", mb.m.SCIMID)
+		assert.Equal(t, "email", mb.m.Email)
+		assert.Equal(t, "status", mb.m.Status)
+		assert.Equal(t, m.HashCode, mb.m.HashCode)
+	})
+
+	t.Run("few options", func(t *testing.T) {
+		mb := NewMemberBuilder()
+		mb.WithIPID("ipid").WithStatus("status").Build()
+
+		m := &Member{
+			IPID:   "ipid",
+			Status: "status",
+		}
+		m.SetHashCode()
+
+		assert.Equal(t, "ipid", mb.m.IPID)
+		assert.Equal(t, "", mb.m.SCIMID)
+		assert.Equal(t, "", mb.m.Email)
+		assert.Equal(t, "status", mb.m.Status)
+		assert.Equal(t, m.HashCode, mb.m.HashCode)
+	})
+}
