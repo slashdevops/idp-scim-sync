@@ -6,7 +6,7 @@ type userBuilder struct {
 }
 
 // NewUserBuilder creates a new UserBuilder entity.
-func NewUserBuilder() *userBuilder {
+func UserBuilder() *userBuilder {
 	return &userBuilder{
 		u: &User{},
 	}

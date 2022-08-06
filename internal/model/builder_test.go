@@ -8,7 +8,7 @@ import (
 
 func TestUserBuilder(t *testing.T) {
 	t.Run("empty", func(t *testing.T) {
-		ub := NewUserBuilder().Build()
+		ub := UserBuilder().Build()
 
 		u := &User{}
 		u.SetHashCode()
@@ -24,7 +24,7 @@ func TestUserBuilder(t *testing.T) {
 	})
 
 	t.Run("all options", func(t *testing.T) {
-		ub := NewUserBuilder()
+		ub := UserBuilder()
 		ub.WithIPID("ipid").
 			WithSCIMID("scimid").
 			WithGivenName("givenname").
@@ -55,7 +55,7 @@ func TestUserBuilder(t *testing.T) {
 	})
 
 	t.Run("few options", func(t *testing.T) {
-		ub := NewUserBuilder()
+		ub := UserBuilder()
 		ub.WithIPID("ipid").
 			WithGivenName("givenname").
 			WithActive(true).

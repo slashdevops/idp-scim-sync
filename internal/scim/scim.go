@@ -224,7 +224,7 @@ func (s *Provider) GetUsers(ctx context.Context) (*model.UsersResult, error) {
 
 	users := make([]*model.User, 0)
 	for _, user := range usersResponse.Resources {
-		e := model.NewUserBuilder().
+		e := model.UserBuilder().
 			WithIPID(user.ExternalID).
 			WithSCIMID(user.ID).
 			WithGivenName(user.Name.GivenName).
@@ -282,7 +282,7 @@ func (s *Provider) CreateUsers(ctx context.Context, ur *model.UsersResult) (*mod
 			return nil, fmt.Errorf("scim: error creating user: %w", err)
 		}
 
-		e := model.NewUserBuilder().
+		e := model.UserBuilder().
 			WithIPID(user.IPID).
 			WithSCIMID(r.ID).
 			WithGivenName(user.Name.GivenName).
@@ -341,7 +341,7 @@ func (s *Provider) UpdateUsers(ctx context.Context, ur *model.UsersResult) (*mod
 			return nil, fmt.Errorf("scim: error updating user: %w", err)
 		}
 
-		e := model.NewUserBuilder().
+		e := model.UserBuilder().
 			WithIPID(user.IPID).
 			WithSCIMID(r.ID).
 			WithGivenName(user.Name.GivenName).

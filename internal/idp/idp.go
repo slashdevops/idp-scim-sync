@@ -104,7 +104,7 @@ func (i *IdentityProvider) GetUsers(ctx context.Context, filter []string) (*mode
 	}
 
 	for _, usr := range pUsers {
-		e := model.NewUserBuilder().
+		e := model.UserBuilder().
 			WithIPID(usr.Id).
 			WithGivenName(usr.Name.GivenName).
 			WithFamilyName(usr.Name.FamilyName).
@@ -170,7 +170,7 @@ func (i *IdentityProvider) GetUsersByGroupsMembers(ctx context.Context, gmr *mod
 				return nil, fmt.Errorf("idp: error getting user: %+v, email: %s, error: %w", member.IPID, member.Email, err)
 			}
 
-			e := model.NewUserBuilder().
+			e := model.UserBuilder().
 				WithIPID(u.Id).
 				WithGivenName(u.Name.GivenName).
 				WithFamilyName(u.Name.FamilyName).
