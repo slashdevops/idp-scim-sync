@@ -144,7 +144,7 @@ func (i *IdentityProvider) GetGroupMembers(ctx context.Context, groupID string) 
 			continue
 		}
 
-		e := model.NewMemberBuilder().
+		e := model.MemberBuilder().
 			WithIPID(member.Id).
 			WithEmail(member.Email).
 			WithStatus(member.Status).

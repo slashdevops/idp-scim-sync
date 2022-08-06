@@ -177,8 +177,8 @@ type memberBuilder struct {
 	m *Member
 }
 
-// NewMemberBuilder creates a new MemberBuilder entity.
-func NewMemberBuilder() *memberBuilder {
+// MemberBuilder creates a new MemberBuilder entity.
+func MemberBuilder() *memberBuilder {
 	return &memberBuilder{
 		m: &Member{},
 	}

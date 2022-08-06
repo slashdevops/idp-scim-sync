@@ -406,7 +406,7 @@ func (s *Provider) CreateGroupsMembers(ctx context.Context, gmr *model.GroupsMem
 				Value: member.SCIMID,
 			})
 
-			e := model.NewMemberBuilder().
+			e := model.MemberBuilder().
 				WithIPID(member.IPID).
 				WithSCIMID(member.SCIMID).
 				WithEmail(member.Email).
@@ -525,7 +525,7 @@ func (s *Provider) GetGroupsMembers(ctx context.Context, gr *model.GroupsResult)
 					return nil, fmt.Errorf("scim: error getting user: %s, error %w", member.Value, err)
 				}
 
-				m := model.NewMemberBuilder().
+				m := model.MemberBuilder().
 					WithSCIMID(member.Value).
 					WithEmail(u.Emails[0].Value).
 					Build()
@@ -572,7 +572,7 @@ func (s *Provider) GetGroupsMembersBruteForce(ctx context.Context, gr *model.Gro
 			}
 
 			if lgr.TotalResults > 0 { // crazy thing of the AWS SSO SCIM API, it doesn't return the member into the Resources array
-				m := model.NewMemberBuilder().
+				m := model.MemberBuilder().
 					WithIPID(user.IPID).
 					WithSCIMID(user.SCIMID).
 					WithEmail(user.Email).

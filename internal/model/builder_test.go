@@ -298,7 +298,7 @@ func TestGroupsResultBuilder(t *testing.T) {
 
 func TestMemberBuilder(t *testing.T) {
 	t.Run("empty", func(t *testing.T) {
-		mb := NewMemberBuilder().Build()
+		mb := MemberBuilder().Build()
 
 		m := &Member{}
 		m.SetHashCode()
@@ -311,7 +311,7 @@ func TestMemberBuilder(t *testing.T) {
 	})
 
 	t.Run("all options", func(t *testing.T) {
-		mb := NewMemberBuilder()
+		mb := MemberBuilder()
 		mb.WithIPID("ipid").WithSCIMID("scimid").WithEmail("email").WithStatus("status").Build()
 
 		m := &Member{
@@ -330,7 +330,7 @@ func TestMemberBuilder(t *testing.T) {
 	})
 
 	t.Run("few options", func(t *testing.T) {
-		mb := NewMemberBuilder()
+		mb := MemberBuilder()
 		mb.WithIPID("ipid").WithStatus("status").Build()
 
 		m := &Member{
