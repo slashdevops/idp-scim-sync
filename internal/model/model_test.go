@@ -121,7 +121,7 @@ func TestGroupsMembersResult_MarshalJSON(t *testing.T) {
 				Resources: []*GroupMembers{
 					{
 						Items: 1,
-						Group: Group{
+						Group: &Group{
 							IPID:   "1",
 							SCIMID: "1",
 							Name:   "group 1",
@@ -358,19 +358,19 @@ func TestUser_SetHashCode_pointer(t *testing.T) {
 func TestGroup_SetHashCode(t *testing.T) {
 	tests := []struct {
 		name  string
-		group Group
-		want  Group
+		group *Group
+		want  *Group
 	}{
 		{
 			name: "success",
-			group: Group{
+			group: &Group{
 				IPID:     "1",
 				SCIMID:   "1",
 				Name:     "group 1",
 				Email:    "user.1@mail.com",
 				HashCode: "test",
 			},
-			want: Group{
+			want: &Group{
 				IPID:  "1",
 				Name:  "group 1",
 				Email: "user.1@mail.com",
@@ -434,7 +434,7 @@ func TestGroupMembers_SetHashCode(t *testing.T) {
 			groupMembers: GroupMembers{
 				Items:    3,
 				HashCode: "test",
-				Group:    Group{IPID: "1", SCIMID: "1", Name: "group", Email: "group.1@mail.com"},
+				Group:    &Group{IPID: "1", SCIMID: "1", Name: "group", Email: "group.1@mail.com"},
 				Resources: []*Member{
 					{IPID: "1", SCIMID: "1", Email: "group.1@mail.com", Status: "ACTIVE"},
 					{IPID: "2", SCIMID: "2", Email: "group.2@mail.com", Status: "ACTIVE"},
@@ -443,7 +443,7 @@ func TestGroupMembers_SetHashCode(t *testing.T) {
 			},
 			want: GroupMembers{
 				Items: 3,
-				Group: Group{IPID: "1", SCIMID: "1", Name: "group", Email: "group.1@mail.com"},
+				Group: &Group{IPID: "1", SCIMID: "1", Name: "group", Email: "group.1@mail.com"},
 				Resources: []*Member{
 					{IPID: "3", SCIMID: "3", Email: "group.3@mail.com", Status: "ACTIVE"},
 					{IPID: "1", SCIMID: "1", Email: "group.1@mail.com", Status: "ACTIVE"},
@@ -628,9 +628,9 @@ func TestGroupsMembersResult_SetHashCode(t *testing.T) {
 	m2.SetHashCode()
 	m3.SetHashCode()
 
-	gm1 := &GroupMembers{Group: Group{IPID: "1", SCIMID: "1", Name: "group", Email: "group.1@mail.com"}, Resources: []*Member{m1, m2, m3}}
-	gm2 := &GroupMembers{Group: Group{IPID: "2", SCIMID: "2", Name: "group", Email: "group.2@mail.com"}, Resources: []*Member{m2, m1, m3}}
-	gm3 := &GroupMembers{Group: Group{IPID: "3", SCIMID: "3", Name: "group", Email: "group.3@mail.com"}, Resources: []*Member{m1, m3, m2}}
+	gm1 := &GroupMembers{Group: &Group{IPID: "1", SCIMID: "1", Name: "group", Email: "group.1@mail.com"}, Resources: []*Member{m1, m2, m3}}
+	gm2 := &GroupMembers{Group: &Group{IPID: "2", SCIMID: "2", Name: "group", Email: "group.2@mail.com"}, Resources: []*Member{m2, m1, m3}}
+	gm3 := &GroupMembers{Group: &Group{IPID: "3", SCIMID: "3", Name: "group", Email: "group.3@mail.com"}, Resources: []*Member{m1, m3, m2}}
 
 	gm1.SetHashCode()
 	gm2.SetHashCode()
@@ -683,12 +683,12 @@ func TestGroupsMembersResult_SetHashCode(t *testing.T) {
 func TestGroup_GobEncode(t *testing.T) {
 	tests := []struct {
 		name    string
-		g       Group
+		g       *Group
 		wantErr bool
 	}{
 		{
 			name: "Test Group GobEncode",
-			g: Group{
+			g: &Group{
 				IPID:     "1",
 				SCIMID:   "1",
 				Name:     "group",

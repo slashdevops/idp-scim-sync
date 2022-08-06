@@ -227,7 +227,7 @@ func (mr *MembersResult) SetHashCode() {
 type GroupMembers struct {
 	Items     int       `json:"items"`
 	HashCode  string    `json:"hashCode,omitempty"`
-	Group     Group     `json:"group"`
+	Group     *Group    `json:"group"`
 	Resources []*Member `json:"resources"`
 }
 

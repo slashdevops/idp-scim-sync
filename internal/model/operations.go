@@ -310,7 +310,7 @@ func UpdateGroupsMembersSCIMID(idp *GroupsMembersResult, scimGroups *GroupsResul
 	for _, groupMembers := range idp.Resources {
 		mbs := make([]*Member, 0)
 
-		g := Group{
+		g := &Group{
 			IPID:   groupMembers.Group.IPID,
 			SCIMID: groups[groupMembers.Group.Name].SCIMID,
 			Name:   groupMembers.Group.Name,
@@ -365,7 +365,7 @@ func membersDataSets(idp, scim []*GroupMembers) (create, equal, remove []*GroupM
 	}
 
 	for _, grpMembers := range scim {
-		scimGroupsSet[grpMembers.Group.Name] = grpMembers.Group
+		scimGroupsSet[grpMembers.Group.Name] = *grpMembers.Group
 		scimMemberSet[grpMembers.Group.Name] = make(map[string]Member)
 		for _, member := range grpMembers.Resources {
 			scimMemberSet[grpMembers.Group.Name][member.Email] = *member

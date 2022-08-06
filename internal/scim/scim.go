@@ -569,7 +569,7 @@ func (s *Provider) GetGroupsMembers(ctx context.Context, gr *model.GroupsResult)
 
 			e := &model.GroupMembers{
 				Items:     len(members),
-				Group:     *group,
+				Group:     group,
 				Resources: members,
 			}
 			e.SetHashCode()
@@ -623,7 +623,7 @@ func (s *Provider) GetGroupsMembersBruteForce(ctx context.Context, gr *model.Gro
 			}
 			e := &model.GroupMembers{
 				Items:     len(members),
-				Group:     *group,
+				Group:     group,
 				Resources: members,
 			}
 			e.SetHashCode()

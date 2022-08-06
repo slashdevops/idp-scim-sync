@@ -1184,7 +1184,7 @@ func TestCreateGroupsMembers(t *testing.T) {
 			Resources: []*model.GroupMembers{
 				{
 					Items: 1,
-					Group: model.Group{
+					Group: &model.Group{
 						IPID:   "1",
 						SCIMID: "1",
 						Name:   "group 1",
@@ -1228,7 +1228,7 @@ func TestCreateGroupsMembers(t *testing.T) {
 			Resources: []*model.GroupMembers{
 				{
 					Items: 1,
-					Group: model.Group{
+					Group: &model.Group{
 						IPID:   "1",
 						SCIMID: "1",
 						Name:   "group 1",
@@ -1302,7 +1302,7 @@ func TestCreateGroupsMembers(t *testing.T) {
 			Resources: []*model.GroupMembers{
 				{
 					Items: 1,
-					Group: model.Group{
+					Group: &model.Group{
 						IPID:   "1",
 						SCIMID: "1",
 						Name:   "group 1",
@@ -1357,7 +1357,7 @@ func TestCreateGroupsMembers(t *testing.T) {
 			Resources: []*model.GroupMembers{
 				{
 					Items: len(members),
-					Group: model.Group{
+					Group: &model.Group{
 						IPID:   "1",
 						SCIMID: "1",
 						Name:   "group 1",
@@ -1421,7 +1421,7 @@ func TestDeleteGroupsMembers(t *testing.T) {
 			Resources: []*model.GroupMembers{
 				{
 					Items: 1,
-					Group: model.Group{
+					Group: &model.Group{
 						IPID:   "1",
 						SCIMID: "1",
 						Name:   "group 1",
@@ -1477,7 +1477,7 @@ func TestDeleteGroupsMembers(t *testing.T) {
 			Resources: []*model.GroupMembers{
 				{
 					Items: 1,
-					Group: model.Group{
+					Group: &model.Group{
 						IPID:   "1",
 						SCIMID: "1",
 						Name:   "group 1",
@@ -1513,7 +1513,7 @@ func TestDeleteGroupsMembers(t *testing.T) {
 			Resources: []*model.GroupMembers{
 				{
 					Items: len(members),
-					Group: model.Group{
+					Group: &model.Group{
 						IPID:   "1",
 						SCIMID: "1",
 						Name:   "group 1",

@@ -220,7 +220,7 @@ func (i *IdentityProvider) GetGroupsMembers(ctx context.Context, gr *model.Group
 			return nil, fmt.Errorf("idp: error getting group members: %w", err)
 		}
 
-		e := model.Group{
+		e := &model.Group{
 			IPID:  group.IPID,
 			Name:  group.Name,
 			Email: group.Email,
