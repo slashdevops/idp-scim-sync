@@ -470,28 +470,19 @@ func TestMembersOperations(t *testing.T) {
 		{
 			name: "empty, return empty",
 			args: args{
-				idp:  &GroupsMembersResult{},
-				scim: &GroupsMembersResult{},
+				idp:  NewGroupsMembersResultBuilder().Build(),
+				scim: NewGroupsMembersResultBuilder().Build(),
 			},
-			wantCreate: &GroupsMembersResult{
-				Items:     0,
-				Resources: []*GroupMembers{},
-			},
-			wantEqual: &GroupsMembersResult{
-				Items:     0,
-				Resources: []*GroupMembers{},
-			},
-			wantDelete: &GroupsMembersResult{
-				Items:     0,
-				Resources: []*GroupMembers{},
-			},
-			wantErr: false,
+			wantCreate: NewGroupsMembersResultBuilder().Build(),
+			wantEqual:  NewGroupsMembersResultBuilder().Build(),
+			wantDelete: NewGroupsMembersResultBuilder().Build(),
+			wantErr:    false,
 		},
 		{
 			name: "nil idp, return error",
 			args: args{
 				idp:  nil,
-				scim: &GroupsMembersResult{},
+				scim: NewGroupsMembersResultBuilder().Build(),
 			},
 			wantCreate: nil,
 			wantEqual:  nil,
@@ -501,7 +492,7 @@ func TestMembersOperations(t *testing.T) {
 		{
 			name: "nil scim, return error",
 			args: args{
-				idp:  &GroupsMembersResult{},
+				idp:  NewGroupsMembersResultBuilder().Build(),
 				scim: nil,
 			},
 			wantCreate: nil,
@@ -512,9 +503,8 @@ func TestMembersOperations(t *testing.T) {
 		{
 			name: "one group: 1 add, 1 equal, 1 delete",
 			args: args{
-				idp: &GroupsMembersResult{
-					Items: 1,
-					Resources: []*GroupMembers{
+				idp: NewGroupsMembersResultBuilder().WithResources(
+					[]*GroupMembers{
 						{
 							Items: 2,
 							Group: &Group{IPID: "1", Name: "group 1", Email: "group.1@mail.com"},
@@ -524,10 +514,9 @@ func TestMembersOperations(t *testing.T) {
 							},
 						},
 					},
-				},
-				scim: &GroupsMembersResult{
-					Items: 1,
-					Resources: []*GroupMembers{
+				).Build(),
+				scim: NewGroupsMembersResultBuilder().WithResources(
+					[]*GroupMembers{
 						{
 							Items: 2,
 							Group: &Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com"},
@@ -537,307 +526,255 @@ func TestMembersOperations(t *testing.T) {
 							},
 						},
 					},
-				},
+				).Build(),
 			},
-			wantCreate: &GroupsMembersResult{
-				Items: 1,
-				Resources: []*GroupMembers{
-					{
-						Items: 1,
-						Group: &Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: Hash(&Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com"})},
-						Resources: []*Member{
-							NewMemberBuilder().WithIPID("2").WithSCIMID("2").WithEmail("user.2@mail.com").WithStatus("ACTIVE").Build(),
-						},
-						HashCode: Hash(&GroupMembers{
-							Items: 1,
-							Group: &Group{IPID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: Hash(&Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com"})},
-							Resources: []*Member{
+			wantCreate: NewGroupsMembersResultBuilder().WithResources(
+				[]*GroupMembers{
+					NewGroupMembersBuilder().
+						WithGroup(
+							&Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: Hash(&Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com"})},
+						).
+						WithResources(
+							[]*Member{
 								NewMemberBuilder().WithIPID("2").WithSCIMID("2").WithEmail("user.2@mail.com").WithStatus("ACTIVE").Build(),
 							},
-						}),
-					},
+						).Build(),
 				},
-			},
-			wantEqual: &GroupsMembersResult{
-				Items: 1,
-				Resources: []*GroupMembers{
-					{
-						Items: 1,
-						Group: &Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: Hash(&Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com"})},
-						Resources: []*Member{
-							NewMemberBuilder().WithIPID("1").WithSCIMID("1").WithEmail("user.1@mail.com").WithStatus("ACTIVE").Build(),
-						},
-						HashCode: Hash(&GroupMembers{
-							Items: 1,
-							Group: &Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: Hash(&Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com"})},
-							Resources: []*Member{
+			).Build(),
+			wantEqual: NewGroupsMembersResultBuilder().WithResources(
+				[]*GroupMembers{
+					NewGroupMembersBuilder().
+						WithGroup(
+							&Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: Hash(&Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com"})},
+						).
+						WithResources(
+							[]*Member{
 								NewMemberBuilder().WithIPID("1").WithSCIMID("1").WithEmail("user.1@mail.com").WithStatus("ACTIVE").Build(),
 							},
-						}),
-					},
+						).Build(),
 				},
-			},
-			wantDelete: &GroupsMembersResult{
-				Items: 1,
-				Resources: []*GroupMembers{
-					{
-						Items: 1,
-						Group: &Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: Hash(&Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com"})},
-						Resources: []*Member{
-							NewMemberBuilder().WithIPID("3").WithSCIMID("3").WithEmail("user.3@mail.com").WithStatus("ACTIVE").Build(),
-						},
-						HashCode: Hash(&GroupMembers{
-							Items: 1,
-							Group: &Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: Hash(&Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com"})},
-							Resources: []*Member{
+			).Build(),
+			wantDelete: NewGroupsMembersResultBuilder().WithResources(
+				[]*GroupMembers{
+					NewGroupMembersBuilder().
+						WithGroup(
+							&Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: Hash(&Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com"})},
+						).
+						WithResources(
+							[]*Member{
 								NewMemberBuilder().WithIPID("3").WithSCIMID("3").WithEmail("user.3@mail.com").WithStatus("ACTIVE").Build(),
 							},
-						}),
-					},
+						).Build(),
 				},
-			},
+			).Build(),
 			wantErr: false,
 		},
 		{
 			name: "two groups: g1 -> add 1, g1 -> equal 1, g2 -> equal 1, g1 -> delete 1, g2 -> delete 1",
 			args: args{
-				idp: &GroupsMembersResult{
-					Items: 2,
-					Resources: []*GroupMembers{
-						{
-							Items: 2,
-							Group: &Group{IPID: "1", Name: "group 1", Email: "group.1@mail.com"},
-							Resources: []*Member{
+				idp: NewGroupsMembersResultBuilder().WithResources(
+					[]*GroupMembers{
+						NewGroupMembersBuilder().
+							WithGroup(
+								&Group{IPID: "1", Name: "group 1", Email: "group.1@mail.com"},
+							).
+							WithResources(
+								[]*Member{
+									NewMemberBuilder().WithIPID("1").WithEmail("user.1@mail.com").WithStatus("ACTIVE").Build(),
+									NewMemberBuilder().WithIPID("2").WithSCIMID("2").WithEmail("user.2@mail.com").WithStatus("ACTIVE").Build(),
+								},
+							).Build(),
+						NewGroupMembersBuilder().
+							WithGroup(
+								&Group{IPID: "2", Name: "group 2", Email: "group.2@mail.com"},
+							).
+							WithResources(
+								[]*Member{
+									NewMemberBuilder().WithIPID("3").WithEmail("user.3@mail.com").WithStatus("ACTIVE").Build(),
+								},
+							).Build(),
+					},
+				).Build(),
+				scim: NewGroupsMembersResultBuilder().WithResources(
+					[]*GroupMembers{
+						NewGroupMembersBuilder().
+							WithGroup(
+								&Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com"},
+							).
+							WithResources(
+								[]*Member{
+									NewMemberBuilder().WithIPID("2").WithSCIMID("2").WithEmail("user.2@mail.com").WithStatus("ACTIVE").Build(),
+									NewMemberBuilder().WithIPID("3").WithSCIMID("3").WithEmail("user.3@mail.com").WithStatus("ACTIVE").Build(),
+								},
+							).Build(),
+						NewGroupMembersBuilder().
+							WithGroup(
+								&Group{IPID: "2", SCIMID: "2", Name: "group 2", Email: "group.2@mail.com"},
+							).
+							WithResources(
+								[]*Member{
+									NewMemberBuilder().WithIPID("1").WithSCIMID("1").WithEmail("user.1@mail.com").WithStatus("ACTIVE").Build(),
+									NewMemberBuilder().WithIPID("3").WithSCIMID("3").WithEmail("user.3@mail.com").WithStatus("ACTIVE").Build(),
+								},
+							).Build(),
+					},
+				).Build(),
+			},
+			wantCreate: NewGroupsMembersResultBuilder().WithResources(
+				[]*GroupMembers{
+					NewGroupMembersBuilder().
+						WithGroup(
+							&Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: Hash(&Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com"})},
+						).
+						WithResources(
+							[]*Member{
 								NewMemberBuilder().WithIPID("1").WithEmail("user.1@mail.com").WithStatus("ACTIVE").Build(),
+							},
+						).Build(),
+				},
+			).Build(),
+			wantEqual: NewGroupsMembersResultBuilder().WithResources(
+				[]*GroupMembers{
+					NewGroupMembersBuilder().
+						WithGroup(
+							&Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: Hash(&Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com"})},
+						).
+						WithResources(
+							[]*Member{
 								NewMemberBuilder().WithIPID("2").WithSCIMID("2").WithEmail("user.2@mail.com").WithStatus("ACTIVE").Build(),
 							},
-						},
-						{
-							Items: 1,
-							Group: &Group{IPID: "2", Name: "group 2", Email: "group.2@mail.com"},
-							Resources: []*Member{
-								NewMemberBuilder().WithIPID("3").WithEmail("user.3@mail.com").WithStatus("ACTIVE").Build(),
-							},
-						},
-					},
-				},
-				scim: &GroupsMembersResult{
-					Items: 2,
-					Resources: []*GroupMembers{
-						{
-							Items: 2,
-							Group: &Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com"},
-							Resources: []*Member{
-								NewMemberBuilder().WithIPID("2").WithSCIMID("2").WithEmail("user.2@mail.com").WithStatus("ACTIVE").Build(),
+						).Build(),
+					NewGroupMembersBuilder().
+						WithGroup(
+							&Group{IPID: "2", SCIMID: "2", Name: "group 2", Email: "group.2@mail.com", HashCode: Hash(&Group{IPID: "2", SCIMID: "2", Name: "group 2", Email: "group.2@mail.com"})},
+						).
+						WithResources(
+							[]*Member{
 								NewMemberBuilder().WithIPID("3").WithSCIMID("3").WithEmail("user.3@mail.com").WithStatus("ACTIVE").Build(),
 							},
-						},
-						{
-							Items: 2,
-							Group: &Group{IPID: "2", SCIMID: "2", Name: "group 2", Email: "group.2@mail.com"},
-							Resources: []*Member{
-								NewMemberBuilder().WithIPID("1").WithSCIMID("1").WithEmail("user.1@mail.com").WithStatus("ACTIVE").Build(),
+						).Build(),
+				},
+			).Build(),
+			wantDelete: NewGroupsMembersResultBuilder().WithResources(
+				[]*GroupMembers{
+					NewGroupMembersBuilder().
+						WithGroup(
+							&Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: Hash(&Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com"})},
+						).
+						WithResources(
+							[]*Member{
 								NewMemberBuilder().WithIPID("3").WithSCIMID("3").WithEmail("user.3@mail.com").WithStatus("ACTIVE").Build(),
 							},
-						},
-					},
-				},
-			},
-			wantCreate: &GroupsMembersResult{
-				Items: 1,
-				Resources: []*GroupMembers{
-					{
-						Items: 1,
-						Group: &Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: Hash(&Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com"})},
-						Resources: []*Member{
-							NewMemberBuilder().WithIPID("1").WithEmail("user.1@mail.com").WithStatus("ACTIVE").Build(),
-						},
-						HashCode: Hash(&GroupMembers{
-							Items: 1,
-							Group: &Group{IPID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: Hash(&Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com"})},
-							Resources: []*Member{
-								NewMemberBuilder().WithIPID("1").WithEmail("user.1@mail.com").WithStatus("ACTIVE").Build(),
-							},
-						}),
-					},
-				},
-			},
-			wantEqual: &GroupsMembersResult{
-				Items: 2,
-				Resources: []*GroupMembers{
-					{
-						Items: 1,
-						Group: &Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: Hash(&Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com"})},
-						Resources: []*Member{
-							NewMemberBuilder().WithIPID("2").WithSCIMID("2").WithEmail("user.2@mail.com").WithStatus("ACTIVE").Build(),
-						},
-						HashCode: Hash(&GroupMembers{
-							Items: 1,
-							Group: &Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: Hash(&Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com"})},
-							Resources: []*Member{
-								NewMemberBuilder().WithIPID("2").WithSCIMID("2").WithEmail("user.2@mail.com").WithStatus("ACTIVE").Build(),
-							},
-						}),
-					},
-					{
-						Items: 1,
-						Group: &Group{IPID: "2", SCIMID: "2", Name: "group 2", Email: "group.2@mail.com", HashCode: Hash(&Group{IPID: "2", SCIMID: "2", Name: "group 2", Email: "group.2@mail.com"})},
-						Resources: []*Member{
-							NewMemberBuilder().WithIPID("3").WithSCIMID("3").WithEmail("user.3@mail.com").WithStatus("ACTIVE").Build(),
-						},
-						HashCode: Hash(&GroupMembers{
-							Items: 1,
-							Group: &Group{IPID: "2", SCIMID: "2", Name: "group 2", Email: "group.2@mail.com", HashCode: Hash(&Group{IPID: "2", SCIMID: "2", Name: "group 2", Email: "group.2@mail.com"})},
-							Resources: []*Member{
-								NewMemberBuilder().WithIPID("3").WithSCIMID("3").WithEmail("user.3@mail.com").WithStatus("ACTIVE").Build(),
-							},
-						}),
-					},
-				},
-			},
-			wantDelete: &GroupsMembersResult{
-				Items: 2,
-				Resources: []*GroupMembers{
-					{
-						Items: 1,
-						Group: &Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: Hash(&Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com"})},
-						Resources: []*Member{
-							NewMemberBuilder().WithIPID("3").WithSCIMID("3").WithEmail("user.3@mail.com").WithStatus("ACTIVE").Build(),
-						},
-						HashCode: Hash(&GroupMembers{
-							Items: 1,
-							Group: &Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: Hash(&Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com"})},
-							Resources: []*Member{
-								NewMemberBuilder().WithIPID("3").WithSCIMID("3").WithEmail("user.3@mail.com").WithStatus("ACTIVE").Build(),
-							},
-						}),
-					},
-					{
-						Items: 1,
-						Group: &Group{IPID: "2", SCIMID: "2", Name: "group 2", Email: "group.2@mail.com", HashCode: Hash(&Group{IPID: "2", SCIMID: "2", Name: "group 2", Email: "group.2@mail.com"})},
-						Resources: []*Member{
-							NewMemberBuilder().WithIPID("1").WithSCIMID("1").WithEmail("user.1@mail.com").WithStatus("ACTIVE").Build(),
-						},
-						HashCode: Hash(&GroupMembers{
-							Items: 1,
-							Group: &Group{IPID: "2", SCIMID: "2", Name: "group 2", Email: "group.2@mail.com", HashCode: Hash(&Group{IPID: "2", SCIMID: "2", Name: "group 2", Email: "group.2@mail.com"})},
-							Resources: []*Member{
+						).Build(),
+					NewGroupMembersBuilder().
+						WithGroup(
+							&Group{IPID: "2", SCIMID: "2", Name: "group 2", Email: "group.2@mail.com", HashCode: Hash(&Group{IPID: "2", SCIMID: "2", Name: "group 2", Email: "group.2@mail.com"})},
+						).
+						WithResources(
+							[]*Member{
 								NewMemberBuilder().WithIPID("1").WithSCIMID("1").WithEmail("user.1@mail.com").WithStatus("ACTIVE").Build(),
 							},
-						}),
-					},
+						).Build(),
 				},
-			},
+			).Build(),
 			wantErr: false,
 		},
 		{
 			name: "two groups: 2 equals, 1 add",
 			args: args{
-				idp: &GroupsMembersResult{
-					Items: 2,
-					Resources: []*GroupMembers{
-						{
-							Items: 2,
-							Group: &Group{IPID: "1", Name: "group 1", Email: "group.1@mail.com"},
-							Resources: []*Member{
-								NewMemberBuilder().WithIPID("1").WithSCIMID("1").WithEmail("user.1@mail.com").WithStatus("ACTIVE").Build(),
-								NewMemberBuilder().WithIPID("2").WithSCIMID("2").WithEmail("user.2@mail.com").WithStatus("ACTIVE").Build(),
-							},
-						},
-						{
-							Items: 1,
-							Group: &Group{IPID: "2", Name: "group 2", Email: "group.2@mail.com"},
-							Resources: []*Member{
+				idp: NewGroupsMembersResultBuilder().WithResources(
+					[]*GroupMembers{
+						NewGroupMembersBuilder().
+							WithGroup(
+								&Group{IPID: "1", Name: "group 1", Email: "group.1@mail.com"},
+							).
+							WithResources(
+								[]*Member{
+									NewMemberBuilder().WithIPID("1").WithSCIMID("1").WithEmail("user.1@mail.com").WithStatus("ACTIVE").Build(),
+									NewMemberBuilder().WithIPID("2").WithSCIMID("2").WithEmail("user.2@mail.com").WithStatus("ACTIVE").Build(),
+								},
+							).Build(),
+						NewGroupMembersBuilder().
+							WithGroup(
+								&Group{IPID: "2", Name: "group 2", Email: "group.2@mail.com"},
+							).
+							WithResources(
+								[]*Member{
+									NewMemberBuilder().WithIPID("3").WithEmail("user.3@mail.com").WithStatus("ACTIVE").Build(),
+								},
+							).Build(),
+						NewGroupMembersBuilder().
+							WithGroup(
+								&Group{IPID: "3", Name: "group 3", Email: "group.3@mail.com"}).
+							WithResources(
+								[]*Member{},
+							).Build(),
+					},
+				).Build(),
+				scim: NewGroupsMembersResultBuilder().WithResources(
+					[]*GroupMembers{
+						NewGroupMembersBuilder().
+							WithGroup(
+								&Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com"},
+							).
+							WithResources(
+								[]*Member{
+									NewMemberBuilder().WithIPID("1").WithSCIMID("1").WithEmail("user.1@mail.com").WithStatus("ACTIVE").Build(),
+									NewMemberBuilder().WithIPID("2").WithSCIMID("2").WithEmail("user.2@mail.com").WithStatus("ACTIVE").Build(),
+								},
+							).Build(),
+						NewGroupMembersBuilder().
+							WithGroup(
+								&Group{IPID: "2", SCIMID: "2", Name: "group 2", Email: "group.2@mail.com"},
+							).
+							WithResources(
+								[]*Member{},
+							).Build(),
+						NewGroupMembersBuilder().
+							WithGroup(
+								&Group{IPID: "3", SCIMID: "3", Name: "group 3", Email: "group.3@mail.com"},
+							).
+							WithResources(
+								[]*Member{},
+							).Build(),
+					},
+				).Build(),
+			},
+			wantCreate: NewGroupsMembersResultBuilder().WithResources(
+				[]*GroupMembers{
+					NewGroupMembersBuilder().
+						WithGroup(
+							&Group{IPID: "2", SCIMID: "2", Name: "group 2", Email: "group.2@mail.com", HashCode: Hash(&Group{IPID: "2", SCIMID: "2", Name: "group 2", Email: "group.2@mail.com"})},
+						).
+						WithResources(
+							[]*Member{
 								NewMemberBuilder().WithIPID("3").WithEmail("user.3@mail.com").WithStatus("ACTIVE").Build(),
 							},
-						},
-						{
-							Items:     0,
-							Group:     &Group{IPID: "3", Name: "group 3", Email: "group.3@mail.com"},
-							Resources: []*Member{},
-						},
-					},
+						).Build(),
 				},
-				scim: &GroupsMembersResult{
-					Items: 2,
-					Resources: []*GroupMembers{
-						{
-							Items: 2,
-							Group: &Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com"},
-							Resources: []*Member{
+			).Build(),
+			wantEqual: NewGroupsMembersResultBuilder().WithResources(
+				[]*GroupMembers{
+					NewGroupMembersBuilder().
+						WithGroup(
+							&Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: Hash(&Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com"})},
+						).
+						WithResources(
+							[]*Member{
 								NewMemberBuilder().WithIPID("1").WithSCIMID("1").WithEmail("user.1@mail.com").WithStatus("ACTIVE").Build(),
 								NewMemberBuilder().WithIPID("2").WithSCIMID("2").WithEmail("user.2@mail.com").WithStatus("ACTIVE").Build(),
 							},
-						},
-						{
-							Items:     0,
-							Group:     &Group{IPID: "2", SCIMID: "2", Name: "group 2", Email: "group.2@mail.com"},
-							Resources: []*Member{},
-						},
-						{
-							Items:     0,
-							Group:     &Group{IPID: "3", SCIMID: "3", Name: "group 3", Email: "group.3@mail.com"},
-							Resources: []*Member{},
-						},
-					},
+						).Build(),
+					NewGroupMembersBuilder().
+						WithGroup(
+							&Group{IPID: "3", SCIMID: "3", Name: "group 3", Email: "group.3@mail.com", HashCode: Hash(&Group{IPID: "3", SCIMID: "3", Name: "group 3", Email: "group.3@mail.com"})}).
+						WithResources(
+							[]*Member{},
+						).Build(),
 				},
-			},
-			wantCreate: &GroupsMembersResult{
-				Items:    1,
-				HashCode: "",
-				Resources: []*GroupMembers{
-					{
-						Items: 1,
-						Group: &Group{IPID: "2", SCIMID: "2", Name: "group 2", Email: "group.2@mail.com", HashCode: Hash(&Group{IPID: "2", SCIMID: "2", Name: "group 2", Email: "group.2@mail.com"})},
-						Resources: []*Member{
-							NewMemberBuilder().WithIPID("3").WithEmail("user.3@mail.com").WithStatus("ACTIVE").Build(),
-						},
-						HashCode: Hash(&GroupMembers{
-							Items: 1,
-							Group: &Group{IPID: "2", SCIMID: "2", Name: "group 2", Email: "group.2@mail.com", HashCode: Hash(&Group{IPID: "2", SCIMID: "2", Name: "group 2", Email: "group.2@mail.com"})}, Resources: []*Member{
-								NewMemberBuilder().WithIPID("3").WithEmail("user.3@mail.com").WithStatus("ACTIVE").Build(),
-							},
-						}),
-					},
-				},
-			},
-			wantEqual: &GroupsMembersResult{
-				Items: 2,
-				Resources: []*GroupMembers{
-					{
-						Items: 2,
-						Group: &Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: Hash(&Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com"})},
-						Resources: []*Member{
-							NewMemberBuilder().WithIPID("1").WithSCIMID("1").WithEmail("user.1@mail.com").WithStatus("ACTIVE").Build(),
-							NewMemberBuilder().WithIPID("2").WithSCIMID("2").WithEmail("user.2@mail.com").WithStatus("ACTIVE").Build(),
-						},
-						HashCode: Hash(&GroupMembers{
-							Items: 2,
-							Group: &Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: Hash(&Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com"})},
-							Resources: []*Member{
-								NewMemberBuilder().WithIPID("1").WithSCIMID("1").WithEmail("user.1@mail.com").WithStatus("ACTIVE").Build(),
-								NewMemberBuilder().WithIPID("2").WithSCIMID("2").WithEmail("user.2@mail.com").WithStatus("ACTIVE").Build(),
-							},
-						}),
-					},
-					{
-						Items:     0,
-						Group:     &Group{IPID: "3", SCIMID: "3", Name: "group 3", Email: "group.3@mail.com", HashCode: Hash(&Group{IPID: "3", SCIMID: "3", Name: "group 3", Email: "group.3@mail.com"})},
-						Resources: []*Member{},
-						HashCode: Hash(&GroupMembers{
-							Items:     0,
-							Group:     &Group{IPID: "3", SCIMID: "3", Name: "group 3", Email: "group.3@mail.com", HashCode: Hash(&Group{IPID: "3", SCIMID: "3", Name: "group 3", Email: "group.3@mail.com"})},
-							Resources: []*Member{},
-						}),
-					},
-				},
-			},
-			wantDelete: &GroupsMembersResult{
-				Items:     0,
-				HashCode:  "",
-				Resources: []*GroupMembers{},
-			},
-			wantErr: false,
+			).Build(),
+			wantDelete: NewGroupsMembersResultBuilder().WithResources([]*GroupMembers{}).Build(),
+			wantErr:    false,
 		},
 	}
 	for _, tt := range tests {
