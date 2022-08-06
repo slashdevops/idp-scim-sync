@@ -424,3 +424,184 @@ func TestMembersResultBuilder(t *testing.T) {
 		assert.Equal(t, mr.HashCode, mrb.mr.HashCode)
 	})
 }
+
+func TestGroupMembersBuilder(t *testing.T) {
+	t.Run("empty", func(t *testing.T) {
+		gmb := NewGroupMembersBuilder().Build()
+
+		gm := &GroupMembers{
+			Resources: make([]*Member, 0),
+		}
+		gm.SetHashCode()
+
+		assert.Equal(t, 0, len(gmb.Resources))
+		assert.Equal(t, gm.HashCode, gmb.HashCode)
+	})
+
+	t.Run("all options resources", func(t *testing.T) {
+		gmb := NewGroupMembersBuilder()
+		gmb.WithGroup(
+			&Group{IPID: "ipid", SCIMID: "scimid", Name: "group", Email: "email"},
+		).
+			WithResources([]*Member{
+				{IPID: "ipid", SCIMID: "scimid", Email: "email", Status: "1"},
+				{IPID: "ipid2", SCIMID: "scimid2", Email: "email2", Status: "2"},
+			}).Build()
+
+		gm := &GroupMembers{
+			Items: 2,
+			Group: &Group{IPID: "ipid", SCIMID: "scimid", Name: "group", Email: "email"},
+			Resources: []*Member{
+				{IPID: "ipid", SCIMID: "scimid", Email: "email", Status: "1"},
+				{IPID: "ipid2", SCIMID: "scimid2", Email: "email2", Status: "2"},
+			},
+		}
+		gm.SetHashCode()
+
+		assert.Equal(t, "group", gmb.gm.Group.Name)
+		assert.Equal(t, "ipid", gmb.gm.Group.IPID)
+		assert.Equal(t, "scimid", gmb.gm.Group.SCIMID)
+		assert.Equal(t, "email", gmb.gm.Group.Email)
+
+		assert.Equal(t, 2, len(gmb.gm.Resources))
+		assert.Equal(t, "ipid", gmb.gm.Resources[0].IPID)
+		assert.Equal(t, "ipid2", gmb.gm.Resources[1].IPID)
+		assert.Equal(t, "scimid", gmb.gm.Resources[0].SCIMID)
+		assert.Equal(t, "scimid2", gmb.gm.Resources[1].SCIMID)
+		assert.Equal(t, "email", gmb.gm.Resources[0].Email)
+		assert.Equal(t, "email2", gmb.gm.Resources[1].Email)
+		assert.Equal(t, "1", gmb.gm.Resources[0].Status)
+		assert.Equal(t, "2", gmb.gm.Resources[1].Status)
+		assert.Equal(t, gm.HashCode, gmb.gm.HashCode)
+	})
+
+	t.Run("all options resource", func(t *testing.T) {
+		gmb := NewGroupMembersBuilder()
+		gmb.WithGroup(
+			&Group{IPID: "ipid", SCIMID: "scimid", Name: "group", Email: "email"},
+		).
+			WithResource(
+				&Member{IPID: "ipid", SCIMID: "scimid", Email: "email", Status: "1"},
+			).WithResource(
+			&Member{IPID: "ipid2", SCIMID: "scimid2", Email: "email2", Status: "2"},
+		).Build()
+
+		gm := &GroupMembers{
+			Items: 2,
+			Group: &Group{IPID: "ipid", SCIMID: "scimid", Name: "group", Email: "email"},
+			Resources: []*Member{
+				{IPID: "ipid", SCIMID: "scimid", Email: "email", Status: "1"},
+				{IPID: "ipid2", SCIMID: "scimid2", Email: "email2", Status: "2"},
+			},
+		}
+		gm.SetHashCode()
+
+		assert.Equal(t, 2, len(gmb.gm.Resources))
+		assert.Equal(t, "ipid", gmb.gm.Resources[0].IPID)
+		assert.Equal(t, "ipid2", gmb.gm.Resources[1].IPID)
+		assert.Equal(t, "scimid", gmb.gm.Resources[0].SCIMID)
+		assert.Equal(t, "scimid2", gmb.gm.Resources[1].SCIMID)
+		assert.Equal(t, "email", gmb.gm.Resources[0].Email)
+		assert.Equal(t, "email2", gmb.gm.Resources[1].Email)
+		assert.Equal(t, "1", gmb.gm.Resources[0].Status)
+		assert.Equal(t, "2", gmb.gm.Resources[1].Status)
+		assert.Equal(t, gm.HashCode, gmb.gm.HashCode)
+	})
+}
+
+func TestGroupsMembersResultBuilder(t *testing.T) {
+	t.Run("empty", func(t *testing.T) {
+		gmrb := NewGroupsMembersResultBuilder().Build()
+
+		gmr := &GroupsMembersResult{
+			Resources: make([]*GroupMembers, 0),
+		}
+		gmr.SetHashCode()
+
+		assert.Equal(t, 0, len(gmrb.Resources))
+		assert.Equal(t, gmr.HashCode, gmrb.HashCode)
+	})
+
+	t.Run("all options resources", func(t *testing.T) {
+		gmrb := NewGroupsMembersResultBuilder()
+		gmrb.WithResources(
+			[]*GroupMembers{
+				NewGroupMembersBuilder().WithGroup(
+					&Group{IPID: "ipid", SCIMID: "scimid", Name: "group", Email: "email"},
+				).WithResources(
+					[]*Member{
+						{IPID: "ipid", SCIMID: "scimid", Email: "email", Status: "1"},
+						{IPID: "ipid2", SCIMID: "scimid2", Email: "email2", Status: "2"},
+					},
+				).Build(),
+			},
+		).Build()
+
+		gm := &GroupMembers{
+			Items: 2,
+			Group: &Group{IPID: "ipid", SCIMID: "scimid", Name: "group", Email: "email"},
+			Resources: []*Member{
+				{IPID: "ipid", SCIMID: "scimid", Email: "email", Status: "1"},
+				{IPID: "ipid2", SCIMID: "scimid2", Email: "email2", Status: "2"},
+			},
+		}
+		gm.SetHashCode()
+
+		gmr := &GroupsMembersResult{
+			Items: 1,
+			Resources: []*GroupMembers{
+				gm,
+			},
+		}
+		gmr.SetHashCode()
+
+		assert.Equal(t, "group", gmrb.gmr.Resources[0].Group.Name)
+		assert.Equal(t, "ipid", gmrb.gmr.Resources[0].Group.IPID)
+		assert.Equal(t, "scimid", gmrb.gmr.Resources[0].Group.SCIMID)
+		assert.Equal(t, "email", gmrb.gmr.Resources[0].Group.Email)
+
+		assert.Equal(t, 1, len(gmrb.gmr.Resources))
+		assert.Equal(t, gmr.HashCode, gmrb.gmr.HashCode)
+		assert.Equal(t, gm.HashCode, gmrb.gmr.Resources[0].HashCode)
+	})
+
+	t.Run("all options resource", func(t *testing.T) {
+		gmrb := NewGroupsMembersResultBuilder()
+		gmrb.WithResource(
+			NewGroupMembersBuilder().WithGroup(
+				&Group{IPID: "ipid", SCIMID: "scimid", Name: "group", Email: "email"},
+			).WithResource(
+				&Member{IPID: "ipid", SCIMID: "scimid", Email: "email", Status: "1"},
+			).WithResource(
+				&Member{IPID: "ipid2", SCIMID: "scimid2", Email: "email2", Status: "2"},
+			).Build(),
+		).Build()
+
+		gm := &GroupMembers{
+			Items: 2,
+			Group: &Group{IPID: "ipid", SCIMID: "scimid", Name: "group", Email: "email"},
+			Resources: []*Member{
+				{IPID: "ipid", SCIMID: "scimid", Email: "email", Status: "1"},
+				{IPID: "ipid2", SCIMID: "scimid2", Email: "email2", Status: "2"},
+			},
+		}
+		gm.SetHashCode()
+
+		gmr := &GroupsMembersResult{
+			Items: 1,
+			Resources: []*GroupMembers{
+				gm,
+			},
+		}
+		gmr.SetHashCode()
+
+		assert.Equal(t, "group", gmrb.gmr.Resources[0].Group.Name)
+		assert.Equal(t, "ipid", gmrb.gmr.Resources[0].Group.IPID)
+		assert.Equal(t, "scimid", gmrb.gmr.Resources[0].Group.SCIMID)
+		assert.Equal(t, "email", gmrb.gmr.Resources[0].Group.Email)
+
+		assert.Equal(t, 1, len(gmrb.gmr.Resources))
+		assert.Equal(t, gmr.HashCode, gmrb.gmr.HashCode)
+		assert.Equal(t, gm.HashCode, gmrb.gmr.Resources[0].HashCode)
+	})
+}

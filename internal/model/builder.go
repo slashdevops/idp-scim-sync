@@ -248,3 +248,77 @@ func (b *MembersResultBuilder) Build() *MembersResult {
 	mr.SetHashCode()
 	return mr
 }
+
+// GroupMembersBuilder is used to build a GroupMembers entity and ensure the calculated hash code is set.
+type GroupMembersBuilder struct {
+	gm *GroupMembers
+}
+
+// NewGroupMembersBuilder creates a new GroupMembersBuilder entity.
+func NewGroupMembersBuilder() *GroupMembersBuilder {
+	return &GroupMembersBuilder{
+		gm: &GroupMembers{
+			Resources: make([]*Member, 0),
+		},
+	}
+}
+
+// WithGroup sets the Group field of the GroupMembers entity.
+func (b *GroupMembersBuilder) WithGroup(group *Group) *GroupMembersBuilder {
+	b.gm.Group = group
+	return b
+}
+
+// WithResources sets the Resources field of the GroupMembers entity.
+func (b *GroupMembersBuilder) WithResources(resources []*Member) *GroupMembersBuilder {
+	b.gm.Resources = resources
+	return b
+}
+
+// WithResource add the resource to a Resources field of the GroupMembers entity.
+func (b *GroupMembersBuilder) WithResource(resource *Member) *GroupMembersBuilder {
+	b.gm.Resources = append(b.gm.Resources, resource)
+	return b
+}
+
+// Build returns the GroupMembers entity.
+func (b *GroupMembersBuilder) Build() *GroupMembers {
+	gm := b.gm
+	gm.Items = len(gm.Resources)
+	gm.SetHashCode()
+	return gm
+}
+
+// GroupsMembersResultBuilder is used to build a GroupsMembersResult entity and ensure the calculated hash code and items is set.
+type GroupsMembersResultBuilder struct {
+	gmr *GroupsMembersResult
+}
+
+// NewGroupsMembersResultBuilder creates a new GroupsMembersResultBuilder entity.
+func NewGroupsMembersResultBuilder() *GroupsMembersResultBuilder {
+	return &GroupsMembersResultBuilder{
+		gmr: &GroupsMembersResult{
+			Resources: make([]*GroupMembers, 0),
+		},
+	}
+}
+
+// WithResources sets the Resources field of the GroupsMembersResult entity.
+func (b *GroupsMembersResultBuilder) WithResources(resources []*GroupMembers) *GroupsMembersResultBuilder {
+	b.gmr.Resources = resources
+	return b
+}
+
+// WithResource add the resource to a Resources field of the GroupsMembersResult entity.
+func (b *GroupsMembersResultBuilder) WithResource(resource *GroupMembers) *GroupsMembersResultBuilder {
+	b.gmr.Resources = append(b.gmr.Resources, resource)
+	return b
+}
+
+// Build returns the GroupsMembersResult entity.
+func (b *GroupsMembersResultBuilder) Build() *GroupsMembersResult {
+	gmr := b.gmr
+	gmr.Items = len(gmr.Resources)
+	gmr.SetHashCode()
+	return gmr
+}
