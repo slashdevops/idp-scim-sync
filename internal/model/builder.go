@@ -100,8 +100,8 @@ type groupBuilder struct {
 	g *Group
 }
 
-// NewGroupBuilder creates a new GroupBuilder entity.
-func NewGroupBuilder() *groupBuilder {
+// GroupBuilder creates a new GroupBuilder entity.
+func GroupBuilder() *groupBuilder {
 	return &groupBuilder{
 		g: &Group{},
 	}

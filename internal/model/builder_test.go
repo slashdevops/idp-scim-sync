@@ -169,7 +169,7 @@ func TestUsersResultBuilder(t *testing.T) {
 
 func TestGroupBuilder(t *testing.T) {
 	t.Run("empty", func(t *testing.T) {
-		gb := NewGroupBuilder().Build()
+		gb := GroupBuilder().Build()
 
 		g := &Group{}
 		g.SetHashCode()
@@ -182,7 +182,7 @@ func TestGroupBuilder(t *testing.T) {
 	})
 
 	t.Run("all options", func(t *testing.T) {
-		gb := NewGroupBuilder()
+		gb := GroupBuilder()
 		gb.WithIPID("ipid").WithSCIMID("scimid").WithName("name").WithEmail("email").Build()
 
 		g := &Group{
@@ -201,7 +201,7 @@ func TestGroupBuilder(t *testing.T) {
 	})
 
 	t.Run("few options", func(t *testing.T) {
-		gb := NewGroupBuilder()
+		gb := GroupBuilder()
 		gb.WithName("name").WithEmail("email").Build()
 
 		g := &Group{

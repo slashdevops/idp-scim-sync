@@ -82,7 +82,7 @@ func (s *Provider) GetGroups(ctx context.Context) (*model.GroupsResult, error) {
 
 	groups := make([]*model.Group, 0)
 	for _, group := range groupsResponse.Resources {
-		e := model.NewGroupBuilder().
+		e := model.GroupBuilder().
 			WithSCIMID(group.ID).
 			WithName(group.DisplayName).
 			WithIPID(group.ExternalID).
@@ -122,7 +122,7 @@ func (s *Provider) CreateGroups(ctx context.Context, gr *model.GroupsResult) (*m
 			return nil, fmt.Errorf("scim: error creating group: %w", err)
 		}
 
-		e := model.NewGroupBuilder().
+		e := model.GroupBuilder().
 			WithSCIMID(r.ID).
 			WithName(group.Name).
 			WithIPID(group.IPID).
@@ -178,7 +178,7 @@ func (s *Provider) UpdateGroups(ctx context.Context, gr *model.GroupsResult) (*m
 		}
 
 		// return the same group
-		e := model.NewGroupBuilder().
+		e := model.GroupBuilder().
 			WithSCIMID(group.SCIMID).
 			WithName(group.Name).
 			WithIPID(group.IPID).

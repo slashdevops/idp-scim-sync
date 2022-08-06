@@ -70,7 +70,7 @@ func (i *IdentityProvider) GetGroups(ctx context.Context, filter []string) (*mod
 		if _, ok := uniqueGroups[grp.Name]; !ok {
 			uniqueGroups[grp.Name] = struct{}{}
 
-			e := model.NewGroupBuilder().
+			e := model.GroupBuilder().
 				WithIPID(grp.Id).
 				WithName(grp.Name).
 				WithEmail(grp.Email).
@@ -205,7 +205,7 @@ func (i *IdentityProvider) GetGroupsMembers(ctx context.Context, gr *model.Group
 			return nil, fmt.Errorf("idp: error getting group members: %w", err)
 		}
 
-		e := model.NewGroupBuilder().
+		e := model.GroupBuilder().
 			WithIPID(group.IPID).
 			WithName(group.Name).
 			WithEmail(group.Email).
