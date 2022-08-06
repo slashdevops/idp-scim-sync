@@ -79,20 +79,18 @@ func TestGroupsOperations(t *testing.T) {
 		{
 			name: "2 equals",
 			args: args{
-				idp: &GroupsResult{
-					Items: 2,
-					Resources: []*Group{
-						{IPID: "1", Name: "name1", Email: "1@mail.com"},
-						{IPID: "2", Name: "name2", Email: "2@mail.com"},
+				idp: NewGroupsResultBuilder().WithResources(
+					[]*Group{
+						NewGroupBuilder().WithIPID("1").WithName("name1").WithEmail("1@mail.com").Build(),
+						NewGroupBuilder().WithIPID("2").WithName("name2").WithEmail("2@mail.com").Build(),
 					},
-				},
-				state: &GroupsResult{
-					Items: 2,
-					Resources: []*Group{
-						{IPID: "1", Name: "name1", Email: "1@mail.com"},
-						{IPID: "2", Name: "name2", Email: "2@mail.com"},
+				).Build(),
+				state: NewGroupsResultBuilder().WithResources(
+					[]*Group{
+						NewGroupBuilder().WithIPID("1").WithName("name1").WithEmail("1@mail.com").Build(),
+						NewGroupBuilder().WithIPID("2").WithName("name2").WithEmail("2@mail.com").Build(),
 					},
-				},
+				).Build(),
 			},
 			wantCreate: &GroupsResult{
 				Items:     0,
@@ -102,13 +100,12 @@ func TestGroupsOperations(t *testing.T) {
 				Items:     0,
 				Resources: []*Group{},
 			},
-			wantEqual: &GroupsResult{
-				Items: 2,
-				Resources: []*Group{
-					{IPID: "1", Name: "name1", Email: "1@mail.com"},
-					{IPID: "2", Name: "name2", Email: "2@mail.com"},
+			wantEqual: NewGroupsResultBuilder().WithResources(
+				[]*Group{
+					NewGroupBuilder().WithIPID("1").WithName("name1").WithEmail("1@mail.com").Build(),
+					NewGroupBuilder().WithIPID("2").WithName("name2").WithEmail("2@mail.com").Build(),
 				},
-			},
+			).Build(),
 			wantDelete: &GroupsResult{
 				Items:     0,
 				Resources: []*Group{},
@@ -118,37 +115,33 @@ func TestGroupsOperations(t *testing.T) {
 		{
 			name: "1 equals, 1 update",
 			args: args{
-				idp: &GroupsResult{
-					Items: 2,
-					Resources: []*Group{
-						{IPID: "1", SCIMID: "11", Name: "name1", Email: "1@mail.com"},
-						{IPID: "2", SCIMID: "22", Name: "name2", Email: "2@mail.com"},
+				idp: NewGroupsResultBuilder().WithResources(
+					[]*Group{
+						NewGroupBuilder().WithIPID("1").WithSCIMID("11").WithName("name1").WithEmail("1@mail.com").Build(),
+						NewGroupBuilder().WithIPID("2").WithSCIMID("22").WithName("name2").WithEmail("2@mail.com").Build(),
 					},
-				},
-				state: &GroupsResult{
-					Items: 2,
-					Resources: []*Group{
-						{IPID: "1", SCIMID: "11", Name: "name1", Email: "1@mail.com"},
-						{IPID: "", SCIMID: "22", Name: "name2", Email: "2@mail.com"},
+				).Build(),
+				state: NewGroupsResultBuilder().WithResources(
+					[]*Group{
+						NewGroupBuilder().WithIPID("1").WithSCIMID("11").WithName("name1").WithEmail("1@mail.com").Build(),
+						NewGroupBuilder().WithIPID("").WithSCIMID("22").WithName("name2").WithEmail("2@mail.com").Build(),
 					},
-				},
+				).Build(),
 			},
 			wantCreate: &GroupsResult{
 				Items:     0,
 				Resources: []*Group{},
 			},
-			wantUpdate: &GroupsResult{
-				Items: 1,
-				Resources: []*Group{
-					{IPID: "2", SCIMID: "22", Name: "name2", Email: "2@mail.com"},
+			wantUpdate: NewGroupsResultBuilder().WithResources(
+				[]*Group{
+					NewGroupBuilder().WithIPID("2").WithSCIMID("22").WithName("name2").WithEmail("2@mail.com").Build(),
 				},
-			},
-			wantEqual: &GroupsResult{
-				Items: 1,
-				Resources: []*Group{
-					{IPID: "1", SCIMID: "11", Name: "name1", Email: "1@mail.com"},
+			).Build(),
+			wantEqual: NewGroupsResultBuilder().WithResources(
+				[]*Group{
+					NewGroupBuilder().WithIPID("1").WithSCIMID("11").WithName("name1").WithEmail("1@mail.com").Build(),
 				},
-			},
+			).Build(),
 			wantDelete: &GroupsResult{
 				Items:     0,
 				Resources: []*Group{},
@@ -158,118 +151,104 @@ func TestGroupsOperations(t *testing.T) {
 		{
 			name: "1 equals, 1 update, 1 delete",
 			args: args{
-				idp: &GroupsResult{
-					Items: 2,
-					Resources: []*Group{
-						{IPID: "1", SCIMID: "11", Name: "name1", Email: "1@mail.com"},
-						{IPID: "2", SCIMID: "22", Name: "name2", Email: "2@mail.com"},
+				idp: NewGroupsResultBuilder().WithResources(
+					[]*Group{
+						NewGroupBuilder().WithIPID("1").WithSCIMID("11").WithName("name1").WithEmail("1@mail.com").Build(),
+						NewGroupBuilder().WithIPID("2").WithSCIMID("22").WithName("name2").WithEmail("2@mail.com").Build(),
 					},
-				},
-				state: &GroupsResult{
-					Items: 3,
-					Resources: []*Group{
-						{IPID: "1", SCIMID: "11", Name: "name1", Email: "1@mail.com"},
-						{IPID: "", SCIMID: "22", Name: "name2", Email: "2@mail.com"},
-						{IPID: "3", SCIMID: "33", Name: "name3", Email: "3@mail.com"},
+				).Build(),
+				state: NewGroupsResultBuilder().WithResources(
+					[]*Group{
+						NewGroupBuilder().WithIPID("1").WithSCIMID("11").WithName("name1").WithEmail("1@mail.com").Build(),
+						NewGroupBuilder().WithIPID("").WithSCIMID("22").WithName("name2").WithEmail("2@mail.com").Build(),
+						NewGroupBuilder().WithIPID("3").WithSCIMID("33").WithName("name3").WithEmail("3@mail.com").Build(),
 					},
-				},
+				).Build(),
 			},
 			wantCreate: &GroupsResult{
 				Items:     0,
 				Resources: []*Group{},
 			},
-			wantUpdate: &GroupsResult{
-				Items: 1,
-				Resources: []*Group{
-					{IPID: "2", SCIMID: "22", Name: "name2", Email: "2@mail.com"},
+			wantUpdate: NewGroupsResultBuilder().WithResources(
+				[]*Group{
+					NewGroupBuilder().WithIPID("2").WithSCIMID("22").WithName("name2").WithEmail("2@mail.com").Build(),
 				},
-			},
-			wantEqual: &GroupsResult{
-				Items: 1,
-				Resources: []*Group{
-					{IPID: "1", SCIMID: "11", Name: "name1", Email: "1@mail.com"},
+			).Build(),
+			wantEqual: NewGroupsResultBuilder().WithResources(
+				[]*Group{
+					NewGroupBuilder().WithIPID("1").WithSCIMID("11").WithName("name1").WithEmail("1@mail.com").Build(),
 				},
-			},
-			wantDelete: &GroupsResult{
-				Items: 1,
-				Resources: []*Group{
-					{IPID: "3", SCIMID: "33", Name: "name3", Email: "3@mail.com"},
+			).Build(),
+			wantDelete: NewGroupsResultBuilder().WithResources(
+				[]*Group{
+					NewGroupBuilder().WithIPID("3").WithSCIMID("33").WithName("name3").WithEmail("3@mail.com").Build(),
 				},
-			},
+			).Build(),
 			wantErr: false,
 		},
 		{
 			name: "1 equals, 1 update, 1 delete, 1 create",
 			args: args{
-				idp: &GroupsResult{
-					Items: 4,
-					Resources: []*Group{
-						{IPID: "1", SCIMID: "11", Name: "name1", Email: "1@mail.com"},
-						{IPID: "2", SCIMID: "dd", Name: "name2", Email: "2@mail.com"},
-						{IPID: "4", SCIMID: "44", Name: "name4", Email: "4@mail.com"},
+				idp: NewGroupsResultBuilder().WithResources(
+					[]*Group{
+						NewGroupBuilder().WithIPID("1").WithSCIMID("11").WithName("name1").WithEmail("1@mail.com").Build(),
+						NewGroupBuilder().WithIPID("2").WithSCIMID("different").WithName("name2").WithEmail("2@mail.com").Build(),
+						NewGroupBuilder().WithIPID("4").WithSCIMID("44").WithName("name4").WithEmail("4@mail.com").Build(),
 					},
-				},
-				state: &GroupsResult{
-					Items: 3,
-					Resources: []*Group{
-						{IPID: "1", SCIMID: "11", Name: "name1", Email: "1@mail.com"},
-						{IPID: "", SCIMID: "22", Name: "name2", Email: "2@mail.com"},
-						{IPID: "3", SCIMID: "33", Name: "name3", Email: "3@mail.com"},
+				).Build(),
+				state: NewGroupsResultBuilder().WithResources(
+					[]*Group{
+						NewGroupBuilder().WithIPID("1").WithSCIMID("11").WithName("name1").WithEmail("1@mail.com").Build(),
+						NewGroupBuilder().WithIPID("").WithSCIMID("different").WithName("name2").WithEmail("2@mail.com").Build(),
+						NewGroupBuilder().WithIPID("3").WithSCIMID("33").WithName("name3").WithEmail("3@mail.com").Build(),
 					},
-				},
+				).Build(),
 			},
-			wantCreate: &GroupsResult{
-				Items: 1,
-				Resources: []*Group{
-					{IPID: "4", SCIMID: "44", Name: "name4", Email: "4@mail.com"},
+			wantCreate: NewGroupsResultBuilder().WithResources(
+				[]*Group{
+					NewGroupBuilder().WithIPID("4").WithSCIMID("44").WithName("name4").WithEmail("4@mail.com").Build(),
 				},
-			},
-			wantUpdate: &GroupsResult{
-				Items: 1,
-				Resources: []*Group{
-					{IPID: "2", SCIMID: "22", Name: "name2", Email: "2@mail.com"},
+			).Build(),
+			wantUpdate: NewGroupsResultBuilder().WithResources(
+				[]*Group{
+					NewGroupBuilder().WithIPID("2").WithSCIMID("different").WithName("name2").WithEmail("2@mail.com").Build(),
 				},
-			},
-			wantEqual: &GroupsResult{
-				Items: 1,
-				Resources: []*Group{
-					{IPID: "1", SCIMID: "11", Name: "name1", Email: "1@mail.com"},
+			).Build(),
+			wantEqual: NewGroupsResultBuilder().WithResources(
+				[]*Group{
+					NewGroupBuilder().WithIPID("1").WithSCIMID("11").WithName("name1").WithEmail("1@mail.com").Build(),
 				},
-			},
-			wantDelete: &GroupsResult{
-				Items: 1,
-				Resources: []*Group{
-					{IPID: "3", SCIMID: "33", Name: "name3", Email: "3@mail.com"},
+			).Build(),
+			wantDelete: NewGroupsResultBuilder().WithResources(
+				[]*Group{
+					NewGroupBuilder().WithIPID("3").WithSCIMID("33").WithName("name3").WithEmail("3@mail.com").Build(),
 				},
-			},
+			).Build(),
 			wantErr: false,
 		},
 		{
 			name: "1 update, change the ID",
 			args: args{
-				idp: &GroupsResult{
-					Items: 1,
-					Resources: []*Group{
-						{IPID: "1", SCIMID: "11", Name: "name1", Email: "1@mail.com"},
+				idp: NewGroupsResultBuilder().WithResources(
+					[]*Group{
+						NewGroupBuilder().WithIPID("1").WithSCIMID("11").WithName("name1").WithEmail("1@mail.com").Build(),
 					},
-				},
-				state: &GroupsResult{
-					Items: 1,
-					Resources: []*Group{
-						{IPID: "3", SCIMID: "22", Name: "name1", Email: "1@mail.com"},
+				).Build(),
+				state: NewGroupsResultBuilder().WithResources(
+					[]*Group{
+						NewGroupBuilder().WithIPID("3").WithSCIMID("22").WithName("name1").WithEmail("1@mail.com").Build(),
 					},
-				},
+				).Build(),
 			},
 			wantCreate: &GroupsResult{
 				Items:     0,
 				Resources: []*Group{},
 			},
-			wantUpdate: &GroupsResult{
-				Items: 1,
-				Resources: []*Group{
-					{IPID: "1", SCIMID: "22", Name: "name1", Email: "1@mail.com"},
+			wantUpdate: NewGroupsResultBuilder().WithResources(
+				[]*Group{
+					NewGroupBuilder().WithIPID("1").WithSCIMID("22").WithName("name1").WithEmail("1@mail.com").Build(),
 				},
-			},
+			).Build(),
 			wantEqual: &GroupsResult{
 				Items:     0,
 				Resources: []*Group{},
