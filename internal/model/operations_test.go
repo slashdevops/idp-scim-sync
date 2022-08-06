@@ -470,19 +470,19 @@ func TestMembersOperations(t *testing.T) {
 		{
 			name: "empty, return empty",
 			args: args{
-				idp:  NewGroupsMembersResultBuilder().Build(),
-				scim: NewGroupsMembersResultBuilder().Build(),
+				idp:  GroupsMembersResultBuilder().Build(),
+				scim: GroupsMembersResultBuilder().Build(),
 			},
-			wantCreate: NewGroupsMembersResultBuilder().Build(),
-			wantEqual:  NewGroupsMembersResultBuilder().Build(),
-			wantDelete: NewGroupsMembersResultBuilder().Build(),
+			wantCreate: GroupsMembersResultBuilder().Build(),
+			wantEqual:  GroupsMembersResultBuilder().Build(),
+			wantDelete: GroupsMembersResultBuilder().Build(),
 			wantErr:    false,
 		},
 		{
 			name: "nil idp, return error",
 			args: args{
 				idp:  nil,
-				scim: NewGroupsMembersResultBuilder().Build(),
+				scim: GroupsMembersResultBuilder().Build(),
 			},
 			wantCreate: nil,
 			wantEqual:  nil,
@@ -492,7 +492,7 @@ func TestMembersOperations(t *testing.T) {
 		{
 			name: "nil scim, return error",
 			args: args{
-				idp:  NewGroupsMembersResultBuilder().Build(),
+				idp:  GroupsMembersResultBuilder().Build(),
 				scim: nil,
 			},
 			wantCreate: nil,
@@ -503,7 +503,7 @@ func TestMembersOperations(t *testing.T) {
 		{
 			name: "one group: 1 add, 1 equal, 1 delete",
 			args: args{
-				idp: NewGroupsMembersResultBuilder().WithResources(
+				idp: GroupsMembersResultBuilder().WithResources(
 					[]*GroupMembers{
 						{
 							Items: 2,
@@ -515,7 +515,7 @@ func TestMembersOperations(t *testing.T) {
 						},
 					},
 				).Build(),
-				scim: NewGroupsMembersResultBuilder().WithResources(
+				scim: GroupsMembersResultBuilder().WithResources(
 					[]*GroupMembers{
 						{
 							Items: 2,
@@ -528,7 +528,7 @@ func TestMembersOperations(t *testing.T) {
 					},
 				).Build(),
 			},
-			wantCreate: NewGroupsMembersResultBuilder().WithResources(
+			wantCreate: GroupsMembersResultBuilder().WithResources(
 				[]*GroupMembers{
 					GroupMembersBuilder().
 						WithGroup(
@@ -541,7 +541,7 @@ func TestMembersOperations(t *testing.T) {
 						).Build(),
 				},
 			).Build(),
-			wantEqual: NewGroupsMembersResultBuilder().WithResources(
+			wantEqual: GroupsMembersResultBuilder().WithResources(
 				[]*GroupMembers{
 					GroupMembersBuilder().
 						WithGroup(
@@ -554,7 +554,7 @@ func TestMembersOperations(t *testing.T) {
 						).Build(),
 				},
 			).Build(),
-			wantDelete: NewGroupsMembersResultBuilder().WithResources(
+			wantDelete: GroupsMembersResultBuilder().WithResources(
 				[]*GroupMembers{
 					GroupMembersBuilder().
 						WithGroup(
@@ -572,7 +572,7 @@ func TestMembersOperations(t *testing.T) {
 		{
 			name: "two groups: g1 -> add 1, g1 -> equal 1, g2 -> equal 1, g1 -> delete 1, g2 -> delete 1",
 			args: args{
-				idp: NewGroupsMembersResultBuilder().WithResources(
+				idp: GroupsMembersResultBuilder().WithResources(
 					[]*GroupMembers{
 						GroupMembersBuilder().
 							WithGroup(
@@ -595,7 +595,7 @@ func TestMembersOperations(t *testing.T) {
 							).Build(),
 					},
 				).Build(),
-				scim: NewGroupsMembersResultBuilder().WithResources(
+				scim: GroupsMembersResultBuilder().WithResources(
 					[]*GroupMembers{
 						GroupMembersBuilder().
 							WithGroup(
@@ -620,7 +620,7 @@ func TestMembersOperations(t *testing.T) {
 					},
 				).Build(),
 			},
-			wantCreate: NewGroupsMembersResultBuilder().WithResources(
+			wantCreate: GroupsMembersResultBuilder().WithResources(
 				[]*GroupMembers{
 					GroupMembersBuilder().
 						WithGroup(
@@ -633,7 +633,7 @@ func TestMembersOperations(t *testing.T) {
 						).Build(),
 				},
 			).Build(),
-			wantEqual: NewGroupsMembersResultBuilder().WithResources(
+			wantEqual: GroupsMembersResultBuilder().WithResources(
 				[]*GroupMembers{
 					GroupMembersBuilder().
 						WithGroup(
@@ -655,7 +655,7 @@ func TestMembersOperations(t *testing.T) {
 						).Build(),
 				},
 			).Build(),
-			wantDelete: NewGroupsMembersResultBuilder().WithResources(
+			wantDelete: GroupsMembersResultBuilder().WithResources(
 				[]*GroupMembers{
 					GroupMembersBuilder().
 						WithGroup(
@@ -682,7 +682,7 @@ func TestMembersOperations(t *testing.T) {
 		{
 			name: "two groups: 2 equals, 1 add",
 			args: args{
-				idp: NewGroupsMembersResultBuilder().WithResources(
+				idp: GroupsMembersResultBuilder().WithResources(
 					[]*GroupMembers{
 						GroupMembersBuilder().
 							WithGroup(
@@ -711,7 +711,7 @@ func TestMembersOperations(t *testing.T) {
 							).Build(),
 					},
 				).Build(),
-				scim: NewGroupsMembersResultBuilder().WithResources(
+				scim: GroupsMembersResultBuilder().WithResources(
 					[]*GroupMembers{
 						GroupMembersBuilder().
 							WithGroup(
@@ -740,7 +740,7 @@ func TestMembersOperations(t *testing.T) {
 					},
 				).Build(),
 			},
-			wantCreate: NewGroupsMembersResultBuilder().WithResources(
+			wantCreate: GroupsMembersResultBuilder().WithResources(
 				[]*GroupMembers{
 					GroupMembersBuilder().
 						WithGroup(
@@ -753,7 +753,7 @@ func TestMembersOperations(t *testing.T) {
 						).Build(),
 				},
 			).Build(),
-			wantEqual: NewGroupsMembersResultBuilder().WithResources(
+			wantEqual: GroupsMembersResultBuilder().WithResources(
 				[]*GroupMembers{
 					GroupMembersBuilder().
 						WithGroup(
@@ -773,7 +773,7 @@ func TestMembersOperations(t *testing.T) {
 						).Build(),
 				},
 			).Build(),
-			wantDelete: NewGroupsMembersResultBuilder().WithResources([]*GroupMembers{}).Build(),
+			wantDelete: GroupsMembersResultBuilder().WithResources([]*GroupMembers{}).Build(),
 			wantErr:    false,
 		},
 	}

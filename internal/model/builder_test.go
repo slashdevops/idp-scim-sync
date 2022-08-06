@@ -534,7 +534,7 @@ func TestGroupMembersBuilder(t *testing.T) {
 
 func TestGroupsMembersResultBuilder(t *testing.T) {
 	t.Run("empty", func(t *testing.T) {
-		gmrb := NewGroupsMembersResultBuilder().Build()
+		gmrb := GroupsMembersResultBuilder().Build()
 
 		gmr := &GroupsMembersResult{
 			Resources: make([]*GroupMembers, 0),
@@ -546,7 +546,7 @@ func TestGroupsMembersResultBuilder(t *testing.T) {
 	})
 
 	t.Run("all options resources", func(t *testing.T) {
-		gmrb := NewGroupsMembersResultBuilder()
+		gmrb := GroupsMembersResultBuilder()
 		gmrb.WithResources(
 			[]*GroupMembers{
 				GroupMembersBuilder().WithGroup(
@@ -589,7 +589,7 @@ func TestGroupsMembersResultBuilder(t *testing.T) {
 	})
 
 	t.Run("all options resource", func(t *testing.T) {
-		gmrb := NewGroupsMembersResultBuilder()
+		gmrb := GroupsMembersResultBuilder()
 		gmrb.WithResource(
 			GroupMembersBuilder().WithGroup(
 				&Group{IPID: "ipid", SCIMID: "scimid", Name: "group", Email: "email"},

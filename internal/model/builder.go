@@ -294,8 +294,8 @@ type groupsMembersResultBuilder struct {
 	gmr *GroupsMembersResult
 }
 
-// NewGroupsMembersResultBuilder creates a new GroupsMembersResultBuilder entity.
-func NewGroupsMembersResultBuilder() *groupsMembersResultBuilder {
+// GroupsMembersResultBuilder creates a new GroupsMembersResultBuilder entity.
+func GroupsMembersResultBuilder() *groupsMembersResultBuilder {
 	return &groupsMembersResultBuilder{
 		gmr: &GroupsMembersResult{
 			Resources: make([]*GroupMembers, 0),

@@ -453,7 +453,7 @@ func (s *Provider) CreateGroupsMembers(ctx context.Context, gmr *model.GroupsMem
 		}
 	}
 
-	groupsMembersResult := model.NewGroupsMembersResultBuilder().WithResources(groupsMembers).Build()
+	groupsMembersResult := model.GroupsMembersResultBuilder().WithResources(groupsMembers).Build()
 
 	return groupsMembersResult, nil
 }
@@ -542,7 +542,7 @@ func (s *Provider) GetGroupsMembers(ctx context.Context, gr *model.GroupsResult)
 		}
 	}
 
-	groupsMembersResult := model.NewGroupsMembersResultBuilder().WithResources(groupMembers).Build()
+	groupsMembersResult := model.GroupsMembersResultBuilder().WithResources(groupMembers).Build()
 
 	return groupsMembersResult, nil
 }
@@ -590,7 +590,7 @@ func (s *Provider) GetGroupsMembersBruteForce(ctx context.Context, gr *model.Gro
 		}
 	}
 
-	groupsMembersResult := model.NewGroupsMembersResultBuilder().WithResources(groupMembers).Build()
+	groupsMembersResult := model.GroupsMembersResultBuilder().WithResources(groupMembers).Build()
 
 	return groupsMembersResult, nil
 }
