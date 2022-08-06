@@ -237,7 +237,7 @@ func (s *Provider) GetUsers(ctx context.Context) (*model.UsersResult, error) {
 		users = append(users, e)
 	}
 
-	usersResult := model.NewUsersResultBuilder().WithResources(users).Build()
+	usersResult := model.UsersResultBuilder().WithResources(users).Build()
 
 	return usersResult, nil
 }
@@ -295,7 +295,7 @@ func (s *Provider) CreateUsers(ctx context.Context, ur *model.UsersResult) (*mod
 		users = append(users, e)
 	}
 
-	usersResult := model.NewUsersResultBuilder().WithResources(users).Build()
+	usersResult := model.UsersResultBuilder().WithResources(users).Build()
 
 	return usersResult, nil
 }
@@ -354,7 +354,7 @@ func (s *Provider) UpdateUsers(ctx context.Context, ur *model.UsersResult) (*mod
 		users = append(users, e)
 	}
 
-	usersResult := model.NewUsersResultBuilder().WithResources(users).Build()
+	usersResult := model.UsersResultBuilder().WithResources(users).Build()
 
 	return usersResult, nil
 }

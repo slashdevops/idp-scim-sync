@@ -263,20 +263,20 @@ func TestUsersOperations(t *testing.T) {
 		{
 			name: "empty",
 			args: args{
-				idp:   NewUsersResultBuilder().Build(),
-				state: NewUsersResultBuilder().Build(),
+				idp:   UsersResultBuilder().Build(),
+				state: UsersResultBuilder().Build(),
 			},
-			wantCreate: NewUsersResultBuilder().Build(),
-			wantUpdate: NewUsersResultBuilder().Build(),
-			wantEqual:  NewUsersResultBuilder().Build(),
-			wantDelete: NewUsersResultBuilder().Build(),
+			wantCreate: UsersResultBuilder().Build(),
+			wantUpdate: UsersResultBuilder().Build(),
+			wantEqual:  UsersResultBuilder().Build(),
+			wantDelete: UsersResultBuilder().Build(),
 			wantErr:    false,
 		},
 		{
 			name: "nil idp",
 			args: args{
 				idp:   nil,
-				state: NewUsersResultBuilder().Build(),
+				state: UsersResultBuilder().Build(),
 			},
 			wantCreate: nil,
 			wantUpdate: nil,
@@ -287,7 +287,7 @@ func TestUsersOperations(t *testing.T) {
 		{
 			name: "nil state",
 			args: args{
-				idp:   NewUsersResultBuilder().Build(),
+				idp:   UsersResultBuilder().Build(),
 				state: nil,
 			},
 			wantCreate: nil,
@@ -299,39 +299,39 @@ func TestUsersOperations(t *testing.T) {
 		{
 			name: "2 equals",
 			args: args{
-				idp: NewUsersResultBuilder().WithResources(
+				idp: UsersResultBuilder().WithResources(
 					[]*User{
 						UserBuilder().WithIPID("1").WithEmail("user.1@mail.com").WithFamilyName("1").WithGivenName("user").WithDisplayName("user 1").WithActive(true).Build(),
 						UserBuilder().WithIPID("2").WithEmail("user.2@mail.com").WithFamilyName("2").WithGivenName("user").WithDisplayName("user 2").WithActive(true).Build(),
 					},
 				).Build(),
-				state: NewUsersResultBuilder().WithResources(
+				state: UsersResultBuilder().WithResources(
 					[]*User{
 						UserBuilder().WithIPID("1").WithEmail("user.1@mail.com").WithFamilyName("1").WithGivenName("user").WithDisplayName("user 1").WithActive(true).Build(),
 						UserBuilder().WithIPID("2").WithEmail("user.2@mail.com").WithFamilyName("2").WithGivenName("user").WithDisplayName("user 2").WithActive(true).Build(),
 					},
 				).Build(),
 			},
-			wantCreate: NewUsersResultBuilder().Build(),
-			wantUpdate: NewUsersResultBuilder().Build(),
-			wantEqual: NewUsersResultBuilder().WithResources(
+			wantCreate: UsersResultBuilder().Build(),
+			wantUpdate: UsersResultBuilder().Build(),
+			wantEqual: UsersResultBuilder().WithResources(
 				[]*User{
 					UserBuilder().WithIPID("1").WithEmail("user.1@mail.com").WithFamilyName("1").WithGivenName("user").WithDisplayName("user 1").WithActive(true).Build(),
 					UserBuilder().WithIPID("2").WithEmail("user.2@mail.com").WithFamilyName("2").WithGivenName("user").WithDisplayName("user 2").WithActive(true).Build(),
 				},
 			).Build(),
-			wantDelete: NewUsersResultBuilder().Build(),
+			wantDelete: UsersResultBuilder().Build(),
 		},
 		{
 			name: "1 equals, 1 update, 1 delete",
 			args: args{
-				idp: NewUsersResultBuilder().WithResources(
+				idp: UsersResultBuilder().WithResources(
 					[]*User{
 						UserBuilder().WithIPID("1").WithEmail("user.1@mail.com").WithFamilyName("1").WithGivenName("user").WithDisplayName("user 1").WithActive(true).Build(),
 						UserBuilder().WithIPID("2").WithEmail("user.2@mail.com").WithFamilyName("different").WithGivenName("user").WithDisplayName("user 2").WithActive(true).Build(),
 					},
 				).Build(),
-				state: NewUsersResultBuilder().WithResources(
+				state: UsersResultBuilder().WithResources(
 					[]*User{
 						UserBuilder().WithIPID("1").WithEmail("user.1@mail.com").WithFamilyName("1").WithGivenName("user").WithDisplayName("user 1").WithActive(true).Build(),
 						UserBuilder().WithIPID("2").WithEmail("user.2@mail.com").WithFamilyName("2").WithGivenName("user").WithDisplayName("user 2").WithActive(true).Build(),
@@ -339,18 +339,18 @@ func TestUsersOperations(t *testing.T) {
 					},
 				).Build(),
 			},
-			wantCreate: NewUsersResultBuilder().Build(),
-			wantUpdate: NewUsersResultBuilder().WithResources(
+			wantCreate: UsersResultBuilder().Build(),
+			wantUpdate: UsersResultBuilder().WithResources(
 				[]*User{
 					UserBuilder().WithIPID("2").WithEmail("user.2@mail.com").WithFamilyName("different").WithGivenName("user").WithDisplayName("user 2").WithActive(true).Build(),
 				},
 			).Build(),
-			wantEqual: NewUsersResultBuilder().WithResources(
+			wantEqual: UsersResultBuilder().WithResources(
 				[]*User{
 					UserBuilder().WithIPID("1").WithEmail("user.1@mail.com").WithFamilyName("1").WithGivenName("user").WithDisplayName("user 1").WithActive(true).Build(),
 				},
 			).Build(),
-			wantDelete: NewUsersResultBuilder().WithResources(
+			wantDelete: UsersResultBuilder().WithResources(
 				[]*User{
 					UserBuilder().WithIPID("3").WithEmail("user.3@mail.com").WithFamilyName("3").WithGivenName("user").WithDisplayName("user 3").WithActive(true).Build(),
 				},
@@ -359,65 +359,65 @@ func TestUsersOperations(t *testing.T) {
 		{
 			name: "1 equals, 1 update",
 			args: args{
-				idp: NewUsersResultBuilder().WithResources(
+				idp: UsersResultBuilder().WithResources(
 					[]*User{
 						UserBuilder().WithIPID("1").WithEmail("user.1@mail.com").WithFamilyName("1").WithGivenName("user").WithDisplayName("user 1").WithActive(true).Build(),
 						UserBuilder().WithIPID("2").WithEmail("user.2@mail.com").WithFamilyName("different").WithGivenName("user").WithDisplayName("user 2").WithActive(true).Build(),
 					},
 				).Build(),
-				state: NewUsersResultBuilder().WithResources(
+				state: UsersResultBuilder().WithResources(
 					[]*User{
 						UserBuilder().WithIPID("1").WithEmail("user.1@mail.com").WithFamilyName("1").WithGivenName("user").WithDisplayName("user 1").WithActive(true).Build(),
 						UserBuilder().WithIPID("2").WithEmail("user.2@mail.com").WithFamilyName("2").WithGivenName("user").WithDisplayName("user 2").WithActive(true).Build(),
 					},
 				).Build(),
 			},
-			wantCreate: NewUsersResultBuilder().Build(),
-			wantUpdate: NewUsersResultBuilder().WithResources(
+			wantCreate: UsersResultBuilder().Build(),
+			wantUpdate: UsersResultBuilder().WithResources(
 				[]*User{
 					UserBuilder().WithIPID("2").WithEmail("user.2@mail.com").WithFamilyName("different").WithGivenName("user").WithDisplayName("user 2").WithActive(true).Build(),
 				},
 			).Build(),
-			wantEqual: NewUsersResultBuilder().WithResources(
+			wantEqual: UsersResultBuilder().WithResources(
 				[]*User{
 					UserBuilder().WithIPID("1").WithEmail("user.1@mail.com").WithFamilyName("1").WithGivenName("user").WithDisplayName("user 1").WithActive(true).Build(),
 				},
 			).Build(),
-			wantDelete: NewUsersResultBuilder().Build(),
+			wantDelete: UsersResultBuilder().Build(),
 		},
 		{
 			name: "1 equals, 1 update, 1 delete, 1 create",
 			args: args{
-				idp: NewUsersResultBuilder().WithResources(
+				idp: UsersResultBuilder().WithResources(
 					[]*User{
 						UserBuilder().WithIPID("1").WithEmail("user.1@mail.com").WithFamilyName("1").WithGivenName("user").WithDisplayName("user 1").WithActive(true).Build(),
 						UserBuilder().WithIPID("2").WithEmail("user.2@mail.com").WithFamilyName("different").WithGivenName("user").WithDisplayName("user 2").WithActive(true).Build(),
 						UserBuilder().WithIPID("4").WithEmail("user.4@mail.com").WithFamilyName("4").WithGivenName("user").WithDisplayName("user 4").WithActive(true).Build(),
 					},
 				).Build(),
-				state: NewUsersResultBuilder().WithResources([]*User{
+				state: UsersResultBuilder().WithResources([]*User{
 					UserBuilder().WithIPID("1").WithEmail("user.1@mail.com").WithFamilyName("1").WithGivenName("user").WithDisplayName("user 1").WithActive(true).Build(),
 					UserBuilder().WithIPID("2").WithEmail("user.2@mail.com").WithFamilyName("2").WithGivenName("user").WithDisplayName("user 2").WithActive(true).Build(),
 					UserBuilder().WithIPID("3").WithEmail("user.3@mail.com").WithFamilyName("3").WithGivenName("user").WithDisplayName("user 3").WithActive(true).Build(),
 				},
 				).Build(),
 			},
-			wantCreate: NewUsersResultBuilder().WithResources(
+			wantCreate: UsersResultBuilder().WithResources(
 				[]*User{
 					UserBuilder().WithIPID("4").WithEmail("user.4@mail.com").WithFamilyName("4").WithGivenName("user").WithDisplayName("user 4").WithActive(true).Build(),
 				},
 			).Build(),
-			wantUpdate: NewUsersResultBuilder().WithResources(
+			wantUpdate: UsersResultBuilder().WithResources(
 				[]*User{
 					UserBuilder().WithIPID("2").WithEmail("user.2@mail.com").WithFamilyName("different").WithGivenName("user").WithDisplayName("user 2").WithActive(true).Build(),
 				},
 			).Build(),
-			wantEqual: NewUsersResultBuilder().WithResources(
+			wantEqual: UsersResultBuilder().WithResources(
 				[]*User{
 					UserBuilder().WithIPID("1").WithEmail("user.1@mail.com").WithFamilyName("1").WithGivenName("user").WithDisplayName("user 1").WithActive(true).Build(),
 				},
 			).Build(),
-			wantDelete: NewUsersResultBuilder().WithResources(
+			wantDelete: UsersResultBuilder().WithResources(
 				[]*User{
 					UserBuilder().WithIPID("3").WithEmail("user.3@mail.com").WithFamilyName("3").WithGivenName("user").WithDisplayName("user 3").WithActive(true).Build(),
 				},

@@ -116,7 +116,7 @@ func (i *IdentityProvider) GetUsers(ctx context.Context, filter []string) (*mode
 		syncUsers = append(syncUsers, e)
 	}
 
-	uResult := model.NewUsersResultBuilder().WithResources(syncUsers).Build()
+	uResult := model.UsersResultBuilder().WithResources(syncUsers).Build()
 
 	return uResult, nil
 }
@@ -186,7 +186,7 @@ func (i *IdentityProvider) GetUsersByGroupsMembers(ctx context.Context, gmr *mod
 		}
 	}
 
-	pUsersResult := model.NewUsersResultBuilder().WithResources(pUsers).Build()
+	pUsersResult := model.UsersResultBuilder().WithResources(pUsers).Build()
 
 	return pUsersResult, nil
 }

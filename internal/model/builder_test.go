@@ -81,7 +81,7 @@ func TestUserBuilder(t *testing.T) {
 
 func TestUsersResultBuilder(t *testing.T) {
 	t.Run("empty", func(t *testing.T) {
-		urb := NewUsersResultBuilder().Build()
+		urb := UsersResultBuilder().Build()
 
 		ur := &UsersResult{
 			Resources: make([]*User, 0),
@@ -93,7 +93,7 @@ func TestUsersResultBuilder(t *testing.T) {
 	})
 
 	t.Run("all options resources", func(t *testing.T) {
-		urb := NewUsersResultBuilder()
+		urb := UsersResultBuilder()
 		urb.WithResources([]*User{
 			{IPID: "ipid", SCIMID: "scimid", Name: Name{FamilyName: "1", GivenName: "user"}, DisplayName: "user 1", Email: "email", Active: true},
 			{IPID: "ipid2", SCIMID: "scimid2", Name: Name{FamilyName: "2", GivenName: "user"}, DisplayName: "user 2", Email: "email2", Active: true},
@@ -125,7 +125,7 @@ func TestUsersResultBuilder(t *testing.T) {
 	})
 
 	t.Run("all options resource", func(t *testing.T) {
-		urb := NewUsersResultBuilder()
+		urb := UsersResultBuilder()
 		urb.WithResource(
 			&User{IPID: "ipid", SCIMID: "scimid", Name: Name{FamilyName: "1", GivenName: "user"}, DisplayName: "user 1", Email: "email", Active: true},
 		).WithResource(

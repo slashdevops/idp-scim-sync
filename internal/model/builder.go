@@ -5,7 +5,7 @@ type userBuilder struct {
 	u *User
 }
 
-// NewUserBuilder creates a new UserBuilder entity.
+// UserBuilder creates a new UserBuilder entity.
 func UserBuilder() *userBuilder {
 	return &userBuilder{
 		u: &User{},
@@ -66,8 +66,8 @@ type usersResultBuilder struct {
 	ur *UsersResult
 }
 
-// NewUsersResultBuilder creates a new UsersResultBuilder entity.
-func NewUsersResultBuilder() *usersResultBuilder {
+// UsersResultBuilder creates a new UsersResultBuilder entity.
+func UsersResultBuilder() *usersResultBuilder {
 	return &usersResultBuilder{
 		ur: &UsersResult{
 			Resources: make([]*User, 0),
