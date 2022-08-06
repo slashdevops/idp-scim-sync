@@ -17,7 +17,7 @@ permissions:
 
 env:
   AWS_REGION: us-east-1
-  GO_VERSION: 1.18
+  GO_VERSION: 1.19
 
 jobs:
   publish:
