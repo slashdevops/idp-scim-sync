@@ -429,7 +429,7 @@ func (s *Provider) CreateGroupsMembers(ctx context.Context, gmr *model.GroupsMem
 			}).Warn("adding member to group")
 		}
 
-		e := model.NewGroupMembersBuilder().
+		e := model.GroupMembersBuilder().
 			WithGroup(groupMembers.Group).
 			WithResources(members).
 			Build()
@@ -533,7 +533,7 @@ func (s *Provider) GetGroupsMembers(ctx context.Context, gr *model.GroupsResult)
 				members = append(members, m)
 			}
 
-			e := model.NewGroupMembersBuilder().
+			e := model.GroupMembersBuilder().
 				WithGroup(group).
 				WithResources(members).
 				Build()
@@ -581,7 +581,7 @@ func (s *Provider) GetGroupsMembersBruteForce(ctx context.Context, gr *model.Gro
 				members = append(members, m)
 			}
 
-			e := model.NewGroupMembersBuilder().
+			e := model.GroupMembersBuilder().
 				WithGroup(group).
 				WithResources(members).
 				Build()

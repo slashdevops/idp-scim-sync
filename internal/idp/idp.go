@@ -212,10 +212,10 @@ func (i *IdentityProvider) GetGroupsMembers(ctx context.Context, gr *model.Group
 			Build()
 
 		if members.Items > 0 {
-			groupMember := model.NewGroupMembersBuilder().WithGroup(e).WithResources(members.Resources).Build()
+			groupMember := model.GroupMembersBuilder().WithGroup(e).WithResources(members.Resources).Build()
 			groupMembers = append(groupMembers, groupMember)
 		} else {
-			groupMember := model.NewGroupMembersBuilder().WithGroup(e).Build()
+			groupMember := model.GroupMembersBuilder().WithGroup(e).Build()
 			groupMembers = append(groupMembers, groupMember)
 		}
 	}

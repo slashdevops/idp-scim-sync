@@ -254,8 +254,8 @@ type groupMembersBuilder struct {
 	gm *GroupMembers
 }
 
-// NewGroupMembersBuilder creates a new GroupMembersBuilder entity.
-func NewGroupMembersBuilder() *groupMembersBuilder {
+// GroupMembersBuilder creates a new GroupMembersBuilder entity.
+func GroupMembersBuilder() *groupMembersBuilder {
 	return &groupMembersBuilder{
 		gm: &GroupMembers{
 			Resources: make([]*Member, 0),

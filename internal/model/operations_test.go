@@ -530,7 +530,7 @@ func TestMembersOperations(t *testing.T) {
 			},
 			wantCreate: NewGroupsMembersResultBuilder().WithResources(
 				[]*GroupMembers{
-					NewGroupMembersBuilder().
+					GroupMembersBuilder().
 						WithGroup(
 							&Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: Hash(&Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com"})},
 						).
@@ -543,7 +543,7 @@ func TestMembersOperations(t *testing.T) {
 			).Build(),
 			wantEqual: NewGroupsMembersResultBuilder().WithResources(
 				[]*GroupMembers{
-					NewGroupMembersBuilder().
+					GroupMembersBuilder().
 						WithGroup(
 							&Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: Hash(&Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com"})},
 						).
@@ -556,7 +556,7 @@ func TestMembersOperations(t *testing.T) {
 			).Build(),
 			wantDelete: NewGroupsMembersResultBuilder().WithResources(
 				[]*GroupMembers{
-					NewGroupMembersBuilder().
+					GroupMembersBuilder().
 						WithGroup(
 							&Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: Hash(&Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com"})},
 						).
@@ -574,7 +574,7 @@ func TestMembersOperations(t *testing.T) {
 			args: args{
 				idp: NewGroupsMembersResultBuilder().WithResources(
 					[]*GroupMembers{
-						NewGroupMembersBuilder().
+						GroupMembersBuilder().
 							WithGroup(
 								&Group{IPID: "1", Name: "group 1", Email: "group.1@mail.com"},
 							).
@@ -584,7 +584,7 @@ func TestMembersOperations(t *testing.T) {
 									MemberBuilder().WithIPID("2").WithSCIMID("2").WithEmail("user.2@mail.com").WithStatus("ACTIVE").Build(),
 								},
 							).Build(),
-						NewGroupMembersBuilder().
+						GroupMembersBuilder().
 							WithGroup(
 								&Group{IPID: "2", Name: "group 2", Email: "group.2@mail.com"},
 							).
@@ -597,7 +597,7 @@ func TestMembersOperations(t *testing.T) {
 				).Build(),
 				scim: NewGroupsMembersResultBuilder().WithResources(
 					[]*GroupMembers{
-						NewGroupMembersBuilder().
+						GroupMembersBuilder().
 							WithGroup(
 								&Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com"},
 							).
@@ -607,7 +607,7 @@ func TestMembersOperations(t *testing.T) {
 									MemberBuilder().WithIPID("3").WithSCIMID("3").WithEmail("user.3@mail.com").WithStatus("ACTIVE").Build(),
 								},
 							).Build(),
-						NewGroupMembersBuilder().
+						GroupMembersBuilder().
 							WithGroup(
 								&Group{IPID: "2", SCIMID: "2", Name: "group 2", Email: "group.2@mail.com"},
 							).
@@ -622,7 +622,7 @@ func TestMembersOperations(t *testing.T) {
 			},
 			wantCreate: NewGroupsMembersResultBuilder().WithResources(
 				[]*GroupMembers{
-					NewGroupMembersBuilder().
+					GroupMembersBuilder().
 						WithGroup(
 							&Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: Hash(&Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com"})},
 						).
@@ -635,7 +635,7 @@ func TestMembersOperations(t *testing.T) {
 			).Build(),
 			wantEqual: NewGroupsMembersResultBuilder().WithResources(
 				[]*GroupMembers{
-					NewGroupMembersBuilder().
+					GroupMembersBuilder().
 						WithGroup(
 							&Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: Hash(&Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com"})},
 						).
@@ -644,7 +644,7 @@ func TestMembersOperations(t *testing.T) {
 								MemberBuilder().WithIPID("2").WithSCIMID("2").WithEmail("user.2@mail.com").WithStatus("ACTIVE").Build(),
 							},
 						).Build(),
-					NewGroupMembersBuilder().
+					GroupMembersBuilder().
 						WithGroup(
 							&Group{IPID: "2", SCIMID: "2", Name: "group 2", Email: "group.2@mail.com", HashCode: Hash(&Group{IPID: "2", SCIMID: "2", Name: "group 2", Email: "group.2@mail.com"})},
 						).
@@ -657,7 +657,7 @@ func TestMembersOperations(t *testing.T) {
 			).Build(),
 			wantDelete: NewGroupsMembersResultBuilder().WithResources(
 				[]*GroupMembers{
-					NewGroupMembersBuilder().
+					GroupMembersBuilder().
 						WithGroup(
 							&Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: Hash(&Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com"})},
 						).
@@ -666,7 +666,7 @@ func TestMembersOperations(t *testing.T) {
 								MemberBuilder().WithIPID("3").WithSCIMID("3").WithEmail("user.3@mail.com").WithStatus("ACTIVE").Build(),
 							},
 						).Build(),
-					NewGroupMembersBuilder().
+					GroupMembersBuilder().
 						WithGroup(
 							&Group{IPID: "2", SCIMID: "2", Name: "group 2", Email: "group.2@mail.com", HashCode: Hash(&Group{IPID: "2", SCIMID: "2", Name: "group 2", Email: "group.2@mail.com"})},
 						).
@@ -684,7 +684,7 @@ func TestMembersOperations(t *testing.T) {
 			args: args{
 				idp: NewGroupsMembersResultBuilder().WithResources(
 					[]*GroupMembers{
-						NewGroupMembersBuilder().
+						GroupMembersBuilder().
 							WithGroup(
 								&Group{IPID: "1", Name: "group 1", Email: "group.1@mail.com"},
 							).
@@ -694,7 +694,7 @@ func TestMembersOperations(t *testing.T) {
 									MemberBuilder().WithIPID("2").WithSCIMID("2").WithEmail("user.2@mail.com").WithStatus("ACTIVE").Build(),
 								},
 							).Build(),
-						NewGroupMembersBuilder().
+						GroupMembersBuilder().
 							WithGroup(
 								&Group{IPID: "2", Name: "group 2", Email: "group.2@mail.com"},
 							).
@@ -703,7 +703,7 @@ func TestMembersOperations(t *testing.T) {
 									MemberBuilder().WithIPID("3").WithEmail("user.3@mail.com").WithStatus("ACTIVE").Build(),
 								},
 							).Build(),
-						NewGroupMembersBuilder().
+						GroupMembersBuilder().
 							WithGroup(
 								&Group{IPID: "3", Name: "group 3", Email: "group.3@mail.com"}).
 							WithResources(
@@ -713,7 +713,7 @@ func TestMembersOperations(t *testing.T) {
 				).Build(),
 				scim: NewGroupsMembersResultBuilder().WithResources(
 					[]*GroupMembers{
-						NewGroupMembersBuilder().
+						GroupMembersBuilder().
 							WithGroup(
 								&Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com"},
 							).
@@ -723,14 +723,14 @@ func TestMembersOperations(t *testing.T) {
 									MemberBuilder().WithIPID("2").WithSCIMID("2").WithEmail("user.2@mail.com").WithStatus("ACTIVE").Build(),
 								},
 							).Build(),
-						NewGroupMembersBuilder().
+						GroupMembersBuilder().
 							WithGroup(
 								&Group{IPID: "2", SCIMID: "2", Name: "group 2", Email: "group.2@mail.com"},
 							).
 							WithResources(
 								[]*Member{},
 							).Build(),
-						NewGroupMembersBuilder().
+						GroupMembersBuilder().
 							WithGroup(
 								&Group{IPID: "3", SCIMID: "3", Name: "group 3", Email: "group.3@mail.com"},
 							).
@@ -742,7 +742,7 @@ func TestMembersOperations(t *testing.T) {
 			},
 			wantCreate: NewGroupsMembersResultBuilder().WithResources(
 				[]*GroupMembers{
-					NewGroupMembersBuilder().
+					GroupMembersBuilder().
 						WithGroup(
 							&Group{IPID: "2", SCIMID: "2", Name: "group 2", Email: "group.2@mail.com", HashCode: Hash(&Group{IPID: "2", SCIMID: "2", Name: "group 2", Email: "group.2@mail.com"})},
 						).
@@ -755,7 +755,7 @@ func TestMembersOperations(t *testing.T) {
 			).Build(),
 			wantEqual: NewGroupsMembersResultBuilder().WithResources(
 				[]*GroupMembers{
-					NewGroupMembersBuilder().
+					GroupMembersBuilder().
 						WithGroup(
 							&Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com", HashCode: Hash(&Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com"})},
 						).
@@ -765,7 +765,7 @@ func TestMembersOperations(t *testing.T) {
 								MemberBuilder().WithIPID("2").WithSCIMID("2").WithEmail("user.2@mail.com").WithStatus("ACTIVE").Build(),
 							},
 						).Build(),
-					NewGroupMembersBuilder().
+					GroupMembersBuilder().
 						WithGroup(
 							&Group{IPID: "3", SCIMID: "3", Name: "group 3", Email: "group.3@mail.com", HashCode: Hash(&Group{IPID: "3", SCIMID: "3", Name: "group 3", Email: "group.3@mail.com"})}).
 						WithResources(
