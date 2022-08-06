@@ -86,7 +86,7 @@ func (i *IdentityProvider) GetGroups(ctx context.Context, filter []string) (*mod
 		}
 	}
 
-	syncResult := model.NewGroupsResultBuilder().WithResources(syncGroups).Build()
+	syncResult := model.GroupsResultBuilder().WithResources(syncGroups).Build()
 
 	return syncResult, nil
 }

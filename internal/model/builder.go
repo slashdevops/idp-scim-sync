@@ -143,8 +143,8 @@ type groupsResultBuilder struct {
 	gr *GroupsResult
 }
 
-// NewGroupsResultBuilder creates a new GroupsResultBuilder entity.
-func NewGroupsResultBuilder() *groupsResultBuilder {
+// GroupsResultBuilder creates a new GroupsResultBuilder entity.
+func GroupsResultBuilder() *groupsResultBuilder {
 	return &groupsResultBuilder{
 		gr: &GroupsResult{
 			Resources: make([]*Group, 0),

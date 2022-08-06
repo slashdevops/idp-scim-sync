@@ -220,7 +220,7 @@ func TestGroupBuilder(t *testing.T) {
 
 func TestGroupsResultBuilder(t *testing.T) {
 	t.Run("empty", func(t *testing.T) {
-		grb := NewGroupsResultBuilder().Build()
+		grb := GroupsResultBuilder().Build()
 
 		gr := &GroupsResult{
 			Resources: make([]*Group, 0),
@@ -232,7 +232,7 @@ func TestGroupsResultBuilder(t *testing.T) {
 	})
 
 	t.Run("all options resources", func(t *testing.T) {
-		grb := NewGroupsResultBuilder()
+		grb := GroupsResultBuilder()
 		grb.WithResources([]*Group{
 			{IPID: "ipid", SCIMID: "scimid", Name: "name", Email: "email"},
 			{IPID: "ipid2", SCIMID: "scimid2", Name: "name2", Email: "email2"},
@@ -260,7 +260,7 @@ func TestGroupsResultBuilder(t *testing.T) {
 	})
 
 	t.Run("all options resource", func(t *testing.T) {
-		grb := NewGroupsResultBuilder()
+		grb := GroupsResultBuilder()
 		grb.WithResource(
 			&Group{IPID: "ipid", SCIMID: "scimid", Name: "name", Email: "email"},
 		).WithResource(

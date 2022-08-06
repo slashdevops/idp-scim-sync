@@ -91,7 +91,7 @@ func (s *Provider) GetGroups(ctx context.Context) (*model.GroupsResult, error) {
 		groups = append(groups, e)
 	}
 
-	groupsResult := model.NewGroupsResultBuilder().WithResources(groups).Build()
+	groupsResult := model.GroupsResultBuilder().WithResources(groups).Build()
 
 	return groupsResult, nil
 }
@@ -132,7 +132,7 @@ func (s *Provider) CreateGroups(ctx context.Context, gr *model.GroupsResult) (*m
 		groups = append(groups, e)
 	}
 
-	groupsResult := model.NewGroupsResultBuilder().WithResources(groups).Build()
+	groupsResult := model.GroupsResultBuilder().WithResources(groups).Build()
 
 	return groupsResult, nil
 }
@@ -188,7 +188,7 @@ func (s *Provider) UpdateGroups(ctx context.Context, gr *model.GroupsResult) (*m
 		groups = append(groups, e)
 	}
 
-	groupsResult := model.NewGroupsResultBuilder().WithResources(groups).Build()
+	groupsResult := model.GroupsResultBuilder().WithResources(groups).Build()
 
 	return groupsResult, nil
 }
