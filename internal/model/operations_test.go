@@ -25,38 +25,20 @@ func TestGroupsOperations(t *testing.T) {
 		{
 			name: "empty",
 			args: args{
-				idp: &GroupsResult{
-					Items:     0,
-					Resources: []*Group{},
-				},
-				state: &GroupsResult{
-					Items:     0,
-					Resources: []*Group{},
-				},
+				idp:   NewGroupsResultBuilder().Build(),
+				state: NewGroupsResultBuilder().Build(),
 			},
-			wantCreate: &GroupsResult{
-				Items:     0,
-				Resources: []*Group{},
-			},
-			wantUpdate: &GroupsResult{
-				Items:     0,
-				Resources: []*Group{},
-			},
-			wantEqual: &GroupsResult{
-				Items:     0,
-				Resources: []*Group{},
-			},
-			wantDelete: &GroupsResult{
-				Items:     0,
-				Resources: []*Group{},
-			},
-			wantErr: false,
+			wantCreate: NewGroupsResultBuilder().Build(),
+			wantUpdate: NewGroupsResultBuilder().Build(),
+			wantEqual:  NewGroupsResultBuilder().Build(),
+			wantDelete: NewGroupsResultBuilder().Build(),
+			wantErr:    false,
 		},
 		{
 			name: "nil idp",
 			args: args{
 				idp:   nil,
-				state: &GroupsResult{},
+				state: NewGroupsResultBuilder().Build(),
 			},
 			wantCreate: nil,
 			wantUpdate: nil,
@@ -67,7 +49,7 @@ func TestGroupsOperations(t *testing.T) {
 		{
 			name: "nil state",
 			args: args{
-				idp:   &GroupsResult{},
+				idp:   NewGroupsResultBuilder().Build(),
 				state: nil,
 			},
 			wantCreate: nil,
@@ -92,25 +74,16 @@ func TestGroupsOperations(t *testing.T) {
 					},
 				).Build(),
 			},
-			wantCreate: &GroupsResult{
-				Items:     0,
-				Resources: []*Group{},
-			},
-			wantUpdate: &GroupsResult{
-				Items:     0,
-				Resources: []*Group{},
-			},
+			wantCreate: NewGroupsResultBuilder().Build(),
+			wantUpdate: NewGroupsResultBuilder().Build(),
 			wantEqual: NewGroupsResultBuilder().WithResources(
 				[]*Group{
 					NewGroupBuilder().WithIPID("1").WithName("name1").WithEmail("1@mail.com").Build(),
 					NewGroupBuilder().WithIPID("2").WithName("name2").WithEmail("2@mail.com").Build(),
 				},
 			).Build(),
-			wantDelete: &GroupsResult{
-				Items:     0,
-				Resources: []*Group{},
-			},
-			wantErr: false,
+			wantDelete: NewGroupsResultBuilder().Build(),
+			wantErr:    false,
 		},
 		{
 			name: "1 equals, 1 update",
@@ -128,10 +101,7 @@ func TestGroupsOperations(t *testing.T) {
 					},
 				).Build(),
 			},
-			wantCreate: &GroupsResult{
-				Items:     0,
-				Resources: []*Group{},
-			},
+			wantCreate: NewGroupsResultBuilder().Build(),
 			wantUpdate: NewGroupsResultBuilder().WithResources(
 				[]*Group{
 					NewGroupBuilder().WithIPID("2").WithSCIMID("22").WithName("name2").WithEmail("2@mail.com").Build(),
@@ -142,11 +112,8 @@ func TestGroupsOperations(t *testing.T) {
 					NewGroupBuilder().WithIPID("1").WithSCIMID("11").WithName("name1").WithEmail("1@mail.com").Build(),
 				},
 			).Build(),
-			wantDelete: &GroupsResult{
-				Items:     0,
-				Resources: []*Group{},
-			},
-			wantErr: false,
+			wantDelete: NewGroupsResultBuilder().Build(),
+			wantErr:    false,
 		},
 		{
 			name: "1 equals, 1 update, 1 delete",
@@ -165,10 +132,7 @@ func TestGroupsOperations(t *testing.T) {
 					},
 				).Build(),
 			},
-			wantCreate: &GroupsResult{
-				Items:     0,
-				Resources: []*Group{},
-			},
+			wantCreate: NewGroupsResultBuilder().Build(),
 			wantUpdate: NewGroupsResultBuilder().WithResources(
 				[]*Group{
 					NewGroupBuilder().WithIPID("2").WithSCIMID("22").WithName("name2").WithEmail("2@mail.com").Build(),
@@ -240,24 +204,15 @@ func TestGroupsOperations(t *testing.T) {
 					},
 				).Build(),
 			},
-			wantCreate: &GroupsResult{
-				Items:     0,
-				Resources: []*Group{},
-			},
+			wantCreate: NewGroupsResultBuilder().Build(),
 			wantUpdate: NewGroupsResultBuilder().WithResources(
 				[]*Group{
 					NewGroupBuilder().WithIPID("1").WithSCIMID("22").WithName("name1").WithEmail("1@mail.com").Build(),
 				},
 			).Build(),
-			wantEqual: &GroupsResult{
-				Items:     0,
-				Resources: []*Group{},
-			},
-			wantDelete: &GroupsResult{
-				Items:     0,
-				Resources: []*Group{},
-			},
-			wantErr: false,
+			wantEqual:  NewGroupsResultBuilder().Build(),
+			wantDelete: NewGroupsResultBuilder().Build(),
+			wantErr:    false,
 		},
 	}
 	for _, tt := range tests {
@@ -308,38 +263,20 @@ func TestUsersOperations(t *testing.T) {
 		{
 			name: "empty",
 			args: args{
-				idp: &UsersResult{
-					Items:     0,
-					Resources: []*User{},
-				},
-				state: &UsersResult{
-					Items:     0,
-					Resources: []*User{},
-				},
+				idp:   NewUsersResultBuilder().Build(),
+				state: NewUsersResultBuilder().Build(),
 			},
-			wantCreate: &UsersResult{
-				Items:     0,
-				Resources: []*User{},
-			},
-			wantUpdate: &UsersResult{
-				Items:     0,
-				Resources: []*User{},
-			},
-			wantEqual: &UsersResult{
-				Items:     0,
-				Resources: []*User{},
-			},
-			wantDelete: &UsersResult{
-				Items:     0,
-				Resources: []*User{},
-			},
-			wantErr: false,
+			wantCreate: NewUsersResultBuilder().Build(),
+			wantUpdate: NewUsersResultBuilder().Build(),
+			wantEqual:  NewUsersResultBuilder().Build(),
+			wantDelete: NewUsersResultBuilder().Build(),
+			wantErr:    false,
 		},
 		{
 			name: "nil idp",
 			args: args{
 				idp:   nil,
-				state: &UsersResult{},
+				state: NewUsersResultBuilder().Build(),
 			},
 			wantCreate: nil,
 			wantUpdate: nil,
@@ -350,7 +287,7 @@ func TestUsersOperations(t *testing.T) {
 		{
 			name: "nil state",
 			args: args{
-				idp:   &UsersResult{},
+				idp:   NewUsersResultBuilder().Build(),
 				state: nil,
 			},
 			wantCreate: nil,
@@ -362,166 +299,129 @@ func TestUsersOperations(t *testing.T) {
 		{
 			name: "2 equals",
 			args: args{
-				idp: &UsersResult{
-					Items: 2,
-					Resources: []*User{
-						{IPID: "1", Email: "john.doe@email.com", Name: Name{FamilyName: "john", GivenName: "doe"}, DisplayName: "john doe", Active: true},
-						{IPID: "2", Email: "foo.bar@email.com", Name: Name{FamilyName: "foo", GivenName: "bar"}, DisplayName: "foo bar", Active: true},
+				idp: NewUsersResultBuilder().WithResources(
+					[]*User{
+						NewUserBuilder().WithIPID("1").WithEmail("user.1@mail.com").WithFamilyName("1").WithGivenName("user").WithDisplayName("user 1").WithActive(true).Build(),
+						NewUserBuilder().WithIPID("2").WithEmail("user.2@mail.com").WithFamilyName("2").WithGivenName("user").WithDisplayName("user 2").WithActive(true).Build(),
 					},
-				},
-				state: &UsersResult{
-					Items: 2,
-					Resources: []*User{
-						{IPID: "1", Email: "john.doe@email.com", Name: Name{FamilyName: "john", GivenName: "doe"}, DisplayName: "john doe", Active: true},
-						{IPID: "2", Email: "foo.bar@email.com", Name: Name{FamilyName: "foo", GivenName: "bar"}, DisplayName: "foo bar", Active: true},
+				).Build(),
+				state: NewUsersResultBuilder().WithResources(
+					[]*User{
+						NewUserBuilder().WithIPID("1").WithEmail("user.1@mail.com").WithFamilyName("1").WithGivenName("user").WithDisplayName("user 1").WithActive(true).Build(),
+						NewUserBuilder().WithIPID("2").WithEmail("user.2@mail.com").WithFamilyName("2").WithGivenName("user").WithDisplayName("user 2").WithActive(true).Build(),
 					},
+				).Build(),
+			},
+			wantCreate: NewUsersResultBuilder().Build(),
+			wantUpdate: NewUsersResultBuilder().Build(),
+			wantEqual: NewUsersResultBuilder().WithResources(
+				[]*User{
+					NewUserBuilder().WithIPID("1").WithEmail("user.1@mail.com").WithFamilyName("1").WithGivenName("user").WithDisplayName("user 1").WithActive(true).Build(),
+					NewUserBuilder().WithIPID("2").WithEmail("user.2@mail.com").WithFamilyName("2").WithGivenName("user").WithDisplayName("user 2").WithActive(true).Build(),
 				},
-			},
-			wantCreate: &UsersResult{
-				Items:     0,
-				Resources: []*User{},
-			},
-			wantUpdate: &UsersResult{
-				Items:     0,
-				Resources: []*User{},
-			},
-			wantEqual: &UsersResult{
-				Items: 2,
-				Resources: []*User{
-					{IPID: "1", Email: "john.doe@email.com", Name: Name{FamilyName: "john", GivenName: "doe"}, DisplayName: "john doe", Active: true},
-					{IPID: "2", Email: "foo.bar@email.com", Name: Name{FamilyName: "foo", GivenName: "bar"}, DisplayName: "foo bar", Active: true},
-				},
-			},
-			wantDelete: &UsersResult{
-				Items:     0,
-				Resources: []*User{},
-			},
+			).Build(),
+			wantDelete: NewUsersResultBuilder().Build(),
 		},
 		{
 			name: "1 equals, 1 update, 1 delete",
 			args: args{
-				idp: &UsersResult{
-					Items: 2,
-					Resources: []*User{
-						{IPID: "1", Email: "john.doe@email.com", Name: Name{FamilyName: "john", GivenName: "doe"}, DisplayName: "john doe", Active: true},
-						{IPID: "2", Email: "foo.bar@email.com", Name: Name{FamilyName: "foonew", GivenName: "bar"}, DisplayName: "foonew bar", Active: true},
+				idp: NewUsersResultBuilder().WithResources(
+					[]*User{
+						NewUserBuilder().WithIPID("1").WithEmail("user.1@mail.com").WithFamilyName("1").WithGivenName("user").WithDisplayName("user 1").WithActive(true).Build(),
+						NewUserBuilder().WithIPID("2").WithEmail("user.2@mail.com").WithFamilyName("different").WithGivenName("user").WithDisplayName("user 2").WithActive(true).Build(),
 					},
-				},
-				state: &UsersResult{
-					Items: 2,
-					Resources: []*User{
-						{IPID: "1", Email: "john.doe@email.com", Name: Name{FamilyName: "john", GivenName: "doe"}, DisplayName: "john doe", Active: true},
-						{IPID: "2", Email: "foo.bar@email.com", Name: Name{FamilyName: "foo", GivenName: "bar"}, DisplayName: "foo bar", Active: true},
-						{IPID: "3", Email: "donato.ricupero@email.com", Name: Name{FamilyName: "donato", GivenName: "ricupero"}, DisplayName: "donato ricupero", Active: true},
+				).Build(),
+				state: NewUsersResultBuilder().WithResources(
+					[]*User{
+						NewUserBuilder().WithIPID("1").WithEmail("user.1@mail.com").WithFamilyName("1").WithGivenName("user").WithDisplayName("user 1").WithActive(true).Build(),
+						NewUserBuilder().WithIPID("2").WithEmail("user.2@mail.com").WithFamilyName("2").WithGivenName("user").WithDisplayName("user 2").WithActive(true).Build(),
+						NewUserBuilder().WithIPID("3").WithEmail("user.3@mail.com").WithFamilyName("3").WithGivenName("user").WithDisplayName("user 3").WithActive(true).Build(),
 					},
+				).Build(),
+			},
+			wantCreate: NewUsersResultBuilder().Build(),
+			wantUpdate: NewUsersResultBuilder().WithResources(
+				[]*User{
+					NewUserBuilder().WithIPID("2").WithEmail("user.2@mail.com").WithFamilyName("different").WithGivenName("user").WithDisplayName("user 2").WithActive(true).Build(),
 				},
-			},
-			wantCreate: &UsersResult{
-				Items:     0,
-				Resources: []*User{},
-			},
-			wantUpdate: &UsersResult{
-				Items: 1,
-				Resources: []*User{
-					{IPID: "2", Email: "foo.bar@email.com", Name: Name{FamilyName: "foonew", GivenName: "bar"}, DisplayName: "foonew bar", Active: true},
+			).Build(),
+			wantEqual: NewUsersResultBuilder().WithResources(
+				[]*User{
+					NewUserBuilder().WithIPID("1").WithEmail("user.1@mail.com").WithFamilyName("1").WithGivenName("user").WithDisplayName("user 1").WithActive(true).Build(),
 				},
-			},
-			wantEqual: &UsersResult{
-				Items: 1,
-				Resources: []*User{
-					{IPID: "1", Email: "john.doe@email.com", Name: Name{FamilyName: "john", GivenName: "doe"}, DisplayName: "john doe", Active: true},
+			).Build(),
+			wantDelete: NewUsersResultBuilder().WithResources(
+				[]*User{
+					NewUserBuilder().WithIPID("3").WithEmail("user.3@mail.com").WithFamilyName("3").WithGivenName("user").WithDisplayName("user 3").WithActive(true).Build(),
 				},
-			},
-			wantDelete: &UsersResult{
-				Items: 1,
-				Resources: []*User{
-					{IPID: "3", Email: "donato.ricupero@email.com", Name: Name{FamilyName: "donato", GivenName: "ricupero"}, DisplayName: "donato ricupero", Active: true},
-				},
-			},
+			).Build(),
 		},
 		{
 			name: "1 equals, 1 update",
 			args: args{
-				idp: &UsersResult{
-					Items: 2,
-					Resources: []*User{
-						{IPID: "1", Email: "john.doe@email.com", Name: Name{FamilyName: "john", GivenName: "doe"}, DisplayName: "john doe", Active: true},
-						{IPID: "2", Email: "foo.bar@email.com", Name: Name{FamilyName: "foonew", GivenName: "bar"}, DisplayName: "foonew bar", Active: true},
+				idp: NewUsersResultBuilder().WithResources(
+					[]*User{
+						NewUserBuilder().WithIPID("1").WithEmail("user.1@mail.com").WithFamilyName("1").WithGivenName("user").WithDisplayName("user 1").WithActive(true).Build(),
+						NewUserBuilder().WithIPID("2").WithEmail("user.2@mail.com").WithFamilyName("different").WithGivenName("user").WithDisplayName("user 2").WithActive(true).Build(),
 					},
-				},
-				state: &UsersResult{
-					Items: 2,
-					Resources: []*User{
-						{IPID: "1", Email: "john.doe@email.com", Name: Name{FamilyName: "john", GivenName: "doe"}, DisplayName: "john doe", Active: true},
-						{IPID: "2", Email: "foo.bar@email.com", Name: Name{FamilyName: "foo", GivenName: "bar"}, DisplayName: "foo bar", Active: true},
+				).Build(),
+				state: NewUsersResultBuilder().WithResources(
+					[]*User{
+						NewUserBuilder().WithIPID("1").WithEmail("user.1@mail.com").WithFamilyName("1").WithGivenName("user").WithDisplayName("user 1").WithActive(true).Build(),
+						NewUserBuilder().WithIPID("2").WithEmail("user.2@mail.com").WithFamilyName("2").WithGivenName("user").WithDisplayName("user 2").WithActive(true).Build(),
 					},
+				).Build(),
+			},
+			wantCreate: NewUsersResultBuilder().Build(),
+			wantUpdate: NewUsersResultBuilder().WithResources(
+				[]*User{
+					NewUserBuilder().WithIPID("2").WithEmail("user.2@mail.com").WithFamilyName("different").WithGivenName("user").WithDisplayName("user 2").WithActive(true).Build(),
 				},
-			},
-			wantCreate: &UsersResult{
-				Items:     0,
-				Resources: []*User{},
-			},
-			wantUpdate: &UsersResult{
-				Items: 1,
-				Resources: []*User{
-					{IPID: "2", Email: "foo.bar@email.com", Name: Name{FamilyName: "foonew", GivenName: "bar"}, DisplayName: "foonew bar", Active: true},
+			).Build(),
+			wantEqual: NewUsersResultBuilder().WithResources(
+				[]*User{
+					NewUserBuilder().WithIPID("1").WithEmail("user.1@mail.com").WithFamilyName("1").WithGivenName("user").WithDisplayName("user 1").WithActive(true).Build(),
 				},
-			},
-			wantEqual: &UsersResult{
-				Items: 1,
-				Resources: []*User{
-					{IPID: "1", Email: "john.doe@email.com", Name: Name{FamilyName: "john", GivenName: "doe"}, DisplayName: "john doe", Active: true},
-				},
-			},
-			wantDelete: &UsersResult{
-				Items:     0,
-				Resources: []*User{},
-			},
+			).Build(),
+			wantDelete: NewUsersResultBuilder().Build(),
 		},
 		{
 			name: "1 equals, 1 update, 1 delete, 1 create",
 			args: args{
-				idp: &UsersResult{
-					Items: 2,
-					Resources: []*User{
-						{IPID: "1", Email: "john.doe@email.com", Name: Name{FamilyName: "john", GivenName: "doe"}, DisplayName: "john doe", Active: true},
-						{IPID: "2", Email: "foo.bar@email.com", Name: Name{FamilyName: "foonew", GivenName: "bar"}, DisplayName: "foonew bar", Active: true},
-						{IPID: "4", Email: "don.nadie@email.com", Name: Name{FamilyName: "don", GivenName: "nadie"}, DisplayName: "don nadie", Active: true},
+				idp: NewUsersResultBuilder().WithResources(
+					[]*User{
+						NewUserBuilder().WithIPID("1").WithEmail("user.1@mail.com").WithFamilyName("1").WithGivenName("user").WithDisplayName("user 1").WithActive(true).Build(),
+						NewUserBuilder().WithIPID("2").WithEmail("user.2@mail.com").WithFamilyName("different").WithGivenName("user").WithDisplayName("user 2").WithActive(true).Build(),
+						NewUserBuilder().WithIPID("4").WithEmail("user.4@mail.com").WithFamilyName("4").WithGivenName("user").WithDisplayName("user 4").WithActive(true).Build(),
 					},
+				).Build(),
+				state: NewUsersResultBuilder().WithResources([]*User{
+					NewUserBuilder().WithIPID("1").WithEmail("user.1@mail.com").WithFamilyName("1").WithGivenName("user").WithDisplayName("user 1").WithActive(true).Build(),
+					NewUserBuilder().WithIPID("2").WithEmail("user.2@mail.com").WithFamilyName("2").WithGivenName("user").WithDisplayName("user 2").WithActive(true).Build(),
+					NewUserBuilder().WithIPID("3").WithEmail("user.3@mail.com").WithFamilyName("3").WithGivenName("user").WithDisplayName("user 3").WithActive(true).Build(),
 				},
-				state: &UsersResult{
-					Items: 2,
-					Resources: []*User{
-						{IPID: "1", Email: "john.doe@email.com", Name: Name{FamilyName: "john", GivenName: "doe"}, DisplayName: "john doe", Active: true},
-						{IPID: "2", Email: "foo.bar@email.com", Name: Name{FamilyName: "foo", GivenName: "bar"}, DisplayName: "foo bar", Active: true},
-						{IPID: "3", Email: "donato.ricupero@email.com", Name: Name{FamilyName: "donato", GivenName: "ricupero"}, DisplayName: "donato ricupero", Active: true},
-					},
-				},
+				).Build(),
 			},
-			wantCreate: &UsersResult{
-				Items: 1,
-				Resources: []*User{
-					{IPID: "4", Email: "don.nadie@email.com", Name: Name{FamilyName: "don", GivenName: "nadie"}, DisplayName: "don nadie", Active: true},
+			wantCreate: NewUsersResultBuilder().WithResources(
+				[]*User{
+					NewUserBuilder().WithIPID("4").WithEmail("user.4@mail.com").WithFamilyName("4").WithGivenName("user").WithDisplayName("user 4").WithActive(true).Build(),
 				},
-			},
-			wantUpdate: &UsersResult{
-				Items: 1,
-				Resources: []*User{
-					{IPID: "2", Email: "foo.bar@email.com", Name: Name{FamilyName: "foonew", GivenName: "bar"}, DisplayName: "foonew bar", Active: true},
+			).Build(),
+			wantUpdate: NewUsersResultBuilder().WithResources(
+				[]*User{
+					NewUserBuilder().WithIPID("2").WithEmail("user.2@mail.com").WithFamilyName("different").WithGivenName("user").WithDisplayName("user 2").WithActive(true).Build(),
 				},
-			},
-			wantEqual: &UsersResult{
-				Items: 1,
-				Resources: []*User{
-					{IPID: "1", Email: "john.doe@email.com", Name: Name{FamilyName: "john", GivenName: "doe"}, DisplayName: "john doe", Active: true},
+			).Build(),
+			wantEqual: NewUsersResultBuilder().WithResources(
+				[]*User{
+					NewUserBuilder().WithIPID("1").WithEmail("user.1@mail.com").WithFamilyName("1").WithGivenName("user").WithDisplayName("user 1").WithActive(true).Build(),
 				},
-			},
-			wantDelete: &UsersResult{
-				Items: 1,
-				Resources: []*User{
-					{IPID: "3", Email: "donato.ricupero@email.com", Name: Name{FamilyName: "donato", GivenName: "ricupero"}, DisplayName: "donato ricupero", Active: true},
+			).Build(),
+			wantDelete: NewUsersResultBuilder().WithResources(
+				[]*User{
+					NewUserBuilder().WithIPID("3").WithEmail("user.3@mail.com").WithFamilyName("3").WithGivenName("user").WithDisplayName("user 3").WithActive(true).Build(),
 				},
-			},
+			).Build(),
 		},
 	}
 	for _, tt := range tests {

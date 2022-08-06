@@ -6,6 +6,167 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestUserBuilder(t *testing.T) {
+	t.Run("empty", func(t *testing.T) {
+		ub := NewUserBuilder().Build()
+
+		u := &User{}
+		u.SetHashCode()
+
+		assert.Equal(t, "", ub.IPID)
+		assert.Equal(t, "", ub.SCIMID)
+		assert.Equal(t, "", ub.Name.GivenName)
+		assert.Equal(t, "", ub.Name.FamilyName)
+		assert.Equal(t, "", ub.DisplayName)
+		assert.Equal(t, false, ub.Active)
+		assert.Equal(t, "", ub.Email)
+		assert.Equal(t, u.HashCode, ub.HashCode)
+	})
+
+	t.Run("all options", func(t *testing.T) {
+		ub := NewUserBuilder()
+		ub.WithIPID("ipid").
+			WithSCIMID("scimid").
+			WithGivenName("givenname").
+			WithFamilyName("familyname").
+			WithDisplayName("displayname").
+			WithActive(true).
+			WithEmail("email").
+			Build()
+
+		u := &User{
+			IPID:        "ipid",
+			SCIMID:      "scimid",
+			Name:        Name{GivenName: "givenname", FamilyName: "familyname"},
+			DisplayName: "displayname",
+			Active:      true,
+			Email:       "email",
+		}
+		u.SetHashCode()
+
+		assert.Equal(t, "ipid", ub.u.IPID)
+		assert.Equal(t, "scimid", ub.u.SCIMID)
+		assert.Equal(t, "givenname", ub.u.Name.GivenName)
+		assert.Equal(t, "familyname", ub.u.Name.FamilyName)
+		assert.Equal(t, "displayname", ub.u.DisplayName)
+		assert.Equal(t, true, ub.u.Active)
+		assert.Equal(t, "email", ub.u.Email)
+		assert.Equal(t, u.HashCode, ub.u.HashCode)
+	})
+
+	t.Run("few options", func(t *testing.T) {
+		ub := NewUserBuilder()
+		ub.WithIPID("ipid").
+			WithGivenName("givenname").
+			WithActive(true).
+			Build()
+
+		u := &User{
+			IPID:   "ipid",
+			Name:   Name{GivenName: "givenname"},
+			Active: true,
+		}
+		u.SetHashCode()
+
+		assert.Equal(t, "ipid", ub.u.IPID)
+		assert.Equal(t, "", ub.u.SCIMID)
+		assert.Equal(t, "givenname", ub.u.Name.GivenName)
+		assert.Equal(t, "", ub.u.Name.FamilyName)
+		assert.Equal(t, "", ub.u.DisplayName)
+		assert.Equal(t, true, ub.u.Active)
+		assert.Equal(t, "", ub.u.Email)
+		assert.Equal(t, u.HashCode, ub.u.HashCode)
+	})
+}
+
+func TestUsersResultBuilder(t *testing.T) {
+	t.Run("empty", func(t *testing.T) {
+		urb := NewUsersResultBuilder().Build()
+
+		ur := &UsersResult{
+			Resources: make([]*User, 0),
+		}
+		ur.SetHashCode()
+
+		assert.Equal(t, 0, len(urb.Resources))
+		assert.Equal(t, ur.HashCode, urb.HashCode)
+	})
+
+	t.Run("all options resources", func(t *testing.T) {
+		urb := NewUsersResultBuilder()
+		urb.WithResources([]*User{
+			{IPID: "ipid", SCIMID: "scimid", Name: Name{FamilyName: "1", GivenName: "user"}, DisplayName: "user 1", Email: "email", Active: true},
+			{IPID: "ipid2", SCIMID: "scimid2", Name: Name{FamilyName: "2", GivenName: "user"}, DisplayName: "user 2", Email: "email2", Active: true},
+		}).Build()
+
+		ur := &UsersResult{
+			Items: 2,
+			Resources: []*User{
+				{IPID: "ipid", SCIMID: "scimid", Name: Name{FamilyName: "1", GivenName: "user"}, DisplayName: "user 1", Email: "email", Active: true},
+				{IPID: "ipid2", SCIMID: "scimid2", Name: Name{FamilyName: "2", GivenName: "user"}, DisplayName: "user 2", Email: "email2", Active: true},
+			},
+		}
+		ur.SetHashCode()
+
+		assert.Equal(t, 2, len(urb.ur.Resources))
+		assert.Equal(t, "ipid", urb.ur.Resources[0].IPID)
+		assert.Equal(t, "ipid2", urb.ur.Resources[1].IPID)
+		assert.Equal(t, "scimid", urb.ur.Resources[0].SCIMID)
+		assert.Equal(t, "scimid2", urb.ur.Resources[1].SCIMID)
+		assert.Equal(t, "1", urb.ur.Resources[0].Name.FamilyName)
+		assert.Equal(t, "user", urb.ur.Resources[0].Name.GivenName)
+		assert.Equal(t, "2", urb.ur.Resources[1].Name.FamilyName)
+		assert.Equal(t, "user", urb.ur.Resources[1].Name.GivenName)
+		assert.Equal(t, "email", urb.ur.Resources[0].Email)
+		assert.Equal(t, "email2", urb.ur.Resources[1].Email)
+		assert.Equal(t, true, urb.ur.Resources[0].Active)
+		assert.Equal(t, true, urb.ur.Resources[1].Active)
+		assert.Equal(t, ur.HashCode, urb.ur.HashCode)
+	})
+
+	t.Run("all options resource", func(t *testing.T) {
+		urb := NewUsersResultBuilder()
+		urb.WithResource(
+			&User{IPID: "ipid", SCIMID: "scimid", Name: Name{FamilyName: "1", GivenName: "user"}, DisplayName: "user 1", Email: "email", Active: true},
+		).WithResource(
+			&User{IPID: "ipid2", SCIMID: "scimid2", Name: Name{FamilyName: "2", GivenName: "user"}, DisplayName: "user 2", Email: "email2", Active: true},
+		).WithResource(
+			&User{IPID: "ipid3", SCIMID: "scimid3", Name: Name{FamilyName: "3", GivenName: "user"}, DisplayName: "user 3", Email: "email3", Active: true},
+		).Build()
+
+		ur := &UsersResult{
+			Items: 3,
+			Resources: []*User{
+				{IPID: "ipid", SCIMID: "scimid", Name: Name{FamilyName: "1", GivenName: "user"}, DisplayName: "user 1", Email: "email", Active: true},
+				{IPID: "ipid2", SCIMID: "scimid2", Name: Name{FamilyName: "2", GivenName: "user"}, DisplayName: "user 2", Email: "email2", Active: true},
+				{IPID: "ipid3", SCIMID: "scimid3", Name: Name{FamilyName: "3", GivenName: "user"}, DisplayName: "user 3", Email: "email3", Active: true},
+			},
+		}
+		ur.SetHashCode()
+
+		assert.Equal(t, 3, len(urb.ur.Resources))
+		assert.Equal(t, "ipid", urb.ur.Resources[0].IPID)
+		assert.Equal(t, "ipid2", urb.ur.Resources[1].IPID)
+		assert.Equal(t, "ipid3", urb.ur.Resources[2].IPID)
+		assert.Equal(t, "scimid", urb.ur.Resources[0].SCIMID)
+		assert.Equal(t, "scimid2", urb.ur.Resources[1].SCIMID)
+		assert.Equal(t, "scimid3", urb.ur.Resources[2].SCIMID)
+		assert.Equal(t, "1", urb.ur.Resources[0].Name.FamilyName)
+		assert.Equal(t, "user", urb.ur.Resources[0].Name.GivenName)
+		assert.Equal(t, "2", urb.ur.Resources[1].Name.FamilyName)
+		assert.Equal(t, "user", urb.ur.Resources[1].Name.GivenName)
+		assert.Equal(t, "3", urb.ur.Resources[2].Name.FamilyName)
+		assert.Equal(t, "user", urb.ur.Resources[2].Name.GivenName)
+		assert.Equal(t, "email", urb.ur.Resources[0].Email)
+		assert.Equal(t, "email2", urb.ur.Resources[1].Email)
+		assert.Equal(t, "email3", urb.ur.Resources[2].Email)
+		assert.Equal(t, true, urb.ur.Resources[0].Active)
+		assert.Equal(t, true, urb.ur.Resources[1].Active)
+		assert.Equal(t, true, urb.ur.Resources[2].Active)
+		assert.Equal(t, ur.HashCode, urb.ur.HashCode)
+	})
+}
+
 func TestGroupBuilder(t *testing.T) {
 	t.Run("empty", func(t *testing.T) {
 		gb := NewGroupBuilder().Build()
@@ -183,5 +344,83 @@ func TestMemberBuilder(t *testing.T) {
 		assert.Equal(t, "", mb.m.Email)
 		assert.Equal(t, "status", mb.m.Status)
 		assert.Equal(t, m.HashCode, mb.m.HashCode)
+	})
+}
+
+func TestMembersResultBuilder(t *testing.T) {
+	t.Run("empty", func(t *testing.T) {
+		mrb := NewMembersResultBuilder().Build()
+
+		mr := &MembersResult{
+			Resources: make([]*Member, 0),
+		}
+		mr.SetHashCode()
+
+		assert.Equal(t, 0, len(mrb.Resources))
+		assert.Equal(t, mr.HashCode, mrb.HashCode)
+	})
+
+	t.Run("all options resources", func(t *testing.T) {
+		mrb := NewMembersResultBuilder()
+		mrb.WithResources([]*Member{
+			{IPID: "ipid", SCIMID: "scimid", Email: "email", Status: "1"},
+			{IPID: "ipid2", SCIMID: "scimid2", Email: "email2", Status: "2"},
+		}).Build()
+
+		mr := &MembersResult{
+			Items: 2,
+			Resources: []*Member{
+				{IPID: "ipid", SCIMID: "scimid", Email: "email", Status: "1"},
+				{IPID: "ipid2", SCIMID: "scimid2", Email: "email2", Status: "2"},
+			},
+		}
+		mr.SetHashCode()
+
+		assert.Equal(t, 2, len(mrb.mr.Resources))
+		assert.Equal(t, "ipid", mrb.mr.Resources[0].IPID)
+		assert.Equal(t, "ipid2", mrb.mr.Resources[1].IPID)
+		assert.Equal(t, "scimid", mrb.mr.Resources[0].SCIMID)
+		assert.Equal(t, "scimid2", mrb.mr.Resources[1].SCIMID)
+		assert.Equal(t, "email", mrb.mr.Resources[0].Email)
+		assert.Equal(t, "email2", mrb.mr.Resources[1].Email)
+		assert.Equal(t, "1", mrb.mr.Resources[0].Status)
+		assert.Equal(t, "2", mrb.mr.Resources[1].Status)
+		assert.Equal(t, mr.HashCode, mrb.mr.HashCode)
+	})
+
+	t.Run("all options resource", func(t *testing.T) {
+		mrb := NewMembersResultBuilder()
+		mrb.WithResource(
+			&Member{IPID: "ipid", SCIMID: "scimid", Email: "email", Status: "1"},
+		).WithResource(
+			&Member{IPID: "ipid2", SCIMID: "scimid2", Email: "email2", Status: "2"},
+		).WithResource(
+			&Member{IPID: "ipid3", SCIMID: "scimid3", Email: "email3", Status: "3"},
+		).Build()
+
+		mr := &MembersResult{
+			Items: 3,
+			Resources: []*Member{
+				{IPID: "ipid", SCIMID: "scimid", Email: "email", Status: "1"},
+				{IPID: "ipid2", SCIMID: "scimid2", Email: "email2", Status: "2"},
+				{IPID: "ipid3", SCIMID: "scimid3", Email: "email3", Status: "3"},
+			},
+		}
+		mr.SetHashCode()
+
+		assert.Equal(t, 3, len(mrb.mr.Resources))
+		assert.Equal(t, "ipid", mrb.mr.Resources[0].IPID)
+		assert.Equal(t, "ipid2", mrb.mr.Resources[1].IPID)
+		assert.Equal(t, "ipid3", mrb.mr.Resources[2].IPID)
+		assert.Equal(t, "scimid", mrb.mr.Resources[0].SCIMID)
+		assert.Equal(t, "scimid2", mrb.mr.Resources[1].SCIMID)
+		assert.Equal(t, "scimid3", mrb.mr.Resources[2].SCIMID)
+		assert.Equal(t, "email", mrb.mr.Resources[0].Email)
+		assert.Equal(t, "email2", mrb.mr.Resources[1].Email)
+		assert.Equal(t, "email3", mrb.mr.Resources[2].Email)
+		assert.Equal(t, "1", mrb.mr.Resources[0].Status)
+		assert.Equal(t, "2", mrb.mr.Resources[1].Status)
+		assert.Equal(t, "3", mrb.mr.Resources[2].Status)
+		assert.Equal(t, mr.HashCode, mrb.mr.HashCode)
 	})
 }
