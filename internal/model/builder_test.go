@@ -438,6 +438,29 @@ func TestGroupMembersBuilder(t *testing.T) {
 		assert.Equal(t, gm.HashCode, gmb.HashCode)
 	})
 
+	t.Run("with group and no resources", func(t *testing.T) {
+		gmb := NewGroupMembersBuilder()
+		gmb.WithGroup(
+			&Group{IPID: "ipid", SCIMID: "scimid", Name: "group", Email: "email"},
+		).Build()
+
+		gm := &GroupMembers{
+			Items:     0,
+			Group:     &Group{IPID: "ipid", SCIMID: "scimid", Name: "group", Email: "email"},
+			Resources: []*Member{},
+		}
+		gm.SetHashCode()
+
+		assert.Equal(t, "group", gmb.gm.Group.Name)
+		assert.Equal(t, "ipid", gmb.gm.Group.IPID)
+		assert.Equal(t, "scimid", gmb.gm.Group.SCIMID)
+		assert.Equal(t, "email", gmb.gm.Group.Email)
+
+		assert.Equal(t, 0, len(gmb.gm.Resources))
+		assert.Equal(t, gm.HashCode, gmb.gm.HashCode)
+		assert.Equal(t, gm.Items, gmb.gm.Items)
+	})
+
 	t.Run("all options resources", func(t *testing.T) {
 		gmb := NewGroupMembersBuilder()
 		gmb.WithGroup(

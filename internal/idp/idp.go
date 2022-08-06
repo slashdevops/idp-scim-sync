@@ -70,12 +70,11 @@ func (i *IdentityProvider) GetGroups(ctx context.Context, filter []string) (*mod
 		if _, ok := uniqueGroups[grp.Name]; !ok {
 			uniqueGroups[grp.Name] = struct{}{}
 
-			e := &model.Group{
-				IPID:  grp.Id,
-				Name:  grp.Name,
-				Email: grp.Email,
-			}
-			e.SetHashCode()
+			e := model.NewGroupBuilder().
+				WithIPID(grp.Id).
+				WithName(grp.Name).
+				WithEmail(grp.Email).
+				Build()
 
 			syncGroups = append(syncGroups, e)
 		} else {
@@ -87,11 +86,7 @@ func (i *IdentityProvider) GetGroups(ctx context.Context, filter []string) (*mod
 		}
 	}
 
-	syncResult := &model.GroupsResult{
-		Items:     len(syncGroups),
-		Resources: syncGroups,
-	}
-	syncResult.SetHashCode()
+	syncResult := model.NewGroupsResultBuilder().WithResources(syncGroups).Build()
 
 	return syncResult, nil
 }
@@ -109,23 +104,19 @@ func (i *IdentityProvider) GetUsers(ctx context.Context, filter []string) (*mode
 	}
 
 	for _, usr := range pUsers {
-		e := &model.User{
-			IPID:        usr.Id,
-			Name:        model.Name{FamilyName: usr.Name.FamilyName, GivenName: usr.Name.GivenName},
-			DisplayName: fmt.Sprintf("%s %s", usr.Name.GivenName, usr.Name.FamilyName),
-			Active:      !usr.Suspended,
-			Email:       usr.PrimaryEmail,
-		}
-		e.SetHashCode()
+		e := model.NewUserBuilder().
+			WithIPID(usr.Id).
+			WithGivenName(usr.Name.GivenName).
+			WithFamilyName(usr.Name.FamilyName).
+			WithDisplayName(fmt.Sprintf("%s %s", usr.Name.GivenName, usr.Name.FamilyName)).
+			WithEmail(usr.PrimaryEmail).
+			WithActive(!usr.Suspended).
+			Build()
 
 		syncUsers = append(syncUsers, e)
 	}
 
-	uResult := &model.UsersResult{
-		Items:     len(pUsers),
-		Resources: syncUsers,
-	}
-	uResult.SetHashCode()
+	uResult := model.NewUsersResultBuilder().WithResources(syncUsers).Build()
 
 	return uResult, nil
 }
@@ -152,21 +143,17 @@ func (i *IdentityProvider) GetGroupMembers(ctx context.Context, groupID string) 
 			}).Warn("skipping member because is a group, but group members will be included")
 			continue
 		}
-		e := &model.Member{
-			IPID:   member.Id,
-			Email:  member.Email,
-			Status: member.Status,
-		}
-		e.SetHashCode()
+
+		e := model.NewMemberBuilder().
+			WithIPID(member.Id).
+			WithEmail(member.Email).
+			WithStatus(member.Status).
+			Build()
 
 		syncMembers = append(syncMembers, e)
 	}
 
-	syncMembersResult := &model.MembersResult{
-		Items:     len(syncMembers),
-		Resources: syncMembers,
-	}
-	syncMembersResult.SetHashCode()
+	syncMembersResult := model.NewMembersResultBuilder().WithResources(syncMembers).Build()
 
 	return syncMembersResult, nil
 }
@@ -183,25 +170,23 @@ func (i *IdentityProvider) GetUsersByGroupsMembers(ctx context.Context, gmr *mod
 				return nil, fmt.Errorf("idp: error getting user: %+v, email: %s, error: %w", member.IPID, member.Email, err)
 			}
 
-			e := &model.User{
-				IPID:        u.Id,
-				Name:        model.Name{FamilyName: u.Name.FamilyName, GivenName: u.Name.GivenName},
-				DisplayName: fmt.Sprintf("%s %s", u.Name.GivenName, u.Name.FamilyName),
-				Active:      !u.Suspended,
-				Email:       u.PrimaryEmail,
-			}
-			e.SetHashCode()
+			e := model.NewUserBuilder().
+				WithIPID(u.Id).
+				WithGivenName(u.Name.GivenName).
+				WithFamilyName(u.Name.FamilyName).
+				WithDisplayName(fmt.Sprintf("%s %s", u.Name.GivenName, u.Name.FamilyName)).
+				WithEmail(u.PrimaryEmail).
+				WithActive(!u.Suspended).
+				Build()
+
 			if _, ok := uniqUsers[e.Email]; !ok {
 				uniqUsers[e.Email] = struct{}{}
 				pUsers = append(pUsers, e)
 			}
 		}
 	}
-	pUsersResult := &model.UsersResult{
-		Items:     len(pUsers),
-		Resources: pUsers,
-	}
-	pUsersResult.SetHashCode()
+
+	pUsersResult := model.NewUsersResultBuilder().WithResources(pUsers).Build()
 
 	return pUsersResult, nil
 }
@@ -220,30 +205,17 @@ func (i *IdentityProvider) GetGroupsMembers(ctx context.Context, gr *model.Group
 			return nil, fmt.Errorf("idp: error getting group members: %w", err)
 		}
 
-		e := &model.Group{
-			IPID:  group.IPID,
-			Name:  group.Name,
-			Email: group.Email,
-		}
-		e.SetHashCode()
+		e := model.NewGroupBuilder().
+			WithIPID(group.IPID).
+			WithName(group.Name).
+			WithEmail(group.Email).
+			Build()
 
 		if members.Items > 0 {
-			groupMember := &model.GroupMembers{
-				Items:     len(members.Resources),
-				Group:     e,
-				Resources: members.Resources,
-			}
-			groupMember.SetHashCode()
-
+			groupMember := model.NewGroupMembersBuilder().WithGroup(e).WithResources(members.Resources).Build()
 			groupMembers = append(groupMembers, groupMember)
 		} else {
-			groupMember := &model.GroupMembers{
-				Items:     0,
-				Group:     e,
-				Resources: make([]*model.Member, 0),
-			}
-			groupMember.SetHashCode()
-
+			groupMember := model.NewGroupMembersBuilder().WithGroup(e).Build()
 			groupMembers = append(groupMembers, groupMember)
 		}
 	}
