@@ -82,21 +82,16 @@ func (s *Provider) GetGroups(ctx context.Context) (*model.GroupsResult, error) {
 
 	groups := make([]*model.Group, 0)
 	for _, group := range groupsResponse.Resources {
-		e := &model.Group{
-			SCIMID: group.ID,
-			Name:   group.DisplayName,
-			IPID:   group.ExternalID,
-		}
-		e.SetHashCode()
+		e := model.NewGroupBuilder().
+			WithSCIMID(group.ID).
+			WithName(group.DisplayName).
+			WithIPID(group.ExternalID).
+			Build()
 
 		groups = append(groups, e)
 	}
 
-	groupsResult := &model.GroupsResult{
-		Items:     len(groups),
-		Resources: groups,
-	}
-	groupsResult.SetHashCode()
+	groupsResult := model.NewGroupsResultBuilder().WithResources(groups).Build()
 
 	return groupsResult, nil
 }
@@ -127,19 +122,19 @@ func (s *Provider) CreateGroups(ctx context.Context, gr *model.GroupsResult) (*m
 			return nil, fmt.Errorf("scim: error creating group: %w", err)
 		}
 
-		e := group
-		e.SCIMID = r.ID
-		e.SetHashCode()
+		e := model.NewGroupBuilder().
+			WithSCIMID(r.ID).
+			WithName(group.Name).
+			WithIPID(group.IPID).
+			WithEmail(group.Email).
+			Build()
+
 		groups = append(groups, e)
 	}
 
-	ret := &model.GroupsResult{
-		Items:     len(groups),
-		Resources: groups,
-	}
-	ret.SetHashCode()
+	groupsResult := model.NewGroupsResultBuilder().WithResources(groups).Build()
 
-	return ret, nil
+	return groupsResult, nil
 }
 
 // UpdateGroups updates groups in SCIM Provider
@@ -183,23 +178,19 @@ func (s *Provider) UpdateGroups(ctx context.Context, gr *model.GroupsResult) (*m
 		}
 
 		// return the same group
-		e := &model.Group{
-			SCIMID: group.SCIMID,
-			Name:   group.Name,
-			IPID:   group.IPID,
-			Email:  group.Email,
-		}
-		e.SetHashCode()
+		e := model.NewGroupBuilder().
+			WithSCIMID(group.SCIMID).
+			WithName(group.Name).
+			WithIPID(group.IPID).
+			WithEmail(group.Email).
+			Build()
+
 		groups = append(groups, e)
 	}
 
-	ret := &model.GroupsResult{
-		Items:     len(groups),
-		Resources: groups,
-	}
-	ret.SetHashCode()
+	groupsResult := model.NewGroupsResultBuilder().WithResources(groups).Build()
 
-	return ret, nil
+	return groupsResult, nil
 }
 
 // DeleteGroups deletes groups in SCIM Provider
@@ -233,27 +224,20 @@ func (s *Provider) GetUsers(ctx context.Context) (*model.UsersResult, error) {
 
 	users := make([]*model.User, 0)
 	for _, user := range usersResponse.Resources {
-		e := &model.User{
-			IPID:   user.ExternalID,
-			SCIMID: user.ID,
-			Name: model.Name{
-				FamilyName: user.Name.FamilyName,
-				GivenName:  user.Name.GivenName,
-			},
-			DisplayName: user.DisplayName,
-			Active:      user.Active,
-			Email:       user.Emails[0].Value,
-		}
-		e.SetHashCode()
+		e := model.NewUserBuilder().
+			WithIPID(user.ExternalID).
+			WithSCIMID(user.ID).
+			WithGivenName(user.Name.GivenName).
+			WithFamilyName(user.Name.FamilyName).
+			WithDisplayName(user.DisplayName).
+			WithEmail(user.Emails[0].Value).
+			WithActive(user.Active).
+			Build()
 
 		users = append(users, e)
 	}
 
-	usersResult := &model.UsersResult{
-		Items:     len(users),
-		Resources: users,
-	}
-	usersResult.SetHashCode()
+	usersResult := model.NewUsersResultBuilder().WithResources(users).Build()
 
 	return usersResult, nil
 }
@@ -298,29 +282,22 @@ func (s *Provider) CreateUsers(ctx context.Context, ur *model.UsersResult) (*mod
 			return nil, fmt.Errorf("scim: error creating user: %w", err)
 		}
 
-		e := &model.User{
-			IPID:   user.IPID,
-			SCIMID: r.ID,
-			Name: model.Name{
-				FamilyName: user.Name.FamilyName,
-				GivenName:  user.Name.GivenName,
-			},
-			DisplayName: user.DisplayName,
-			Active:      user.Active,
-			Email:       user.Email,
-		}
-		e.SetHashCode()
+		e := model.NewUserBuilder().
+			WithIPID(user.IPID).
+			WithSCIMID(r.ID).
+			WithGivenName(user.Name.GivenName).
+			WithFamilyName(user.Name.FamilyName).
+			WithDisplayName(user.DisplayName).
+			WithEmail(user.Email).
+			WithActive(user.Active).
+			Build()
 
 		users = append(users, e)
 	}
 
-	ret := &model.UsersResult{
-		Items:     len(users),
-		Resources: users,
-	}
-	ret.SetHashCode()
+	usersResult := model.NewUsersResultBuilder().WithResources(users).Build()
 
-	return ret, nil
+	return usersResult, nil
 }
 
 // UpdateUsers updates users in SCIM Provider given a list of users
@@ -364,29 +341,22 @@ func (s *Provider) UpdateUsers(ctx context.Context, ur *model.UsersResult) (*mod
 			return nil, fmt.Errorf("scim: error updating user: %w", err)
 		}
 
-		e := &model.User{
-			IPID:   user.IPID,
-			SCIMID: r.ID,
-			Name: model.Name{
-				FamilyName: user.Name.FamilyName,
-				GivenName:  user.Name.GivenName,
-			},
-			DisplayName: user.DisplayName,
-			Active:      user.Active,
-			Email:       user.Email,
-		}
-		e.SCIMID = r.ID
-		e.SetHashCode()
+		e := model.NewUserBuilder().
+			WithIPID(user.IPID).
+			WithSCIMID(r.ID).
+			WithGivenName(user.Name.GivenName).
+			WithFamilyName(user.Name.FamilyName).
+			WithDisplayName(user.DisplayName).
+			WithEmail(user.Email).
+			WithActive(user.Active).
+			Build()
+
 		users = append(users, e)
 	}
 
-	ret := &model.UsersResult{
-		Items:     len(users),
-		Resources: users,
-	}
-	ret.SetHashCode()
+	usersResult := model.NewUsersResultBuilder().WithResources(users).Build()
 
-	return ret, nil
+	return usersResult, nil
 }
 
 // DeleteUsers deletes users in SCIM Provider given a list of users
@@ -436,13 +406,13 @@ func (s *Provider) CreateGroupsMembers(ctx context.Context, gmr *model.GroupsMem
 				Value: member.SCIMID,
 			})
 
-			e := &model.Member{
-				IPID:   member.IPID,
-				SCIMID: member.SCIMID,
-				Email:  member.Email,
-				Status: member.Status,
-			}
-			e.SetHashCode()
+			e := model.NewMemberBuilder().
+				WithIPID(member.IPID).
+				WithSCIMID(member.SCIMID).
+				WithEmail(member.Email).
+				WithStatus(member.Status).
+				Build()
+
 			members = append(members, e)
 
 			log.WithFields(log.Fields{
@@ -459,9 +429,10 @@ func (s *Provider) CreateGroupsMembers(ctx context.Context, gmr *model.GroupsMem
 			}).Warn("adding member to group")
 		}
 
-		e := groupMembers
-		e.SetHashCode()
-		e.Resources = members
+		e := model.NewGroupMembersBuilder().
+			WithGroup(groupMembers.Group).
+			WithResources(members).
+			Build()
 
 		groupsMembers = append(groupsMembers, e)
 
@@ -482,13 +453,9 @@ func (s *Provider) CreateGroupsMembers(ctx context.Context, gmr *model.GroupsMem
 		}
 	}
 
-	ret := &model.GroupsMembersResult{
-		Items:     len(groupsMembers),
-		Resources: groupsMembers,
-	}
-	ret.SetHashCode()
+	groupsMembersResult := model.NewGroupsMembersResultBuilder().WithResources(groupsMembers).Build()
 
-	return ret, nil
+	return groupsMembersResult, nil
 }
 
 // DeleteGroupsMembers deletes groups members in SCIM Provider given a list of groups members
@@ -558,31 +525,24 @@ func (s *Provider) GetGroupsMembers(ctx context.Context, gr *model.GroupsResult)
 					return nil, fmt.Errorf("scim: error getting user: %s, error %w", member.Value, err)
 				}
 
-				m := &model.Member{
-					SCIMID: member.Value,
-					Email:  u.Emails[0].Value,
-				}
-				m.SetHashCode()
+				m := model.NewMemberBuilder().
+					WithSCIMID(member.Value).
+					WithEmail(u.Emails[0].Value).
+					Build()
 
 				members = append(members, m)
 			}
 
-			e := &model.GroupMembers{
-				Items:     len(members),
-				Group:     group,
-				Resources: members,
-			}
-			e.SetHashCode()
+			e := model.NewGroupMembersBuilder().
+				WithGroup(group).
+				WithResources(members).
+				Build()
 
 			groupMembers = append(groupMembers, e)
 		}
 	}
 
-	groupsMembersResult := &model.GroupsMembersResult{
-		Items:     len(groupMembers),
-		Resources: groupMembers,
-	}
-	groupsMembersResult.SetHashCode()
+	groupsMembersResult := model.NewGroupsMembersResultBuilder().WithResources(groupMembers).Build()
 
 	return groupsMembersResult, nil
 }
@@ -612,31 +572,25 @@ func (s *Provider) GetGroupsMembersBruteForce(ctx context.Context, gr *model.Gro
 			}
 
 			if lgr.TotalResults > 0 { // crazy thing of the AWS SSO SCIM API, it doesn't return the member into the Resources array
-				m := &model.Member{
-					IPID:   user.IPID,
-					SCIMID: user.SCIMID,
-					Email:  user.Email,
-				}
-				m.SetHashCode()
+				m := model.NewMemberBuilder().
+					WithIPID(user.IPID).
+					WithSCIMID(user.SCIMID).
+					WithEmail(user.Email).
+					Build()
 
 				members = append(members, m)
 			}
-			e := &model.GroupMembers{
-				Items:     len(members),
-				Group:     group,
-				Resources: members,
-			}
-			e.SetHashCode()
+
+			e := model.NewGroupMembersBuilder().
+				WithGroup(group).
+				WithResources(members).
+				Build()
 
 			groupMembers = append(groupMembers, e)
 		}
 	}
 
-	groupsMembersResult := &model.GroupsMembersResult{
-		Items:     len(groupMembers),
-		Resources: groupMembers,
-	}
-	groupsMembersResult.SetHashCode()
+	groupsMembersResult := model.NewGroupsMembersResultBuilder().WithResources(groupMembers).Build()
 
 	return groupsMembersResult, nil
 }
