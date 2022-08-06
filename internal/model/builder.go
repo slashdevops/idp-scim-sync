@@ -220,8 +220,8 @@ type membersResultBuilder struct {
 	mr *MembersResult
 }
 
-// NewMembersResultBuilder creates a new MembersResultBuilder entity.
-func NewMembersResultBuilder() *membersResultBuilder {
+// MembersResultBuilder creates a new MembersResultBuilder entity.
+func MembersResultBuilder() *membersResultBuilder {
 	return &membersResultBuilder{
 		mr: &MembersResult{
 			Resources: make([]*Member, 0),

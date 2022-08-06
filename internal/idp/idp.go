@@ -153,7 +153,7 @@ func (i *IdentityProvider) GetGroupMembers(ctx context.Context, groupID string) 
 		syncMembers = append(syncMembers, e)
 	}
 
-	syncMembersResult := model.NewMembersResultBuilder().WithResources(syncMembers).Build()
+	syncMembersResult := model.MembersResultBuilder().WithResources(syncMembers).Build()
 
 	return syncMembersResult, nil
 }

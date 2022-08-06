@@ -349,7 +349,7 @@ func TestMemberBuilder(t *testing.T) {
 
 func TestMembersResultBuilder(t *testing.T) {
 	t.Run("empty", func(t *testing.T) {
-		mrb := NewMembersResultBuilder().Build()
+		mrb := MembersResultBuilder().Build()
 
 		mr := &MembersResult{
 			Resources: make([]*Member, 0),
@@ -361,7 +361,7 @@ func TestMembersResultBuilder(t *testing.T) {
 	})
 
 	t.Run("all options resources", func(t *testing.T) {
-		mrb := NewMembersResultBuilder()
+		mrb := MembersResultBuilder()
 		mrb.WithResources([]*Member{
 			{IPID: "ipid", SCIMID: "scimid", Email: "email", Status: "1"},
 			{IPID: "ipid2", SCIMID: "scimid2", Email: "email2", Status: "2"},
@@ -389,7 +389,7 @@ func TestMembersResultBuilder(t *testing.T) {
 	})
 
 	t.Run("all options resource", func(t *testing.T) {
-		mrb := NewMembersResultBuilder()
+		mrb := MembersResultBuilder()
 		mrb.WithResource(
 			&Member{IPID: "ipid", SCIMID: "scimid", Email: "email", Status: "1"},
 		).WithResource(
