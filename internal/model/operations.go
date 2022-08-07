@@ -156,11 +156,7 @@ func UsersOperations(idp, scim *UsersResult) (create, update, equal, remove *Use
 		} else {
 			usr.SCIMID = scimUsers[usr.Email].SCIMID
 
-			// TODO: replace this check with the check of the hash code
-			if usr.Name.FamilyName != scimUsers[usr.Email].Name.FamilyName ||
-				usr.Name.GivenName != scimUsers[usr.Email].Name.GivenName ||
-				usr.Active != scimUsers[usr.Email].Active || usr.IPID != scimUsers[usr.Email].IPID ||
-				usr.DisplayName != scimUsers[usr.Email].DisplayName {
+			if usr.HashCode != scimUsers[usr.Email].HashCode {
 				toUpdate = append(toUpdate, usr)
 			} else {
 				toEqual = append(toEqual, usr)
