@@ -8,7 +8,7 @@ import (
 func TestState_MarshalJSON(t *testing.T) {
 	type fields struct {
 		LastSync  string
-		Resources StateResources
+		Resources *StateResources
 	}
 	tests := []struct {
 		name    string
@@ -45,11 +45,11 @@ func TestState_MarshalJSON(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "success",
+			name: "empty GroupsMembersResult",
 			fields: fields{
 				LastSync: "2020-01-01T00:00:00Z",
-				Resources: StateResources{
-					Groups: GroupsResult{
+				Resources: &StateResources{
+					Groups: &GroupsResult{
 						Items:    1,
 						HashCode: "hashCode",
 						Resources: []*Group{
@@ -62,7 +62,7 @@ func TestState_MarshalJSON(t *testing.T) {
 							},
 						},
 					},
-					Users: UsersResult{
+					Users: &UsersResult{
 						Items:    1,
 						HashCode: "hashCode",
 						Resources: []*User{
@@ -75,6 +75,7 @@ func TestState_MarshalJSON(t *testing.T) {
 							},
 						},
 					},
+					GroupsMembers: &GroupsMembersResult{},
 				},
 			},
 			want: []byte(`{
@@ -171,7 +172,7 @@ func TestState_SetHashCode(t *testing.T) {
 		u3 := User{IPID: "3", SCIMID: "3", Name: Name{FamilyName: "user", GivenName: "3"}, DisplayName: "user.3", Active: false, Email: "user.3@mail.com"}
 		u3.SetHashCode()
 
-		usrs := UsersResult{Items: 3, Resources: []*User{&u1, &u2, &u3}}
+		usrs := &UsersResult{Items: 3, Resources: []*User{&u1, &u2, &u3}}
 		usrs.SetHashCode()
 
 		g1 := &Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com"}
@@ -183,7 +184,7 @@ func TestState_SetHashCode(t *testing.T) {
 		g3 := &Group{IPID: "3", SCIMID: "3", Name: "group 3", Email: "group.3@mail.com"}
 		g3.SetHashCode()
 
-		grs := GroupsResult{Items: 3, Resources: []*Group{g1, g2, g3}}
+		grs := &GroupsResult{Items: 3, Resources: []*Group{g1, g2, g3}}
 		grs.SetHashCode()
 
 		m1 := Member{IPID: "1", SCIMID: "1", Email: u1.Email, Status: "ACTIVE"}
@@ -204,10 +205,10 @@ func TestState_SetHashCode(t *testing.T) {
 		gm3 := GroupMembers{Items: 1, Group: g3, Resources: []*Member{&m3}}
 		gm3.SetHashCode()
 
-		gmrs := GroupsMembersResult{Items: 3, Resources: []*GroupMembers{&gm1, &gm2, &gm3}}
+		gmrs := &GroupsMembersResult{Items: 3, Resources: []*GroupMembers{&gm1, &gm2, &gm3}}
 		gmrs.SetHashCode()
 
-		sr := StateResources{
+		sr := &StateResources{
 			Users:         usrs,
 			Groups:        grs,
 			GroupsMembers: gmrs,

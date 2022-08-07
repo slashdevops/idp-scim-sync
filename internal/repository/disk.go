@@ -13,8 +13,13 @@ import (
 
 // consume io.ReadWriter
 
-// ErrStateFileNil is returned when the state file is nil
-var ErrStateFileNil = errors.New("disk: state file is nil")
+var (
+	// ErrStateFileNil is returned when the state file is nil
+	ErrStateFileNil = errors.New("disk: state file is nil")
+
+	// ErrReadingStateFile is returned when the state file is not found
+	ErrReadingStateFile = errors.New("disk: error reading state file")
+)
 
 // DiskRepository represents a disk based state repository and implement core.StateRepository interface
 type DiskRepository struct {
@@ -36,12 +41,22 @@ func NewDiskRepository(stateFile io.ReadWriter) (*DiskRepository, error) {
 func (dr *DiskRepository) GetState(ctx context.Context) (*model.State, error) {
 	var err error
 
-	var state model.State
-	if err = json.NewDecoder(dr.stateFile).Decode(&state); err == io.EOF {
-	} else if err != nil {
-		return nil, fmt.Errorf("disk: error decoding state: %w", err)
+	data, err := io.ReadAll(dr.stateFile)
+	if err != nil {
+		return nil, ErrReadingStateFile
 	}
 
+	// if the state file is empty, create a new empty state
+	// necessary to avoid error when unmarshalling empty state with pointers
+	if len(data) == 0 {
+		return nil, fmt.Errorf("disk: error reading state: %w", err)
+	}
+
+	var state model.State
+	err = json.Unmarshal(data, &state)
+	if err != nil {
+		return nil, fmt.Errorf("disk: error unmarshalling state: %w", err)
+	}
 	return &state, nil
 }
 

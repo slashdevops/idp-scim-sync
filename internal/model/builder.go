@@ -1,11 +1,11 @@
 package model
 
-// UserBuilder is the builder of User entity.
+// userBuilder is the builder of User entity.
 type userBuilder struct {
 	u *User
 }
 
-// UserBuilder creates a new UserBuilder entity.
+// UserBuilder creates a new userBuilder entity.
 func UserBuilder() *userBuilder {
 	return &userBuilder{
 		u: &User{},
@@ -61,12 +61,12 @@ func (b *userBuilder) Build() *User {
 	return u
 }
 
-// UsersResultBuilder is used to build a UsersResult entity and ensure the calculated hash code and items.
+// usersResultBuilder is used to build a UsersResult entity and ensure the calculated hash code and items.
 type usersResultBuilder struct {
 	ur *UsersResult
 }
 
-// UsersResultBuilder creates a new UsersResultBuilder entity.
+// UsersResultBuilder creates a new usersResultBuilder entity.
 func UsersResultBuilder() *usersResultBuilder {
 	return &usersResultBuilder{
 		ur: &UsersResult{
@@ -95,12 +95,12 @@ func (b *usersResultBuilder) Build() *UsersResult {
 	return ur
 }
 
-// GroupBuilder is used to build a Group entity and ensure the calculated hash code is set.
+// groupBuilder is used to build a Group entity and ensure the calculated hash code is set.
 type groupBuilder struct {
 	g *Group
 }
 
-// GroupBuilder creates a new GroupBuilder entity.
+// GroupBuilder creates a new groupBuilder entity.
 func GroupBuilder() *groupBuilder {
 	return &groupBuilder{
 		g: &Group{},
@@ -138,12 +138,12 @@ func (b *groupBuilder) Build() *Group {
 	return g
 }
 
-// GroupsResultBuilder is used to build a GroupsResult entity and ensure the calculated hash code and items is set.
+// groupsResultBuilder is used to build a GroupsResult entity and ensure the calculated hash code and items is set.
 type groupsResultBuilder struct {
 	gr *GroupsResult
 }
 
-// GroupsResultBuilder creates a new GroupsResultBuilder entity.
+// GroupsResultBuilder creates a new groupsResultBuilder entity.
 func GroupsResultBuilder() *groupsResultBuilder {
 	return &groupsResultBuilder{
 		gr: &GroupsResult{
@@ -172,12 +172,12 @@ func (b *groupsResultBuilder) Build() *GroupsResult {
 	return gr
 }
 
-// MemberBuilder is used to build a Member entity and ensure the calculated hash code is set.
+// memberBuilder is used to build a Member entity and ensure the calculated hash code is set.
 type memberBuilder struct {
 	m *Member
 }
 
-// MemberBuilder creates a new MemberBuilder entity.
+// MemberBuilder creates a new memberBuilder entity.
 func MemberBuilder() *memberBuilder {
 	return &memberBuilder{
 		m: &Member{},
@@ -215,12 +215,12 @@ func (b *memberBuilder) Build() *Member {
 	return m
 }
 
-// MembersResultBuilder is used to build a MembersResult entity and ensure the calculated hash code and items is set.
+// membersResultBuilder is used to build a MembersResult entity and ensure the calculated hash code and items is set.
 type membersResultBuilder struct {
 	mr *MembersResult
 }
 
-// MembersResultBuilder creates a new MembersResultBuilder entity.
+// MembersResultBuilder creates a new membersResultBuilder entity.
 func MembersResultBuilder() *membersResultBuilder {
 	return &membersResultBuilder{
 		mr: &MembersResult{
@@ -249,12 +249,12 @@ func (b *membersResultBuilder) Build() *MembersResult {
 	return mr
 }
 
-// GroupMembersBuilder is used to build a GroupMembers entity and ensure the calculated hash code is set.
+// groupMembersBuilder is used to build a GroupMembers entity and ensure the calculated hash code is set.
 type groupMembersBuilder struct {
 	gm *GroupMembers
 }
 
-// GroupMembersBuilder creates a new GroupMembersBuilder entity.
+// GroupMembersBuilder creates a new groupMembersBuilder entity.
 func GroupMembersBuilder() *groupMembersBuilder {
 	return &groupMembersBuilder{
 		gm: &GroupMembers{
@@ -289,12 +289,12 @@ func (b *groupMembersBuilder) Build() *GroupMembers {
 	return gm
 }
 
-// GroupsMembersResultBuilder is used to build a GroupsMembersResult entity and ensure the calculated hash code and items is set.
+// groupsMembersResultBuilder is used to build a GroupsMembersResult entity and ensure the calculated hash code and items is set.
 type groupsMembersResultBuilder struct {
 	gmr *GroupsMembersResult
 }
 
-// GroupsMembersResultBuilder creates a new GroupsMembersResultBuilder entity.
+// GroupsMembersResultBuilder creates a new groupsMembersResultBuilder entity.
 func GroupsMembersResultBuilder() *groupsMembersResultBuilder {
 	return &groupsMembersResultBuilder{
 		gmr: &GroupsMembersResult{
@@ -321,4 +321,72 @@ func (b *groupsMembersResultBuilder) Build() *GroupsMembersResult {
 	gmr.Items = len(gmr.Resources)
 	gmr.SetHashCode()
 	return gmr
+}
+
+// stateBuilder is used to build a State entity and ensure the calculated hash code is set.
+type stateBuilder struct {
+	s *State
+}
+
+// StateBuilder creates a new stateBuilder entity.
+func StateBuilder() *stateBuilder {
+	return &stateBuilder{
+		s: &State{
+			SchemaVersion: StateSchemaVersion,
+			Resources: &StateResources{
+				Groups: &GroupsResult{
+					Resources: make([]*Group, 0),
+				},
+				Users: &UsersResult{
+					Resources: make([]*User, 0),
+				},
+				GroupsMembers: &GroupsMembersResult{
+					Resources: make([]*GroupMembers, 0),
+				},
+			},
+		},
+	}
+}
+
+// WithSchemaVersion sets the SchemaVersion field of the State entity.
+func (b *stateBuilder) WithSchemaVersion(schemaVersion string) *stateBuilder {
+	b.s.SchemaVersion = schemaVersion
+	return b
+}
+
+// WithCodeVersion sets the CodeVersion field of the State entity.
+func (b *stateBuilder) WithCodeVersion(codeVersion string) *stateBuilder {
+	b.s.CodeVersion = codeVersion
+	return b
+}
+
+// WithLastSync sets the LastSync field of the State entity.
+func (b *stateBuilder) WithLastSync(lastSync string) *stateBuilder {
+	b.s.LastSync = lastSync
+	return b
+}
+
+// WithGroups sets the Groups field of the StateResources entity inside the State entity.
+func (b *stateBuilder) WithGroups(groups *GroupsResult) *stateBuilder {
+	b.s.Resources.Groups = groups
+	return b
+}
+
+// WithUsers sets the Users field of the StateResources entity inside the State entity.
+func (b *stateBuilder) WithUsers(users *UsersResult) *stateBuilder {
+	b.s.Resources.Users = users
+	return b
+}
+
+// WithGroupsMembers sets the GroupsMembers field of the StateResources entity inside the State entity.
+func (b *stateBuilder) WithGroupsMembers(groupsMembers *GroupsMembersResult) *stateBuilder {
+	b.s.Resources.GroupsMembers = groupsMembers
+	return b
+}
+
+// Build returns the State entity.
+func (b *stateBuilder) Build() *State {
+	s := b.s
+	s.SetHashCode()
+	return s
 }

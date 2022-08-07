@@ -64,10 +64,10 @@ func TestGetState(t *testing.T) {
 			CodeVersion:   "0.0.1",
 			LastSync:      "2020-01-01T00:00:00Z",
 			HashCode:      "123456789",
-			Resources: model.StateResources{
-				Groups:        model.GroupsResult{},
-				Users:         model.UsersResult{},
-				GroupsMembers: model.GroupsMembersResult{},
+			Resources: &model.StateResources{
+				Groups:        &model.GroupsResult{},
+				Users:         &model.UsersResult{},
+				GroupsMembers: &model.GroupsMembersResult{},
 			},
 		}
 
@@ -154,10 +154,10 @@ func TestS3SetState(t *testing.T) {
 			CodeVersion:   "0.0.1",
 			LastSync:      "2020-01-01T00:00:00Z",
 			HashCode:      "123456789",
-			Resources: model.StateResources{
-				Groups:        model.GroupsResult{},
-				Users:         model.UsersResult{},
-				GroupsMembers: model.GroupsMembersResult{},
+			Resources: &model.StateResources{
+				Groups:        &model.GroupsResult{},
+				Users:         &model.UsersResult{},
+				GroupsMembers: &model.GroupsMembersResult{},
 			},
 		}
 
