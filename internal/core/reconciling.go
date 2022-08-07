@@ -55,7 +55,7 @@ func reconcilingGroups(ctx context.Context, scim SCIMService, create, update, re
 
 	if create.Items == 0 {
 		log.Info("no groups to be create")
-		created = &model.GroupsResult{Items: 0, Resources: []*model.Group{}}
+		created = model.GroupsResultBuilder().Build()
 	} else {
 		log.WithField("quantity", create.Items).Warn("creating groups")
 		created, err = scim.CreateGroups(ctx, create)
@@ -66,7 +66,7 @@ func reconcilingGroups(ctx context.Context, scim SCIMService, create, update, re
 
 	if update.Items == 0 {
 		log.Info("no groups to be updated")
-		updated = &model.GroupsResult{Items: 0, Resources: []*model.Group{}}
+		updated = model.GroupsResultBuilder().Build()
 	} else {
 		log.WithField("quantity", update.Items).Warn("updating groups")
 		updated, err = scim.UpdateGroups(ctx, update)
@@ -108,7 +108,7 @@ func reconcilingUsers(ctx context.Context, scim SCIMService, create, update, rem
 
 	if create.Items == 0 {
 		log.Info("no users to be created")
-		created = &model.UsersResult{Items: 0, Resources: []*model.User{}}
+		created = model.UsersResultBuilder().Build()
 	} else {
 		log.WithField("quantity", create.Items).Warn("creating users")
 		created, err = scim.CreateUsers(ctx, create)
@@ -119,7 +119,7 @@ func reconcilingUsers(ctx context.Context, scim SCIMService, create, update, rem
 
 	if update.Items == 0 {
 		log.Info("no users to be updated")
-		updated = &model.UsersResult{Items: 0, Resources: []*model.User{}}
+		updated = model.UsersResultBuilder().Build()
 	} else {
 		log.WithField("quantity", update.Items).Warn("updating users")
 		updated, err = scim.UpdateUsers(ctx, update)
@@ -158,7 +158,7 @@ func reconcilingGroupsMembers(ctx context.Context, scim SCIMService, create, rem
 
 	if create.Items == 0 {
 		log.Info("no users to be joined to groups")
-		created = &model.GroupsMembersResult{Items: 0, Resources: []*model.GroupMembers{}}
+		created = model.GroupsMembersResultBuilder().Build()
 	} else {
 		log.WithField("quantity", create.Items).Warn("joining users to groups")
 		created, err = scim.CreateGroupsMembers(ctx, create)
