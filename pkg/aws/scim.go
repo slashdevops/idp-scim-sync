@@ -13,6 +13,7 @@ import (
 
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+	"github.com/slashdevops/idp-scim-sync/internal/utils"
 )
 
 // Consume http methods
@@ -63,6 +64,9 @@ var (
 
 	// ErrUserUserNameEmpty is returned when the userName is empty.
 	ErrUserUserNameEmpty = errors.Errorf("aws: userName may not be empty")
+
+	// ErrUserExternalIDEmpty is returned when the user externalId is empty.
+	ErrUserExternalIDEmpty = errors.Errorf("aws: externalId may not be empty")
 
 	// ErrGroupDisplayNameEmpty is returned when the userName is empty.
 	ErrGroupDisplayNameEmpty = errors.Errorf("aws: displayName may not be empty")
@@ -301,6 +305,8 @@ func (s *SCIMService) CreateOrGetUser(ctx context.Context, usr *CreateUserReques
 			if err != nil {
 				return nil, fmt.Errorf("aws CreateOrGetUser: error getting user information: %w", err)
 			}
+			log.Infof("aws CreateOrGetUser: user: %s", utils.ToJSON(usr))
+			log.Infof("aws CreateOrGetUser: response: %s", utils.ToJSON(response))
 
 			log.WithFields(log.Fields{
 				"user":        usr.UserName,
