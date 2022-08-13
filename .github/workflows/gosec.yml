@@ -20,14 +20,20 @@ jobs:
     env:
       GOROOT: $(go env GOROOT)
     steps:
-      # - name: Set up Go 1.x
-      #   id: go
-      #   uses: actions/setup-go@v3
-      #   with:
-      #     go-version: ${{ env.GO_VERSION }}
-
       - name: Check out code
         uses: actions/checkout@v3
+
+      - name: Set up Go 1.x
+        id: go
+        uses: actions/setup-go@v3
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Go Version
+        run: go version
+
+      - name: Go Envirioment Variables
+        run: go env
 
       - name: Show project files after make
         run: tree .
