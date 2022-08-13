@@ -91,14 +91,14 @@ func TestSyncService_SyncGroupsAndTheirMembers(t *testing.T) {
 
 		// mock Google Workspace API calls
 		svrIDP := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			t.Logf("Calling IDP API with method: %s, url: %s", r.Method, r.URL.String())
+			t.Logf("Calling IDP API with method: %s, path: %s, query: %s", r.Method, r.URL.Path, r.URL.RawQuery)
 			w.Write([]byte(`{}`))
 		}))
 		defer svrIDP.Close()
 
 		// mock Google Workspace API calls
 		svrSCIM := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			t.Logf("Calling SCIM API with method: %s, url: %s", r.Method, r.URL.String())
+			t.Logf("Calling SCIM API with method: %s, path: %s, query: %s", r.Method, r.URL.Path, r.URL.RawQuery)
 			w.Write([]byte(`{}`))
 		}))
 		defer svrSCIM.Close()
