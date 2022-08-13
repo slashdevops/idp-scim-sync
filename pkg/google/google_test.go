@@ -2,6 +2,7 @@ package google
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -84,6 +85,7 @@ func TestNewDirectoryService(t *testing.T) {
 func TestNewDirectoryService_ListUsers(t *testing.T) {
 	t.Run("should return a valid list of two users with nil argument", func(t *testing.T) {
 		ctx := context.TODO()
+		urlPath := "/admin/directory/v1/users"
 
 		userList := &admin.Users{
 			Etag: "etag-users",
@@ -130,6 +132,7 @@ func TestNewDirectoryService_ListUsers(t *testing.T) {
 
 		svr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			assert.Equal(t, "GET", r.Method)
+			assert.Equal(t, urlPath, r.URL.Path)
 			w.Write(jsonBytes)
 		}))
 		defer svr.Close()
@@ -163,6 +166,7 @@ func TestNewDirectoryService_ListUsers(t *testing.T) {
 		ctx := context.TODO()
 
 		filter := []string{""}
+		urlPath := "/admin/directory/v1/users"
 
 		userList := &admin.Users{
 			Etag: "etag-users",
@@ -209,6 +213,7 @@ func TestNewDirectoryService_ListUsers(t *testing.T) {
 
 		svr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			assert.Equal(t, "GET", r.Method)
+			assert.Equal(t, urlPath, r.URL.Path)
 			w.Write(jsonBytes)
 		}))
 		defer svr.Close()
@@ -242,6 +247,7 @@ func TestNewDirectoryService_ListUsers(t *testing.T) {
 		ctx := context.TODO()
 
 		filter := []string{"name:user* email:user*"}
+		urlPath := "/admin/directory/v1/users"
 
 		userList := &admin.Users{
 			Etag: "etag-users",
@@ -271,6 +277,7 @@ func TestNewDirectoryService_ListUsers(t *testing.T) {
 
 		svr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			assert.Equal(t, "GET", r.Method)
+			assert.Equal(t, urlPath, r.URL.Path)
 			assert.Equal(t, filter[0], r.URL.Query().Get("query"))
 			w.Write(jsonBytes)
 		}))
@@ -507,6 +514,7 @@ func TestNewDirectoryService_ListGroupMembers(t *testing.T) {
 		ctx := context.TODO()
 
 		groupID := "123456789"
+		urlPath := fmt.Sprintf("/admin/directory/v1/groups/%s/members", groupID)
 
 		membersList := &admin.Members{
 			Etag: "etag-members",
@@ -533,6 +541,7 @@ func TestNewDirectoryService_ListGroupMembers(t *testing.T) {
 
 		svr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			assert.Equal(t, "GET", r.Method)
+			assert.Equal(t, urlPath, r.URL.Path)
 			w.Write(jsonBytes)
 		}))
 		defer svr.Close()
@@ -555,10 +564,12 @@ func TestNewDirectoryService_ListGroupMembers(t *testing.T) {
 		assert.Equal(t, "member.1@mail.com", got[0].Email)
 		assert.Equal(t, "member.2@mail.com", got[1].Email)
 	})
+
 	t.Run("should return a valid list of one members when a member has Status DEACTIVATE", func(t *testing.T) {
 		ctx := context.TODO()
 
 		groupID := "123456789"
+		urlPath := fmt.Sprintf("/admin/directory/v1/groups/%s/members", groupID)
 
 		membersList := &admin.Members{
 			Etag: "etag-members",
@@ -585,6 +596,7 @@ func TestNewDirectoryService_ListGroupMembers(t *testing.T) {
 
 		svr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			assert.Equal(t, "GET", r.Method)
+			assert.Equal(t, urlPath, r.URL.Path)
 			w.Write(jsonBytes)
 		}))
 		defer svr.Close()
@@ -655,6 +667,7 @@ func TestNewDirectoryService_GetUser(t *testing.T) {
 		ctx := context.TODO()
 
 		userID := "123456789"
+		urlPath := fmt.Sprintf("/admin/directory/v1/users/%s", userID)
 
 		user := &admin.User{
 			Id:           "123456789",
@@ -679,6 +692,7 @@ func TestNewDirectoryService_GetUser(t *testing.T) {
 
 		svr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			assert.Equal(t, "GET", r.Method)
+			assert.Equal(t, urlPath, r.URL.Path)
 			w.Write(jsonBytes)
 		}))
 		defer svr.Close()
@@ -741,6 +755,7 @@ func TestNewDirectoryService_GetGroup(t *testing.T) {
 		ctx := context.TODO()
 
 		groupID := "123456789"
+		urlPath := fmt.Sprintf("/admin/directory/v1/groups/%s", groupID)
 
 		group := &admin.Group{
 			Id:    "123456789",
@@ -754,6 +769,7 @@ func TestNewDirectoryService_GetGroup(t *testing.T) {
 
 		svr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			assert.Equal(t, "GET", r.Method)
+			assert.Equal(t, urlPath, r.URL.Path)
 			w.Write(jsonBytes)
 		}))
 		defer svr.Close()
