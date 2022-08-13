@@ -3,6 +3,7 @@ package core
 import (
 	"context"
 	"encoding/json"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -44,7 +45,7 @@ func TestSyncService_NewSyncService(t *testing.T) {
 		assert.Nil(t, svc)
 	})
 
-	t.Run("New Service without IdentityProviderServoce, return specific error", func(t *testing.T) {
+	t.Run("New Service without IdentityProviderService, return specific error", func(t *testing.T) {
 		svc, err := NewSyncService(nil, nil, nil)
 
 		assert.Error(t, err)
@@ -52,7 +53,7 @@ func TestSyncService_NewSyncService(t *testing.T) {
 		assert.Equal(t, err, ErrIdentityProviderServiceNil)
 	})
 
-	t.Run("New Service without SCIMServoce, return context specific error", func(t *testing.T) {
+	t.Run("New Service without SCIMService, return context specific error", func(t *testing.T) {
 		mockProviderService := mocks.NewMockIdentityProviderService(mockCtrl)
 
 		svc, err := NewSyncService(mockProviderService, nil, nil)
@@ -75,11 +76,9 @@ func TestSyncService_NewSyncService(t *testing.T) {
 }
 
 func TestSyncService_SyncGroupsAndTheirMembers(t *testing.T) {
-	mockCtrl := gomock.NewController(t)
-	defer mockCtrl.Finish()
 	ctx := context.TODO()
 
-	t.Run("no errors when no data in idp, scim and state", func(t *testing.T) {
+	t.Run("create empty state file when no date came from idp and scim", func(t *testing.T) {
 		tmpDir := os.TempDir()
 		defer os.Remove(tmpDir)
 
@@ -103,35 +102,7 @@ func TestSyncService_SyncGroupsAndTheirMembers(t *testing.T) {
 		}))
 		defer svrSCIM.Close()
 
-		googleSvc, err := admin.NewService(ctx, option.WithHTTPClient(svrIDP.Client()), option.WithEndpoint(svrIDP.URL), option.WithUserAgent("test"))
-		assert.NoError(t, err)
-
-		gwsDS, err := google.NewDirectoryService(googleSvc)
-		assert.NoError(t, err)
-		assert.NotNil(t, gwsDS)
-
-		awsSCIM, err := aws.NewSCIMService(svrSCIM.Client(), svrSCIM.URL, "test-token")
-		assert.NoError(t, err)
-		assert.NotNil(t, awsSCIM)
-
-		// Identity Provider Service
-		idpService, err := idp.NewIdentityProvider(gwsDS)
-		assert.NoError(t, err)
-		assert.NotNil(t, idpService)
-
-		// AWS SCIM Service
-		scimService, err := scim.NewProvider(awsSCIM)
-		assert.NoError(t, err)
-		assert.NotNil(t, scimService)
-
-		// Disk State Repository
-		repo, err := repository.NewDiskRepository(stateFile)
-		assert.NoError(t, err)
-		assert.NotNil(t, repo)
-
-		svc, err := NewSyncService(idpService, scimService, repo)
-		assert.NoError(t, err)
-		assert.NotNil(t, svc)
+		svc := prepareService(t, ctx, svrIDP, svrSCIM, stateFile)
 
 		err = svc.SyncGroupsAndTheirMembers(ctx)
 		assert.NoError(t, err)
@@ -166,4 +137,44 @@ func TestSyncService_SyncGroupsAndTheirMembers(t *testing.T) {
 		assert.Equal(t, "", state.CodeVersion)
 		assert.Equal(t, model.StateSchemaVersion, state.SchemaVersion)
 	})
+}
+
+func prepareService(
+	t *testing.T,
+	ctx context.Context,
+	idpSRV *httptest.Server,
+	scimSRV *httptest.Server,
+	stateFile io.ReadWriter,
+) *SyncService {
+	googleSvc, err := admin.NewService(ctx, option.WithHTTPClient(idpSRV.Client()), option.WithEndpoint(idpSRV.URL), option.WithUserAgent("test"))
+	assert.NoError(t, err)
+
+	gwsDS, err := google.NewDirectoryService(googleSvc)
+	assert.NoError(t, err)
+	assert.NotNil(t, gwsDS)
+
+	awsSCIM, err := aws.NewSCIMService(scimSRV.Client(), scimSRV.URL, "test-token")
+	assert.NoError(t, err)
+	assert.NotNil(t, awsSCIM)
+
+	// Identity Provider Service
+	idpService, err := idp.NewIdentityProvider(gwsDS)
+	assert.NoError(t, err)
+	assert.NotNil(t, idpService)
+
+	// AWS SCIM Service
+	scimService, err := scim.NewProvider(awsSCIM)
+	assert.NoError(t, err)
+	assert.NotNil(t, scimService)
+
+	// Disk State Repository
+	repo, err := repository.NewDiskRepository(stateFile)
+	assert.NoError(t, err)
+	assert.NotNil(t, repo)
+
+	svc, err := NewSyncService(idpService, scimService, repo)
+	assert.NoError(t, err)
+	assert.NotNil(t, svc)
+
+	return svc
 }
