@@ -1666,3 +1666,60 @@ func TestPatchGroup(t *testing.T) {
 		assert.Error(t, err)
 	})
 }
+
+func TestListGroups(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	endpoint := "https://testing.com"
+	reqURL, err := url.Parse(endpoint)
+	assert.NoError(t, err)
+
+	ListUserResponseFile := "testdata/ListGroupsResponse.json"
+
+	t.Run("should return a valid response with a valid request", func(t *testing.T) {
+		mockHTTPClient := mocks.NewMockHTTPClient(mockCtrl)
+		jsonResp := ReadJSONFileAsString(t, ListUserResponseFile)
+
+		groupID := "90677c608a-ef9cb2da-d480-422b-9901-451b1bf9e607"
+		filter := "displayName eq \"Group Foo\""
+
+		reqURL.Path = path.Join(reqURL.Path, "/Groups")
+
+		q := reqURL.Query()
+		q.Add("filter", filter)
+		reqURL.RawQuery = q.Encode()
+
+		httpReq, err := http.NewRequestWithContext(context.Background(), "GET", reqURL.String(), nil)
+		assert.NoError(t, err)
+
+		httpReq.Header.Set("Accept", "application/json")
+		httpReq.Header.Set("Authorization", "Bearer MyToken")
+
+		httpResp := &http.Response{
+			Status:     "200 OK",
+			StatusCode: http.StatusNoContent,
+			Header: http.Header{
+				"Date":             []string{"Wed, 22 Jul 2020 23:06:38 GMT"},
+				"Content-Type":     []string{"application/json"},
+				"x-amzn-RequestId": []string{"45995b44-02cd-419f-87f4-ff8fa323448d"},
+			},
+			Proto:         "HTTP/1.1",
+			Body:          io.NopCloser(strings.NewReader(jsonResp)),
+			ContentLength: int64(len(jsonResp)),
+		}
+
+		mockHTTPClient.EXPECT().Do(httpReq).Return(httpResp, nil)
+
+		service, err := NewSCIMService(mockHTTPClient, endpoint, "MyToken")
+		assert.NoError(t, err)
+		assert.NotNil(t, service)
+
+		got, err := service.ListGroups(context.Background(), filter)
+		assert.NoError(t, err)
+		assert.NotNil(t, got)
+
+		assert.Equal(t, "urn:ietf:params:scim:api:messages:2.0:ListResponse", got.Schemas[0])
+		assert.Equal(t, groupID, got.Resources[0].ID)
+		assert.Equal(t, "Group Foo", got.Resources[0].DisplayName)
+	})
+}
