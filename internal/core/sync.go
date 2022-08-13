@@ -9,6 +9,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 	log "github.com/sirupsen/logrus"
 	"github.com/slashdevops/idp-scim-sync/internal/model"
+	"github.com/slashdevops/idp-scim-sync/internal/repository"
 	"github.com/slashdevops/idp-scim-sync/internal/version"
 )
 
@@ -105,7 +106,9 @@ func (ss *SyncService) SyncGroupsAndTheirMembers(ctx context.Context) error {
 	state, err := ss.repo.GetState(ctx)
 	if err != nil {
 		var nsk *types.NoSuchKey
-		if errors.As(err, &nsk) {
+		var StateFileEmpty *repository.ErrStateFileEmpty
+
+		if errors.As(err, &nsk) || errors.As(err, &StateFileEmpty) {
 			log.Warn("no state file found in the state repository, creating a new one")
 			state = model.StateBuilder().Build()
 		} else {

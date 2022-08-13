@@ -6,20 +6,10 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/pkg/errors"
-
 	"github.com/slashdevops/idp-scim-sync/internal/model"
 )
 
 // consume io.ReadWriter
-
-var (
-	// ErrStateFileNil is returned when the state file is nil
-	ErrStateFileNil = errors.New("disk: state file is nil")
-
-	// ErrReadingStateFile is returned when the state file is not found
-	ErrReadingStateFile = errors.New("disk: error reading state file")
-)
 
 // DiskRepository represents a disk based state repository and implement core.StateRepository interface
 type DiskRepository struct {
@@ -29,7 +19,7 @@ type DiskRepository struct {
 // NewDiskRepository creates a new disk based state repository
 func NewDiskRepository(stateFile io.ReadWriter) (*DiskRepository, error) {
 	if stateFile == nil {
-		return nil, ErrStateFileNil
+		return nil, &ErrStateFileNil{Message: "state file cannot be nil"}
 	}
 
 	return &DiskRepository{
@@ -43,13 +33,13 @@ func (dr *DiskRepository) GetState(ctx context.Context) (*model.State, error) {
 
 	data, err := io.ReadAll(dr.stateFile)
 	if err != nil {
-		return nil, ErrReadingStateFile
+		return nil, &ErrReadingStateFile{Message: fmt.Sprintf("error reading state file: %s", err)}
 	}
 
 	// if the state file is empty, create a new empty state
 	// necessary to avoid error when unmarshalling empty state with pointers
 	if len(data) == 0 {
-		return nil, fmt.Errorf("disk: error reading state: %w", err)
+		return nil, &ErrStateFileEmpty{Message: "state file is empty"}
 	}
 
 	var state model.State
@@ -71,3 +61,45 @@ func (dr *DiskRepository) SetState(ctx context.Context, state *model.State) erro
 
 	return nil
 }
+
+// ErrStateFileEmpty, the state file is empty.
+type ErrStateFileEmpty struct {
+	Message string
+}
+
+func (e *ErrStateFileEmpty) Error() string {
+	return fmt.Sprintf("%s: %s", e.ErrorCode(), e.ErrorMessage())
+}
+
+func (e *ErrStateFileEmpty) ErrorMessage() string {
+	return e.Message
+}
+func (e *ErrStateFileEmpty) ErrorCode() string { return "ErrStateFileEmpty" }
+
+// ErrReadingStateFile, the state file is empty.
+type ErrReadingStateFile struct {
+	Message string
+}
+
+func (e *ErrReadingStateFile) Error() string {
+	return fmt.Sprintf("%s: %s", e.ErrorCode(), e.ErrorMessage())
+}
+
+func (e *ErrReadingStateFile) ErrorMessage() string {
+	return e.Message
+}
+func (e *ErrReadingStateFile) ErrorCode() string { return "ErrReadingStateFile" }
+
+// ErrStateFileNil, the state file is empty.
+type ErrStateFileNil struct {
+	Message string
+}
+
+func (e *ErrStateFileNil) Error() string {
+	return fmt.Sprintf("%s: %s", e.ErrorCode(), e.ErrorMessage())
+}
+
+func (e *ErrStateFileNil) ErrorMessage() string {
+	return e.Message
+}
+func (e *ErrStateFileNil) ErrorCode() string { return "ErrStateFileNil" }
