@@ -412,7 +412,7 @@ func TestGetUsersByGroupsMembers(t *testing.T) {
 					Resources: []*model.GroupMembers{
 						{
 							Items: 2,
-							Group: model.Group{IPID: "1", Name: "group 1", Email: "group1@mail.com"},
+							Group: &model.Group{IPID: "1", Name: "group 1", Email: "group1@mail.com"},
 							Resources: []*model.Member{
 								{IPID: "1", Email: "user.1@mail.com", Status: "ACTIVE"},
 								{IPID: "2", Email: "user.2@mail.com", Status: "ACTIVE"},
@@ -420,7 +420,7 @@ func TestGetUsersByGroupsMembers(t *testing.T) {
 						},
 						{
 							Items: 2,
-							Group: model.Group{IPID: "1", Name: "group 1", Email: "group1@mail.com"},
+							Group: &model.Group{IPID: "1", Name: "group 1", Email: "group1@mail.com"},
 							Resources: []*model.Member{
 								{IPID: "3", Email: "user.3@mail.com", Status: "ACTIVE"},
 								{IPID: "4", Email: "user.4@mail.com", Status: "ACTIVE"},
@@ -452,7 +452,7 @@ func TestGetUsersByGroupsMembers(t *testing.T) {
 					Resources: []*model.GroupMembers{
 						{
 							Items: 2,
-							Group: model.Group{IPID: "1", Name: "group 1", Email: "group1@mail.com"},
+							Group: &model.Group{IPID: "1", Name: "group 1", Email: "group1@mail.com"},
 							Resources: []*model.Member{
 								{IPID: "1", Email: "user.1@mail.com", Status: "ACTIVE"},
 							},
@@ -499,10 +499,13 @@ func TestGetUsersByGroupsMembers(t *testing.T) {
 func TestGetGroupsMembers(t *testing.T) {
 	m1 := model.Member{IPID: "1", Email: "user.1@mail.com", Status: "ACTIVE"}
 	m1.SetHashCode()
+
 	m2 := model.Member{IPID: "2", Email: "user.2@mail.com", Status: "ACTIVE"}
 	m2.SetHashCode()
-	g1 := model.Group{IPID: "1", Name: "group 1", Email: "group.1@mail.com"}
+
+	g1 := &model.Group{IPID: "1", Name: "group 1", Email: "group.1@mail.com"}
 	g1.SetHashCode()
+
 	gm1 := &model.GroupMembers{
 		Items: 2,
 		Group: g1,

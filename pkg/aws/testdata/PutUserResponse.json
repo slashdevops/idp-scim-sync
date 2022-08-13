@@ -1,6 +1,6 @@
 {
-    "id": "9067729b3d-94f1e0b3-c394-48d5-8ab1-2c122a167074",
-    "externalId": "701984",
+    "id": "90677c608a-7afcdc23-0bd4-4fb7-b2ff-10ccffdff447",
+    "externalId": "702135",
     "meta": {
         "resourceType": "User",
         "created": "2020-03-31T02:36:15Z",
@@ -10,16 +10,16 @@
         "urn:ietf:params:scim:schemas:core:2.0:User",
         "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User"
     ],
-    "userName": "bjensen",
+    "userName": "mjack",
     "name": {
-        "familyName": "Jensen",
-        "givenName": "Barbara"
+        "familyName": "Jackson",
+        "givenName": "Mark"
     },
-    "displayName": "Babs Jensen",
+    "displayName": "Mark Jackson",
     "active": true,
     "emails": [
         {
-            "value": "bjensen@example.com",
+            "value": "mjack@example.com",
             "type": "work",
             "primary": true
         }

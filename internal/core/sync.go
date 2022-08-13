@@ -107,7 +107,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers(ctx context.Context) error {
 		var nsk *types.NoSuchKey
 		if errors.As(err, &nsk) {
 			log.Warn("no state file found in the state repository, creating a new one")
-			state = &model.State{}
+			state = model.StateBuilder().Build()
 		} else {
 			return fmt.Errorf("error getting state data from the repository: %w", err)
 		}
@@ -153,18 +153,13 @@ func (ss *SyncService) SyncGroupsAndTheirMembers(ctx context.Context) error {
 
 	// after be sure all the SCIM side is aligned with the identity provider side
 	// we can update the state with the last data coming from the reconciliation
-	newState := &model.State{
-		Resources: model.StateResources{
-			Groups:        *totalGroupsResult,
-			Users:         *totalUsersResult,
-			GroupsMembers: *totalGroupsMembersResult,
-		},
-	}
-	// update metadata information
-	newState.SetHashCode()
-	newState.SchemaVersion = model.StateSchemaVersion
-	newState.CodeVersion = version.Version
-	newState.LastSync = time.Now().Format(time.RFC3339)
+	newState := model.StateBuilder().
+		WithCodeVersion(version.Version).
+		WithLastSync(time.Now().Format(time.RFC3339)).
+		WithGroups(totalGroupsResult).
+		WithUsers(totalUsersResult).
+		WithGroupsMembers(totalGroupsMembersResult).
+		Build()
 
 	log.WithFields(log.Fields{
 		"lastSync": newState.LastSync,
@@ -172,7 +167,6 @@ func (ss *SyncService) SyncGroupsAndTheirMembers(ctx context.Context) error {
 		"users":    totalUsersResult.Items,
 	}).Info("storing the new state")
 
-	// TODO: avoid this step using a cmd flag, could be a nice feature
 	if err := ss.repo.SetState(ctx, newState); err != nil {
 		return fmt.Errorf("error storing the state: %w", err)
 	}

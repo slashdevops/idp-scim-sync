@@ -24,7 +24,7 @@ func (e mockErrReader) Read(b []byte) (n int, err error) {
 	return 0, errors.New("test error")
 }
 
-func ReadJSONFIleAsString(t *testing.T, fileName string) string {
+func ReadJSONFileAsString(t *testing.T, fileName string) string {
 	bytes, err := ioutil.ReadFile(fileName)
 	assert.NoError(t, err)
 
@@ -36,9 +36,9 @@ func TestNewSCIMService(t *testing.T) {
 	defer mockCtrl.Finish()
 
 	t.Run("should return AWSSCIMProvider", func(t *testing.T) {
-		mockHTTPCLient := mocks.NewMockHTTPClient(mockCtrl)
+		mockHTTPClient := mocks.NewMockHTTPClient(mockCtrl)
 
-		got, err := NewSCIMService(mockHTTPCLient, "https://testing.com", "MyToken")
+		got, err := NewSCIMService(mockHTTPClient, "https://testing.com", "MyToken")
 		assert.NoError(t, err)
 		assert.NotNil(t, got)
 	})
@@ -50,17 +50,17 @@ func TestNewSCIMService(t *testing.T) {
 	})
 
 	t.Run("should return error when url is bad formed", func(t *testing.T) {
-		mockHTTPCLient := mocks.NewMockHTTPClient(mockCtrl)
+		mockHTTPClient := mocks.NewMockHTTPClient(mockCtrl)
 
-		got, err := NewSCIMService(mockHTTPCLient, "https://%%testing.com", "MyToken")
+		got, err := NewSCIMService(mockHTTPClient, "https://%%testing.com", "MyToken")
 		assert.Error(t, err)
 		assert.Nil(t, got)
 	})
 
 	t.Run("should return error when the url is empty ", func(t *testing.T) {
-		mockHTTPCLient := mocks.NewMockHTTPClient(mockCtrl)
+		mockHTTPClient := mocks.NewMockHTTPClient(mockCtrl)
 
-		got, err := NewSCIMService(mockHTTPCLient, "", "MyToken")
+		got, err := NewSCIMService(mockHTTPClient, "", "MyToken")
 		assert.Error(t, err)
 		assert.ErrorIs(t, err, ErrURLEmpty)
 		assert.Nil(t, got)
@@ -73,9 +73,9 @@ func TestNewRequest(t *testing.T) {
 	endpoint := "https://testing.com"
 
 	t.Run("valid GET method should return valid request", func(t *testing.T) {
-		mockHTTPCLient := mocks.NewMockHTTPClient(mockCtrl)
+		mockHTTPClient := mocks.NewMockHTTPClient(mockCtrl)
 
-		service, err := NewSCIMService(mockHTTPCLient, endpoint, "MyToken")
+		service, err := NewSCIMService(mockHTTPClient, endpoint, "MyToken")
 		assert.NoError(t, err)
 		assert.NotNil(t, service)
 
@@ -96,9 +96,9 @@ func TestNewRequest(t *testing.T) {
 	})
 
 	t.Run("valid POST method should return valid request", func(t *testing.T) {
-		mockHTTPCLient := mocks.NewMockHTTPClient(mockCtrl)
+		mockHTTPClient := mocks.NewMockHTTPClient(mockCtrl)
 
-		service, err := NewSCIMService(mockHTTPCLient, endpoint, "MyToken")
+		service, err := NewSCIMService(mockHTTPClient, endpoint, "MyToken")
 		assert.NoError(t, err)
 		assert.NotNil(t, service)
 
@@ -121,9 +121,9 @@ func TestNewRequest(t *testing.T) {
 	})
 
 	t.Run("invalid method should return error", func(t *testing.T) {
-		mockHTTPCLient := mocks.NewMockHTTPClient(mockCtrl)
+		mockHTTPClient := mocks.NewMockHTTPClient(mockCtrl)
 
-		service, err := NewSCIMService(mockHTTPCLient, endpoint, "MyToken")
+		service, err := NewSCIMService(mockHTTPClient, endpoint, "MyToken")
 		assert.NoError(t, err)
 		assert.NotNil(t, service)
 
@@ -139,9 +139,9 @@ func TestNewRequest(t *testing.T) {
 	})
 
 	t.Run("valid method should return error when body is wrong", func(t *testing.T) {
-		mockHTTPCLient := mocks.NewMockHTTPClient(mockCtrl)
+		mockHTTPClient := mocks.NewMockHTTPClient(mockCtrl)
 
-		service, err := NewSCIMService(mockHTTPCLient, endpoint, "MyToken")
+		service, err := NewSCIMService(mockHTTPClient, endpoint, "MyToken")
 		assert.NoError(t, err)
 		assert.NotNil(t, service)
 
@@ -161,9 +161,9 @@ func TestNewRequest(t *testing.T) {
 	})
 
 	t.Run("valid POST method should return valid request and valid userAgent", func(t *testing.T) {
-		mockHTTPCLient := mocks.NewMockHTTPClient(mockCtrl)
+		mockHTTPClient := mocks.NewMockHTTPClient(mockCtrl)
 
-		service, err := NewSCIMService(mockHTTPCLient, endpoint, "MyToken")
+		service, err := NewSCIMService(mockHTTPClient, endpoint, "MyToken")
 		assert.NoError(t, err)
 		assert.NotNil(t, service)
 
@@ -194,11 +194,11 @@ func TestDo(t *testing.T) {
 	endpoint := "https://testing.com"
 
 	t.Run("should return error when error come from request", func(t *testing.T) {
-		mockHTTPCLient := mocks.NewMockHTTPClient(mockCtrl)
+		mockHTTPClient := mocks.NewMockHTTPClient(mockCtrl)
 
-		mockHTTPCLient.EXPECT().Do(gomock.Any()).Return(nil, errors.New("test error"))
+		mockHTTPClient.EXPECT().Do(gomock.Any()).Return(nil, errors.New("test error"))
 
-		service, err := NewSCIMService(mockHTTPCLient, endpoint, "MyToken")
+		service, err := NewSCIMService(mockHTTPClient, endpoint, "MyToken")
 		assert.NoError(t, err)
 		assert.NotNil(t, service)
 
@@ -211,7 +211,7 @@ func TestDo(t *testing.T) {
 	})
 
 	t.Run("should return valid response", func(t *testing.T) {
-		mockHTTPCLient := mocks.NewMockHTTPClient(mockCtrl)
+		mockHTTPClient := mocks.NewMockHTTPClient(mockCtrl)
 
 		mockResp := &http.Response{
 			Status:        "200 OK",
@@ -221,9 +221,9 @@ func TestDo(t *testing.T) {
 			ContentLength: int64(len("Hello, test world!")),
 		}
 
-		mockHTTPCLient.EXPECT().Do(gomock.Any()).Return(mockResp, nil)
+		mockHTTPClient.EXPECT().Do(gomock.Any()).Return(mockResp, nil)
 
-		service, err := NewSCIMService(mockHTTPCLient, endpoint, "MyToken")
+		service, err := NewSCIMService(mockHTTPClient, endpoint, "MyToken")
 		assert.NoError(t, err)
 		assert.NotNil(t, service)
 
@@ -305,9 +305,9 @@ func TestCheckHTTPResponse(t *testing.T) {
 	}
 
 	t.Run("should return nil error when respond is 200", func(t *testing.T) {
-		mockHTTPCLient := mocks.NewMockHTTPClient(mockCtrl)
+		mockHTTPClient := mocks.NewMockHTTPClient(mockCtrl)
 
-		got, err := NewSCIMService(mockHTTPCLient, endpoint, "MyToken")
+		got, err := NewSCIMService(mockHTTPClient, endpoint, "MyToken")
 		assert.NoError(t, err)
 		assert.NotNil(t, got)
 
@@ -326,9 +326,9 @@ func TestCheckHTTPResponse(t *testing.T) {
 	})
 
 	t.Run("should return nil error when respond code >= 200 and < 400", func(t *testing.T) {
-		mockHTTPCLient := mocks.NewMockHTTPClient(mockCtrl)
+		mockHTTPClient := mocks.NewMockHTTPClient(mockCtrl)
 
-		got, err := NewSCIMService(mockHTTPCLient, endpoint, "MyToken")
+		got, err := NewSCIMService(mockHTTPClient, endpoint, "MyToken")
 		assert.NoError(t, err)
 		assert.NotNil(t, got)
 
@@ -347,9 +347,9 @@ func TestCheckHTTPResponse(t *testing.T) {
 	})
 
 	t.Run("should return error when respond code < 200 and >= 400", func(t *testing.T) {
-		mockHTTPCLient := mocks.NewMockHTTPClient(mockCtrl)
+		mockHTTPClient := mocks.NewMockHTTPClient(mockCtrl)
 
-		got, err := NewSCIMService(mockHTTPCLient, endpoint, "MyToken")
+		got, err := NewSCIMService(mockHTTPClient, endpoint, "MyToken")
 		assert.NoError(t, err)
 		assert.NotNil(t, got)
 
@@ -373,9 +373,9 @@ func TestCheckHTTPResponse(t *testing.T) {
 	})
 
 	t.Run("should return error when response and body has error", func(t *testing.T) {
-		mockHTTPCLient := mocks.NewMockHTTPClient(mockCtrl)
+		mockHTTPClient := mocks.NewMockHTTPClient(mockCtrl)
 
-		got, err := NewSCIMService(mockHTTPCLient, endpoint, "MyToken")
+		got, err := NewSCIMService(mockHTTPClient, endpoint, "MyToken")
 		assert.NoError(t, err)
 		assert.NotNil(t, got)
 
@@ -399,8 +399,8 @@ func TestCreateUser(t *testing.T) {
 	CreateUserResponseFile := "testdata/CreateUserResponse_Active.json"
 
 	t.Run("should return a valid response with a valid request", func(t *testing.T) {
-		mockHTTPCLient := mocks.NewMockHTTPClient(mockCtrl)
-		jsonResp := ReadJSONFIleAsString(t, CreateUserResponseFile)
+		mockHTTPClient := mocks.NewMockHTTPClient(mockCtrl)
+		jsonResp := ReadJSONFileAsString(t, CreateUserResponseFile)
 
 		httpResp := &http.Response{
 			Status:     "201 OK",
@@ -415,9 +415,9 @@ func TestCreateUser(t *testing.T) {
 			ContentLength: int64(len(jsonResp)),
 		}
 
-		mockHTTPCLient.EXPECT().Do(gomock.Any()).Return(httpResp, nil)
+		mockHTTPClient.EXPECT().Do(gomock.Any()).Return(httpResp, nil)
 
-		service, err := NewSCIMService(mockHTTPCLient, endpoint, "MyToken")
+		service, err := NewSCIMService(mockHTTPClient, endpoint, "MyToken")
 		assert.NoError(t, err)
 		assert.NotNil(t, service)
 
@@ -457,9 +457,9 @@ func TestCreateUser(t *testing.T) {
 	})
 
 	t.Run("should return an error when usr is nil", func(t *testing.T) {
-		mockHTTPCLient := mocks.NewMockHTTPClient(mockCtrl)
+		mockHTTPClient := mocks.NewMockHTTPClient(mockCtrl)
 
-		service, err := NewSCIMService(mockHTTPCLient, endpoint, "MyToken")
+		service, err := NewSCIMService(mockHTTPClient, endpoint, "MyToken")
 		assert.NoError(t, err)
 		assert.NotNil(t, service)
 
@@ -470,9 +470,9 @@ func TestCreateUser(t *testing.T) {
 	})
 
 	t.Run("should return an error when usr.UserName is empty", func(t *testing.T) {
-		mockHTTPCLient := mocks.NewMockHTTPClient(mockCtrl)
+		mockHTTPClient := mocks.NewMockHTTPClient(mockCtrl)
 
-		service, err := NewSCIMService(mockHTTPCLient, endpoint, "MyToken")
+		service, err := NewSCIMService(mockHTTPClient, endpoint, "MyToken")
 		assert.NoError(t, err)
 		assert.NotNil(t, service)
 
@@ -502,9 +502,9 @@ func TestCreateUser(t *testing.T) {
 	})
 
 	t.Run("should return an error when usr.DisplayName is empty", func(t *testing.T) {
-		mockHTTPCLient := mocks.NewMockHTTPClient(mockCtrl)
+		mockHTTPClient := mocks.NewMockHTTPClient(mockCtrl)
 
-		service, err := NewSCIMService(mockHTTPCLient, endpoint, "MyToken")
+		service, err := NewSCIMService(mockHTTPClient, endpoint, "MyToken")
 		assert.NoError(t, err)
 		assert.NotNil(t, service)
 
@@ -534,9 +534,9 @@ func TestCreateUser(t *testing.T) {
 	})
 
 	t.Run("should return an error when usr.GivenName is empty", func(t *testing.T) {
-		mockHTTPCLient := mocks.NewMockHTTPClient(mockCtrl)
+		mockHTTPClient := mocks.NewMockHTTPClient(mockCtrl)
 
-		service, err := NewSCIMService(mockHTTPCLient, endpoint, "MyToken")
+		service, err := NewSCIMService(mockHTTPClient, endpoint, "MyToken")
 		assert.NoError(t, err)
 		assert.NotNil(t, service)
 
@@ -566,9 +566,9 @@ func TestCreateUser(t *testing.T) {
 	})
 
 	t.Run("should return an error when usr.FamilyName is empty", func(t *testing.T) {
-		mockHTTPCLient := mocks.NewMockHTTPClient(mockCtrl)
+		mockHTTPClient := mocks.NewMockHTTPClient(mockCtrl)
 
-		service, err := NewSCIMService(mockHTTPCLient, endpoint, "MyToken")
+		service, err := NewSCIMService(mockHTTPClient, endpoint, "MyToken")
 		assert.NoError(t, err)
 		assert.NotNil(t, service)
 
@@ -598,9 +598,9 @@ func TestCreateUser(t *testing.T) {
 	})
 
 	t.Run("should return an error when usr.Emails > 1", func(t *testing.T) {
-		mockHTTPCLient := mocks.NewMockHTTPClient(mockCtrl)
+		mockHTTPClient := mocks.NewMockHTTPClient(mockCtrl)
 
-		service, err := NewSCIMService(mockHTTPCLient, endpoint, "MyToken")
+		service, err := NewSCIMService(mockHTTPClient, endpoint, "MyToken")
 		assert.NoError(t, err)
 		assert.NotNil(t, service)
 
@@ -639,11 +639,11 @@ func TestCreateOrGetUser(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 	endpoint := "https://testing.com"
-	CreateUserResponseFile := "testdata/CreateUserResponse_Active.json"
 
 	t.Run("should return a valid response with a valid request", func(t *testing.T) {
-		mockHTTPCLient := mocks.NewMockHTTPClient(mockCtrl)
-		jsonResp := ReadJSONFIleAsString(t, CreateUserResponseFile)
+		mockHTTPClient := mocks.NewMockHTTPClient(mockCtrl)
+		CreateUserResponseFile := "testdata/CreateUserResponse_Active.json"
+		jsonResp := ReadJSONFileAsString(t, CreateUserResponseFile)
 
 		httpResp := &http.Response{
 			Status:     "201 OK",
@@ -658,9 +658,9 @@ func TestCreateOrGetUser(t *testing.T) {
 			ContentLength: int64(len(jsonResp)),
 		}
 
-		mockHTTPCLient.EXPECT().Do(gomock.Any()).Return(httpResp, nil)
+		mockHTTPClient.EXPECT().Do(gomock.Any()).Return(httpResp, nil)
 
-		service, err := NewSCIMService(mockHTTPCLient, endpoint, "MyToken")
+		service, err := NewSCIMService(mockHTTPClient, endpoint, "MyToken")
 		assert.NoError(t, err)
 		assert.NotNil(t, service)
 
@@ -699,15 +699,15 @@ func TestCreateOrGetUser(t *testing.T) {
 		assert.Equal(t, true, got.Active)
 	})
 
-	t.Run("should return a 409 response and execute the get user", func(t *testing.T) {
+	t.Run("should return a 409 response and execute the get user when not field changed", func(t *testing.T) {
 		CreateUserResponseConflictFile := "testdata/CreateUserResponse_Conflict.json"
 		ListUserResponseFile := "testdata/ListUserResponse.json"
 		PutUserResponseFile := "testdata/PutUserResponse.json"
 
-		mockHTTPCLient := mocks.NewMockHTTPClient(mockCtrl)
-		jsonRespConflict := ReadJSONFIleAsString(t, CreateUserResponseConflictFile)
-		jsonRespOK := ReadJSONFIleAsString(t, ListUserResponseFile)
-		jsonPutUserRespOK := ReadJSONFIleAsString(t, PutUserResponseFile)
+		mockHTTPClient := mocks.NewMockHTTPClient(mockCtrl)
+		jsonRespConflict := ReadJSONFileAsString(t, CreateUserResponseConflictFile)
+		jsonRespOK := ReadJSONFileAsString(t, ListUserResponseFile)
+		jsonPutUserRespOK := ReadJSONFileAsString(t, PutUserResponseFile)
 
 		httpRespConflict := &http.Response{
 			Status:     "409 Conflict",
@@ -748,11 +748,11 @@ func TestCreateOrGetUser(t *testing.T) {
 			ContentLength: int64(len(jsonPutUserRespOK)),
 		}
 
-		mockHTTPCLient.EXPECT().Do(gomock.Any()).Return(httpRespConflict, nil).Times(1)
-		mockHTTPCLient.EXPECT().Do(gomock.Any()).Return(httpRespOK, nil).Times(1)
-		mockHTTPCLient.EXPECT().Do(gomock.Any()).Return(PutUserRespOK, nil).Times(1)
+		mockHTTPClient.EXPECT().Do(gomock.Any()).Return(httpRespConflict, nil).Times(1)
+		mockHTTPClient.EXPECT().Do(gomock.Any()).Return(httpRespOK, nil).Times(1)
+		mockHTTPClient.EXPECT().Do(gomock.Any()).Return(PutUserRespOK, nil).Times(1)
 
-		service, err := NewSCIMService(mockHTTPCLient, endpoint, "MyToken")
+		service, err := NewSCIMService(mockHTTPClient, endpoint, "MyToken")
 		assert.NoError(t, err)
 		assert.NotNil(t, service)
 
@@ -761,10 +761,10 @@ func TestCreateOrGetUser(t *testing.T) {
 			ExternalID: "702135",
 			UserName:   "mjack",
 			Name: Name{
-				FamilyName: "Mark",
-				GivenName:  "Jackson",
+				FamilyName: "Jackson",
+				GivenName:  "Mark",
 			},
-			DisplayName: "mjack",
+			DisplayName: "Mark Jackson",
 			Emails: []*Email{
 				{
 					Value:   "mjack@example.com",
@@ -782,13 +782,105 @@ func TestCreateOrGetUser(t *testing.T) {
 		assert.Equal(t, "90677c608a-7afcdc23-0bd4-4fb7-b2ff-10ccffdff447", got.ID)
 		assert.Equal(t, "702135", got.ExternalID)
 		assert.Equal(t, "mjack", got.UserName)
-		assert.Equal(t, "Jackson", got.Name.GivenName)
-		assert.Equal(t, "Mark", got.Name.FamilyName)
-		assert.Equal(t, "mjack", got.DisplayName)
+		assert.Equal(t, "Mark", got.Name.GivenName)
+		assert.Equal(t, "Jackson", got.Name.FamilyName)
+		assert.Equal(t, "Mark Jackson", got.DisplayName)
 		assert.Equal(t, "mjack@example.com", got.Emails[0].Value)
 		assert.Equal(t, "work", got.Emails[0].Type)
 		assert.Equal(t, true, got.Emails[0].Primary)
-		assert.Equal(t, false, got.Active)
+		assert.Equal(t, true, got.Active)
+	})
+
+	t.Run("should return a 409 response and execute the get user when fields changed", func(t *testing.T) {
+		CreateUserResponseConflictFile := "testdata/CreateUserResponse_Conflict.json"
+		ListUserResponseFile := "testdata/ListUserResponse_fields_changes.json"
+		PutUserResponseFile := "testdata/PutUserResponse.json"
+
+		mockHTTPClient := mocks.NewMockHTTPClient(mockCtrl)
+		jsonRespConflict := ReadJSONFileAsString(t, CreateUserResponseConflictFile)
+		jsonListRespOK := ReadJSONFileAsString(t, ListUserResponseFile)
+		jsonPutUserRespOK := ReadJSONFileAsString(t, PutUserResponseFile)
+
+		httpRespConflict := &http.Response{
+			Status:     "409 Conflict",
+			StatusCode: http.StatusConflict,
+			Header: http.Header{
+				"Date":             []string{"Fri, 18 Mar 2022 10:57:08 GMT"},
+				"Content-Type":     []string{"application/json"},
+				"x-amzn-RequestId": []string{"81abca44-4ee3-47fa-b4d9-729908ef1dd9"},
+			},
+			Proto:         "HTTP/1.1",
+			Body:          io.NopCloser(strings.NewReader(jsonRespConflict)),
+			ContentLength: int64(len(jsonRespConflict)),
+		}
+
+		ListRespOK := &http.Response{
+			Status:     "201 OK",
+			StatusCode: http.StatusCreated,
+			Header: http.Header{
+				"Date":             []string{"Tue, 31 Mar 2020 02:36:15 GMT"},
+				"Content-Type":     []string{"application/json"},
+				"x-amzn-RequestId": []string{"abbf9e53-9ecc-46d2-8efe-104a66ff128f"},
+			},
+			Proto:         "HTTP/1.1",
+			Body:          io.NopCloser(strings.NewReader(jsonListRespOK)),
+			ContentLength: int64(len(jsonListRespOK)),
+		}
+
+		PutUserRespOK := &http.Response{
+			Status:     "201 OK",
+			StatusCode: http.StatusCreated,
+			Header: http.Header{
+				"Date":             []string{"Tue, 31 Mar 2020 02:36:15 GMT"},
+				"Content-Type":     []string{"application/json"},
+				"x-amzn-RequestId": []string{"abbf9e53-9ecc-46d2-8efe-104a66ff128f"},
+			},
+			Proto:         "HTTP/1.1",
+			Body:          io.NopCloser(strings.NewReader(jsonPutUserRespOK)),
+			ContentLength: int64(len(jsonPutUserRespOK)),
+		}
+
+		mockHTTPClient.EXPECT().Do(gomock.Any()).Return(httpRespConflict, nil).Times(1)
+		mockHTTPClient.EXPECT().Do(gomock.Any()).Return(ListRespOK, nil).Times(1)
+		mockHTTPClient.EXPECT().Do(gomock.Any()).Return(PutUserRespOK, nil).Times(1)
+
+		service, err := NewSCIMService(mockHTTPClient, endpoint, "MyToken")
+		assert.NoError(t, err)
+		assert.NotNil(t, service)
+
+		usrr := &CreateUserRequest{
+			ID:         "90677c608a-7afcdc23-0bd4-4fb7-b2ff-10ccffdff447",
+			ExternalID: "702135",
+			UserName:   "mjack",
+			Name: Name{
+				FamilyName: "Jackson",
+				GivenName:  "Mark",
+			},
+			DisplayName: "Mark Jackson",
+			Emails: []*Email{
+				{
+					Value:   "mjack@example.com",
+					Type:    "work",
+					Primary: true,
+				},
+			},
+			Active: true,
+		}
+
+		got, err := service.CreateOrGetUser(context.Background(), usrr)
+		assert.NoError(t, err)
+		assert.NotNil(t, got)
+
+		assert.Equal(t, "90677c608a-7afcdc23-0bd4-4fb7-b2ff-10ccffdff447", got.ID)
+		assert.Equal(t, "702135", got.ExternalID)
+		assert.Equal(t, "mjack", got.UserName)
+		assert.Equal(t, "Mark", got.Name.GivenName)
+		assert.Equal(t, "Jackson", got.Name.FamilyName)
+		assert.Equal(t, "Mark Jackson", got.DisplayName)
+		assert.Equal(t, "mjack@example.com", got.Emails[0].Value)
+		assert.Equal(t, "work", got.Emails[0].Type)
+		assert.Equal(t, true, got.Emails[0].Primary)
+		assert.Equal(t, true, got.Active)
 	})
 }
 
@@ -800,7 +892,7 @@ func TestDeleteUser(t *testing.T) {
 	assert.NoError(t, err)
 
 	t.Run("should return a valid response with a valid request", func(t *testing.T) {
-		mockHTTPCLient := mocks.NewMockHTTPClient(mockCtrl)
+		mockHTTPClient := mocks.NewMockHTTPClient(mockCtrl)
 
 		userID := "1"
 		reqURL.Path = path.Join(reqURL.Path, fmt.Sprintf("/Users/%s", userID))
@@ -824,9 +916,9 @@ func TestDeleteUser(t *testing.T) {
 			ContentLength: int64(len("")),
 		}
 
-		mockHTTPCLient.EXPECT().Do(httpReq).Return(httpResp, nil)
+		mockHTTPClient.EXPECT().Do(httpReq).Return(httpResp, nil)
 
-		service, err := NewSCIMService(mockHTTPCLient, endpoint, "MyToken")
+		service, err := NewSCIMService(mockHTTPClient, endpoint, "MyToken")
 		assert.NoError(t, err)
 		assert.NotNil(t, service)
 
@@ -845,8 +937,8 @@ func TestGetUser(t *testing.T) {
 	GetUserResponseFile := "testdata/GetUserResponse.json"
 
 	t.Run("should return a valid response with a valid request", func(t *testing.T) {
-		mockHTTPCLient := mocks.NewMockHTTPClient(mockCtrl)
-		jsonResp := ReadJSONFIleAsString(t, GetUserResponseFile)
+		mockHTTPClient := mocks.NewMockHTTPClient(mockCtrl)
+		jsonResp := ReadJSONFileAsString(t, GetUserResponseFile)
 
 		userID := "90677c608a-7afcdc23-0bd4-4fb7-b2ff-10ccffdff447"
 		reqURL.Path = path.Join(reqURL.Path, fmt.Sprintf("/Users/%s", userID))
@@ -870,9 +962,9 @@ func TestGetUser(t *testing.T) {
 			ContentLength: int64(len(jsonResp)),
 		}
 
-		mockHTTPCLient.EXPECT().Do(httpReq).Return(httpResp, nil)
+		mockHTTPClient.EXPECT().Do(httpReq).Return(httpResp, nil)
 
-		service, err := NewSCIMService(mockHTTPCLient, endpoint, "MyToken")
+		service, err := NewSCIMService(mockHTTPClient, endpoint, "MyToken")
 		assert.NoError(t, err)
 		assert.NotNil(t, service)
 
@@ -903,8 +995,8 @@ func TestGetUserByUserName(t *testing.T) {
 	ListUserResponseFile := "testdata/ListUserResponse.json"
 
 	t.Run("should return a valid response with a valid request", func(t *testing.T) {
-		mockHTTPCLient := mocks.NewMockHTTPClient(mockCtrl)
-		jsonResp := ReadJSONFIleAsString(t, ListUserResponseFile)
+		mockHTTPClient := mocks.NewMockHTTPClient(mockCtrl)
+		jsonResp := ReadJSONFileAsString(t, ListUserResponseFile)
 
 		userID := "90677c608a-7afcdc23-0bd4-4fb7-b2ff-10ccffdff447"
 		userName := "mjack"
@@ -935,9 +1027,9 @@ func TestGetUserByUserName(t *testing.T) {
 			ContentLength: int64(len(jsonResp)),
 		}
 
-		mockHTTPCLient.EXPECT().Do(httpReq).Return(httpResp, nil)
+		mockHTTPClient.EXPECT().Do(httpReq).Return(httpResp, nil)
 
-		service, err := NewSCIMService(mockHTTPCLient, endpoint, "MyToken")
+		service, err := NewSCIMService(mockHTTPClient, endpoint, "MyToken")
 		assert.NoError(t, err)
 		assert.NotNil(t, service)
 
@@ -968,8 +1060,8 @@ func TestListUsers(t *testing.T) {
 	ListUserResponseFile := "testdata/ListUserResponse.json"
 
 	t.Run("should return a valid response with a valid request", func(t *testing.T) {
-		mockHTTPCLient := mocks.NewMockHTTPClient(mockCtrl)
-		jsonResp := ReadJSONFIleAsString(t, ListUserResponseFile)
+		mockHTTPClient := mocks.NewMockHTTPClient(mockCtrl)
+		jsonResp := ReadJSONFileAsString(t, ListUserResponseFile)
 
 		userID := "90677c608a-7afcdc23-0bd4-4fb7-b2ff-10ccffdff447"
 		filter := "userName eq mjack"
@@ -999,9 +1091,9 @@ func TestListUsers(t *testing.T) {
 			ContentLength: int64(len(jsonResp)),
 		}
 
-		mockHTTPCLient.EXPECT().Do(httpReq).Return(httpResp, nil)
+		mockHTTPClient.EXPECT().Do(httpReq).Return(httpResp, nil)
 
-		service, err := NewSCIMService(mockHTTPCLient, endpoint, "MyToken")
+		service, err := NewSCIMService(mockHTTPClient, endpoint, "MyToken")
 		assert.NoError(t, err)
 		assert.NotNil(t, service)
 
@@ -1023,159 +1115,6 @@ func TestListUsers(t *testing.T) {
 	})
 }
 
-func TestGetGroupByDisplayName(t *testing.T) {
-	mockCtrl := gomock.NewController(t)
-	defer mockCtrl.Finish()
-	endpoint := "https://testing.com"
-	reqURL, err := url.Parse(endpoint)
-	assert.NoError(t, err)
-
-	ListGroupsResponseFile := "testdata/ListGroupsResponse.json"
-
-	t.Run("should return a valid response with a valid request", func(t *testing.T) {
-		mockHTTPCLient := mocks.NewMockHTTPClient(mockCtrl)
-		jsonResp := ReadJSONFIleAsString(t, ListGroupsResponseFile)
-
-		groupID := "90677c608a-ef9cb2da-d480-422b-9901-451b1bf9e607"
-		displayName := "Group Foo"
-
-		reqURL.Path = path.Join(reqURL.Path, "/Groups")
-
-		filter := fmt.Sprintf("displayName eq %q", displayName)
-		q := reqURL.Query()
-		q.Add("filter", filter)
-		reqURL.RawQuery = q.Encode()
-
-		httpReq, err := http.NewRequestWithContext(context.Background(), "GET", reqURL.String(), nil)
-		assert.NoError(t, err)
-
-		httpReq.Header.Set("Accept", "application/json")
-		httpReq.Header.Set("Authorization", "Bearer MyToken")
-
-		httpResp := &http.Response{
-			Status:     "200 OK",
-			StatusCode: http.StatusNoContent,
-			Header: http.Header{
-				"Date":             []string{"Thu, 23 Jul 2020 00:37:15 GMT"},
-				"Content-Type":     []string{"application/json"},
-				"x-amzn-RequestId": []string{"e01400a1-0f10-4e90-ba58-ea1766a009d7"},
-			},
-			Proto:         "HTTP/1.1",
-			Body:          io.NopCloser(strings.NewReader(jsonResp)),
-			ContentLength: int64(len(jsonResp)),
-		}
-
-		mockHTTPCLient.EXPECT().Do(httpReq).Return(httpResp, nil)
-
-		service, err := NewSCIMService(mockHTTPCLient, endpoint, "MyToken")
-		assert.NoError(t, err)
-		assert.NotNil(t, service)
-
-		got, err := service.GetGroupByDisplayName(context.Background(), displayName)
-		assert.NoError(t, err)
-		assert.NotNil(t, got)
-
-		assert.Equal(t, groupID, got.ID)
-		assert.Equal(t, displayName, got.DisplayName)
-	})
-}
-
-func TestCreateOrGetGroup(t *testing.T) {
-	mockCtrl := gomock.NewController(t)
-	defer mockCtrl.Finish()
-	endpoint := "https://testing.com"
-	CreateGroupResponseFile := "testdata/CreateGroupResponse.json"
-	CreateGroupResponseConflictFile := "testdata/CreateGroupResponse_Conflict.json"
-	ListGroupsResponseFile := "testdata/ListGroupsResponse.json"
-
-	t.Run("should return a valid response with a valid request", func(t *testing.T) {
-		mockHTTPCLient := mocks.NewMockHTTPClient(mockCtrl)
-		jsonResp := ReadJSONFIleAsString(t, CreateGroupResponseFile)
-
-		httpResp := &http.Response{
-			Status:     "201 OK",
-			StatusCode: http.StatusCreated,
-			Header: http.Header{
-				"Date":             []string{"Mon, 06 Apr 2020 16:48:19 GMT"},
-				"Content-Type":     []string{"application/json"},
-				"x-amzn-RequestId": []string{"abbf9e53-9ecc-46d2-8efe-104a66ff128f"},
-			},
-			Proto:         "HTTP/1.1",
-			Body:          io.NopCloser(strings.NewReader(jsonResp)),
-			ContentLength: int64(len(jsonResp)),
-		}
-
-		mockHTTPCLient.EXPECT().Do(gomock.Any()).Return(httpResp, nil)
-
-		service, err := NewSCIMService(mockHTTPCLient, endpoint, "MyToken")
-		assert.NoError(t, err)
-		assert.NotNil(t, service)
-
-		grpr := &CreateGroupRequest{
-			DisplayName: "Group Foo",
-			Members:     []*Member{},
-		}
-
-		got, err := service.CreateOrGetGroup(context.Background(), grpr)
-		assert.NoError(t, err)
-		assert.NotNil(t, got)
-
-		assert.Equal(t, "9067729b3d-a2cfc8a5-f4ab-4443-9d7d-b32a9013c554", got.ID)
-		assert.Equal(t, "Group Bar", got.DisplayName)
-	})
-
-	t.Run("should return a 409 response and execute the get user", func(t *testing.T) {
-		mockHTTPCLient := mocks.NewMockHTTPClient(mockCtrl)
-		jsonRespConflict := ReadJSONFIleAsString(t, CreateGroupResponseConflictFile)
-		jsonRespOK := ReadJSONFIleAsString(t, ListGroupsResponseFile)
-
-		httpRespConflict := &http.Response{
-			Status:     "409 Conflict",
-			StatusCode: http.StatusConflict,
-			Header: http.Header{
-				"Date":             []string{"Fri, 18 Mar 2022 10:57:08 GMT"},
-				"Content-Type":     []string{"application/json"},
-				"x-amzn-RequestId": []string{"81abca44-4ee3-47fa-b4d9-729908ef1dd9"},
-			},
-			Proto:         "HTTP/1.1",
-			Body:          io.NopCloser(strings.NewReader(jsonRespConflict)),
-			ContentLength: int64(len(jsonRespConflict)),
-		}
-
-		httpRespOK := &http.Response{
-			Status:     "201 OK",
-			StatusCode: http.StatusCreated,
-			Header: http.Header{
-				"Date":             []string{"Tue, 31 Mar 2020 02:36:15 GMT"},
-				"Content-Type":     []string{"application/json"},
-				"x-amzn-RequestId": []string{"abbf9e53-9ecc-46d2-8efe-104a66ff128f"},
-			},
-			Proto:         "HTTP/1.1",
-			Body:          io.NopCloser(strings.NewReader(jsonRespOK)),
-			ContentLength: int64(len(jsonRespOK)),
-		}
-
-		mockHTTPCLient.EXPECT().Do(gomock.Any()).Return(httpRespConflict, nil).Times(1)
-		mockHTTPCLient.EXPECT().Do(gomock.Any()).Return(httpRespOK, nil).Times(1)
-
-		service, err := NewSCIMService(mockHTTPCLient, endpoint, "MyToken")
-		assert.NoError(t, err)
-		assert.NotNil(t, service)
-
-		grpr := &CreateGroupRequest{
-			DisplayName: "Group Foo",
-			Members:     []*Member{},
-		}
-
-		got, err := service.CreateOrGetGroup(context.Background(), grpr)
-		assert.NoError(t, err)
-		assert.NotNil(t, got)
-
-		assert.Equal(t, "90677c608a-ef9cb2da-d480-422b-9901-451b1bf9e607", got.ID)
-		assert.Equal(t, "Group Foo", got.DisplayName)
-	})
-}
-
 func TestPutUser(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
@@ -1183,8 +1122,8 @@ func TestPutUser(t *testing.T) {
 	PutUserResponseFile := "testdata/PutUserResponse.json"
 
 	t.Run("should return a valid response with a valid request", func(t *testing.T) {
-		mockHTTPCLient := mocks.NewMockHTTPClient(mockCtrl)
-		jsonResp := ReadJSONFIleAsString(t, PutUserResponseFile)
+		mockHTTPClient := mocks.NewMockHTTPClient(mockCtrl)
+		jsonResp := ReadJSONFileAsString(t, PutUserResponseFile)
 
 		httpResp := &http.Response{
 			Status:     "201 OK",
@@ -1199,24 +1138,24 @@ func TestPutUser(t *testing.T) {
 			ContentLength: int64(len(jsonResp)),
 		}
 
-		mockHTTPCLient.EXPECT().Do(gomock.Any()).Return(httpResp, nil)
+		mockHTTPClient.EXPECT().Do(gomock.Any()).Return(httpResp, nil)
 
-		service, err := NewSCIMService(mockHTTPCLient, endpoint, "MyToken")
+		service, err := NewSCIMService(mockHTTPClient, endpoint, "MyToken")
 		assert.NoError(t, err)
 		assert.NotNil(t, service)
 
 		pusrr := &PutUserRequest{
-			ID:         "9067729b3d-94f1e0b3-c394-48d5-8ab1-2c122a167074",
-			ExternalID: "701984",
-			UserName:   "bjensen",
+			ID:         "90677c608a-7afcdc23-0bd4-4fb7-b2ff-10ccffdff447",
+			ExternalID: "702135",
+			UserName:   "mjack",
 			Name: Name{
-				FamilyName: "Jensen",
-				GivenName:  "Barbara",
+				FamilyName: "Jackson",
+				GivenName:  "Mark",
 			},
-			DisplayName: "Babs Jensen",
+			DisplayName: "Mark Jackson",
 			Emails: []*Email{
 				{
-					Value:   "bjensen@example.com",
+					Value:   "mjack@example.com",
 					Type:    "work",
 					Primary: true,
 				},
@@ -1228,17 +1167,17 @@ func TestPutUser(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, got)
 
-		assert.Equal(t, "9067729b3d-94f1e0b3-c394-48d5-8ab1-2c122a167074", got.ID)
-		assert.Equal(t, "701984", got.ExternalID)
-		assert.Equal(t, "bjensen", got.UserName)
-		assert.Equal(t, "Babs Jensen", got.DisplayName)
+		assert.Equal(t, "90677c608a-7afcdc23-0bd4-4fb7-b2ff-10ccffdff447", got.ID)
+		assert.Equal(t, "702135", got.ExternalID)
+		assert.Equal(t, "mjack", got.UserName)
+		assert.Equal(t, "Mark Jackson", got.DisplayName)
 		assert.Equal(t, true, got.Active)
 	})
 
 	t.Run("should return an error when usr is nil", func(t *testing.T) {
-		mockHTTPCLient := mocks.NewMockHTTPClient(mockCtrl)
+		mockHTTPClient := mocks.NewMockHTTPClient(mockCtrl)
 
-		service, err := NewSCIMService(mockHTTPCLient, endpoint, "MyToken")
+		service, err := NewSCIMService(mockHTTPClient, endpoint, "MyToken")
 		assert.NoError(t, err)
 		assert.NotNil(t, service)
 
@@ -1249,9 +1188,9 @@ func TestPutUser(t *testing.T) {
 	})
 
 	t.Run("should return an error when usr.DisplayName is empty", func(t *testing.T) {
-		mockHTTPCLient := mocks.NewMockHTTPClient(mockCtrl)
+		mockHTTPClient := mocks.NewMockHTTPClient(mockCtrl)
 
-		service, err := NewSCIMService(mockHTTPCLient, endpoint, "MyToken")
+		service, err := NewSCIMService(mockHTTPClient, endpoint, "MyToken")
 		assert.NoError(t, err)
 		assert.NotNil(t, service)
 
@@ -1281,9 +1220,9 @@ func TestPutUser(t *testing.T) {
 	})
 
 	t.Run("should return an error when usr.GivenName is empty", func(t *testing.T) {
-		mockHTTPCLient := mocks.NewMockHTTPClient(mockCtrl)
+		mockHTTPClient := mocks.NewMockHTTPClient(mockCtrl)
 
-		service, err := NewSCIMService(mockHTTPCLient, endpoint, "MyToken")
+		service, err := NewSCIMService(mockHTTPClient, endpoint, "MyToken")
 		assert.NoError(t, err)
 		assert.NotNil(t, service)
 
@@ -1313,9 +1252,9 @@ func TestPutUser(t *testing.T) {
 	})
 
 	t.Run("should return an error when usr.FamilyName is empty", func(t *testing.T) {
-		mockHTTPCLient := mocks.NewMockHTTPClient(mockCtrl)
+		mockHTTPClient := mocks.NewMockHTTPClient(mockCtrl)
 
-		service, err := NewSCIMService(mockHTTPCLient, endpoint, "MyToken")
+		service, err := NewSCIMService(mockHTTPClient, endpoint, "MyToken")
 		assert.NoError(t, err)
 		assert.NotNil(t, service)
 
@@ -1345,9 +1284,9 @@ func TestPutUser(t *testing.T) {
 	})
 
 	t.Run("should return an error when usr.Emails > 1", func(t *testing.T) {
-		mockHTTPCLient := mocks.NewMockHTTPClient(mockCtrl)
+		mockHTTPClient := mocks.NewMockHTTPClient(mockCtrl)
 
-		service, err := NewSCIMService(mockHTTPCLient, endpoint, "MyToken")
+		service, err := NewSCIMService(mockHTTPClient, endpoint, "MyToken")
 		assert.NoError(t, err)
 		assert.NotNil(t, service)
 
@@ -1389,9 +1328,9 @@ func TestPatchUser(t *testing.T) {
 	PatchUserResponseFile := "testdata/PatchUserResponse.json"
 
 	t.Run("should return an error when usr is nil", func(t *testing.T) {
-		mockHTTPCLient := mocks.NewMockHTTPClient(mockCtrl)
+		mockHTTPClient := mocks.NewMockHTTPClient(mockCtrl)
 
-		service, err := NewSCIMService(mockHTTPCLient, endpoint, "MyToken")
+		service, err := NewSCIMService(mockHTTPClient, endpoint, "MyToken")
 		assert.NoError(t, err)
 		assert.NotNil(t, service)
 
@@ -1400,8 +1339,8 @@ func TestPatchUser(t *testing.T) {
 	})
 
 	t.Run("should return a valid response with a valid request", func(t *testing.T) {
-		mockHTTPCLient := mocks.NewMockHTTPClient(mockCtrl)
-		jsonResp := ReadJSONFIleAsString(t, PatchUserResponseFile)
+		mockHTTPClient := mocks.NewMockHTTPClient(mockCtrl)
+		jsonResp := ReadJSONFileAsString(t, PatchUserResponseFile)
 
 		httpResp := &http.Response{
 			Status:     "200 OK",
@@ -1416,9 +1355,9 @@ func TestPatchUser(t *testing.T) {
 			ContentLength: int64(len(jsonResp)),
 		}
 
-		mockHTTPCLient.EXPECT().Do(gomock.Any()).Return(httpResp, nil)
+		mockHTTPClient.EXPECT().Do(gomock.Any()).Return(httpResp, nil)
 
-		service, err := NewSCIMService(mockHTTPCLient, endpoint, "MyToken")
+		service, err := NewSCIMService(mockHTTPClient, endpoint, "MyToken")
 		assert.NoError(t, err)
 		assert.NotNil(t, service)
 
@@ -1443,9 +1382,9 @@ func TestPatchUser(t *testing.T) {
 	})
 
 	t.Run("should return an error when usr.ID is empty", func(t *testing.T) {
-		mockHTTPCLient := mocks.NewMockHTTPClient(mockCtrl)
+		mockHTTPClient := mocks.NewMockHTTPClient(mockCtrl)
 
-		service, err := NewSCIMService(mockHTTPCLient, endpoint, "MyToken")
+		service, err := NewSCIMService(mockHTTPClient, endpoint, "MyToken")
 		assert.NoError(t, err)
 		assert.NotNil(t, service)
 
@@ -1465,5 +1404,414 @@ func TestPatchUser(t *testing.T) {
 
 		err = service.PatchUser(context.Background(), pur)
 		assert.Error(t, err)
+	})
+}
+
+func TestCreateGroup(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	endpoint := "https://testing.com"
+	CreateGroupResponseFile := "testdata/CreateGroupResponse.json"
+
+	t.Run("should return a valid response with a valid request", func(t *testing.T) {
+		mockHTTPClient := mocks.NewMockHTTPClient(mockCtrl)
+		jsonResp := ReadJSONFileAsString(t, CreateGroupResponseFile)
+
+		httpResp := &http.Response{
+			Status:     "201 OK",
+			StatusCode: http.StatusCreated,
+			Header: http.Header{
+				"Date":             []string{"Mon, 06 Apr 2020 16:48:19 GMT"},
+				"Content-Type":     []string{"application/json"},
+				"x-amzn-RequestId": []string{"abbf9e53-9ecc-46d2-8efe-104a66ff128f"},
+			},
+			Proto:         "HTTP/1.1",
+			Body:          io.NopCloser(strings.NewReader(jsonResp)),
+			ContentLength: int64(len(jsonResp)),
+		}
+
+		mockHTTPClient.EXPECT().Do(gomock.Any()).Return(httpResp, nil)
+
+		service, err := NewSCIMService(mockHTTPClient, endpoint, "MyToken")
+		assert.NoError(t, err)
+		assert.NotNil(t, service)
+
+		usrr := &CreateGroupRequest{
+			ID:          "9067729b3d-a2cfc8a5-f4ab-4443-9d7d-b32a9013c554",
+			DisplayName: "Group Bar",
+		}
+
+		got, err := service.CreateGroup(context.Background(), usrr)
+		assert.NoError(t, err)
+		assert.NotNil(t, got)
+
+		assert.Equal(t, "9067729b3d-a2cfc8a5-f4ab-4443-9d7d-b32a9013c554", got.ID)
+		assert.Equal(t, "Group Bar", got.DisplayName)
+	})
+
+	t.Run("should return an error when usr is nil", func(t *testing.T) {
+		mockHTTPClient := mocks.NewMockHTTPClient(mockCtrl)
+
+		service, err := NewSCIMService(mockHTTPClient, endpoint, "MyToken")
+		assert.NoError(t, err)
+		assert.NotNil(t, service)
+
+		got, err := service.CreateGroup(context.Background(), nil)
+		assert.Error(t, err)
+		assert.Nil(t, got)
+		assert.ErrorIs(t, err, ErrCreateGroupRequestEmpty)
+	})
+
+	t.Run("should return an error when group.DisplayName is empty", func(t *testing.T) {
+		mockHTTPClient := mocks.NewMockHTTPClient(mockCtrl)
+
+		service, err := NewSCIMService(mockHTTPClient, endpoint, "MyToken")
+		assert.NoError(t, err)
+		assert.NotNil(t, service)
+
+		usrr := &CreateGroupRequest{
+			ID:          "9067729b3d-a2cfc8a5-f4ab-4443-9d7d-b32a9013c554",
+			DisplayName: "",
+		}
+
+		got, err := service.CreateGroup(context.Background(), usrr)
+		assert.Error(t, err)
+		assert.Nil(t, got)
+		assert.ErrorIs(t, err, ErrDisplayNameEmpty)
+	})
+}
+
+func TestDeleteGroup(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	endpoint := "https://testing.com"
+	reqURL, err := url.Parse(endpoint)
+	assert.NoError(t, err)
+
+	t.Run("should return a valid response with a valid request", func(t *testing.T) {
+		mockHTTPClient := mocks.NewMockHTTPClient(mockCtrl)
+
+		groupID := "1"
+		reqURL.Path = path.Join(reqURL.Path, fmt.Sprintf("/Groups/%s", groupID))
+
+		httpReq, err := http.NewRequestWithContext(context.Background(), "DELETE", reqURL.String(), nil)
+		assert.NoError(t, err)
+
+		httpReq.Header.Set("Accept", "application/json")
+		httpReq.Header.Set("Authorization", "Bearer MyToken")
+
+		httpResp := &http.Response{
+			Status:     "204 OK",
+			StatusCode: http.StatusNoContent,
+			Header: http.Header{
+				"Date":             []string{"Mon, 06 Apr 2020 22:21:24 GMT"},
+				"Content-Type":     []string{"application/json"},
+				"x-amzn-RequestId": []string{"abbf9e53-9ecc-46d2-8efe-104a66ff128"},
+			},
+			Proto:         "HTTP/1.1",
+			Body:          io.NopCloser(strings.NewReader("")),
+			ContentLength: int64(len("")),
+		}
+
+		mockHTTPClient.EXPECT().Do(httpReq).Return(httpResp, nil)
+
+		service, err := NewSCIMService(mockHTTPClient, endpoint, "MyToken")
+		assert.NoError(t, err)
+		assert.NotNil(t, service)
+
+		err = service.DeleteGroup(context.Background(), groupID)
+		assert.NoError(t, err)
+	})
+}
+
+func TestGetGroupByDisplayName(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	endpoint := "https://testing.com"
+	reqURL, err := url.Parse(endpoint)
+	assert.NoError(t, err)
+
+	ListGroupsResponseFile := "testdata/ListGroupsResponse.json"
+
+	t.Run("should return a valid response with a valid request", func(t *testing.T) {
+		mockHTTPClient := mocks.NewMockHTTPClient(mockCtrl)
+		jsonResp := ReadJSONFileAsString(t, ListGroupsResponseFile)
+
+		groupID := "90677c608a-ef9cb2da-d480-422b-9901-451b1bf9e607"
+		displayName := "Group Foo"
+
+		reqURL.Path = path.Join(reqURL.Path, "/Groups")
+
+		filter := fmt.Sprintf("displayName eq %q", displayName)
+		q := reqURL.Query()
+		q.Add("filter", filter)
+		reqURL.RawQuery = q.Encode()
+
+		httpReq, err := http.NewRequestWithContext(context.Background(), "GET", reqURL.String(), nil)
+		assert.NoError(t, err)
+
+		httpReq.Header.Set("Accept", "application/json")
+		httpReq.Header.Set("Authorization", "Bearer MyToken")
+
+		httpResp := &http.Response{
+			Status:     "200 OK",
+			StatusCode: http.StatusNoContent,
+			Header: http.Header{
+				"Date":             []string{"Thu, 23 Jul 2020 00:37:15 GMT"},
+				"Content-Type":     []string{"application/json"},
+				"x-amzn-RequestId": []string{"e01400a1-0f10-4e90-ba58-ea1766a009d7"},
+			},
+			Proto:         "HTTP/1.1",
+			Body:          io.NopCloser(strings.NewReader(jsonResp)),
+			ContentLength: int64(len(jsonResp)),
+		}
+
+		mockHTTPClient.EXPECT().Do(httpReq).Return(httpResp, nil)
+
+		service, err := NewSCIMService(mockHTTPClient, endpoint, "MyToken")
+		assert.NoError(t, err)
+		assert.NotNil(t, service)
+
+		got, err := service.GetGroupByDisplayName(context.Background(), displayName)
+		assert.NoError(t, err)
+		assert.NotNil(t, got)
+
+		assert.Equal(t, groupID, got.ID)
+		assert.Equal(t, displayName, got.DisplayName)
+	})
+}
+
+func TestCreateOrGetGroup(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	endpoint := "https://testing.com"
+	CreateGroupResponseFile := "testdata/CreateGroupResponse.json"
+	CreateGroupResponseConflictFile := "testdata/CreateGroupResponse_Conflict.json"
+	ListGroupsResponseFile := "testdata/ListGroupsResponse.json"
+
+	t.Run("should return a valid response with a valid request", func(t *testing.T) {
+		mockHTTPClient := mocks.NewMockHTTPClient(mockCtrl)
+		jsonResp := ReadJSONFileAsString(t, CreateGroupResponseFile)
+
+		httpResp := &http.Response{
+			Status:     "201 OK",
+			StatusCode: http.StatusCreated,
+			Header: http.Header{
+				"Date":             []string{"Mon, 06 Apr 2020 16:48:19 GMT"},
+				"Content-Type":     []string{"application/json"},
+				"x-amzn-RequestId": []string{"abbf9e53-9ecc-46d2-8efe-104a66ff128f"},
+			},
+			Proto:         "HTTP/1.1",
+			Body:          io.NopCloser(strings.NewReader(jsonResp)),
+			ContentLength: int64(len(jsonResp)),
+		}
+
+		mockHTTPClient.EXPECT().Do(gomock.Any()).Return(httpResp, nil)
+
+		service, err := NewSCIMService(mockHTTPClient, endpoint, "MyToken")
+		assert.NoError(t, err)
+		assert.NotNil(t, service)
+
+		grpr := &CreateGroupRequest{
+			DisplayName: "Group Foo",
+			Members:     []*Member{},
+		}
+
+		got, err := service.CreateOrGetGroup(context.Background(), grpr)
+		assert.NoError(t, err)
+		assert.NotNil(t, got)
+
+		assert.Equal(t, "9067729b3d-a2cfc8a5-f4ab-4443-9d7d-b32a9013c554", got.ID)
+		assert.Equal(t, "Group Bar", got.DisplayName)
+	})
+
+	t.Run("should return a 409 response and execute the get user", func(t *testing.T) {
+		mockHTTPClient := mocks.NewMockHTTPClient(mockCtrl)
+		jsonRespConflict := ReadJSONFileAsString(t, CreateGroupResponseConflictFile)
+		jsonRespOK := ReadJSONFileAsString(t, ListGroupsResponseFile)
+
+		httpRespConflict := &http.Response{
+			Status:     "409 Conflict",
+			StatusCode: http.StatusConflict,
+			Header: http.Header{
+				"Date":             []string{"Fri, 18 Mar 2022 10:57:08 GMT"},
+				"Content-Type":     []string{"application/json"},
+				"x-amzn-RequestId": []string{"81abca44-4ee3-47fa-b4d9-729908ef1dd9"},
+			},
+			Proto:         "HTTP/1.1",
+			Body:          io.NopCloser(strings.NewReader(jsonRespConflict)),
+			ContentLength: int64(len(jsonRespConflict)),
+		}
+
+		httpRespOK := &http.Response{
+			Status:     "201 OK",
+			StatusCode: http.StatusCreated,
+			Header: http.Header{
+				"Date":             []string{"Tue, 31 Mar 2020 02:36:15 GMT"},
+				"Content-Type":     []string{"application/json"},
+				"x-amzn-RequestId": []string{"abbf9e53-9ecc-46d2-8efe-104a66ff128f"},
+			},
+			Proto:         "HTTP/1.1",
+			Body:          io.NopCloser(strings.NewReader(jsonRespOK)),
+			ContentLength: int64(len(jsonRespOK)),
+		}
+
+		mockHTTPClient.EXPECT().Do(gomock.Any()).Return(httpRespConflict, nil).Times(1)
+		mockHTTPClient.EXPECT().Do(gomock.Any()).Return(httpRespOK, nil).Times(1)
+
+		service, err := NewSCIMService(mockHTTPClient, endpoint, "MyToken")
+		assert.NoError(t, err)
+		assert.NotNil(t, service)
+
+		grpr := &CreateGroupRequest{
+			DisplayName: "Group Foo",
+			Members:     []*Member{},
+		}
+
+		got, err := service.CreateOrGetGroup(context.Background(), grpr)
+		assert.NoError(t, err)
+		assert.NotNil(t, got)
+
+		assert.Equal(t, "90677c608a-ef9cb2da-d480-422b-9901-451b1bf9e607", got.ID)
+		assert.Equal(t, "Group Foo", got.DisplayName)
+	})
+}
+
+func TestPatchGroup(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	endpoint := "https://testing.com"
+
+	t.Run("should return an error when usr is nil", func(t *testing.T) {
+		mockHTTPClient := mocks.NewMockHTTPClient(mockCtrl)
+
+		service, err := NewSCIMService(mockHTTPClient, endpoint, "MyToken")
+		assert.NoError(t, err)
+		assert.NotNil(t, service)
+
+		err = service.PatchGroup(context.Background(), nil)
+		assert.Error(t, err)
+	})
+
+	t.Run("should return a valid response with a valid request", func(t *testing.T) {
+		mockHTTPClient := mocks.NewMockHTTPClient(mockCtrl)
+
+		httpResp := &http.Response{
+			Status:     "204 OK",
+			StatusCode: http.StatusCreated,
+			Header: http.Header{
+				"Date":             []string{"Tue, 07 Apr 2020 23:59:09 GMT"},
+				"Content-Type":     []string{"application/json"},
+				"x-amzn-RequestId": []string{"dad0c91c-1ea8-4b36-9fdb-4f099b59c1c9"},
+			},
+			Proto:         "HTTP/1.1",
+			Body:          io.NopCloser(strings.NewReader("")),
+			ContentLength: int64(len("")),
+		}
+
+		mockHTTPClient.EXPECT().Do(gomock.Any()).Return(httpResp, nil)
+
+		service, err := NewSCIMService(mockHTTPClient, endpoint, "MyToken")
+		assert.NoError(t, err)
+		assert.NotNil(t, service)
+
+		pur := &PatchGroupRequest{
+			Group: Group{
+				ID: "9067729b3d-94f1e0b3-c394-48d5-8ab1-2c122a167074",
+			},
+			Patch: Patch{
+				Schemas: []string{"urn:ietf:params:scim:api:messages:2.0:PatchOp"},
+				Operations: []*Operation{
+					{
+						OP:    "replace",
+						Value: struct{ DisplayName string }{"Group Foo"},
+					},
+				},
+			},
+		}
+
+		err = service.PatchGroup(context.Background(), pur)
+		assert.NoError(t, err)
+	})
+
+	t.Run("should return an error when group.ID is empty", func(t *testing.T) {
+		mockHTTPClient := mocks.NewMockHTTPClient(mockCtrl)
+
+		service, err := NewSCIMService(mockHTTPClient, endpoint, "MyToken")
+		assert.NoError(t, err)
+		assert.NotNil(t, service)
+
+		pur := &PatchGroupRequest{
+			Group: Group{},
+			Patch: Patch{
+				Schemas: []string{"urn:ietf:params:scim:api:messages:2.0:PatchOp"},
+				Operations: []*Operation{
+					{
+						OP:    "replace",
+						Value: struct{ DisplayName string }{""},
+					},
+				},
+			},
+		}
+
+		err = service.PatchGroup(context.Background(), pur)
+		assert.Error(t, err)
+	})
+}
+
+func TestListGroups(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	endpoint := "https://testing.com"
+	reqURL, err := url.Parse(endpoint)
+	assert.NoError(t, err)
+
+	ListUserResponseFile := "testdata/ListGroupsResponse.json"
+
+	t.Run("should return a valid response with a valid request", func(t *testing.T) {
+		mockHTTPClient := mocks.NewMockHTTPClient(mockCtrl)
+		jsonResp := ReadJSONFileAsString(t, ListUserResponseFile)
+
+		groupID := "90677c608a-ef9cb2da-d480-422b-9901-451b1bf9e607"
+		filter := "displayName eq \"Group Foo\""
+
+		reqURL.Path = path.Join(reqURL.Path, "/Groups")
+
+		q := reqURL.Query()
+		q.Add("filter", filter)
+		reqURL.RawQuery = q.Encode()
+
+		httpReq, err := http.NewRequestWithContext(context.Background(), "GET", reqURL.String(), nil)
+		assert.NoError(t, err)
+
+		httpReq.Header.Set("Accept", "application/json")
+		httpReq.Header.Set("Authorization", "Bearer MyToken")
+
+		httpResp := &http.Response{
+			Status:     "200 OK",
+			StatusCode: http.StatusNoContent,
+			Header: http.Header{
+				"Date":             []string{"Wed, 22 Jul 2020 23:06:38 GMT"},
+				"Content-Type":     []string{"application/json"},
+				"x-amzn-RequestId": []string{"45995b44-02cd-419f-87f4-ff8fa323448d"},
+			},
+			Proto:         "HTTP/1.1",
+			Body:          io.NopCloser(strings.NewReader(jsonResp)),
+			ContentLength: int64(len(jsonResp)),
+		}
+
+		mockHTTPClient.EXPECT().Do(httpReq).Return(httpResp, nil)
+
+		service, err := NewSCIMService(mockHTTPClient, endpoint, "MyToken")
+		assert.NoError(t, err)
+		assert.NotNil(t, service)
+
+		got, err := service.ListGroups(context.Background(), filter)
+		assert.NoError(t, err)
+		assert.NotNil(t, got)
+
+		assert.Equal(t, "urn:ietf:params:scim:api:messages:2.0:ListResponse", got.Schemas[0])
+		assert.Equal(t, groupID, got.Resources[0].ID)
+		assert.Equal(t, "Group Foo", got.Resources[0].DisplayName)
 	})
 }

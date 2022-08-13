@@ -44,23 +44,9 @@ func MembersOperations(idp, scim *GroupsMembersResult) (create, equal, remove *G
 
 	toCreate, toEqual, toRemove := membersDataSets(idp.Resources, scim.Resources)
 
-	create = &GroupsMembersResult{
-		Items:     len(toCreate),
-		Resources: toCreate,
-	}
-	create.SetHashCode()
-
-	equal = &GroupsMembersResult{
-		Items:     len(toEqual),
-		Resources: toEqual,
-	}
-	equal.SetHashCode()
-
-	remove = &GroupsMembersResult{
-		Items:     len(toRemove),
-		Resources: toRemove,
-	}
-	remove.SetHashCode()
+	create = GroupsMembersResultBuilder().WithResources(toCreate).Build()
+	equal = GroupsMembersResultBuilder().WithResources(toEqual).Build()
+	remove = GroupsMembersResultBuilder().WithResources(toRemove).Build()
 
 	return
 }
@@ -123,29 +109,10 @@ func GroupsOperations(idp, scim *GroupsResult) (create, update, equal, remove *G
 		}
 	}
 
-	create = &GroupsResult{
-		Items:     len(toCreate),
-		Resources: toCreate,
-	}
-	create.SetHashCode()
-
-	update = &GroupsResult{
-		Items:     len(toUpdate),
-		Resources: toUpdate,
-	}
-	update.SetHashCode()
-
-	equal = &GroupsResult{
-		Items:     len(toEqual),
-		Resources: toEqual,
-	}
-	equal.SetHashCode()
-
-	remove = &GroupsResult{
-		Items:     len(toRemove),
-		Resources: toRemove,
-	}
-	remove.SetHashCode()
+	create = GroupsResultBuilder().WithResources(toCreate).Build()
+	update = GroupsResultBuilder().WithResources(toUpdate).Build()
+	equal = GroupsResultBuilder().WithResources(toEqual).Build()
+	remove = GroupsResultBuilder().WithResources(toRemove).Build()
 
 	return
 }
@@ -189,11 +156,7 @@ func UsersOperations(idp, scim *UsersResult) (create, update, equal, remove *Use
 		} else {
 			usr.SCIMID = scimUsers[usr.Email].SCIMID
 
-			// TODO: replace this check with the check of the hash code
-			if usr.Name.FamilyName != scimUsers[usr.Email].Name.FamilyName ||
-				usr.Name.GivenName != scimUsers[usr.Email].Name.GivenName ||
-				usr.Active != scimUsers[usr.Email].Active || usr.IPID != scimUsers[usr.Email].IPID ||
-				usr.DisplayName != scimUsers[usr.Email].DisplayName {
+			if usr.HashCode != scimUsers[usr.Email].HashCode {
 				toUpdate = append(toUpdate, usr)
 			} else {
 				toEqual = append(toEqual, usr)
@@ -207,29 +170,10 @@ func UsersOperations(idp, scim *UsersResult) (create, update, equal, remove *Use
 		}
 	}
 
-	create = &UsersResult{
-		Items:     len(toCreate),
-		Resources: toCreate,
-	}
-	create.SetHashCode()
-
-	update = &UsersResult{
-		Items:     len(toUpdate),
-		Resources: toUpdate,
-	}
-	update.SetHashCode()
-
-	equal = &UsersResult{
-		Items:     len(toEqual),
-		Resources: toEqual,
-	}
-	equal.SetHashCode()
-
-	remove = &UsersResult{
-		Items:     len(toRemove),
-		Resources: toRemove,
-	}
-	remove.SetHashCode()
+	create = UsersResultBuilder().WithResources(toCreate).Build()
+	update = UsersResultBuilder().WithResources(toUpdate).Build()
+	equal = UsersResultBuilder().WithResources(toEqual).Build()
+	remove = UsersResultBuilder().WithResources(toRemove).Build()
 
 	return
 }
@@ -244,11 +188,7 @@ func MergeGroupsResult(grs ...*GroupsResult) (merged *GroupsResult) {
 		groups = append(groups, gr.Resources...)
 	}
 
-	merged = &GroupsResult{
-		Items:     len(groups),
-		Resources: groups,
-	}
-	merged.SetHashCode()
+	merged = GroupsResultBuilder().WithResources(groups).Build()
 
 	return
 }
@@ -263,11 +203,7 @@ func MergeUsersResult(urs ...*UsersResult) (merged *UsersResult) {
 		users = append(users, u.Resources...)
 	}
 
-	merged = &UsersResult{
-		Items:     len(users),
-		Resources: users,
-	}
-	merged.SetHashCode()
+	merged = UsersResultBuilder().WithResources(users).Build()
 
 	return
 }
@@ -282,11 +218,7 @@ func MergeGroupsMembersResult(gms ...*GroupsMembersResult) (merged *GroupsMember
 		groupsMembers = append(groupsMembers, gm.Resources...)
 	}
 
-	merged = &GroupsMembersResult{
-		Items:     len(groupsMembers),
-		Resources: groupsMembers,
-	}
-	merged.SetHashCode()
+	merged = GroupsMembersResultBuilder().WithResources(groupsMembers).Build()
 
 	return
 }
@@ -310,40 +242,33 @@ func UpdateGroupsMembersSCIMID(idp *GroupsMembersResult, scimGroups *GroupsResul
 	for _, groupMembers := range idp.Resources {
 		mbs := make([]*Member, 0)
 
-		g := Group{
-			IPID:   groupMembers.Group.IPID,
-			SCIMID: groups[groupMembers.Group.Name].SCIMID,
-			Name:   groupMembers.Group.Name,
-			Email:  groupMembers.Group.Email,
-		}
-		g.SetHashCode()
+		g := GroupBuilder().
+			WithIPID(groupMembers.Group.IPID).
+			WithSCIMID(groups[groupMembers.Group.Name].SCIMID).
+			WithName(groupMembers.Group.Name).
+			WithEmail(groupMembers.Group.Email).
+			Build()
 
 		for _, member := range groupMembers.Resources {
-			m := &Member{
-				IPID:   member.IPID,
-				SCIMID: users[member.Email].SCIMID,
-				Email:  member.Email,
-				Status: member.Status,
-			}
-			m.SetHashCode()
+			m := MemberBuilder().
+				WithIPID(member.IPID).
+				WithSCIMID(users[member.Email].SCIMID).
+				WithEmail(member.Email).
+				WithStatus(member.Status).
+				Build()
+
 			mbs = append(mbs, m)
 		}
 
-		gm := &GroupMembers{
-			Items:     len(mbs),
-			Group:     g,
-			Resources: mbs,
-		}
-		gm.SetHashCode()
+		gm := GroupMembersBuilder().
+			WithGroup(g).
+			WithResources(mbs).
+			Build()
 
 		gms = append(gms, gm)
 	}
 
-	gmr := &GroupsMembersResult{
-		Items:     idp.Items,
-		Resources: gms,
-	}
-	gmr.SetHashCode()
+	gmr := GroupsMembersResultBuilder().WithResources(gms).Build()
 
 	return gmr
 }
@@ -365,7 +290,7 @@ func membersDataSets(idp, scim []*GroupMembers) (create, equal, remove []*GroupM
 	}
 
 	for _, grpMembers := range scim {
-		scimGroupsSet[grpMembers.Group.Name] = grpMembers.Group
+		scimGroupsSet[grpMembers.Group.Name] = *grpMembers.Group
 		scimMemberSet[grpMembers.Group.Name] = make(map[string]Member)
 		for _, member := range grpMembers.Resources {
 			scimMemberSet[grpMembers.Group.Name][member.Email] = *member
@@ -418,23 +343,22 @@ func membersDataSets(idp, scim []*GroupMembers) (create, equal, remove []*GroupM
 		if len(toC[grpMembers.Group.Name]) > 0 {
 			grpMembers.Group.SetHashCode()
 
-			e := &GroupMembers{
-				Items:     len(toC[grpMembers.Group.Name]),
-				Group:     grpMembers.Group,
-				Resources: toC[grpMembers.Group.Name],
-			}
-			e.SetHashCode()
+			e := GroupMembersBuilder().
+				WithGroup(grpMembers.Group).
+				WithResources(toC[grpMembers.Group.Name]).
+				Build()
+
 			toCreate = append(toCreate, e)
 		}
 
 		if noMembers > 0 || len(toE[grpMembers.Group.Name]) > 0 {
 			grpMembers.Group.SetHashCode()
-			ee := &GroupMembers{
-				Items:     len(toE[grpMembers.Group.Name]),
-				Group:     grpMembers.Group,
-				Resources: toE[grpMembers.Group.Name],
-			}
-			ee.SetHashCode()
+
+			ee := GroupMembersBuilder().
+				WithGroup(grpMembers.Group).
+				WithResources(toE[grpMembers.Group.Name]).
+				Build()
+
 			toEqual = append(toEqual, ee)
 		}
 	}
@@ -452,12 +376,11 @@ func membersDataSets(idp, scim []*GroupMembers) (create, equal, remove []*GroupM
 		if len(toD[grpMembers.Group.Name]) > 0 {
 			grpMembers.Group.SetHashCode()
 
-			e := &GroupMembers{
-				Items:     len(toD[grpMembers.Group.Name]),
-				Group:     grpMembers.Group,
-				Resources: toD[grpMembers.Group.Name],
-			}
-			e.SetHashCode()
+			e := GroupMembersBuilder().
+				WithGroup(grpMembers.Group).
+				WithResources(toD[grpMembers.Group.Name]).
+				Build()
+
 			toRemove = append(toRemove, e)
 		}
 	}

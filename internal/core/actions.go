@@ -127,7 +127,7 @@ func stateSync(
 	if idpGroupsResult.HashCode == state.Resources.Groups.HashCode {
 		log.Info("provider groups and state groups are the same, nothing to do with groups")
 
-		totalGroupsResult = &state.Resources.Groups
+		totalGroupsResult = state.Resources.Groups
 	} else {
 		log.Info("provider groups and state groups are different")
 		// now here we have the google fresh data and the last sync data state
@@ -138,7 +138,7 @@ func stateSync(
 			"idp":   idpGroupsResult.Items,
 			"state": state.Resources.Groups.Items,
 		}).Info("reconciling groups")
-		groupsCreate, groupsUpdate, groupsEqual, groupsDelete, err := model.GroupsOperations(idpGroupsResult, &state.Resources.Groups)
+		groupsCreate, groupsUpdate, groupsEqual, groupsDelete, err := model.GroupsOperations(idpGroupsResult, state.Resources.Groups)
 		if err != nil {
 			return nil, nil, nil, fmt.Errorf("error reconciling groups: %w", err)
 		}
@@ -155,7 +155,7 @@ func stateSync(
 	if idpUsersResult.HashCode == state.Resources.Users.HashCode {
 		log.Info("provider users and state users are the same, nothing to do with users")
 
-		totalUsersResult = &state.Resources.Users
+		totalUsersResult = state.Resources.Users
 	} else {
 		log.Info("provider users and state users are different")
 
@@ -163,7 +163,7 @@ func stateSync(
 			"idp":   idpUsersResult.Items,
 			"state": state.Resources.Users.Items,
 		}).Info("reconciling users")
-		usersCreate, usersUpdate, usersEqual, usersDelete, err := model.UsersOperations(idpUsersResult, &state.Resources.Users)
+		usersCreate, usersUpdate, usersEqual, usersDelete, err := model.UsersOperations(idpUsersResult, state.Resources.Users)
 		if err != nil {
 			return nil, nil, nil, fmt.Errorf("error operating with users: %w", err)
 		}
@@ -180,7 +180,7 @@ func stateSync(
 	if idpGroupsMembersResult.HashCode == state.Resources.GroupsMembers.HashCode {
 		log.Info("provider groups-members and state groups-members are the same, nothing to do with groups-members")
 
-		totalGroupsMembersResult = &state.Resources.GroupsMembers
+		totalGroupsMembersResult = state.Resources.GroupsMembers
 	} else {
 		log.Info("provider groups-members and state groups-members are different")
 
@@ -194,7 +194,7 @@ func stateSync(
 			"state": state.Resources.GroupsMembers.Items,
 		}).Info("reconciling groups members")
 
-		membersCreate, _, membersDelete, err := model.MembersOperations(groupsMembers, &state.Resources.GroupsMembers)
+		membersCreate, _, membersDelete, err := model.MembersOperations(groupsMembers, state.Resources.GroupsMembers)
 		if err != nil {
 			return nil, nil, nil, fmt.Errorf("error reconciling groups members: %w", err)
 		}

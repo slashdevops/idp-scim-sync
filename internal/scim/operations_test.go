@@ -45,7 +45,7 @@ func Test_patchGroupOperations(t *testing.T) {
 					},
 				},
 				gms: &model.GroupMembers{
-					Group: model.Group{
+					Group: &model.Group{
 						SCIMID: "016722b2be-ee23ed58-6e4e-4b2f-a94a-3ace8456a36d",
 						Name:   "group 1",
 					},
@@ -81,7 +81,7 @@ func Test_patchGroupOperations(t *testing.T) {
 				path: "members",
 				pvs:  patchValueGenerator(1, 120),
 				gms: &model.GroupMembers{
-					Group: model.Group{
+					Group: &model.Group{
 						SCIMID: "016722b2be-ee23ed58-6e4e-4b2f-a94a-3ace8456a36e",
 						Name:   "group 1",
 					},

@@ -1,0 +1,40 @@
+{
+    "totalResults": 1,
+    "itemsPerPage": 1,
+    "startIndex": 1,
+    "schemas": [
+        "urn:ietf:params:scim:api:messages:2.0:ListResponse"
+    ],
+    "Resources": [
+        {
+            "id": "90677c608a-7afcdc23-0bd4-4fb7-b2ff-10ccffdff447",
+            "externalId": "702135",
+            "meta": {
+                "resourceType": "User",
+                "created": "2020-07-22T22:32:58Z",
+                "lastModified": "2020-07-22T22:32:58Z"
+            },
+            "schemas": [
+                "urn:ietf:params:scim:schemas:core:2.0:User",
+                "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User"
+            ],
+            "userName": "mjack",
+            "name": {
+                "familyName": "Sanders",
+                "givenName": "Jack",
+                "honorificPrefix": "Mr.",
+                "honorificSuffix": "I"
+            },
+            "displayName": "mjack",
+            "nickName": "Sanders",
+            "active": false,
+            "emails": [
+                {
+                    "value": "mjack@example.com",
+                    "type": "work",
+                    "primary": true
+                }
+            ]
+        }
+    ]
+}

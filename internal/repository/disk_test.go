@@ -35,22 +35,12 @@ func TestStateRepository_GetState(t *testing.T) {
 		assert.NotNil(t, repo)
 
 		state, err := repo.GetState(context.TODO())
-		assert.NoError(t, err)
-		assert.NotNil(t, state)
-		assert.Equal(t, "", state.LastSync)
-		assert.Equal(t, "", state.HashCode)
-
-		assert.Equal(t, 0, state.Resources.Groups.Items)
-		assert.Equal(t, "", state.Resources.Groups.HashCode)
-		assert.Equal(t, 0, len(state.Resources.Groups.Resources))
-
-		assert.Equal(t, 0, state.Resources.Users.Items)
-		assert.Equal(t, "", state.Resources.Users.HashCode)
-		assert.Equal(t, 0, len(state.Resources.Users.Resources))
+		assert.Error(t, err)
+		assert.Nil(t, state)
 	})
 
 	t.Run("Golden files", func(t *testing.T) {
-		stateFile, err := os.OpenFile("testdata/"+stateFileName, os.O_RDWR, 0644)
+		stateFile, err := os.OpenFile("testdata/"+stateFileName, os.O_RDWR, 0o644)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -94,8 +84,8 @@ func TestStateRepository_SetState(t *testing.T) {
 		stateDef := &model.State{
 			LastSync: "2021-09-25T20:49:46+02:00",
 			HashCode: "hashCode",
-			Resources: model.StateResources{
-				Groups: model.GroupsResult{
+			Resources: &model.StateResources{
+				Groups: &model.GroupsResult{
 					Items:    1,
 					HashCode: "1234567890",
 					Resources: []*model.Group{
@@ -107,7 +97,7 @@ func TestStateRepository_SetState(t *testing.T) {
 						},
 					},
 				},
-				Users: model.UsersResult{
+				Users: &model.UsersResult{
 					Items:    1,
 					HashCode: "hashCode",
 					Resources: []*model.User{
@@ -126,7 +116,7 @@ func TestStateRepository_SetState(t *testing.T) {
 		err = repo.SetState(context.TODO(), stateDef)
 		assert.NoError(t, err)
 
-		stateFileRO, err := os.OpenFile(stateFile.Name(), os.O_RDONLY, 0644)
+		stateFileRO, err := os.OpenFile(stateFile.Name(), os.O_RDONLY, 0o644)
 		if err != nil {
 			t.Fatal(err)
 		}
