@@ -1097,6 +1097,49 @@ func TestCreateGroup(t *testing.T) {
 	})
 }
 
+func TestDeleteGroup(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	endpoint := "https://testing.com"
+	reqURL, err := url.Parse(endpoint)
+	assert.NoError(t, err)
+
+	t.Run("should return a valid response with a valid request", func(t *testing.T) {
+		mockHTTPClient := mocks.NewMockHTTPClient(mockCtrl)
+
+		groupID := "1"
+		reqURL.Path = path.Join(reqURL.Path, fmt.Sprintf("/Groups/%s", groupID))
+
+		httpReq, err := http.NewRequestWithContext(context.Background(), "DELETE", reqURL.String(), nil)
+		assert.NoError(t, err)
+
+		httpReq.Header.Set("Accept", "application/json")
+		httpReq.Header.Set("Authorization", "Bearer MyToken")
+
+		httpResp := &http.Response{
+			Status:     "204 OK",
+			StatusCode: http.StatusNoContent,
+			Header: http.Header{
+				"Date":             []string{"Mon, 06 Apr 2020 22:21:24 GMT"},
+				"Content-Type":     []string{"application/json"},
+				"x-amzn-RequestId": []string{"abbf9e53-9ecc-46d2-8efe-104a66ff128"},
+			},
+			Proto:         "HTTP/1.1",
+			Body:          io.NopCloser(strings.NewReader("")),
+			ContentLength: int64(len("")),
+		}
+
+		mockHTTPClient.EXPECT().Do(httpReq).Return(httpResp, nil)
+
+		service, err := NewSCIMService(mockHTTPClient, endpoint, "MyToken")
+		assert.NoError(t, err)
+		assert.NotNil(t, service)
+
+		err = service.DeleteGroup(context.Background(), groupID)
+		assert.NoError(t, err)
+	})
+}
+
 func TestGetGroupByDisplayName(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
