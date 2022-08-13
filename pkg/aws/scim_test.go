@@ -639,10 +639,10 @@ func TestCreateOrGetUser(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 	endpoint := "https://testing.com"
-	CreateUserResponseFile := "testdata/CreateUserResponse_Active.json"
 
 	t.Run("should return a valid response with a valid request", func(t *testing.T) {
 		mockHTTPClient := mocks.NewMockHTTPClient(mockCtrl)
+		CreateUserResponseFile := "testdata/CreateUserResponse_Active.json"
 		jsonResp := ReadJSONFileAsString(t, CreateUserResponseFile)
 
 		httpResp := &http.Response{
@@ -699,7 +699,7 @@ func TestCreateOrGetUser(t *testing.T) {
 		assert.Equal(t, true, got.Active)
 	})
 
-	t.Run("should return a 409 response and execute the get user", func(t *testing.T) {
+	t.Run("should return a 409 response and execute the get user when not field changed", func(t *testing.T) {
 		CreateUserResponseConflictFile := "testdata/CreateUserResponse_Conflict.json"
 		ListUserResponseFile := "testdata/ListUserResponse.json"
 		PutUserResponseFile := "testdata/PutUserResponse.json"
@@ -757,17 +757,17 @@ func TestCreateOrGetUser(t *testing.T) {
 		assert.NotNil(t, service)
 
 		usrr := &CreateUserRequest{
-			ID:         "9067729b3d-94f1e0b3-c394-48d5-8ab1-2c122a167074",
-			ExternalID: "701984",
-			UserName:   "bjensen",
+			ID:         "90677c608a-7afcdc23-0bd4-4fb7-b2ff-10ccffdff447",
+			ExternalID: "702135",
+			UserName:   "mjack",
 			Name: Name{
-				FamilyName: "Jensen",
-				GivenName:  "Barbara",
+				FamilyName: "Jackson",
+				GivenName:  "Mark",
 			},
-			DisplayName: "Barbara Jensen",
+			DisplayName: "Mark Jackson",
 			Emails: []*Email{
 				{
-					Value:   "bjensen@example.com",
+					Value:   "mjack@example.com",
 					Type:    "work",
 					Primary: true,
 				},
@@ -779,13 +779,105 @@ func TestCreateOrGetUser(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, got)
 
-		assert.Equal(t, "9067729b3d-94f1e0b3-c394-48d5-8ab1-2c122a167074", got.ID)
-		assert.Equal(t, "701984", got.ExternalID)
-		assert.Equal(t, "bjensen", got.UserName)
-		assert.Equal(t, "Barbara", got.Name.GivenName)
-		assert.Equal(t, "Jensen", got.Name.FamilyName)
-		assert.Equal(t, "Barbara Jensen", got.DisplayName)
-		assert.Equal(t, "bjensen@example.com", got.Emails[0].Value)
+		assert.Equal(t, "90677c608a-7afcdc23-0bd4-4fb7-b2ff-10ccffdff447", got.ID)
+		assert.Equal(t, "702135", got.ExternalID)
+		assert.Equal(t, "mjack", got.UserName)
+		assert.Equal(t, "Mark", got.Name.GivenName)
+		assert.Equal(t, "Jackson", got.Name.FamilyName)
+		assert.Equal(t, "Mark Jackson", got.DisplayName)
+		assert.Equal(t, "mjack@example.com", got.Emails[0].Value)
+		assert.Equal(t, "work", got.Emails[0].Type)
+		assert.Equal(t, true, got.Emails[0].Primary)
+		assert.Equal(t, true, got.Active)
+	})
+
+	t.Run("should return a 409 response and execute the get user when fields changed", func(t *testing.T) {
+		CreateUserResponseConflictFile := "testdata/CreateUserResponse_Conflict.json"
+		ListUserResponseFile := "testdata/ListUserResponse_fields_changes.json"
+		PutUserResponseFile := "testdata/PutUserResponse.json"
+
+		mockHTTPClient := mocks.NewMockHTTPClient(mockCtrl)
+		jsonRespConflict := ReadJSONFileAsString(t, CreateUserResponseConflictFile)
+		jsonListRespOK := ReadJSONFileAsString(t, ListUserResponseFile)
+		jsonPutUserRespOK := ReadJSONFileAsString(t, PutUserResponseFile)
+
+		httpRespConflict := &http.Response{
+			Status:     "409 Conflict",
+			StatusCode: http.StatusConflict,
+			Header: http.Header{
+				"Date":             []string{"Fri, 18 Mar 2022 10:57:08 GMT"},
+				"Content-Type":     []string{"application/json"},
+				"x-amzn-RequestId": []string{"81abca44-4ee3-47fa-b4d9-729908ef1dd9"},
+			},
+			Proto:         "HTTP/1.1",
+			Body:          io.NopCloser(strings.NewReader(jsonRespConflict)),
+			ContentLength: int64(len(jsonRespConflict)),
+		}
+
+		ListRespOK := &http.Response{
+			Status:     "201 OK",
+			StatusCode: http.StatusCreated,
+			Header: http.Header{
+				"Date":             []string{"Tue, 31 Mar 2020 02:36:15 GMT"},
+				"Content-Type":     []string{"application/json"},
+				"x-amzn-RequestId": []string{"abbf9e53-9ecc-46d2-8efe-104a66ff128f"},
+			},
+			Proto:         "HTTP/1.1",
+			Body:          io.NopCloser(strings.NewReader(jsonListRespOK)),
+			ContentLength: int64(len(jsonListRespOK)),
+		}
+
+		PutUserRespOK := &http.Response{
+			Status:     "201 OK",
+			StatusCode: http.StatusCreated,
+			Header: http.Header{
+				"Date":             []string{"Tue, 31 Mar 2020 02:36:15 GMT"},
+				"Content-Type":     []string{"application/json"},
+				"x-amzn-RequestId": []string{"abbf9e53-9ecc-46d2-8efe-104a66ff128f"},
+			},
+			Proto:         "HTTP/1.1",
+			Body:          io.NopCloser(strings.NewReader(jsonPutUserRespOK)),
+			ContentLength: int64(len(jsonPutUserRespOK)),
+		}
+
+		mockHTTPClient.EXPECT().Do(gomock.Any()).Return(httpRespConflict, nil).Times(1)
+		mockHTTPClient.EXPECT().Do(gomock.Any()).Return(ListRespOK, nil).Times(1)
+		mockHTTPClient.EXPECT().Do(gomock.Any()).Return(PutUserRespOK, nil).Times(1)
+
+		service, err := NewSCIMService(mockHTTPClient, endpoint, "MyToken")
+		assert.NoError(t, err)
+		assert.NotNil(t, service)
+
+		usrr := &CreateUserRequest{
+			ID:         "90677c608a-7afcdc23-0bd4-4fb7-b2ff-10ccffdff447",
+			ExternalID: "702135",
+			UserName:   "mjack",
+			Name: Name{
+				FamilyName: "Jackson",
+				GivenName:  "Mark",
+			},
+			DisplayName: "Mark Jackson",
+			Emails: []*Email{
+				{
+					Value:   "mjack@example.com",
+					Type:    "work",
+					Primary: true,
+				},
+			},
+			Active: true,
+		}
+
+		got, err := service.CreateOrGetUser(context.Background(), usrr)
+		assert.NoError(t, err)
+		assert.NotNil(t, got)
+
+		assert.Equal(t, "90677c608a-7afcdc23-0bd4-4fb7-b2ff-10ccffdff447", got.ID)
+		assert.Equal(t, "702135", got.ExternalID)
+		assert.Equal(t, "mjack", got.UserName)
+		assert.Equal(t, "Mark", got.Name.GivenName)
+		assert.Equal(t, "Jackson", got.Name.FamilyName)
+		assert.Equal(t, "Mark Jackson", got.DisplayName)
+		assert.Equal(t, "mjack@example.com", got.Emails[0].Value)
 		assert.Equal(t, "work", got.Emails[0].Type)
 		assert.Equal(t, true, got.Emails[0].Primary)
 		assert.Equal(t, true, got.Active)
@@ -1053,17 +1145,17 @@ func TestPutUser(t *testing.T) {
 		assert.NotNil(t, service)
 
 		pusrr := &PutUserRequest{
-			ID:         "9067729b3d-94f1e0b3-c394-48d5-8ab1-2c122a167074",
-			ExternalID: "701984",
-			UserName:   "bjensen",
+			ID:         "90677c608a-7afcdc23-0bd4-4fb7-b2ff-10ccffdff447",
+			ExternalID: "702135",
+			UserName:   "mjack",
 			Name: Name{
-				FamilyName: "Jensen",
-				GivenName:  "Barbara",
+				FamilyName: "Jackson",
+				GivenName:  "Mark",
 			},
-			DisplayName: "Barbara Jensen",
+			DisplayName: "Mark Jackson",
 			Emails: []*Email{
 				{
-					Value:   "bjensen@example.com",
+					Value:   "mjack@example.com",
 					Type:    "work",
 					Primary: true,
 				},
@@ -1075,10 +1167,10 @@ func TestPutUser(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, got)
 
-		assert.Equal(t, "9067729b3d-94f1e0b3-c394-48d5-8ab1-2c122a167074", got.ID)
-		assert.Equal(t, "701984", got.ExternalID)
-		assert.Equal(t, "bjensen", got.UserName)
-		assert.Equal(t, "Barbara Jensen", got.DisplayName)
+		assert.Equal(t, "90677c608a-7afcdc23-0bd4-4fb7-b2ff-10ccffdff447", got.ID)
+		assert.Equal(t, "702135", got.ExternalID)
+		assert.Equal(t, "mjack", got.UserName)
+		assert.Equal(t, "Mark Jackson", got.DisplayName)
 		assert.Equal(t, true, got.Active)
 	})
 
