@@ -13,7 +13,6 @@ import (
 
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
-	"github.com/slashdevops/idp-scim-sync/internal/utils"
 )
 
 // Consume http methods
@@ -305,8 +304,6 @@ func (s *SCIMService) CreateOrGetUser(ctx context.Context, usr *CreateUserReques
 			if err != nil {
 				return nil, fmt.Errorf("aws CreateOrGetUser: error getting user information: %w", err)
 			}
-			log.Infof("aws CreateOrGetUser: user: %s", utils.ToJSON(usr))
-			log.Infof("aws CreateOrGetUser: response: %s", utils.ToJSON(response))
 
 			log.WithFields(log.Fields{
 				"user":        usr.UserName,
@@ -329,10 +326,12 @@ func (s *SCIMService) CreateOrGetUser(ctx context.Context, usr *CreateUserReques
 			}
 
 			// check if the user attributes are the same
-			// maybe the user in the SCIM Side was changed, so we need to update the user in the SCIM Side
+			// maybe the user in the SCIM side was changed, so we need to update the user in the SCIM Side
+			// according to the create user request
 			if usr.Name.FamilyName != response.Name.FamilyName || usr.Name.GivenName != response.Name.GivenName ||
-				usr.Active != response.Active || usr.ExternalID != response.ExternalID || usr.DisplayName != response.DisplayName {
-				log.Warn("aws CreateOrGetUser: user already exists, but the user attributes are different, updating the user")
+				usr.Active != response.Active || usr.ExternalID != response.ExternalID || usr.DisplayName != response.DisplayName ||
+				usr.Emails[0].Value != response.Emails[0].Value {
+				log.Warn("aws CreateOrGetUser: user already exists, but attributes are different, updating the user")
 
 				log.WithFields(log.Fields{
 					"user":        response.UserName,
@@ -340,6 +339,7 @@ func (s *SCIMService) CreateOrGetUser(ctx context.Context, usr *CreateUserReques
 					"externalId":  response.ExternalID,
 					"active":      response.Active,
 					"displayName": response.DisplayName,
+					"email":       response.Emails[0].Value,
 				}).Warn("aws CreateOrGetUser: attributes before update")
 
 				log.WithFields(log.Fields{
@@ -348,6 +348,7 @@ func (s *SCIMService) CreateOrGetUser(ctx context.Context, usr *CreateUserReques
 					"externalId":  usr.ExternalID,
 					"active":      usr.Active,
 					"displayName": usr.DisplayName,
+					"email":       usr.Emails[0].Value,
 				}).Warn("aws CreateOrGetUser: attributes after update")
 
 				pur := &PutUserRequest{
@@ -367,6 +368,8 @@ func (s *SCIMService) CreateOrGetUser(ctx context.Context, usr *CreateUserReques
 				if err != nil {
 					return nil, fmt.Errorf("aws CreateOrGetUser: error updating user: %w", err)
 				}
+
+				// update the user information
 				cur.ID = resp.ID
 				cur.ExternalID = resp.ExternalID
 				cur.Meta = resp.Meta
@@ -749,11 +752,11 @@ func (s *SCIMService) ListGroups(ctx context.Context, filter string) (*ListGroup
 // CreateGroup creates a new group in the AWS SSO Using the API
 // reference:
 // + https://docs.aws.amazon.com/singlesignon/latest/developerguide/creategroup.html
-func (s *SCIMService) CreateGroup(ctx context.Context, g *CreateGroupRequest) (*CreateGroupResponse, error) {
-	if g == nil {
+func (s *SCIMService) CreateGroup(ctx context.Context, group *CreateGroupRequest) (*CreateGroupResponse, error) {
+	if group == nil {
 		return nil, ErrCreateGroupRequestEmpty
 	}
-	if g.DisplayName == "" {
+	if group.DisplayName == "" {
 		return nil, ErrDisplayNameEmpty
 	}
 
@@ -764,7 +767,7 @@ func (s *SCIMService) CreateGroup(ctx context.Context, g *CreateGroupRequest) (*
 
 	reqURL.Path = path.Join(reqURL.Path, "/Groups")
 
-	req, err := s.newRequest(ctx, http.MethodPost, reqURL, *g)
+	req, err := s.newRequest(ctx, http.MethodPost, reqURL, *group)
 	if err != nil {
 		return nil, fmt.Errorf("aws CreateGroup: error creating request, http method: %s, url: %v, error: %w", http.MethodPost, reqURL.String(), err)
 	}
