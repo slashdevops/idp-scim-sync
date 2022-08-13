@@ -1023,6 +1023,80 @@ func TestListUsers(t *testing.T) {
 	})
 }
 
+func TestCreateGroup(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	endpoint := "https://testing.com"
+	CreateGroupResponseFile := "testdata/CreateGroupResponse.json"
+
+	t.Run("should return a valid response with a valid request", func(t *testing.T) {
+		mockHTTPClient := mocks.NewMockHTTPClient(mockCtrl)
+		jsonResp := ReadJSONFileAsString(t, CreateGroupResponseFile)
+
+		httpResp := &http.Response{
+			Status:     "201 OK",
+			StatusCode: http.StatusCreated,
+			Header: http.Header{
+				"Date":             []string{"Mon, 06 Apr 2020 16:48:19 GMT"},
+				"Content-Type":     []string{"application/json"},
+				"x-amzn-RequestId": []string{"abbf9e53-9ecc-46d2-8efe-104a66ff128f"},
+			},
+			Proto:         "HTTP/1.1",
+			Body:          io.NopCloser(strings.NewReader(jsonResp)),
+			ContentLength: int64(len(jsonResp)),
+		}
+
+		mockHTTPClient.EXPECT().Do(gomock.Any()).Return(httpResp, nil)
+
+		service, err := NewSCIMService(mockHTTPClient, endpoint, "MyToken")
+		assert.NoError(t, err)
+		assert.NotNil(t, service)
+
+		usrr := &CreateGroupRequest{
+			ID:          "9067729b3d-a2cfc8a5-f4ab-4443-9d7d-b32a9013c554",
+			DisplayName: "Group Bar",
+		}
+
+		got, err := service.CreateGroup(context.Background(), usrr)
+		assert.NoError(t, err)
+		assert.NotNil(t, got)
+
+		assert.Equal(t, "9067729b3d-a2cfc8a5-f4ab-4443-9d7d-b32a9013c554", got.ID)
+		assert.Equal(t, "Group Bar", got.DisplayName)
+	})
+
+	t.Run("should return an error when usr is nil", func(t *testing.T) {
+		mockHTTPClient := mocks.NewMockHTTPClient(mockCtrl)
+
+		service, err := NewSCIMService(mockHTTPClient, endpoint, "MyToken")
+		assert.NoError(t, err)
+		assert.NotNil(t, service)
+
+		got, err := service.CreateGroup(context.Background(), nil)
+		assert.Error(t, err)
+		assert.Nil(t, got)
+		assert.ErrorIs(t, err, ErrCreateGroupRequestEmpty)
+	})
+
+	t.Run("should return an error when group.DisplayName is empty", func(t *testing.T) {
+		mockHTTPClient := mocks.NewMockHTTPClient(mockCtrl)
+
+		service, err := NewSCIMService(mockHTTPClient, endpoint, "MyToken")
+		assert.NoError(t, err)
+		assert.NotNil(t, service)
+
+		usrr := &CreateGroupRequest{
+			ID:          "9067729b3d-a2cfc8a5-f4ab-4443-9d7d-b32a9013c554",
+			DisplayName: "",
+		}
+
+		got, err := service.CreateGroup(context.Background(), usrr)
+		assert.Error(t, err)
+		assert.Nil(t, got)
+		assert.ErrorIs(t, err, ErrDisplayNameEmpty)
+	})
+}
+
 func TestGetGroupByDisplayName(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
