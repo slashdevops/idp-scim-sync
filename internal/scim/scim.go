@@ -578,16 +578,18 @@ func (s *Provider) GetGroupsMembersBruteForce(ctx context.Context, gr *model.Gro
 					WithEmail(user.Email).
 					Build()
 
+				if user.Active {
+					m.Status = "ACTIVE"
+				}
 				members = append(members, m)
 			}
-
-			e := model.GroupMembersBuilder().
-				WithGroup(group).
-				WithResources(members).
-				Build()
-
-			groupMembers = append(groupMembers, e)
 		}
+		e := model.GroupMembersBuilder().
+			WithGroup(group).
+			WithResources(members).
+			Build()
+
+		groupMembers = append(groupMembers, e)
 	}
 
 	groupsMembersResult := model.GroupsMembersResultBuilder().WithResources(groupMembers).Build()

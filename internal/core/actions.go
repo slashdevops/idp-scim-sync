@@ -21,8 +21,6 @@ func scimSync(
 	var totalGroupsResult *model.GroupsResult
 	var totalUsersResult *model.UsersResult
 	var totalGroupsMembersResult *model.GroupsMembersResult
-
-	log.Warn("syncing from scim service, first time syncing")
 	log.Warn("reconciling the SCIM data with the Identity Provider data")
 
 	log.Info("getting SCIM Groups")
@@ -113,6 +111,7 @@ func stateSync(
 	var totalGroupsResult *model.GroupsResult
 	var totalUsersResult *model.UsersResult
 	var totalGroupsMembersResult *model.GroupsMembersResult
+	log.Warn("reconciling the state data with the Identity Provider data")
 
 	lastSyncTime, err := time.Parse(time.RFC3339, state.LastSync)
 	if err != nil {

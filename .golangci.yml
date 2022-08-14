@@ -1,12 +1,12 @@
 linters-settings:
   nestif:
-    min-complexity: 10
+    min-complexity: 20
 
   dupl:
     threshold: 300
 
   funlen:
-    lines: 150
+    lines: 180
     statements: 80
 
   gci:
@@ -112,7 +112,7 @@ linters:
     - noctx
     - nolintlint
     - staticcheck
-    - structcheck
+    #- structcheck # https://github.com/golangci/golangci-lint/issues/2649
     - stylecheck
     - typecheck
     - unconvert
