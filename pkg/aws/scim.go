@@ -69,6 +69,9 @@ var (
 
 	// ErrGroupDisplayNameEmpty is returned when the userName is empty.
 	ErrGroupDisplayNameEmpty = errors.Errorf("aws: displayName may not be empty")
+
+	// ErrGroupExternalIDEmpty is returned when the userName is empty.
+	ErrGroupExternalIDEmpty = errors.Errorf("aws: externalId may not be empty")
 )
 
 //go:generate go run github.com/golang/mock/mockgen@v1.6.0 -package=mocks -destination=../../mocks/aws/scim_mocks.go -source=scim.go HTTPClient
@@ -805,11 +808,11 @@ func (s *SCIMService) CreateGroup(ctx context.Context, group *CreateGroupRequest
 // references:
 // + https://docs.aws.amazon.com/singlesignon/latest/developerguide/creategroup.html
 // + https://docs.aws.amazon.com/singlesignon/latest/developerguide/getgroup.html
-func (s *SCIMService) CreateOrGetGroup(ctx context.Context, g *CreateGroupRequest) (*CreateGroupResponse, error) {
-	if g == nil {
+func (s *SCIMService) CreateOrGetGroup(ctx context.Context, gr *CreateGroupRequest) (*CreateGroupResponse, error) {
+	if gr == nil {
 		return nil, ErrCreateGroupRequestEmpty
 	}
-	if g.DisplayName == "" {
+	if gr.DisplayName == "" {
 		return nil, ErrDisplayNameEmpty
 	}
 
@@ -820,14 +823,14 @@ func (s *SCIMService) CreateOrGetGroup(ctx context.Context, g *CreateGroupReques
 
 	reqURL.Path = path.Join(reqURL.Path, "/Groups")
 
-	req, err := s.newRequest(ctx, http.MethodPost, reqURL, *g)
+	req, err := s.newRequest(ctx, http.MethodPost, reqURL, *gr)
 	if err != nil {
-		return nil, fmt.Errorf("aws CreateOrGetGroup: error creating request, group: %s, http method: %s, url: %v, error: %w", g.DisplayName, http.MethodPost, reqURL.String(), err)
+		return nil, fmt.Errorf("aws CreateOrGetGroup: error creating request, group: %s, http method: %s, url: %v, error: %w", gr.DisplayName, http.MethodPost, reqURL.String(), err)
 	}
 
 	resp, err := s.do(ctx, req)
 	if err != nil {
-		return nil, fmt.Errorf("aws CreateOrGetGroup: error sending request, group: %s, http method: %s, url: %v, error: %w", g.DisplayName, http.MethodPost, reqURL.String(), err)
+		return nil, fmt.Errorf("aws CreateOrGetGroup: error sending request, group: %s, http method: %s, url: %v, error: %w", gr.DisplayName, http.MethodPost, reqURL.String(), err)
 	}
 	defer resp.Body.Close()
 
@@ -837,16 +840,33 @@ func (s *SCIMService) CreateOrGetGroup(ctx context.Context, g *CreateGroupReques
 		// http.StatusConflict is 409
 		if errors.As(e, &httpErr) && httpErr.StatusCode == http.StatusConflict {
 			log.WithFields(log.Fields{
-				"name": g.DisplayName,
-			}).Warn("aws CreateOrGetGroup: groups already exists, trying to get the group information")
+				"name": gr.DisplayName,
+			}).Warn("aws CreateOrGetGroup: groups already exists with same name or externalId, trying to get the group information")
 
-			response, err := s.GetGroupByDisplayName(ctx, g.DisplayName)
+			// This is because the group already exists, but exists with the same name
+			response, err := s.GetGroupByDisplayName(ctx, gr.DisplayName)
 			if err != nil {
 				return nil, fmt.Errorf("aws CreateOrGetGroup: error getting group information: %w", err)
 			}
 
+			// Check if the group already exists, same external id but different name, name change in the identity provider
+			// when response.ID is empty, the group does not exists, so this is the case when the new group is a existing group
+			// with a different name same external id.
+			if response.ID == "" {
+				log.WithFields(log.Fields{
+					"group": gr.DisplayName,
+				}).Warn("aws CreateOrGetGroup: group already exists, but with a different name, same id")
+
+				// remove the ExternalID from the group request, and call itself again to create the new group name
+				log.WithFields(log.Fields{
+					"group": gr.DisplayName,
+				}).Warn("aws CreateOrGetGroup: removing ExternalID from the group request, calling itself again to create the new group name")
+				gr.ExternalID = ""
+				return s.CreateOrGetGroup(ctx, gr)
+			}
+
 			log.WithFields(log.Fields{
-				"group": g.DisplayName,
+				"group": gr.DisplayName,
 				"id":    response.ID,
 			}).Warn("aws CreateOrGetGroup: obtained group information")
 
@@ -864,10 +884,10 @@ func (s *SCIMService) CreateOrGetGroup(ctx context.Context, g *CreateGroupReques
 	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
 		b, err := io.ReadAll(resp.Body)
 		if err != nil {
-			return nil, fmt.Errorf("aws CreateOrGetGroup: group: %s, error reading response body: %w", g.DisplayName, err)
+			return nil, fmt.Errorf("aws CreateOrGetGroup: group: %s, error reading response body: %w", gr.DisplayName, err)
 		}
 
-		return nil, fmt.Errorf("aws CreateOrGetGroup: group: %s, error decoding response body: %w, body: %s", g.DisplayName, err, string(b))
+		return nil, fmt.Errorf("aws CreateOrGetGroup: group: %s, error decoding response body: %w, body: %s", gr.DisplayName, err, string(b))
 	}
 
 	return &response, nil
