@@ -16,7 +16,7 @@ const (
 	// https://cloud.google.com/storage/docs/json_api
 	groupsRequiredFields    googleapi.Field = "groups(id,name,email,etag)"
 	membersRequiredFields   googleapi.Field = "members(id,email,status,type,etag)"
-	listUsersRequiredFields googleapi.Field = "users(id,name,primaryEmail,suspended,etag)"
+	listUsersRequiredFields googleapi.Field = "users(id,name,primaryEmail,suspended,etag,emails)"
 	getUsersRequiredFields  googleapi.Field = "id,name,primaryEmail,suspended,etag"
 )
 
