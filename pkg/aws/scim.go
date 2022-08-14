@@ -301,7 +301,7 @@ func (s *SCIMService) CreateOrGetUser(ctx context.Context, usr *CreateUserReques
 				"user": usr.UserName,
 				"name": usr.DisplayName,
 				"id":   usr.ID,
-			}).Warn("aws CreateOrGetUser: user already exists, trying to get the user information")
+			}).Warn("aws CreateOrGetUser: user already exists with same name or externalId, trying to get the user information")
 
 			response, err := s.GetUserByUserName(ctx, usr.UserName)
 			if err != nil {
@@ -315,6 +315,24 @@ func (s *SCIMService) CreateOrGetUser(ctx context.Context, usr *CreateUserReques
 				"active":      response.Active,
 				"displayName": response.DisplayName,
 			}).Trace("aws CreateOrGetUser: obtained user information")
+
+			// Check if the user already exists, same externalId but different email, email change in the identity provider
+			// when response.ID is empty, the user does not exists, so this is the case when the new user is a existing user
+			// with a different email same externalId.
+			if response.ID == "" {
+				log.WithFields(log.Fields{
+					"userName": usr.UserName,
+					"name":     usr.DisplayName,
+				}).Warn("aws CreateOrGetUser: group already exists, but with a different name, same id")
+
+				// remove the ExternalID from the user request, and call itself again to create the new user
+				log.WithFields(log.Fields{
+					"userName": usr.UserName,
+					"name":     usr.DisplayName,
+				}).Warn("aws CreateOrGetUser: removing ExternalID from the group request, calling itself again to create the new group name")
+				usr.ExternalID = ""
+				return s.CreateOrGetUser(ctx, usr)
+			}
 
 			cur := &CreateUserResponse{
 				ID:          response.ID,
@@ -849,9 +867,14 @@ func (s *SCIMService) CreateOrGetGroup(ctx context.Context, gr *CreateGroupReque
 				return nil, fmt.Errorf("aws CreateOrGetGroup: error getting group information: %w", err)
 			}
 
-			// Check if the group already exists, same external id but different name, name change in the identity provider
+			log.WithFields(log.Fields{
+				"group": gr.DisplayName,
+				"id":    response.ID,
+			}).Warn("aws CreateOrGetGroup: obtained group information")
+
+			// Check if the group already exists, same externalId but different name, name change in the identity provider
 			// when response.ID is empty, the group does not exists, so this is the case when the new group is a existing group
-			// with a different name same external id.
+			// with a different name same externalId.
 			if response.ID == "" {
 				log.WithFields(log.Fields{
 					"group": gr.DisplayName,
@@ -864,11 +887,6 @@ func (s *SCIMService) CreateOrGetGroup(ctx context.Context, gr *CreateGroupReque
 				gr.ExternalID = ""
 				return s.CreateOrGetGroup(ctx, gr)
 			}
-
-			log.WithFields(log.Fields{
-				"group": gr.DisplayName,
-				"id":    response.ID,
-			}).Warn("aws CreateOrGetGroup: obtained group information")
 
 			return &CreateGroupResponse{
 				ID:          response.ID,
