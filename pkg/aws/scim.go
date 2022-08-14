@@ -424,8 +424,8 @@ func (s *SCIMService) DeleteUser(ctx context.Context, id string) error {
 		// http.StatusNotFound is 404
 		if errors.As(e, &httpErr) && httpErr.StatusCode == http.StatusNotFound {
 			log.WithFields(log.Fields{
-				"user_id": id,
-			}).Warnf("aws DeleteUser: user not found, operation discarded")
+				"id": id,
+			}).Warnf("aws DeleteUser: user id does not exist, maybe it was already deleted because the username changed")
 		}
 		return e
 	}
@@ -898,6 +898,15 @@ func (s *SCIMService) DeleteGroup(ctx context.Context, id string) error {
 	defer resp.Body.Close()
 
 	if e := s.checkHTTPResponse(resp); e != nil {
+		httpErr := new(HTTPResponseError)
+
+		// http.StatusNotFound is 404
+		if errors.As(e, &httpErr) && httpErr.StatusCode == http.StatusNotFound {
+			log.WithFields(log.Fields{
+				"id": id,
+			}).Warn("aws DeleteGroup: group id does not exists, maybe it was already deleted because the name changed")
+			return nil
+		}
 		return e
 	}
 
