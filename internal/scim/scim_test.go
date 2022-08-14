@@ -1692,66 +1692,27 @@ func TestGetGroupsMembersBruteForce(t *testing.T) {
 		assert.NotNil(t, got)
 	})
 
-	t.Run("Should call ListGroups 1 time and no return error", func(t *testing.T) {
+	t.Run("Should call ListGroups 4 time and no return error", func(t *testing.T) {
 		mockSCIM := mocks.NewMockAWSSCIMProvider(mockCtrl)
 		grp := &model.GroupsResult{
-			Items: 1,
+			Items: 2,
 			Resources: []*model.Group{
 				{
 					IPID:   "1",
 					SCIMID: "1",
 					Name:   "group 1",
 					Email:  "group.1@mail.com",
+				},
+				{
+					IPID:   "2",
+					SCIMID: "2",
+					Name:   "group 2",
+					Email:  "group.2@mail.com",
 				},
 			},
 		}
 		usr := &model.UsersResult{
-			Items: 1,
-			Resources: []*model.User{
-				{
-					IPID:   "1",
-					SCIMID: "1",
-					Name: model.Name{
-						FamilyName: "1",
-						GivenName:  "user",
-					},
-					DisplayName: "user 1",
-					Active:      true,
-					Email:       "group.1@mail.com",
-				},
-			},
-		}
-		filter := fmt.Sprintf("id eq %q and members eq %q", grp.Resources[0].SCIMID, usr.Resources[0].SCIMID)
-		lgr := &aws.ListGroupsResponse{
-			Resources: []*aws.Group{
-				{
-					ID:          "1",
-					DisplayName: grp.Resources[0].Name,
-					Members: []*aws.Member{
-						{
-							Value: "1",
-						},
-					},
-				},
-			},
-		}
-
-		ctx := context.TODO()
-		mockSCIM.EXPECT().ListGroups(ctx, filter).Return(lgr, nil).Times(1)
-
-		gr := &model.GroupsResult{
-			Items: 1,
-			Resources: []*model.Group{
-				{
-					IPID:   "1",
-					SCIMID: "1",
-					Name:   "group 1",
-					Email:  "group.1@mail.com",
-				},
-			},
-		}
-		ur := &model.UsersResult{
-			Items: 1,
+			Items: 2,
 			Resources: []*model.User{
 				{
 					IPID:   "1",
@@ -1764,13 +1725,99 @@ func TestGetGroupsMembersBruteForce(t *testing.T) {
 					Active:      true,
 					Email:       "user.1@mail.com",
 				},
+				{
+					IPID:   "2",
+					SCIMID: "2",
+					Name: model.Name{
+						FamilyName: "2",
+						GivenName:  "user",
+					},
+					DisplayName: "user 2",
+					Active:      true,
+					Email:       "user.2@mail.com",
+				},
+			},
+		}
+		filter1 := fmt.Sprintf("id eq %q and members eq %q", grp.Resources[0].SCIMID, usr.Resources[0].SCIMID)
+		lgr1 := &aws.ListGroupsResponse{
+			ListResponse: aws.ListResponse{
+				ItemsPerPage: 1,
+				StartIndex:   1,
+				TotalResults: 1,
+			},
+			Resources: []*aws.Group{
+				{
+					ID:          grp.Resources[0].SCIMID,
+					DisplayName: grp.Resources[0].Name,
+					Meta: aws.Meta{
+						ResourceType: "Group",
+						Created:      "2020-01-01T00:00:00Z",
+						LastModified: "2020-01-01T00:00:00Z",
+					},
+					Members: []*aws.Member{},
+				},
+			},
+		}
+		filter2 := fmt.Sprintf("id eq %q and members eq %q", grp.Resources[0].SCIMID, usr.Resources[1].SCIMID)
+		lgr2 := &aws.ListGroupsResponse{
+			ListResponse: aws.ListResponse{
+				TotalResults: 0,
+			},
+			Resources: []*aws.Group{},
+		}
+		filter3 := fmt.Sprintf("id eq %q and members eq %q", grp.Resources[1].SCIMID, usr.Resources[0].SCIMID)
+		lgr3 := &aws.ListGroupsResponse{
+			ListResponse: aws.ListResponse{
+				TotalResults: 0,
+			},
+			Resources: []*aws.Group{},
+		}
+		filter4 := fmt.Sprintf("id eq %q and members eq %q", grp.Resources[1].SCIMID, usr.Resources[1].SCIMID)
+		lgr4 := &aws.ListGroupsResponse{
+			ListResponse: aws.ListResponse{
+				ItemsPerPage: 1,
+				StartIndex:   1,
+				TotalResults: 1,
+			},
+			Resources: []*aws.Group{
+				{
+					ID:          grp.Resources[1].SCIMID,
+					DisplayName: grp.Resources[1].Name,
+					Meta: aws.Meta{
+						ResourceType: "Group",
+						Created:      "2020-01-01T00:00:00Z",
+						LastModified: "2020-01-01T00:00:00Z",
+					},
+					Members: []*aws.Member{},
+				},
 			},
 		}
 
+		ctx := context.TODO()
+		mockSCIM.EXPECT().ListGroups(ctx, filter1).Return(lgr1, nil).Times(1)
+		mockSCIM.EXPECT().ListGroups(ctx, filter2).Return(lgr2, nil).Times(1)
+		mockSCIM.EXPECT().ListGroups(ctx, filter3).Return(lgr3, nil).Times(1)
+		mockSCIM.EXPECT().ListGroups(ctx, filter4).Return(lgr4, nil).Times(1)
+
 		svc, _ := NewProvider(mockSCIM)
-		got, err := svc.GetGroupsMembersBruteForce(ctx, gr, ur)
+		got, err := svc.GetGroupsMembersBruteForce(ctx, grp, usr)
 		assert.NoError(t, err)
 		assert.NotNil(t, got)
+
+		assert.Equal(t, 2, len(got.Resources))
+		assert.Equal(t, 2, got.Items)
+		assert.Equal(t, "group 1", got.Resources[0].Group.Name)
+		assert.Equal(t, "group 2", got.Resources[1].Group.Name)
+		assert.Equal(t, 1, len(got.Resources[0].Resources))
+		assert.Equal(t, 1, len(got.Resources[1].Resources))
+		assert.Equal(t, 1, got.Resources[0].Items)
+		assert.Equal(t, 1, got.Resources[1].Items)
+		assert.Equal(t, "1", got.Resources[0].Resources[0].SCIMID)
+		assert.Equal(t, "1", got.Resources[0].Resources[0].IPID)
+		assert.Equal(t, "user.1@mail.com", got.Resources[0].Resources[0].Email)
+		assert.Equal(t, "2", got.Resources[1].Resources[0].SCIMID)
+		assert.Equal(t, "2", got.Resources[1].Resources[0].IPID)
+		assert.Equal(t, "user.2@mail.com", got.Resources[1].Resources[0].Email)
 	})
 
 	t.Run("Should return error when ListGroups return error", func(t *testing.T) {
@@ -1879,11 +1926,7 @@ func TestGetGroupsMembersBruteForce(t *testing.T) {
 				{
 					ID:          "1",
 					DisplayName: grp.Resources[0].Name,
-					Members: []*aws.Member{
-						{
-							Value: "1",
-						},
-					},
+					Members:     []*aws.Member{}, // AWS SSO SCIM API doesn't return members, only TotalResults > 0
 				},
 			},
 		}
