@@ -13,7 +13,7 @@ To understand how to configure the program, please read the [Configuration](Conf
 ## idpscim --help
 
 ```bash
-./idpscim --help
+./build/idpscim --help
 
 Sync your Google Workspace Groups and Users to AWS Single Sing-On using
 AWS SSO SCIM API (https://docs.aws.amazon.com/singlesignon/latest/developerguide/what-is-scim.html).
@@ -22,22 +22,25 @@ Usage:
   idpscim [flags]
 
 Flags:
-  -k, --aws-s3-bucket-key string          AWS S3 Bucket key to store the state (default "state.json")
-  -b, --aws-s3-bucket-name string         AWS S3 Bucket name to store the state
-  -t, --aws-scim-access-token string      AWS SSO SCIM API Access Token
-  -e, --aws-scim-endpoint string          AWS SSO SCIM API Endpoint
-  -c, --config-file string                configuration file (default ".idpscim.yaml")
-  -d, --debug                             fast way to set the log-level to debug
-  -n, --disable-state                     state status [true|false]
-  -q, --gws-groups-filter strings         GWS Groups query parameter, example: --gws-groups-filter 'name:Admin* email:admin*' --gws-groups-filter 'name:Power* email:power*'
-  -s, --gws-service-account-file string   path to Google Workspace service account file (default "credentials.json")
-  -u, --gws-user-email string             GWS user email with allowed access to the Google Workspace Service Account
-  -r, --gws-users-filter strings          GWS Users query parameter, example: --gws-users-filter 'name:Admin* email:admin*' --gws-users-filter 'name:Power* email:power*'
-  -h, --help                              help for idpscim
-  -f, --log-format string                 set the log format (default "text")
-  -l, --log-level string                  set the log level [panic|fatal|error|warn|info|debug|trace] (default "info")
-  -m, --sync-method string                Sync method to use [groups] (default "groups")
-  -v, --version                           version for idpscim
+  -k, --aws-s3-bucket-key string                      AWS S3 Bucket key to store the state (default "state.json")
+  -b, --aws-s3-bucket-name string                     AWS S3 Bucket name to store the state
+  -t, --aws-scim-access-token string                  AWS SSO SCIM API Access Token
+  -j, --aws-scim-access-token-secret-name string      AWS Secrets Manager secret name for AWS SSO SCIM API Access Token (default "IDPSCIM_SCIMAccessToken")
+  -e, --aws-scim-endpoint string                      AWS SSO SCIM API Endpoint
+  -n, --aws-scim-endpoint-secret-name string          AWS Secrets Manager secret name for AWS SSO SCIM API Endpoint (default "IDPSCIM_SCIMEndpoint")
+  -c, --config-file string                            configuration file (default ".idpscim.yaml")
+  -d, --debug                                         fast way to set the log-level to debug
+  -q, --gws-groups-filter strings                     GWS Groups query parameter, example: --gws-groups-filter 'name:Admin* email:admin*' --gws-groups-filter 'name:Power* email:power*'
+  -s, --gws-service-account-file string               Google Workspace service account file (default "credentials.json")
+  -o, --gws-service-account-file-secret-name string   AWS Secrets Manager secret name for Google Workspace service account file (default "IDPSCIM_GWSServiceAccountFile")
+  -u, --gws-user-email string                         GWS user email with allowed access to the Google Workspace Service Account
+  -p, --gws-user-email-secret-name string             AWS Secrets Manager secret name for GWS user email with allowed access to the Google Workspace Service Account (default "IDPSCIM_GWSUserEmail")
+  -h, --help                                          help for idpscim
+  -f, --log-format string                             set the log format (default "text")
+  -l, --log-level string                              set the log level [panic|fatal|error|warn|info|debug|trace] (default "info")
+  -m, --sync-method string                            Sync method to use [groups] (default "groups")
+  -g, --use-secrets-manager                           use AWS Secrets Manager content or not
+  -v, --version                                       version for idpscim
 ```
 
 ## Using the AWS Lambda function

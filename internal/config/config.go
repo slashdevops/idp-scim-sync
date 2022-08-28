@@ -38,6 +38,9 @@ const (
 
 	// DefaultAWSSCIMAccessTokenSecretName is the name of the secret containing the SCIM access token.
 	DefaultAWSSCIMAccessTokenSecretName = "IDPSCIM_SCIMAccessToken"
+
+	// DefaultUseSecretsManager determines if we will use the AWS Secrets Manager secrets or program parameter values
+	DefaultUseSecretsManager = false
 )
 
 // Config represents the configuration of the application.
@@ -66,6 +69,9 @@ type Config struct {
 
 	// SyncMethod allow to defined the sync method used to get the user and groups from Google Workspace
 	SyncMethod string `mapstructure:"sync_method" json:"sync_method" yaml:"sync_method"`
+
+	// UseSecretsManager determines if we will use the AWS Secrets Manager secrets or program parameter values
+	UseSecretsManager bool `mapstructure:"use_secrets_manager" json:"use_secrets_manager" yaml:"use_secrets_manager"`
 }
 
 // New returns a new Config
@@ -83,5 +89,6 @@ func New() Config {
 		GWSUserEmailSecretName:          DefaultGWSUserEmailSecretName,
 		AWSSCIMEndpointSecretName:       DefaultAWSSCIMEndpointSecretName,
 		AWSSCIMAccessTokenSecretName:    DefaultAWSSCIMAccessTokenSecretName,
+		UseSecretsManager:               DefaultUseSecretsManager,
 	}
 }

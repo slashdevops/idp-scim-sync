@@ -52,6 +52,7 @@ aws_s3_bucket_name: my-bucket
 aws_s3_bucket_key: data/state.json
 
 sync_method: groups
+use_secrets_manager: false
 ```
 
 then run the `idpscim` program
