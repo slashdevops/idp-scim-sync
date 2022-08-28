@@ -1,13 +1,13 @@
 package model
 
-// stateBuilder is used to build a State entity and ensure the calculated hash code is set.
-type stateBuilder struct {
+// StateBuilderChoice is used to build a State entity and ensure the calculated hash code is set.
+type StateBuilderChoice struct {
 	s *State
 }
 
-// StateBuilder creates a new stateBuilder entity.
-func StateBuilder() *stateBuilder {
-	return &stateBuilder{
+// StateBuilder creates a new StateBuilderChoice entity.
+func StateBuilder() *StateBuilderChoice {
+	return &StateBuilderChoice{
 		s: &State{
 			SchemaVersion: StateSchemaVersion,
 			Resources: &StateResources{
@@ -26,43 +26,43 @@ func StateBuilder() *stateBuilder {
 }
 
 // WithSchemaVersion sets the SchemaVersion field of the State entity.
-func (b *stateBuilder) WithSchemaVersion(schemaVersion string) *stateBuilder {
+func (b *StateBuilderChoice) WithSchemaVersion(schemaVersion string) *StateBuilderChoice {
 	b.s.SchemaVersion = schemaVersion
 	return b
 }
 
 // WithCodeVersion sets the CodeVersion field of the State entity.
-func (b *stateBuilder) WithCodeVersion(codeVersion string) *stateBuilder {
+func (b *StateBuilderChoice) WithCodeVersion(codeVersion string) *StateBuilderChoice {
 	b.s.CodeVersion = codeVersion
 	return b
 }
 
 // WithLastSync sets the LastSync field of the State entity.
-func (b *stateBuilder) WithLastSync(lastSync string) *stateBuilder {
+func (b *StateBuilderChoice) WithLastSync(lastSync string) *StateBuilderChoice {
 	b.s.LastSync = lastSync
 	return b
 }
 
 // WithGroups sets the Groups field of the StateResources entity inside the State entity.
-func (b *stateBuilder) WithGroups(groups *GroupsResult) *stateBuilder {
+func (b *StateBuilderChoice) WithGroups(groups *GroupsResult) *StateBuilderChoice {
 	b.s.Resources.Groups = groups
 	return b
 }
 
 // WithUsers sets the Users field of the StateResources entity inside the State entity.
-func (b *stateBuilder) WithUsers(users *UsersResult) *stateBuilder {
+func (b *StateBuilderChoice) WithUsers(users *UsersResult) *StateBuilderChoice {
 	b.s.Resources.Users = users
 	return b
 }
 
 // WithGroupsMembers sets the GroupsMembers field of the StateResources entity inside the State entity.
-func (b *stateBuilder) WithGroupsMembers(groupsMembers *GroupsMembersResult) *stateBuilder {
+func (b *StateBuilderChoice) WithGroupsMembers(groupsMembers *GroupsMembersResult) *StateBuilderChoice {
 	b.s.Resources.GroupsMembers = groupsMembers
 	return b
 }
 
 // Build returns the State entity.
-func (b *stateBuilder) Build() *State {
+func (b *StateBuilderChoice) Build() *State {
 	s := b.s
 	s.SetHashCode()
 	return s
