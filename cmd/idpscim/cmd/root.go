@@ -65,21 +65,45 @@ func init() {
 	rootCmd.PersistentFlags().StringVarP(&cfg.LogLevel, "log-level", "l", config.DefaultLogLevel, "set the log level [panic|fatal|error|warn|info|debug|trace]")
 
 	rootCmd.PersistentFlags().StringVarP(&cfg.AWSSCIMAccessToken, "aws-scim-access-token", "t", "", "AWS SSO SCIM API Access Token")
+	rootCmd.PersistentFlags().StringVarP(&cfg.AWSSCIMAccessTokenSecretName,
+		"aws-scim-access-token-secret-name", "j", config.DefaultAWSSCIMAccessTokenSecretName,
+		"AWS Secrets Manager secret name for AWS SSO SCIM API Access Token",
+	)
+
 	rootCmd.PersistentFlags().StringVarP(&cfg.AWSSCIMEndpoint, "aws-scim-endpoint", "e", "", "AWS SSO SCIM API Endpoint")
+	rootCmd.PersistentFlags().StringVarP(&cfg.AWSSCIMEndpointSecretName,
+		"aws-scim-endpoint-secret-name", "n", config.DefaultAWSSCIMEndpointSecretName,
+		"AWS Secrets Manager secret name for AWS SSO SCIM API Endpoint",
+	)
+
 	rootCmd.PersistentFlags().StringVarP(&cfg.AWSS3BucketName, "aws-s3-bucket-name", "b", "", "AWS S3 Bucket name to store the state")
 	rootCmd.PersistentFlags().StringVarP(&cfg.AWSS3BucketKey, "aws-s3-bucket-key", "k", config.DefaultAWSS3BucketKey, "AWS S3 Bucket key to store the state")
 
-	rootCmd.PersistentFlags().StringVarP(
-		&cfg.GWSServiceAccountFile, "gws-service-account-file", "s", config.DefaultGWSServiceAccountFile,
-		"path to Google Workspace service account file",
+	rootCmd.PersistentFlags().StringVarP(&cfg.GWSServiceAccountFile,
+		"gws-service-account-file", "s", config.DefaultGWSServiceAccountFile,
+		"Google Workspace service account file",
 	)
-	rootCmd.PersistentFlags().StringVarP(&cfg.GWSUserEmail, "gws-user-email", "u", "", "GWS user email with allowed access to the Google Workspace Service Account")
+	rootCmd.PersistentFlags().StringVarP(&cfg.GWSServiceAccountFileSecretName,
+		"gws-service-account-file-secret-name", "o", config.DefaultGWSServiceAccountFileSecretName,
+		"AWS Secrets Manager secret name for Google Workspace service account file",
+	)
+
+	rootCmd.PersistentFlags().StringVarP(&cfg.GWSUserEmail,
+		"gws-user-email", "u", "",
+		"GWS user email with allowed access to the Google Workspace Service Account",
+	)
+	rootCmd.PersistentFlags().StringVarP(&cfg.GWSUserEmailSecretName,
+		"gws-user-email-secret-name", "p", config.DefaultGWSUserEmailSecretName,
+		"AWS Secrets Manager secret name for GWS user email with allowed access to the Google Workspace Service Account",
+	)
+
 	rootCmd.Flags().StringSliceVarP(
 		&cfg.GWSGroupsFilter, "gws-groups-filter", "q", []string{""},
 		"GWS Groups query parameter, example: --gws-groups-filter 'name:Admin* email:admin*' --gws-groups-filter 'name:Power* email:power*'",
 	)
 
 	rootCmd.PersistentFlags().StringVarP(&cfg.SyncMethod, "sync-method", "m", config.DefaultSyncMethod, "Sync method to use [groups]")
+	rootCmd.PersistentFlags().BoolVarP(&cfg.UseSecretsManager, "use-secrets-manager", "g", config.DefaultUseSecretsManager, "use AWS Secrets Manager content or not (default false)")
 }
 
 // initConfig reads in config file and ENV variables if set.
@@ -93,14 +117,15 @@ func initConfig() {
 		"aws_s3_bucket_name",
 		"aws_s3_bucket_key",
 		"gws_user_email",
+		"gws_user_email_secret_name",
 		"gws_service_account_file",
 		"gws_service_account_file_secret_name",
-		"gws_user_email_secret_name",
 		"gws_groups_filter",
 		"aws_scim_access_token",
+		"aws_scim_access_token_secret_name",
 		"aws_scim_endpoint",
 		"aws_scim_endpoint_secret_name",
-		"aws_scim_access_token_secret_name",
+		"use_secrets_manager",
 	}
 	for _, e := range envVars {
 		if err := viper.BindEnv(e); err != nil {
@@ -109,6 +134,7 @@ func initConfig() {
 	}
 
 	// when use a lambda, we need to read the config from the environment only
+	// so, this is to read the config from file
 	if !cfg.IsLambda {
 		home, err := os.UserHomeDir()
 		cobra.CheckErr(err)
@@ -160,7 +186,7 @@ func initConfig() {
 		log.SetLevel(level)
 	}
 
-	if cfg.IsLambda {
+	if cfg.IsLambda || cfg.UseSecretsManager {
 		getSecrets()
 	}
 
@@ -171,6 +197,8 @@ func initConfig() {
 }
 
 func getSecrets() {
+	log.Info("reading values from AWS Secrets Manager")
+
 	awsConf, err := aws.NewDefaultConf(context.Background())
 	if err != nil {
 		log.Fatalf(errors.Wrap(err, "cannot load aws config").Error())

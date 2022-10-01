@@ -23,4 +23,5 @@ func TestNew(t *testing.T) {
 	assert.Equal(cfg.GWSUserEmailSecretName, DefaultGWSUserEmailSecretName)
 	assert.Equal(cfg.AWSSCIMEndpointSecretName, DefaultAWSSCIMEndpointSecretName)
 	assert.Equal(cfg.AWSSCIMAccessTokenSecretName, DefaultAWSSCIMAccessTokenSecretName)
+	assert.Equal(cfg.UseSecretsManager, DefaultUseSecretsManager)
 }
