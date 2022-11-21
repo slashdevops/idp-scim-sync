@@ -488,6 +488,7 @@ func (s *SCIMService) GetUserByUserName(ctx context.Context, userName string) (*
 
 	if resp.StatusCode == http.StatusOK && log.GetLevel() == log.TraceLevel {
 		bodyBytes, er := io.ReadAll(resp.Body)
+		resp.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
 		if er != nil {
 			log.Error(er)
 		}
