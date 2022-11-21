@@ -9,7 +9,7 @@ The Idea of this tools is check the configuration you will implement in the [idp
 ```bash
 ./idpscimcli --help
 
-This is a Command-Line Interfaced (CLI) to help you validate and check your source and target Single Sing-On endpoints.
+This is a Command-Line Interfaced (CLI) to help you validate and check your source and target Single Sign-On endpoints.
 Check your AWS Single Sign-On (SSO) / Google Workspace Groups users and groups and validate your filters over Google Workspace users and groups.
 
 Usage:

@@ -26,9 +26,9 @@ var (
 var rootCmd = &cobra.Command{
 	Use:     "idpscimcli",
 	Version: version.Version,
-	Short:   "Check your  AWS Single Sing-On (SSO) / Google Workspace Groups/Users",
+	Short:   "Check your  AWS Single Sign-On (SSO) / Google Workspace Groups/Users",
 	Long: `
-This is a Command-Line Interfaced (CLI) to help you validate and check your source and target Single Sing-On endpoints.
+This is a Command-Line Interfaced (CLI) to help you validate and check your source and target Single Sign-On endpoints.
 Check your AWS Single Sign-On (SSO) / Google Workspace Groups users and groups and validate your filters over Google Workspace users and groups.`,
 }
 

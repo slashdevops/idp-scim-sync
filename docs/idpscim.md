@@ -1,6 +1,6 @@
 # idpscim
 
-This is in charge of keeping Google Workspace Groups and Users sync with AWS Single Sing-On service using SCIM protocol, to do that in an efficient way it stores the last sync data into an `AWS S3 Bucket` and periodically it will check if there are changes.
+This is in charge of keeping Google Workspace Groups and Users sync with AWS Single Sign-On service using SCIM protocol, to do that in an efficient way it stores the last sync data into an `AWS S3 Bucket` and periodically it will check if there are changes.
 
 This program could work in three ways:
 
@@ -15,7 +15,7 @@ To understand how to configure the program, please read the [Configuration](Conf
 ```bash
 ./build/idpscim --help
 
-Sync your Google Workspace Groups and Users to AWS Single Sing-On using
+Sync your Google Workspace Groups and Users to AWS Single Sign-On using
 AWS SSO SCIM API (https://docs.aws.amazon.com/singlesignon/latest/developerguide/what-is-scim.html).
 
 Usage:
