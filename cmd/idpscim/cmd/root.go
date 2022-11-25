@@ -34,9 +34,9 @@ var cfg config.Config
 var rootCmd = &cobra.Command{
 	Use:     "idpscim",
 	Version: version.Version,
-	Short:   "Sync your AWS Single Sing-On (SSO) with Google Workspace",
+	Short:   "Sync your AWS Single Sign-On (SSO) with Google Workspace",
 	Long: `
-Sync your Google Workspace Groups and Users to AWS Single Sing-On using
+Sync your Google Workspace Groups and Users to AWS Single Sign-On using
 AWS SSO SCIM API (https://docs.aws.amazon.com/singlesignon/latest/developerguide/what-is-scim.html).`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return sync()
