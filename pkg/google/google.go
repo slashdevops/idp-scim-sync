@@ -48,15 +48,15 @@ func NewService(ctx context.Context, userEmail string, serviceAccount []byte, sc
 		return nil, ErrGoogleClientScopeNil
 	}
 
-	config, err := google.JWTConfigFromJSON(serviceAccount, scope...)
+	creds, err := google.CredentialsFromJSONWithParams(ctx, serviceAccount, google.CredentialsParams{
+		Scopes:  scope,
+		Subject: userEmail,
+	})
 	if err != nil {
-		return nil, fmt.Errorf("google: error getting JWT config from Service Account: %v", err)
+		return nil, fmt.Errorf("google: error getting config for Service Account: %v", err)
 	}
 
-	config.Subject = userEmail
-	ts := config.TokenSource(ctx)
-
-	svc, err := admin.NewService(ctx, option.WithTokenSource(ts))
+	svc, err := admin.NewService(ctx, option.WithTokenSource(creds.TokenSource))
 	if err != nil {
 		return nil, fmt.Errorf("google: error creating service: %v", err)
 	}
