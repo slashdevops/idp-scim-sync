@@ -86,7 +86,7 @@ func init() {
 	awsUsersCmd.Flags().StringVarP(&filter, "filter", "q", "", "AWS SSO SCIM API Filter, example: --filter 'displayName eq \"User Bar\" and id eq \"12324\"'")
 }
 
-func runAWSServiceConfig(cmd *cobra.Command, args []string) error {
+func runAWSServiceConfig(_ *cobra.Command, _ []string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), reqTimeout)
 	defer cancel()
 
@@ -118,7 +118,7 @@ func runAWSServiceConfig(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func runAWSGroupsList(cmd *cobra.Command, args []string) error {
+func runAWSGroupsList(_ *cobra.Command, _ []string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), reqTimeout)
 	defer cancel()
 
@@ -151,7 +151,7 @@ func runAWSGroupsList(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func runAWSUsersList(cmd *cobra.Command, args []string) error {
+func runAWSUsersList(_ *cobra.Command, _ []string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), reqTimeout)
 	defer cancel()
 

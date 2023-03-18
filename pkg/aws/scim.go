@@ -621,8 +621,9 @@ func (s *SCIMService) PatchUser(ctx context.Context, pur *PatchUserRequest) erro
 	}
 	defer resp.Body.Close()
 
-	if e := s.checkHTTPResponse(resp); e != nil {
-		return e
+	err = s.checkHTTPResponse(resp)
+	if err != nil {
+		return err
 	}
 
 	return nil
@@ -979,8 +980,9 @@ func (s *SCIMService) PatchGroup(ctx context.Context, pgr *PatchGroupRequest) er
 	}
 	defer resp.Body.Close()
 
-	if e := s.checkHTTPResponse(resp); e != nil {
-		return e
+	err = s.checkHTTPResponse(resp)
+	if err != nil {
+		return err
 	}
 
 	return nil
