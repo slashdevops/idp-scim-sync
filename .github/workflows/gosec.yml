@@ -17,8 +17,8 @@ env:
 jobs:
   tests:
     runs-on: ubuntu-latest
-    env:
-      GOROOT: $(go env GOROOT)
+    # env:
+    #   GOROOT: $(go env GOROOT)
     steps:
       - name: Check out code
         uses: actions/checkout@v3
