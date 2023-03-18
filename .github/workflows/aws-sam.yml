@@ -76,9 +76,6 @@ jobs:
           path: ${{ steps.go-cache-paths.outputs.go-mod }}
           key: ${{ runner.os }}-go-mod-${{ hashFiles('**/go.sum') }}
 
-      - name: Show project files before make
-        run: tree .
-
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@master
         with:

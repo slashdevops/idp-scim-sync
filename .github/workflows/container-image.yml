@@ -71,9 +71,6 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-go-
 
-      - name: Show workspace files
-        run: tree .
-
       - name: Build container images
         run: make container-build GIT_VERSION=${{ github.ref_name }}
 

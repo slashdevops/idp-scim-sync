@@ -51,9 +51,6 @@ jobs:
           path: ${{ steps.go-cache-paths.outputs.go-mod }}
           key: ${{ runner.os }}-go-mod-${{ hashFiles('**/go.sum') }}
 
-      - name: Show project files before make
-        run: tree .
-
       # - name: golangci-lint
       #   uses: golangci/golangci-lint-action@v3
       #   with:
@@ -61,9 +58,6 @@ jobs:
 
       - name: Test
         run: make test
-
-      - name: Show project files after make
-        run: tree .
 
       - name: codecov coverage report
         uses: codecov/codecov-action@v3

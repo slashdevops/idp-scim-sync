@@ -35,9 +35,6 @@ jobs:
       - name: Go Envirioment Variables
         run: go env
 
-      - name: Show project files after make
-        run: tree .
-
       # - name: Run Gosec Security Scanner
       #   uses: securego/gosec@master
       #   with:

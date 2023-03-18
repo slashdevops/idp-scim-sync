@@ -94,9 +94,6 @@ jobs:
       - name: Build Distribution Cross-Platform
         run: GIT_VERSION=${{ github.ref_name }} make build-dist
 
-      - name: Show workspace files
-        run: tree .
-
       - uses: actions/upload-artifact@v2
         with:
           name: dist
@@ -153,9 +150,6 @@ jobs:
         with:
           name: dist
           path: ./dist/
-
-      - name: Show workspace files
-        run: tree .
 
       - name: Build Distribution zip Assets
         run: GIT_VERSION=${{ github.ref_name }} make build-dist-zip
