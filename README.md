@@ -1,9 +1,9 @@
 # idp-scim-sync
 
 [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/5348/badge)](https://bestpractices.coreinfrastructure.org/projects/5348)
-[![CodeQL Analysis](https://github.com/slashdevops/idp-scim-sync/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/slashdevops/idp-scim-sync/actions/workflows/codeql-analysis.yml)
-[![Gosec](https://github.com/slashdevops/idp-scim-sync/actions/workflows/gosec.yml/badge.svg)](https://github.com/slashdevops/idp-scim-sync/actions/workflows/gosec.yml)
-[![golangci-lint](https://github.com/slashdevops/idp-scim-sync/actions/workflows/golangci-lint.yml/badge.svg)](https://github.com/slashdevops/idp-scim-sync/actions/workflows/golangci-lint.yml)
+[![CodeQL](https://github.com/slashdevops/idp-scim-sync/actions/workflows/codeql-analysis.yml/badge.svg?branch=main)](https://github.com/slashdevops/idp-scim-sync/actions/workflows/codeql-analysis.yml)
+[![Gosec](https://github.com/slashdevops/idp-scim-sync/actions/workflows/gosec.yml/badge.svg?branch=main)](https://github.com/slashdevops/idp-scim-sync/actions/workflows/gosec.yml)
+[![golangci-lint](https://github.com/slashdevops/idp-scim-sync/actions/workflows/golangci-lint.yml/badge.svg?branch=main)](https://github.com/slashdevops/idp-scim-sync/actions/workflows/golangci-lint.yml)
 [![Main branch CI](https://github.com/slashdevops/idp-scim-sync/actions/workflows/main.yml/badge.svg)](https://github.com/slashdevops/idp-scim-sync/actions/workflows/main.yml)
 ![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/slashdevops/idp-scim-sync?style=plastic)
 [![Go Report Card](https://goreportcard.com/badge/github.com/slashdevops/idp-scim-sync)](https://goreportcard.com/report/github.com/slashdevops/idp-scim-sync)
