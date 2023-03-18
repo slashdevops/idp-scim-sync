@@ -28,7 +28,7 @@ func NewDiskRepository(stateFile io.ReadWriter) (*DiskRepository, error) {
 }
 
 // GetState returns the state from the state file
-func (dr *DiskRepository) GetState(ctx context.Context) (*model.State, error) {
+func (dr *DiskRepository) GetState(_ context.Context) (*model.State, error) {
 	var err error
 
 	data, err := io.ReadAll(dr.stateFile)
@@ -51,7 +51,7 @@ func (dr *DiskRepository) GetState(ctx context.Context) (*model.State, error) {
 }
 
 // SetState sets the state in the state file
-func (dr *DiskRepository) SetState(ctx context.Context, state *model.State) error {
+func (dr *DiskRepository) SetState(_ context.Context, state *model.State) error {
 	enc := json.NewEncoder(dr.stateFile)
 	enc.SetIndent("", "  ")
 	err := enc.Encode(state)

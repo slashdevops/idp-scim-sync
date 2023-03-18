@@ -135,7 +135,7 @@ func getGWSDirectoryService(ctx context.Context) *google.DirectoryService {
 	return gDirService
 }
 
-func execGWSGroupsList(cmd *cobra.Command, args []string) error {
+func execGWSGroupsList(_ *cobra.Command, _ []string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), reqTimeout)
 	defer cancel()
 
@@ -153,7 +153,7 @@ func execGWSGroupsList(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func execGWSUsersList(cmd *cobra.Command, args []string) error {
+func execGWSUsersList(_ *cobra.Command, _ []string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), reqTimeout)
 	defer cancel()
 
@@ -176,7 +176,7 @@ type gwsGroupMembers struct {
 	Members []*admin.Member
 }
 
-func execGWSGroupsMembersList(cmd *cobra.Command, args []string) error {
+func execGWSGroupsMembersList(_ *cobra.Command, _ []string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), reqTimeout)
 	defer cancel()
 

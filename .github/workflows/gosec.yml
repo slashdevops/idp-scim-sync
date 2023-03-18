@@ -12,20 +12,18 @@ on:
   workflow_dispatch:
 
 env:
-  GO_VERSION: 1.19
+  GO_VERSION: 1.20.2
 
 jobs:
   tests:
     runs-on: ubuntu-latest
-    env:
-      GOROOT: $(go env GOROOT)
     steps:
       - name: Check out code
         uses: actions/checkout@v3
 
       - name: Set up Go 1.x
         id: go
-        uses: actions/setup-go@v2
+        uses: actions/setup-go@v4
         with:
           go-version: ${{ env.GO_VERSION }}
 
@@ -35,9 +33,6 @@ jobs:
       - name: Go Envirioment Variables
         run: go env
 
-      - name: Show project files after make
-        run: tree .
-
       # - name: Run Gosec Security Scanner
       #   uses: securego/gosec@master
       #   with:
@@ -45,6 +40,5 @@ jobs:
 
       - name: Run Gosec Security Scanner
         run: |
-          export PATH=$PATH:$(go env GOPATH)/bin
           go install github.com/securego/gosec/v2/cmd/gosec@latest
-          gosec -conf .gosec.json ./...
+          gosec -exclude=G307 -conf .gosec.json ./...

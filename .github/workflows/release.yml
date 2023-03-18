@@ -7,7 +7,7 @@ on:
       - v[0-9].[0-9]+.[0-9]*
 
 env:
-  GO_VERSION: 1.19
+  GO_VERSION: 1.20.2
   AWS_REGION: us-east-1
 
 permissions:
@@ -23,7 +23,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Set up Go 1.x
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v4
         with:
           go-version: ${{ env.GO_VERSION }}
         id: go
@@ -49,7 +49,7 @@ jobs:
           key: ${{ runner.os }}-go-mod-${{ hashFiles('**/go.sum') }}
 
       # - name: golangci-lint
-      #   uses: golangci/golangci-lint-action@v2
+      #   uses: golangci/golangci-lint-action@v3
       #   with:
       #     version: latest
 
@@ -62,7 +62,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Set up Go 1.x
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v4
         with:
           go-version: ${{ env.GO_VERSION }}
         id: go
@@ -94,9 +94,6 @@ jobs:
       - name: Build Distribution Cross-Platform
         run: GIT_VERSION=${{ github.ref_name }} make build-dist
 
-      - name: Show workspace files
-        run: tree .
-
       - uses: actions/upload-artifact@v2
         with:
           name: dist
@@ -108,7 +105,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Set up Go 1.x
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v4
         with:
           go-version: ${{ env.GO_VERSION }}
         id: go
@@ -153,9 +150,6 @@ jobs:
         with:
           name: dist
           path: ./dist/
-
-      - name: Show workspace files
-        run: tree .
 
       - name: Build Distribution zip Assets
         run: GIT_VERSION=${{ github.ref_name }} make build-dist-zip
