@@ -12,7 +12,7 @@ on:
   workflow_dispatch:
 
 env:
-  GO_VERSION: 1.19
+  GO_VERSION: 1.20
 
 jobs:
   codeql:
@@ -20,7 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Set up Go 1.x
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v4
         with:
           go-version: ${{ env.GO_VERSION }}
         id: go
@@ -32,6 +32,6 @@ jobs:
         run: tree .
 
       - name: golangci-lint
-        uses: golangci/golangci-lint-action@v2
+        uses: golangci/golangci-lint-action@v3
         with:
           version: latest

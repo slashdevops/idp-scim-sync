@@ -17,7 +17,7 @@ permissions:
 
 env:
   AWS_REGION: us-east-1
-  GO_VERSION: 1.19
+  GO_VERSION: 1.20
 
 jobs:
   publish:
@@ -49,7 +49,7 @@ jobs:
 
       - name: Set up Go 1.x
         id: go
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v4
         with:
           go-version: ${{ env.GO_VERSION }}
 
