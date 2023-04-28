@@ -40,6 +40,16 @@ The best way to to deploy and use this is through the [AWS Serverless public rep
 
 The documentation is a __WIP__ and you can contribute!
 
+## Credentials
+
+* __Google Workspace API credentials__
+  This application will need [Google Workspace Directory API](https://developers.google.com/admin-sdk/directory/v1/guides) to retrieve `Users`, `Groups` and `Members` data.  Configure this is a little `bit tricky`, but it is well [documented by Google](https://developers.google.com/workspace/guides/create-credentials).
+  The Authorization/Authorization needed is [OAuth 2.0 for Server to Server Applications](https://developers.google.com/identity/protocols/oauth2/service-account) and this require to:
+   1. [Create a Service Account](https://developers.google.com/identity/protocols/oauth2/service-account#creatinganaccount) on Google Cloud Platform
+   2. [Delegate domain-wide authority to the service account](https://developers.google.com/identity/protocols/oauth2/service-account#delegatingauthority), the scope needed are: `https://www.googleapis.com/auth/admin.directory.group.readonly`, `https://www.googleapis.com/auth/admin.directory.user.readonly` and `https://www.googleapis.com/auth/admin.directory.group.member.readonly`
+* __AWS SSO SCIM API credentials__
+  This credentials is configured in the [AWS IAM Identity Center (Successor to AWS Single Sign-On)](https://aws.amazon.com/iam/identity-center/) service following the [Automatic provisioning](https://docs.aws.amazon.com/singlesignon/latest/userguide/provision-automatically.html) guide.
+
 ## Repositories
 
 * [AWS Serverless public repository - slashdevops/idp-scim-sync](https://serverlessrepo.aws.amazon.com/applications/us-east-1/889836709304/idp-scim-sync)
