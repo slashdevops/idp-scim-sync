@@ -20,7 +20,7 @@ BUILD_DIR       := ./build
 DIST_DIR        := ./dist
 DIST_ASSEST_DIR := $(DIST_DIR)/assets
 
-GO_LDFLAGS     ?= -ldflags "-X github.com/$(PROJECT_NAMESPACE)/$(PROJECT_NAME)/internal/version.Version=$(GIT_VERSION) -X github.com/$(PROJECT_NAMESPACE)/$(PROJECT_NAME)/internal/version.Revision=$(GIT_REVISION) -X github.com/$(PROJECT_NAMESPACE)/$(PROJECT_NAME)/internal/version.Branch=$(GIT_BRANCH) -X github.com/$(PROJECT_NAMESPACE)/$(PROJECT_NAME)/internal/version.BuildUser=\"$(GIT_USER)\" -X github.com/$(PROJECT_NAMESPACE)/$(PROJECT_NAME)/internal/version.BuildDate=$(BUILD_DATE)"
+GO_LDFLAGS     ?= -ldflags "-s -w -X github.com/$(PROJECT_NAMESPACE)/$(PROJECT_NAME)/internal/version.Version=$(GIT_VERSION) -X github.com/$(PROJECT_NAMESPACE)/$(PROJECT_NAME)/internal/version.Revision=$(GIT_REVISION) -X github.com/$(PROJECT_NAMESPACE)/$(PROJECT_NAME)/internal/version.Branch=$(GIT_BRANCH) -X github.com/$(PROJECT_NAMESPACE)/$(PROJECT_NAME)/internal/version.BuildUser=\"$(GIT_USER)\" -X github.com/$(PROJECT_NAMESPACE)/$(PROJECT_NAME)/internal/version.BuildDate=$(BUILD_DATE)"
 GO_CGO_ENABLED ?= 0
 GO_OPTS        ?= -v
 GO_OS          ?= darwin linux windows
