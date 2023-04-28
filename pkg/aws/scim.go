@@ -443,11 +443,15 @@ func (s *SCIMService) DeleteUser(ctx context.Context, id string) error {
 		httpErr := new(HTTPResponseError)
 
 		// http.StatusNotFound is 404
+		// in this case, the user was already deleted manually, so we can ignore the error
 		if errors.As(e, &httpErr) && httpErr.StatusCode == http.StatusNotFound {
 			log.WithFields(log.Fields{
 				"id": id,
 			}).Warnf("aws DeleteUser: user id does not exist, maybe it was already deleted because the username changed")
+
+			return nil
 		}
+		// different error not handled yet
 		return e
 	}
 	return nil
