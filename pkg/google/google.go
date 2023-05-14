@@ -91,12 +91,18 @@ func (ds *DirectoryService) ListUsers(ctx context.Context, query []string) ([]*a
 					return nil
 				})
 			}
+			if err != nil {
+				return nil, err
+			}
 		}
 	} else {
 		err = ds.svc.Users.List().Customer("my_customer").Fields(listUsersRequiredFields).Pages(ctx, func(users *admin.Users) error {
 			u = append(u, users.Users...)
 			return nil
 		})
+		if err != nil {
+			return nil, err
+		}
 	}
 	return u, err
 }
@@ -121,12 +127,18 @@ func (ds *DirectoryService) ListGroups(ctx context.Context, query []string) ([]*
 					return nil
 				})
 			}
+			if err != nil {
+				return nil, err
+			}
 		}
 	} else {
 		err = ds.svc.Groups.List().Customer("my_customer").Fields(groupsRequiredFields).Pages(ctx, func(groups *admin.Groups) error {
 			g = append(g, groups.Groups...)
 			return nil
 		})
+		if err != nil {
+			return nil, err
+		}
 	}
 	return g, err
 }
