@@ -76,27 +76,28 @@ func NewDirectoryService(svc *admin.Service) (*DirectoryService, error) {
 // ListUsers list all users in a Google Directory filtered by query.
 func (ds *DirectoryService) ListUsers(ctx context.Context, query []string) ([]*admin.User, error) {
 	u := make([]*admin.User, 0)
-	var err error
-
 	if len(query) > 0 {
 		for _, q := range query {
 			if q != "" {
-				err = ds.svc.Users.List().Query(q).Customer("my_customer").Fields(listUsersRequiredFields).Pages(ctx, func(users *admin.Users) error {
+				err := ds.svc.Users.List().Query(q).Customer("my_customer").Fields(listUsersRequiredFields).Pages(ctx, func(users *admin.Users) error {
 					u = append(u, users.Users...)
 					return nil
 				})
+				if err != nil {
+					return nil, err
+				}
 			} else {
-				err = ds.svc.Users.List().Customer("my_customer").Fields(listUsersRequiredFields).Pages(ctx, func(users *admin.Users) error {
+				err := ds.svc.Users.List().Customer("my_customer").Fields(listUsersRequiredFields).Pages(ctx, func(users *admin.Users) error {
 					u = append(u, users.Users...)
 					return nil
 				})
-			}
-			if err != nil {
-				return nil, err
+				if err != nil {
+					return nil, err
+				}
 			}
 		}
 	} else {
-		err = ds.svc.Users.List().Customer("my_customer").Fields(listUsersRequiredFields).Pages(ctx, func(users *admin.Users) error {
+		err := ds.svc.Users.List().Customer("my_customer").Fields(listUsersRequiredFields).Pages(ctx, func(users *admin.Users) error {
 			u = append(u, users.Users...)
 			return nil
 		})
@@ -104,7 +105,7 @@ func (ds *DirectoryService) ListUsers(ctx context.Context, query []string) ([]*a
 			return nil, err
 		}
 	}
-	return u, err
+	return u, nil
 }
 
 // ListGroups list all groups in a Google Directory filtered by query.
@@ -112,27 +113,29 @@ func (ds *DirectoryService) ListUsers(ctx context.Context, query []string) ([]*a
 // - https://developers.google.com/admin-sdk/directory/reference/rest/v1/groups
 func (ds *DirectoryService) ListGroups(ctx context.Context, query []string) ([]*admin.Group, error) {
 	g := make([]*admin.Group, 0)
-	var err error
 
 	if len(query) > 0 {
 		for _, q := range query {
 			if q != "" {
-				err = ds.svc.Groups.List().Customer("my_customer").Query(q).Fields(groupsRequiredFields).Pages(ctx, func(groups *admin.Groups) error {
+				err := ds.svc.Groups.List().Customer("my_customer").Query(q).Fields(groupsRequiredFields).Pages(ctx, func(groups *admin.Groups) error {
 					g = append(g, groups.Groups...)
 					return nil
 				})
+				if err != nil {
+					return nil, err
+				}
 			} else {
-				err = ds.svc.Groups.List().Customer("my_customer").Fields(groupsRequiredFields).Pages(ctx, func(groups *admin.Groups) error {
+				err := ds.svc.Groups.List().Customer("my_customer").Fields(groupsRequiredFields).Pages(ctx, func(groups *admin.Groups) error {
 					g = append(g, groups.Groups...)
 					return nil
 				})
-			}
-			if err != nil {
-				return nil, err
+				if err != nil {
+					return nil, err
+				}
 			}
 		}
 	} else {
-		err = ds.svc.Groups.List().Customer("my_customer").Fields(groupsRequiredFields).Pages(ctx, func(groups *admin.Groups) error {
+		err := ds.svc.Groups.List().Customer("my_customer").Fields(groupsRequiredFields).Pages(ctx, func(groups *admin.Groups) error {
 			g = append(g, groups.Groups...)
 			return nil
 		})
@@ -140,7 +143,7 @@ func (ds *DirectoryService) ListGroups(ctx context.Context, query []string) ([]*
 			return nil, err
 		}
 	}
-	return g, err
+	return g, nil
 }
 
 // ListGroupMembers return a list of all members given a group ID.
@@ -185,8 +188,11 @@ func (ds *DirectoryService) ListGroupMembers(ctx context.Context, groupID string
 		}
 		return nil
 	})
+	if err != nil {
+		return nil, err
+	}
 
-	return m, err
+	return m, nil
 }
 
 // GetUser return a user given a user ID.
