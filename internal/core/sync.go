@@ -71,36 +71,33 @@ func (ss *SyncService) SyncGroupsAndTheirMembers(ctx context.Context) error {
 		return fmt.Errorf("error getting groups from the identity provider: %w", err)
 	}
 
+	log.WithFields(
+		log.Fields{
+			"group_filter": ss.provGroupsFilter,
+			"groups":       idpGroupsResult.Items,
+		}).Info("groups retrieved from the identity provider for syncing that match the filter")
+
 	idpGroupsMembersResult, err := ss.prov.GetGroupsMembers(ctx, idpGroupsResult)
 	if err != nil {
 		return fmt.Errorf("error getting groups members: %w", err)
 	}
+
+	log.WithFields(
+		log.Fields{
+			"group_filter":   ss.provGroupsFilter,
+			"groups_members": idpGroupsMembersResult.Items,
+		}).Info("groups members retrieved from the identity provider for syncing that match the filter")
 
 	idpUsersResult, err := ss.prov.GetUsersByGroupsMembers(ctx, idpGroupsMembersResult)
 	if err != nil {
 		return fmt.Errorf("error getting users from the identity provider: %w", err)
 	}
 
-	if idpUsersResult.Items == 0 {
-		log.WithFields(
-			log.Fields{
-				"group_filter": ss.provGroupsFilter,
-			}).Warn("there are no users in the identity provider")
-	}
-
-	if idpGroupsResult.Items == 0 {
-		log.WithFields(
-			log.Fields{
-				"group_filter": ss.provGroupsFilter,
-			}).Warn("there are no groups in the identity provider that match")
-	}
-
-	if idpGroupsMembersResult.Items == 0 {
-		log.WithFields(
-			log.Fields{
-				"group_filter": ss.provGroupsFilter,
-			}).Warn("there are no groups with members in the identity provider")
-	}
+	log.WithFields(
+		log.Fields{
+			"group_filter": ss.provGroupsFilter,
+			"users":        idpUsersResult.Items,
+		}).Info("users retrieved from the identity provider for syncing that match the filter")
 
 	log.Info("getting state data")
 	state, err := ss.repo.GetState(ctx)
