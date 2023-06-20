@@ -90,7 +90,7 @@ linters:
   enable:
     - bodyclose
     # - deadcode
-    - depguard
+    # - depguard
     - dogsled
     - dupl
     - errcheck
