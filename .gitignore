@@ -18,6 +18,7 @@
 .aws-sam/
 packaged.yaml
 build.toml
+samconfig.toml
 
 # binaries
 bin/

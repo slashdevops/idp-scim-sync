@@ -3,7 +3,7 @@ AWSTemplateFormatVersion: "2010-09-09"
 Transform: AWS::Serverless-2016-10-31
 
 Description: |
-  This is used to keep your AWS Single Sign-On (SSO) groups and users in sync with your
+  This is used to keep your AWS IAM Identity Center (Successor to AWS Single Sign-On) groups and users in sync with your
   Google Workspace directory using and AWS Lambda function.
 
   Project URL: https://github.com/slashdevops/idp-scim-sync
@@ -215,6 +215,34 @@ Parameters:
       - 1827
       - 3653
 
+  Runtime:
+    Type: String
+    Description: |
+      The Lambda function runtime
+
+      Reference: https://docs.aws.amazon.com/lambda/latest/dg/lambda-runtimes.html
+    Default: provided.al2
+    AllowedValues:
+      - provided.al2
+
+  Architecture:
+    Type: String
+    Description: |
+      The Lambda function architecture
+
+      Reference: https://docs.aws.amazon.com/lambda/latest/dg/foundation-arch.html#foundation-arch-adv
+    Default: arm64
+    AllowedValues:
+      - arm64
+
+  LambdaFunctionHandler:
+    Type: String
+    Description: |
+      The Lambda function handler
+
+      Reference: https://docs.aws.amazon.com/lambda/latest/dg/configuration-console.html
+    Default: bootstrap
+
 Resources:
   LambdaFunction:
     Type: AWS::Serverless::Function
@@ -225,11 +253,13 @@ Resources:
       Description: |
         This Lambda function will sync the AWS SSO groups and users with the Google Workspace directory and it will be triggered by an EventBridge rule.
         Project: https://github.com/slashdevops/idp-scim-sync
-      Runtime: go1.x
+      Runtime: !Ref Runtime
+      Architectures:
+        - !Ref Architecture
       MemorySize: !Ref MemorySize
-      Handler: dist/idpscim-linux-amd64/idpscim # depends on the path inside .aws-sam/build/LambdaFunction/ during the build process using sam build
+      Handler: !Ref LambdaFunctionHandler # depends on the path inside .aws-sam/build/LambdaFunction/ during the build process using sam build
       Timeout: !Ref Timeout
-      CodeUri: ../../. # see Metadata section
+      CodeUri: "."
       Tracing: Active
       Environment:
         Variables:
@@ -251,7 +281,7 @@ Resources:
           Properties:
             Enabled: true
             Schedule: !Ref ScheduleExpression
-    Metadata: # https://jiangsc.me/2021/01/24/Lessons-Learnt-On-Deploying-GO-Lambda-Application-on-AWS/
+    Metadata: # https://jiangsc.me/2021/01/24/Lessons-Learnt-On-Deploying-GO-Lambda-Application-on-AWS/ and https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/building-custom-runtimes.html
       BuildMethod: makefile
 
   LambdaFunctionRole:
@@ -461,6 +491,11 @@ Outputs:
     Description: >
       The name of the Lambda function
 
+  LambdaFunctionHandler:
+    Value: !Ref LambdaFunctionHandler
+    Description: >
+      The handler of the Lambda function
+
   BucketName:
     Value: !Ref Bucket
     Description: >
@@ -480,3 +515,8 @@ Outputs:
     Value: !GetAtt KMSKey.Arn
     Description: >
       The ARN of the KMS key
+
+  Architecture:
+    Value: !Ref Architecture
+    Description: >
+      The Lambda function architecture
