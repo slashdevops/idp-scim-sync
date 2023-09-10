@@ -152,6 +152,39 @@ func TestGetGroups(t *testing.T) {
 	}
 }
 
+func BenchmarkGetGroups(b *testing.B) {
+	mockCtrl := gomock.NewController(b)
+	defer mockCtrl.Finish()
+
+	// given
+	filter := []string{""}
+	ctx := context.Background()
+	googleGroups := make([]*admin.Group, 0)
+	googleGroups = append(googleGroups, &admin.Group{Email: "group.1@mail.com", Id: "1", Name: "group 1"})
+	googleGroups = append(googleGroups, &admin.Group{Email: "group.2@mail.com", Id: "2", Name: "group 2"})
+	googleGroups = append(googleGroups, &admin.Group{Email: "group.3@mail.com", Id: "3", Name: "group 3"})
+	googleGroups = append(googleGroups, &admin.Group{Email: "group.4@mail.com", Id: "4", Name: "group 4"})
+	googleGroups = append(googleGroups, &admin.Group{Email: "group.5@mail.com", Id: "5", Name: "group 5"})
+	googleGroups = append(googleGroups, &admin.Group{Email: "group.6@mail.com", Id: "6", Name: "group 6"})
+	googleGroups = append(googleGroups, &admin.Group{Email: "group.7@mail.com", Id: "7", Name: "group 7"})
+
+	ds := mocks.NewMockGoogleProviderService(mockCtrl)
+	g := &IdentityProvider{ps: ds}
+
+	// when
+	ds.EXPECT().ListGroups(ctx, gomock.Eq([]string{""})).Return(googleGroups, nil).AnyTimes()
+
+	b.Run("benchmark GetUsers", func(b *testing.B) {
+		for n := 0; n < b.N; n++ {
+			_, err := g.GetGroups(ctx, filter)
+			if err != nil {
+				b.Errorf("GoogleProvider.GetGroups() error = %v", err)
+				return
+			}
+		}
+	})
+}
+
 func TestGetUsers(t *testing.T) {
 	u1 := &model.User{IPID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, DisplayName: "user 1", Active: true, Email: "user.1@mail.com"}
 	u1.SetHashCode()
@@ -249,6 +282,34 @@ func TestGetUsers(t *testing.T) {
 			}
 		})
 	}
+}
+
+func BenchmarkGetUsers(b *testing.B) {
+	mockCtrl := gomock.NewController(b)
+	defer mockCtrl.Finish()
+
+	// given
+	filter := []string{""}
+	ctx := context.Background()
+	googleUsers := make([]*admin.User, 0)
+	googleUsers = append(googleUsers, &admin.User{PrimaryEmail: "user.1@mail.com", Id: "1", Name: &admin.UserName{GivenName: "user", FamilyName: "1"}, Suspended: false})
+	googleUsers = append(googleUsers, &admin.User{PrimaryEmail: "user.2@mail.com", Id: "2", Name: &admin.UserName{GivenName: "user", FamilyName: "2"}, Suspended: true})
+
+	ds := mocks.NewMockGoogleProviderService(mockCtrl)
+	g := &IdentityProvider{ps: ds}
+
+	// when
+	ds.EXPECT().ListUsers(ctx, gomock.Eq(filter)).Return(googleUsers, nil).AnyTimes()
+
+	b.Run("benchmark GetUsers", func(b *testing.B) {
+		for n := 0; n < b.N; n++ {
+			_, err := g.GetUsers(ctx, filter)
+			if err != nil {
+				b.Errorf("GoogleProvider.GetUsers() error = %v", err)
+				return
+			}
+		}
+	})
 }
 
 func TestGetGroupMembers(t *testing.T) {
