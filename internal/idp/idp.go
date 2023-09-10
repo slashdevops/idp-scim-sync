@@ -57,14 +57,19 @@ func NewIdentityProvider(gps GoogleProviderService) (*IdentityProvider, error) {
 //
 // This method checks the names of the groups and avoid the second, third, etc repetition of the same group name.
 func (i *IdentityProvider) GetGroups(ctx context.Context, filter []string) (*model.GroupsResult, error) {
-	uniqueGroups := make(map[string]struct{})
-	syncGroups := make([]*model.Group, 0)
-
 	pGroups, err := i.ps.ListGroups(ctx, filter)
 	if err != nil {
-		return nil, fmt.Errorf("idp: error listing groups: %w", err)
+		return nil, fmt.Errorf("idp: error getting groups: %w", err)
 	}
 
+	if len(pGroups) == 0 {
+		syncGroups := make([]*model.Group, 0)
+		gResult := model.GroupsResultBuilder().WithResources(syncGroups).Build()
+		return gResult, nil
+	}
+
+	uniqueGroups := make(map[string]struct{}, len(pGroups))
+	syncGroups := make([]*model.Group, 0, len(pGroups))
 	for _, grp := range pGroups {
 		// this is a hack to avoid the second, third, etc repetition of the same group name
 		if _, ok := uniqueGroups[grp.Name]; !ok {
@@ -96,14 +101,19 @@ func (i *IdentityProvider) GetGroups(ctx context.Context, filter []string) (*mod
 // The filter parameter is a list of strings that can be used to filter the users
 // according to the Identity Provider API.
 func (i *IdentityProvider) GetUsers(ctx context.Context, filter []string) (*model.UsersResult, error) {
-	syncUsers := make([]*model.User, 0)
-
 	pUsers, err := i.ps.ListUsers(ctx, filter)
 	if err != nil {
-		return nil, fmt.Errorf("idp: error listing users: %w", err)
+		return nil, fmt.Errorf("idp: error getting users: %w", err)
 	}
 
-	for _, usr := range pUsers {
+	if len(pUsers) == 0 {
+		syncUsers := make([]*model.User, 0)
+		uResult := model.UsersResultBuilder().WithResources(syncUsers).Build()
+		return uResult, nil
+	}
+
+	syncUsers := make([]*model.User, len(pUsers))
+	for i, usr := range pUsers {
 		e := model.UserBuilder().
 			WithIPID(usr.Id).
 			WithGivenName(usr.Name.GivenName).
@@ -113,9 +123,8 @@ func (i *IdentityProvider) GetUsers(ctx context.Context, filter []string) (*mode
 			WithActive(!usr.Suspended).
 			Build()
 
-		syncUsers = append(syncUsers, e)
+		syncUsers[i] = e
 	}
-
 	uResult := model.UsersResultBuilder().WithResources(syncUsers).Build()
 
 	return uResult, nil
@@ -127,13 +136,18 @@ func (i *IdentityProvider) GetGroupMembers(ctx context.Context, groupID string) 
 		return nil, ErrGroupIDNil
 	}
 
-	syncMembers := make([]*model.Member, 0)
-
 	pMembers, err := i.ps.ListGroupMembers(ctx, groupID, google.WithIncludeDerivedMembership(true))
 	if err != nil {
-		return nil, fmt.Errorf("idp: error listing group members: %w", err)
+		return nil, fmt.Errorf("idp: error getting group members: %w", err)
 	}
 
+	if len(pMembers) == 0 {
+		syncMembers := make([]*model.Member, 0)
+		membersResult := model.MembersResultBuilder().WithResources(syncMembers).Build()
+		return membersResult, nil
+	}
+
+	syncMembers := make([]*model.Member, 0, len(pMembers))
 	for _, member := range pMembers {
 		// avoid nested groups, but members are included thanks to the google.WithIncludeDerivedMembership option above
 		if member.Type == "GROUP" {
@@ -160,9 +174,18 @@ func (i *IdentityProvider) GetGroupMembers(ctx context.Context, groupID string) 
 
 // GetUsersByGroupsMembers returns a list of users from the Identity Provider API.
 func (i *IdentityProvider) GetUsersByGroupsMembers(ctx context.Context, gmr *model.GroupsMembersResult) (*model.UsersResult, error) {
-	pUsers := make([]*model.User, 0)
-	uniqUsers := make(map[string]struct{})
+	if gmr == nil {
+		return nil, ErrGroupResultNil
+	}
 
+	if len(gmr.Resources) == 0 {
+		syncUsers := make([]*model.User, 0)
+		uResult := model.UsersResultBuilder().WithResources(syncUsers).Build()
+		return uResult, nil
+	}
+
+	uniqUsers := make(map[string]struct{}, len(gmr.Resources))
+	pUsers := make([]*model.User, 0, len(gmr.Resources))
 	for _, groupMembers := range gmr.Resources {
 		for _, member := range groupMembers.Resources {
 			u, err := i.ps.GetUser(ctx, member.Email)
@@ -197,9 +220,19 @@ func (i *IdentityProvider) GetGroupsMembers(ctx context.Context, gr *model.Group
 		return nil, ErrGroupResultNil
 	}
 
-	groupMembers := make([]*model.GroupMembers, 0)
+	l := len(gr.Resources)
+	if l == 0 {
+		groupsMembersResult := &model.GroupsMembersResult{
+			Items:     l,
+			Resources: make([]*model.GroupMembers, l),
+		}
+		groupsMembersResult.SetHashCode()
 
-	for _, group := range gr.Resources {
+		return groupsMembersResult, nil
+	}
+
+	groupMembers := make([]*model.GroupMembers, l)
+	for j, group := range gr.Resources {
 		members, err := i.GetGroupMembers(ctx, group.IPID)
 		if err != nil {
 			return nil, fmt.Errorf("idp: error getting group members: %w", err)
@@ -211,13 +244,8 @@ func (i *IdentityProvider) GetGroupsMembers(ctx context.Context, gr *model.Group
 			WithEmail(group.Email).
 			Build()
 
-		if members.Items > 0 {
-			groupMember := model.GroupMembersBuilder().WithGroup(e).WithResources(members.Resources).Build()
-			groupMembers = append(groupMembers, groupMember)
-		} else {
-			groupMember := model.GroupMembersBuilder().WithGroup(e).Build()
-			groupMembers = append(groupMembers, groupMember)
-		}
+		groupMember := model.GroupMembersBuilder().WithGroup(e).WithResources(members.Resources).Build()
+		groupMembers[j] = groupMember
 	}
 
 	groupsMembersResult := &model.GroupsMembersResult{
