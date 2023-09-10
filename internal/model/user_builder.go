@@ -56,9 +56,8 @@ func (b *UserBuilderChoice) WithEmail(email string) *UserBuilderChoice {
 
 // Build returns the User entity.
 func (b *UserBuilderChoice) Build() *User {
-	u := b.u
-	u.SetHashCode()
-	return u
+	b.u.SetHashCode()
+	return b.u
 }
 
 // UsersResultBuilderChoice is used to build a UsersResult entity and ensure the calculated hash code and items.
@@ -89,8 +88,7 @@ func (b *UsersResultBuilderChoice) WithResource(resource *User) *UsersResultBuil
 
 // Build returns the UserResult entity.
 func (b *UsersResultBuilderChoice) Build() *UsersResult {
-	ur := b.ur
-	ur.Items = len(ur.Resources)
-	ur.SetHashCode()
-	return ur
+	b.ur.Items = len(b.ur.Resources)
+	b.ur.SetHashCode()
+	return b.ur
 }

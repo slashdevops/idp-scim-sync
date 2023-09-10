@@ -38,9 +38,8 @@ func (b *MemberBuilderChoice) WithStatus(status string) *MemberBuilderChoice {
 
 // Build returns the Member entity.
 func (b *MemberBuilderChoice) Build() *Member {
-	m := b.m
-	m.SetHashCode()
-	return m
+	b.m.SetHashCode()
+	return b.m
 }
 
 // MembersResultBuilderChoice is used to build a MembersResult entity and ensure the calculated hash code and items is set.
@@ -71,10 +70,9 @@ func (b *MembersResultBuilderChoice) WithResource(resource *Member) *MembersResu
 
 // Build returns the MembersResult entity.
 func (b *MembersResultBuilderChoice) Build() *MembersResult {
-	mr := b.mr
-	mr.Items = len(mr.Resources)
-	mr.SetHashCode()
-	return mr
+	b.mr.Items = len(b.mr.Resources)
+	b.mr.SetHashCode()
+	return b.mr
 }
 
 // GroupMembersBuilderChoice is used to build a GroupMembers entity and ensure the calculated hash code is set.
@@ -111,10 +109,9 @@ func (b *GroupMembersBuilderChoice) WithResource(resource *Member) *GroupMembers
 
 // Build returns the GroupMembers entity.
 func (b *GroupMembersBuilderChoice) Build() *GroupMembers {
-	gm := b.gm
-	gm.Items = len(gm.Resources)
-	gm.SetHashCode()
-	return gm
+	b.gm.Items = len(b.gm.Resources)
+	b.gm.SetHashCode()
+	return b.gm
 }
 
 // GroupsMembersResultBuilderChoice is used to build a GroupsMembersResult entity and ensure the calculated hash code and items is set.
@@ -145,8 +142,7 @@ func (b *GroupsMembersResultBuilderChoice) WithResource(resource *GroupMembers) 
 
 // Build returns the GroupsMembersResult entity.
 func (b *GroupsMembersResultBuilderChoice) Build() *GroupsMembersResult {
-	gmr := b.gmr
-	gmr.Items = len(gmr.Resources)
-	gmr.SetHashCode()
-	return gmr
+	b.gmr.Items = len(b.gmr.Resources)
+	b.gmr.SetHashCode()
+	return b.gmr
 }
