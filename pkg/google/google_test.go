@@ -13,6 +13,9 @@ import (
 	"google.golang.org/api/option"
 )
 
+func TestListUsers(t *testing.T) {
+}
+
 func TestNewService(t *testing.T) {
 	t.Run("Should return a new Service with mocked parameters", func(t *testing.T) {
 		ctx := context.TODO()
@@ -300,6 +303,91 @@ func TestNewDirectoryService_ListUsers(t *testing.T) {
 		assert.Equal(t, "1", got[0].Name.FamilyName)
 		assert.Equal(t, "user", got[0].Name.GivenName)
 		assert.False(t, got[0].Suspended)
+	})
+
+	t.Run("show return an error when pages() return error because the json is bad", func(t *testing.T) {
+		ctx := context.TODO()
+
+		filter := []string{"name:user* email:user*"}
+		urlPath := "/admin/directory/v1/users"
+
+		svr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			assert.Equal(t, "GET", r.Method)
+			assert.Equal(t, urlPath, r.URL.Path)
+			assert.Equal(t, filter[0], r.URL.Query().Get("query"))
+			w.WriteHeader(http.StatusOK)
+			w.Write([]byte(`{"etag":"etag-users","kind":"directory#users","users":[{"id":"123456789","etag":"etag-user-123456789","primaryEmail":"""}]}`))
+		}))
+		defer svr.Close()
+
+		svc, err := admin.NewService(ctx, option.WithHTTPClient(svr.Client()), option.WithEndpoint(svr.URL), option.WithUserAgent("test"))
+		assert.NoError(t, err)
+
+		client, err := NewDirectoryService(svc)
+		assert.NoError(t, err)
+		assert.NotNil(t, client)
+
+		got, err := client.ListUsers(ctx, filter)
+		assert.Error(t, err)
+
+		t.Logf("got: %+v", got)
+		assert.Equal(t, 0, len(got))
+	})
+
+	t.Run("show return an error when pages() return error", func(t *testing.T) {
+		ctx := context.TODO()
+
+		filter := []string{"name:user* email:user*"}
+		urlPath := "/admin/directory/v1/users"
+
+		svr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			assert.Equal(t, "GET", r.Method)
+			assert.Equal(t, urlPath, r.URL.Path)
+			assert.Equal(t, filter[0], r.URL.Query().Get("query"))
+			w.WriteHeader(http.StatusServiceUnavailable)
+		}))
+		defer svr.Close()
+
+		svc, err := admin.NewService(ctx, option.WithHTTPClient(svr.Client()), option.WithEndpoint(svr.URL), option.WithUserAgent("test"))
+		assert.NoError(t, err)
+
+		client, err := NewDirectoryService(svc)
+		assert.NoError(t, err)
+		assert.NotNil(t, client)
+
+		got, err := client.ListUsers(ctx, filter)
+		assert.Error(t, err)
+
+		t.Logf("got: %+v", got)
+		assert.Equal(t, 0, len(got))
+	})
+
+	t.Run("show return an error when pages() return error", func(t *testing.T) {
+		ctx := context.TODO()
+
+		filter := []string{"name:user* email:user*"}
+		urlPath := "/admin/directory/v1/users"
+
+		svr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			assert.Equal(t, "GET", r.Method)
+			assert.Equal(t, urlPath, r.URL.Path)
+			assert.Equal(t, filter[0], r.URL.Query().Get("query"))
+			w.WriteHeader(http.StatusTooManyRequests)
+		}))
+		defer svr.Close()
+
+		svc, err := admin.NewService(ctx, option.WithHTTPClient(svr.Client()), option.WithEndpoint(svr.URL), option.WithUserAgent("test"))
+		assert.NoError(t, err)
+
+		client, err := NewDirectoryService(svc)
+		assert.NoError(t, err)
+		assert.NotNil(t, client)
+
+		got, err := client.ListUsers(ctx, filter)
+		assert.Error(t, err)
+
+		t.Logf("got: %+v", got)
+		assert.Equal(t, 0, len(got))
 	})
 }
 
