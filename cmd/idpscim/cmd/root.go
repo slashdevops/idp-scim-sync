@@ -218,7 +218,7 @@ func getSecrets() {
 	}
 	cfg.GWSUserEmail = unwrap
 	log.WithFields(
-		log.Fields{"secretName": cfg.GWSUserEmailSecretName},
+		log.Fields{"secretARN": cfg.GWSUserEmailSecretName},
 	).Info("Read secret")
 
 	log.WithField("name", cfg.GWSServiceAccountFileSecretName).Debug("reading secret")
@@ -228,7 +228,7 @@ func getSecrets() {
 	}
 	cfg.GWSServiceAccountFile = unwrap
 	log.WithFields(
-		log.Fields{"secretName": cfg.GWSServiceAccountFileSecretName},
+		log.Fields{"secretARN": cfg.GWSServiceAccountFileSecretName},
 	).Info("Read secret")
 
 	log.WithField("name", cfg.AWSSCIMAccessTokenSecretName).Debug("reading secret")
@@ -238,7 +238,7 @@ func getSecrets() {
 	}
 	cfg.AWSSCIMAccessToken = unwrap
 	log.WithFields(
-		log.Fields{"secretName": cfg.AWSSCIMAccessTokenSecretName},
+		log.Fields{"secretARN": cfg.AWSSCIMAccessTokenSecretName},
 	).Info("Read secret")
 
 	log.WithField("name", cfg.AWSSCIMEndpointSecretName).Debug("reading secret")
@@ -248,7 +248,7 @@ func getSecrets() {
 	}
 	cfg.AWSSCIMEndpoint = unwrap
 	log.WithFields(
-		log.Fields{"secretName": cfg.AWSSCIMEndpointSecretName},
+		log.Fields{"secretARN": cfg.AWSSCIMEndpointSecretName},
 	).Info("Read secret")
 }
 
