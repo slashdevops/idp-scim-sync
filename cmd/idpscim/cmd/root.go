@@ -54,7 +54,7 @@ func Execute() {
 
 func init() {
 	cfg = config.New()
-	cfg.IsLambda = len(os.Getenv("_LAMBDA_SERVER_PORT")) > 0
+	cfg.IsLambda = len(os.Getenv("LAMBDA_TASK_ROOT")) > 0
 
 	cobra.OnInitialize(initConfig)
 
@@ -217,6 +217,9 @@ func getSecrets() {
 		log.Fatalf(errors.Wrap(err, "cannot get secretmanager value").Error())
 	}
 	cfg.GWSUserEmail = unwrap
+	log.WithFields(
+		log.Fields{"secretName": cfg.GWSUserEmailSecretName},
+	).Info("Read secret")
 
 	log.WithField("name", cfg.GWSServiceAccountFileSecretName).Debug("reading secret")
 	unwrap, err = secrets.GetSecretValue(context.Background(), cfg.GWSServiceAccountFileSecretName)
@@ -224,6 +227,9 @@ func getSecrets() {
 		log.Fatalf(errors.Wrap(err, "cannot get secretmanager value").Error())
 	}
 	cfg.GWSServiceAccountFile = unwrap
+	log.WithFields(
+		log.Fields{"secretName": cfg.GWSServiceAccountFileSecretName},
+	).Info("Read secret")
 
 	log.WithField("name", cfg.AWSSCIMAccessTokenSecretName).Debug("reading secret")
 	unwrap, err = secrets.GetSecretValue(context.Background(), cfg.AWSSCIMAccessTokenSecretName)
@@ -231,6 +237,9 @@ func getSecrets() {
 		log.Fatalf(errors.Wrap(err, "cannot get secretmanager value").Error())
 	}
 	cfg.AWSSCIMAccessToken = unwrap
+	log.WithFields(
+		log.Fields{"secretName": cfg.AWSSCIMAccessTokenSecretName},
+	).Info("Read secret")
 
 	log.WithField("name", cfg.AWSSCIMEndpointSecretName).Debug("reading secret")
 	unwrap, err = secrets.GetSecretValue(context.Background(), cfg.AWSSCIMEndpointSecretName)
@@ -238,6 +247,9 @@ func getSecrets() {
 		log.Fatalf(errors.Wrap(err, "cannot get secretmanager value").Error())
 	}
 	cfg.AWSSCIMEndpoint = unwrap
+	log.WithFields(
+		log.Fields{"secretName": cfg.AWSSCIMEndpointSecretName},
+	).Info("Read secret")
 }
 
 func sync() error {
