@@ -13,11 +13,11 @@
 [![Maintainability](https://api.codeclimate.com/v1/badges/8f88180aebaca6fc4923/maintainability)](https://codeclimate.com/github/slashdevops/idp-scim-sync/maintainability)
 [![codecov](https://codecov.io/gh/slashdevops/idp-scim-sync/branch/main/graph/badge.svg?token=H72NWJGHZ0)](https://codecov.io/gh/slashdevops/idp-scim-sync)
 
-Keep your [AWS Single Sign-On (SSO) groups and users](https://aws.amazon.com/single-sign-on/) in sync with your [Google Workspace directory](https://workspace.google.com/) using and [AWS Lambda function](https://aws.amazon.com/lambda/).
+Keep your [AWS IAM Identity Center (Successor to AWS Single Sign-On)](https://aws.amazon.com/iam/identity-center/) in sync with your [Google Workspace directory](https://workspace.google.com/) using and [AWS Lambda function](https://aws.amazon.com/lambda/).
 
 ![On AWS](https://raw.githubusercontent.com/slashdevops/idp-scim-sync/main/docs/images/diagrams/ipd-scim-sync.drawio.png)
 
-As the image above shows, the [AWS Lambda function](https://aws.amazon.com/lambda) is triggered by a [CloudWatch event rule](https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-create-rule-schedule.html), the event rule is configured to run every [15 minutes (default in the cfn template)](template.yaml), and `sync` the `AWS Single Sign-On (SSO) groups and users` with `Google Workspace directory` using their respective `APIs`.  During the `first sync`, the data of the `Groups and Users` are stored in the `AWS S3 bucket` as [the State file](docs/State-File-example.md)
+As the image above shows, the [AWS Lambda function](https://aws.amazon.com/lambda) is triggered by a [CloudWatch event rule](https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-create-rule-schedule.html), the event rule is configured to run every [15 minutes (default in the cfn template)](template.yaml), and `sync` the [AWS IAM Identity Center (Successor to AWS Single Sign-On)](https://aws.amazon.com/iam/identity-center/) with `Google Workspace directory` using their respective `APIs`.  During the `first sync`, the data of the `Groups and Users` are stored in the `AWS S3 bucket` as [the State file](docs/State-File-example.md)
 
 [The State file](docs/State-File-example.md) is a custom implementation to save time and requests to the [AWS SSO SCIM API](https://docs.aws.amazon.com/singlesignon/latest/developerguide/what-is-scim.html), also mitigate some limitations of this.
 
@@ -25,7 +25,7 @@ This project is developed using the [Go language](https://go.dev/) and [AWS SAM]
 
 If you want to know what creates the [CloudFormation Template](template.yaml), please check the [AWS SAM Template](docs/AWS-SAM-Template.md)
 
-__First time implementing [Single Sign-on on AWS](https://aws.amazon.com/single-sign-on)? please read [Using SSO](docs/Using-SSO.md)__
+__First time implementing [AWS IAM Identity Center (Successor to AWS Single Sign-On)](https://aws.amazon.com/iam/identity-center/)? please read [Using SSO](docs/Using-SSO.md)__
 
 The best way to to deploy and use this is through the [AWS Serverless public repository - slashdevops/idp-scim-sync](https://serverlessrepo.aws.amazon.com/applications/us-east-1/889836709304/idp-scim-sync)
 
