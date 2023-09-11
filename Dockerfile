@@ -4,7 +4,7 @@ FROM ${ARCH}/alpine
 ARG OS="linux"
 ARG BIN_ARCH="amd64"
 
-ENV PROJECT_NAME="idp-scim-sync"
+ARG PROJECT_NAME="idpscim"
 ENV HOME="/app"
 
 LABEL name="${PROJECT_NAME}" \
@@ -18,7 +18,7 @@ RUN apk add --no-cache --update \
 RUN mkdir -p $HOME && \
   chown -R nobody.nobody $HOME
 
-COPY dist/$PROJECT_NAME-$OS-$BIN_ARCH/* $HOME/
+COPY dist/$PROJECT_NAME-$OS-$BIN_ARCH $HOME/idpscim
 
 ENV PATH="${PATH}:${HOME}"
 
