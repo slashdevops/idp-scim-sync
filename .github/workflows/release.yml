@@ -21,7 +21,11 @@ jobs:
     name: Test
     runs-on: ubuntu-latest
     steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
       - name: Set up Go 1.x
+        id: go
         uses: actions/setup-go@v4
         with:
           go-version-file: ./go.mod
@@ -29,26 +33,6 @@ jobs:
       - name: Go version
         run: |
           go version
-
-      - name: Check out code
-        uses: actions/checkout@v4
-
-      - id: go-cache-paths
-        run: |
-          echo "go-build=$(go env GOCACHE)" >> $GITHUB_OUTPUT
-          echo "go-mod=$(go env GOMODCACHE)" >> $GITHUB_OUTPUT
-
-      - name: Go Build Cache
-        uses: actions/cache@v3
-        with:
-          path: ${{ steps.go-cache-paths.outputs.go-build }}
-          key: ${{ runner.os }}-go-build-${{ hashFiles('**/go.sum') }}
-
-      - name: Go Mod Cache
-        uses: actions/cache@v3
-        with:
-          path: ${{ steps.go-cache-paths.outputs.go-mod }}
-          key: ${{ runner.os }}-go-mod-${{ hashFiles('**/go.sum') }}
 
       - name: Test
         run: make test
@@ -58,7 +42,11 @@ jobs:
     needs: test
     runs-on: ubuntu-latest
     steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
       - name: Set up Go 1.x
+        id: go
         uses: actions/setup-go@v4
         with:
           go-version-file: ./go.mod
@@ -67,26 +55,6 @@ jobs:
         run: |
           go version
 
-      - name: Check out code
-        uses: actions/checkout@v4
-
-      - id: go-cache-paths
-        run: |
-          echo "go-build=$(go env GOCACHE)" >> $GITHUB_OUTPUT
-          echo "go-mod=$(go env GOMODCACHE)" >> $GITHUB_OUTPUT
-
-      - name: Go Build Cache
-        uses: actions/cache@v3
-        with:
-          path: ${{ steps.go-cache-paths.outputs.go-build }}
-          key: ${{ runner.os }}-go-build-${{ hashFiles('**/go.sum') }}
-
-      - name: Go Mod Cache
-        uses: actions/cache@v3
-        with:
-          path: ${{ steps.go-cache-paths.outputs.go-mod }}
-          key: ${{ runner.os }}-go-mod-${{ hashFiles('**/go.sum') }}
-
       - name: Git Current branch name (Version)
         run: |
           echo ${{ github.ref_name }}
@@ -94,7 +62,7 @@ jobs:
       - name: Build Distribution Cross-Platform
         run: GIT_VERSION=${{ github.ref_name }} make build-dist
 
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v3
         with:
           name: dist
           path: ./dist/
@@ -104,7 +72,11 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
       - name: Set up Go 1.x
+        id: go
         uses: actions/setup-go@v4
         with:
           go-version-file: ./go.mod
@@ -113,41 +85,12 @@ jobs:
         run: |
           go version
 
-      - name: Check out code
-        uses: actions/checkout@v4
-
-      - id: go-cache-paths
-        run: |
-          echo "go-build=$(go env GOCACHE)" >> $GITHUB_OUTPUT
-          echo "go-mod=$(go env GOMODCACHE)" >> $GITHUB_OUTPUT
-
-      - name: Go Build Cache
-        uses: actions/cache@v3
-        with:
-          path: ${{ steps.go-cache-paths.outputs.go-build }}
-          key: ${{ runner.os }}-go-build-${{ hashFiles('**/go.sum') }}
-
-      - name: Go Mod Cache
-        uses: actions/cache@v3
-        with:
-          path: ${{ steps.go-cache-paths.outputs.go-mod }}
-          key: ${{ runner.os }}-go-mod-${{ hashFiles('**/go.sum') }}
-
       - name: Docker Version
         run: docker version
 
       - name: Git Current branch name (Version)
         run: |
           echo ${{ github.ref_name }}
-
-      - uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cache/go-build
-            ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-
 
       - uses: actions/download-artifact@v3
         with:

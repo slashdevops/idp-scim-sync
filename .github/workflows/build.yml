@@ -20,6 +20,9 @@ jobs:
     name: "Test and Build"
     runs-on: ubuntu-latest
     steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
       - name: Set up Go 1.x
         id: go
         uses: actions/setup-go@v4
@@ -29,9 +32,6 @@ jobs:
       - name: Go version
         run: |
           go version
-
-      - name: Check out code
-        uses: actions/checkout@v4
 
       - id: go-cache-paths
         run: |

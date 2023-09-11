@@ -27,7 +27,11 @@ jobs:
     name: Publish Container Images
     runs-on: ubuntu-latest
     steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
       - name: Set up Go 1.x
+        id: go
         uses: actions/setup-go@v4
         with:
           go-version-file: ./go.mod
@@ -35,9 +39,6 @@ jobs:
       - name: Go version
         run: |
           go version
-
-      - name: Check out code
-        uses: actions/checkout@v4
 
       - id: go-cache-paths
         run: |
