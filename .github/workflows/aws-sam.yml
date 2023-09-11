@@ -55,31 +55,18 @@ jobs:
         run: |
           go version
 
+      - name: Git Current branch name (Version)
+        run: |
+          echo ${{ github.ref_name }}
+
       - name: Set up Python 3.x
         uses: actions/setup-python@v4
 
       - name: Set up AWS SAM
         uses: aws-actions/setup-sam@v2
 
-      - id: go-cache-paths
-        run: |
-          echo "go-build=$(go env GOCACHE)" >> $GITHUB_OUTPUT
-          echo "go-mod=$(go env GOMODCACHE)" >> $GITHUB_OUTPUT
-
-      - name: Go Build Cache
-        uses: actions/cache@v3
-        with:
-          path: ${{ steps.go-cache-paths.outputs.go-build }}
-          key: ${{ runner.os }}-go-build-${{ hashFiles('**/go.sum') }}
-
-      - name: Go Mod Cache
-        uses: actions/cache@v3
-        with:
-          path: ${{ steps.go-cache-paths.outputs.go-mod }}
-          key: ${{ runner.os }}-go-mod-${{ hashFiles('**/go.sum') }}
-
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@master
+        uses: aws-actions/configure-aws-credentials@v3
         with:
           role-to-assume: ${{ secrets.AWS_OIDC_ROLE_TO_ASSUME }}
           role-session-name: publish-sam-app
@@ -92,7 +79,7 @@ jobs:
 
       - name: AWS SAM Build template
         run: |
-          GIT_VERSION=${{ github.ref_name }} sam build --base-dir cmd/idpscim/
+          GIT_VERSION=${{ github.ref_name }} sam build
 
       - name: AWS SAM Package
         env:
@@ -100,17 +87,13 @@ jobs:
         run: |
           sam package --output-template-file packaged.yaml --s3-bucket $SAM_APP_BUCKET
 
-      - name: Git Current branch name (Version)
-        run: |
-          echo ${{ github.ref_name }}
-
-      - name: Set semVer format version
+      - name: Set SemVer format version
         id: semver
         run: |
           VERSION=$(echo ${{ github.ref_name }} | cut -d 'v' -f 2)
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
-      - name: semVer version
+      - name: Shows SemVer format version
         run: |
           echo ${{ steps.semver.outputs.version }}
 
@@ -123,7 +106,7 @@ jobs:
           sam publish --semantic-version $SAM_APP_VERSION --template packaged.yaml --region $AWS_PUBLIC_REGION
 
       - name: Get the AWS SAM published application ARN
-        id: set_arn
+        id: set-arn
         env:
           AWS_PUBLIC_REGION: ${{ matrix.AWS_REGIONS }}
         run: |
@@ -136,11 +119,11 @@ jobs:
 
       - name: Show AWS SAM Application ARN
         run: |
-          echo ${{ steps.set_arn.outputs.arn }}
+          echo ${{ steps.set-arn.outputs.arn }}
 
       - name: Get the AWS SAM published application ARN
         env:
           AWS_PUBLIC_REGION: ${{ matrix.AWS_REGIONS }}
-          AWS_SAM_APP_ARN: ${{ steps.set_arn.outputs.arn }}
+          AWS_SAM_APP_ARN: ${{ steps.set-arn.outputs.arn }}
         run: |
           aws serverlessrepo put-application-policy --application-id $AWS_SAM_APP_ARN --statements Principals='*',Actions='Deploy' --region $AWS_PUBLIC_REGION

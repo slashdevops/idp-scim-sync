@@ -23,8 +23,8 @@ permissions:
   contents: read
 
 jobs:
-  publish_container_images:
-    name: Publish Container Images
+  build_publish_container_images:
+    name: Build and Publish Container Images
     runs-on: ubuntu-latest
     steps:
       - name: Check out code
@@ -40,56 +40,37 @@ jobs:
         run: |
           go version
 
-      - id: go-cache-paths
-        run: |
-          echo "go-build=$(go env GOCACHE)" >> $GITHUB_OUTPUT
-          echo "go-mod=$(go env GOMODCACHE)" >> $GITHUB_OUTPUT
-
-      - name: Go Build Cache
-        uses: actions/cache@v3
-        with:
-          path: ${{ steps.go-cache-paths.outputs.go-build }}
-          key: ${{ runner.os }}-go-build-${{ hashFiles('**/go.sum') }}
-
-      - name: Go Mod Cache
-        uses: actions/cache@v3
-        with:
-          path: ${{ steps.go-cache-paths.outputs.go-mod }}
-          key: ${{ runner.os }}-go-mod-${{ hashFiles('**/go.sum') }}
-
       - name: Git Current branch name (Version)
         run: |
           echo ${{ github.ref_name }}
 
       - name: Docker Version
-        run: docker version
-
-      - uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cache/go-build
-            ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-
+        run: |
+          docker version
 
       - name: Build container images
-        run: make container-build GIT_VERSION=${{ github.ref_name }}
+        run: |
+          GIT_VERSION=${{ github.ref_name }} make container-build
 
-      - name: Show local container images
-        run: docker images
+      - name: Show container images
+        run: |
+          docker images
 
       - name: Logging in Docker Hub
-        run: echo ${{ secrets.DOCKER_HUB_TOKEN }} | docker login -u ${{ secrets.DOCKER_HUB_USER }} --password-stdin
+        run: |
+          echo ${{ secrets.DOCKER_HUB_TOKEN }} | docker login -u ${{ secrets.DOCKER_HUB_USER }} --password-stdin
 
       - name: Publish Images in Docker Hub
-        run: make container-publish-docker GIT_VERSION=${{ github.ref_name }}
+        run: |
+          GIT_VERSION=${{ github.ref_name }} make container-publish-docker
 
       - name: Logging in GitHub Registry
-        run: echo ${{ secrets.GH_PAT }} | docker login ghcr.io -u ${{ secrets.GH_USER }} --password-stdin
+        run: |
+          echo ${{ secrets.GH_PAT }} | docker login ghcr.io -u ${{ secrets.GH_USER }} --password-stdin
 
       - name: Publish Images in GitHub Registry
-        run: make container-publish-github GIT_VERSION=${{ github.ref_name }}
+        run: |
+          GIT_VERSION=${{ github.ref_name }} make container-publish-github
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@master
@@ -101,12 +82,9 @@ jobs:
       - name: Logging in AWS ECR Public Repository
         env:
           AWS_REGION: ${{ env.AWS_REGION }}
-        run: aws ecr-public get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin public.ecr.aws
-
-      # not supported public repos yet: https://github.com/aws-actions/amazon-ecr-login/issues/116
-      # - name: Logging in AWS ECR Public Repository
-      #   id: login-ecr
-      #   uses: aws-actions/amazon-ecr-login@v1
+        run: |
+          aws ecr-public get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin public.ecr.aws
 
       - name: Publish Images in GitHub Packages
-        run: make container-publish-aws-ecr GIT_VERSION=${{ github.ref_name }}
+        run: |
+          GIT_VERSION=${{ github.ref_name }} make container-publish-aws-ecr

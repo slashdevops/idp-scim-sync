@@ -60,14 +60,16 @@ jobs:
           echo ${{ github.ref_name }}
 
       - name: Build Distribution Cross-Platform
-        run: GIT_VERSION=${{ github.ref_name }} make build-dist
+        run: |
+          GIT_VERSION=${{ github.ref_name }} make build-dist
 
-      - uses: actions/upload-artifact@v3
+      - name: Upload Distribution files
+        uses: actions/upload-artifact@v3
         with:
           name: dist
           path: ./dist/
 
-  create_github_release:
+  create-github-release:
     name: Create Github Release
     needs: build
     runs-on: ubuntu-latest
@@ -86,22 +88,25 @@ jobs:
           go version
 
       - name: Docker Version
-        run: docker version
+        run: |
+          docker version
 
       - name: Git Current branch name (Version)
         run: |
           echo ${{ github.ref_name }}
 
-      - uses: actions/download-artifact@v3
+      - name: Download Distribution files
+        uses: actions/download-artifact@v3
         with:
           name: dist
           path: ./dist/
 
       - name: Build Distribution zip Assets
-        run: GIT_VERSION=${{ github.ref_name }} make build-dist-zip
+        run: |
+          GIT_VERSION=${{ github.ref_name }} make build-dist-zip
 
       - name: Create Release
-        id: create_github_release
+        id: create-github-release
         uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ github.ref_name }}
@@ -118,12 +123,12 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          release_id: ${{ steps.create_github_release.outputs.id }}
+          release_id: ${{ steps.create-github-release.outputs.id }}
           assets_path: dist/assets
 
   container_image:
     name: Create and Publish Container Image
-    needs: create_github_release
+    needs: create-github-release
     uses: slashdevops/idp-scim-sync/.github/workflows/container-image.yml@main
     secrets:
       GH_PAT: ${{ secrets.GH_PAT }}
@@ -134,7 +139,7 @@ jobs:
 
   aws_sam:
     name: Create and Publish AWS SAM Serverless Application
-    needs: create_github_release
+    needs: create-github-release
     uses: slashdevops/idp-scim-sync/.github/workflows/aws-sam.yml@main
     secrets:
       AWS_OIDC_ROLE_TO_ASSUME: ${{ secrets.AWS_OIDC_ROLE_TO_ASSUME }}
