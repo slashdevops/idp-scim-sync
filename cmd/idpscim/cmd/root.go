@@ -197,7 +197,7 @@ func initConfig() {
 }
 
 func getSecrets() {
-	log.Info("reading values from AWS Secrets Manager")
+	log.Info("reading secrets from AWS Secrets Manager")
 
 	awsConf, err := aws.NewDefaultConf(context.Background())
 	if err != nil {
@@ -219,7 +219,7 @@ func getSecrets() {
 	cfg.GWSUserEmail = unwrap
 	log.WithFields(
 		log.Fields{"secretARN": cfg.GWSUserEmailSecretName},
-	).Info("Read secret")
+	).Debug("read secret")
 
 	log.WithField("name", cfg.GWSServiceAccountFileSecretName).Debug("reading secret")
 	unwrap, err = secrets.GetSecretValue(context.Background(), cfg.GWSServiceAccountFileSecretName)
@@ -229,7 +229,7 @@ func getSecrets() {
 	cfg.GWSServiceAccountFile = unwrap
 	log.WithFields(
 		log.Fields{"secretARN": cfg.GWSServiceAccountFileSecretName},
-	).Info("Read secret")
+	).Debug("read secret")
 
 	log.WithField("name", cfg.AWSSCIMAccessTokenSecretName).Debug("reading secret")
 	unwrap, err = secrets.GetSecretValue(context.Background(), cfg.AWSSCIMAccessTokenSecretName)
@@ -239,7 +239,7 @@ func getSecrets() {
 	cfg.AWSSCIMAccessToken = unwrap
 	log.WithFields(
 		log.Fields{"secretARN": cfg.AWSSCIMAccessTokenSecretName},
-	).Info("Read secret")
+	).Debug("read secret")
 
 	log.WithField("name", cfg.AWSSCIMEndpointSecretName).Debug("reading secret")
 	unwrap, err = secrets.GetSecretValue(context.Background(), cfg.AWSSCIMEndpointSecretName)
@@ -249,7 +249,7 @@ func getSecrets() {
 	cfg.AWSSCIMEndpoint = unwrap
 	log.WithFields(
 		log.Fields{"secretARN": cfg.AWSSCIMEndpointSecretName},
-	).Info("Read secret")
+	).Debug("read secret")
 }
 
 func sync() error {
