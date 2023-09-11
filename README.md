@@ -115,10 +115,19 @@ Requirements:
 Validate, Build and Deploy:
 
 ```bash
-aws cloudformation validate-template --template-body file://template.yaml 1>/dev/null
-sam validate
+# your AWS Cli Profile and Region
+export AWS_PROFILE=<profile name here>
+export AWS_REGION=<region here>
 
-sam deploy --guided
+# validate
+aws cloudformation validate-template --template-body file://template.yaml 1>/dev/null --profile $AWS_PROFILE
+sam validate --profile $AWS_PROFILE
+
+# build
+sam build --profile $AWS_PROFILE
+
+# deploy guided
+sam deploy --guided  --capabilities CAPABILITY_IAM --capabilities CAPABILITY_NAMED_IAM --profile $AWS_PROFILE
 ```
 
 Are you using [AWS Cli Profiles?](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-profiles.html), read [AWS-SAM](docs/AWS-SAM.md)
