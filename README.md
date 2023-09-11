@@ -3,7 +3,6 @@
 [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/5348/badge)](https://bestpractices.coreinfrastructure.org/projects/5348)
 [![CodeQL](https://github.com/slashdevops/idp-scim-sync/actions/workflows/codeql-analysis.yml/badge.svg?branch=main)](https://github.com/slashdevops/idp-scim-sync/actions/workflows/codeql-analysis.yml)
 [![Gosec](https://github.com/slashdevops/idp-scim-sync/actions/workflows/gosec.yml/badge.svg?branch=main)](https://github.com/slashdevops/idp-scim-sync/actions/workflows/gosec.yml)
-[![golangci-lint](https://github.com/slashdevops/idp-scim-sync/actions/workflows/golangci-lint.yml/badge.svg?branch=main)](https://github.com/slashdevops/idp-scim-sync/actions/workflows/golangci-lint.yml)
 [![Main branch CI](https://github.com/slashdevops/idp-scim-sync/actions/workflows/main.yml/badge.svg)](https://github.com/slashdevops/idp-scim-sync/actions/workflows/main.yml)
 ![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/slashdevops/idp-scim-sync?style=plastic)
 [![Go Report Card](https://goreportcard.com/badge/github.com/slashdevops/idp-scim-sync)](https://goreportcard.com/report/github.com/slashdevops/idp-scim-sync)
@@ -28,6 +27,17 @@ If you want to know what creates the [CloudFormation Template](template.yaml), p
 __First time implementing [AWS IAM Identity Center (Successor to AWS Single Sign-On)](https://aws.amazon.com/iam/identity-center/)? please read [Using SSO](docs/Using-SSO.md)__
 
 The best way to to deploy and use this is through the [AWS Serverless public repository - slashdevops/idp-scim-sync](https://serverlessrepo.aws.amazon.com/applications/us-east-1/889836709304/idp-scim-sync)
+
+## Compatibility
+
+AWS recently announced `AWS Lambda Deprecates Go Runtime 1.x` and posted this article [Migrating AWS Lambda functions from the Go1.x runtime to the custom runtime on Amazon Linux 2](https://aws.amazon.com/blogs/compute/migrating-aws-lambda-functions-from-the-go1-x-runtime-to-the-custom-runtime-on-amazon-linux-2/) to help customers with the migration.
+
+This project is already migrated since version `v0.0.19` to the `provided.al2` runtime, so you can use it without any problem.
+
+| idp-scim-sync version | AWS Lambda Runtime | Architecture       | AWS Lambda Deprecates Go Runtime |
+|-----------------------|--------------------|--------------------|----------------------------------|
+| v0.0.18               | Go 1.x             | amd64 (Intel)      | 2023-12-31                       |
+| v0.0.19               | provided.al2       | arm64 (Graviton 2) | ----------                       |
 
 ## Features
 
@@ -116,10 +126,19 @@ Requirements:
 Validate, Build and Deploy:
 
 ```bash
-aws cloudformation validate-template --template-body file://template.yaml 1>/dev/null
-sam validate
+# your AWS Cli Profile and Region
+export AWS_PROFILE=<profile name here>
+export AWS_REGION=<region here>
 
-sam deploy --guided
+# validate
+aws cloudformation validate-template --template-body file://template.yaml 1>/dev/null --profile $AWS_PROFILE
+sam validate --profile $AWS_PROFILE
+
+# build
+sam build --profile $AWS_PROFILE
+
+# deploy guided
+sam deploy --guided  --capabilities CAPABILITY_IAM --capabilities CAPABILITY_NAMED_IAM --profile $AWS_PROFILE
 ```
 
 Are you using [AWS Cli Profiles?](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-profiles.html), read [AWS-SAM](docs/AWS-SAM.md)

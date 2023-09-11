@@ -23,13 +23,13 @@ Validate and Build
 aws cloudformation validate-template --template-body file://template.yaml 1>/dev/null --profile $AWS_PROFILE
 sam validate --profile $AWS_PROFILE
 
-sam build --base-dir cmd/idpscim/ --profile $AWS_PROFILE
+sam build --profile $AWS_PROFILE
 ```
 
 Deploy (Local way)
 
 ```bash
-sam deploy --guided --profile $AWS_PROFILE
+sam deploy --guided  --capabilities CAPABILITY_IAM --capabilities CAPABILITY_NAMED_IAM --profile $AWS_PROFILE
 ```
 
 ## Publish
@@ -49,22 +49,7 @@ Buy default this is private the first time and depends on `AWS_REGION`
 #export AWS_PUBLIC_REGIONS=($(aws ec2 describe-regions | jq -c -r '.Regions[] | .RegionName' | tr '\n' ' '))
 
 export AWS_PUBLIC_REGIONS=(\
-us-west-2 \
-us-west-1 \
-us-east-2 \
 us-east-1 \
-eu-central-1 \
-ap-southeast-2 \
-ap-southeast-1 \
-ca-central-1 \
-sa-east-1 \
-ap-northeast-1 \
-ap-northeast-2 \
-eu-west-1 \
-eu-west-2 \
-eu-west-3 \
-ap-south-1 \
-eu-north-1\
 )
 
 for AWS_PUBLIC_REGION in $AWS_PUBLIC_REGIONS; do
@@ -102,22 +87,7 @@ Delete Application
 
 ```bash
 export AWS_PUBLIC_REGIONS=(\
-us-west-2 \
-us-west-1 \
-us-east-2 \
 us-east-1 \
-eu-central-1 \
-ap-southeast-2 \
-ap-southeast-1 \
-ca-central-1 \
-sa-east-1 \
-ap-northeast-1 \
-ap-northeast-2 \
-eu-west-1 \
-eu-west-2 \
-eu-west-3 \
-ap-south-1 \
-eu-north-1\
 )
 
 for AWS_PUBLIC_REGION in $AWS_PUBLIC_REGIONS; do

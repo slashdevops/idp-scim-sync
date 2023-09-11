@@ -1,0 +1,46 @@
+name: "Build"
+
+on:
+  # push:
+  #   branches:
+  #     - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  security-events: write
+  actions: read
+  contents: read
+  pull-requests: read
+
+jobs:
+  test:
+    name: "Test and Build"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Set up Go 1.x
+        id: go
+        uses: actions/setup-go@v4
+        with:
+          go-version-file: ./go.mod
+
+      - name: Go version
+        run: |
+          go version
+
+      - name: Test
+        run: make test
+
+      - name: codecov coverage report
+        uses: codecov/codecov-action@v3
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }} # not required for public repos
+          files: ./coverage.out
+
+      - name: Build
+        run: make build

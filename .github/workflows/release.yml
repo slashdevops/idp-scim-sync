@@ -7,7 +7,6 @@ on:
       - v[0-9].[0-9]+.[0-9]*
 
 env:
-  GO_VERSION: 1.21.1
   AWS_REGION: us-east-1
 
 permissions:
@@ -22,36 +21,18 @@ jobs:
     name: Test
     runs-on: ubuntu-latest
     steps:
-      - name: Set up Go 1.x
-        uses: actions/setup-go@v4
-        with:
-          go-version: ${{ env.GO_VERSION }}
-        id: go
-
       - name: Check out code
         uses: actions/checkout@v4
 
-      - id: go-cache-paths
+      - name: Set up Go 1.x
+        id: go
+        uses: actions/setup-go@v4
+        with:
+          go-version-file: ./go.mod
+
+      - name: Go version
         run: |
-          echo "go-build=$(go env GOCACHE)" >> $GITHUB_OUTPUT
-          echo "go-mod=$(go env GOMODCACHE)" >> $GITHUB_OUTPUT
-
-      - name: Go Build Cache
-        uses: actions/cache@v3
-        with:
-          path: ${{ steps.go-cache-paths.outputs.go-build }}
-          key: ${{ runner.os }}-go-build-${{ hashFiles('**/go.sum') }}
-
-      - name: Go Mod Cache
-        uses: actions/cache@v3
-        with:
-          path: ${{ steps.go-cache-paths.outputs.go-mod }}
-          key: ${{ runner.os }}-go-mod-${{ hashFiles('**/go.sum') }}
-
-      # - name: golangci-lint
-      #   uses: golangci/golangci-lint-action@v3
-      #   with:
-      #     version: latest
+          go version
 
       - name: Test
         run: make test
@@ -61,101 +42,71 @@ jobs:
     needs: test
     runs-on: ubuntu-latest
     steps:
-      - name: Set up Go 1.x
-        uses: actions/setup-go@v4
-        with:
-          go-version: ${{ env.GO_VERSION }}
-        id: go
-
       - name: Check out code
         uses: actions/checkout@v4
 
-      - id: go-cache-paths
+      - name: Set up Go 1.x
+        id: go
+        uses: actions/setup-go@v4
+        with:
+          go-version-file: ./go.mod
+
+      - name: Go version
         run: |
-          echo "go-build=$(go env GOCACHE)" >> $GITHUB_OUTPUT
-          echo "go-mod=$(go env GOMODCACHE)" >> $GITHUB_OUTPUT
-
-      - name: Go Build Cache
-        uses: actions/cache@v3
-        with:
-          path: ${{ steps.go-cache-paths.outputs.go-build }}
-          key: ${{ runner.os }}-go-build-${{ hashFiles('**/go.sum') }}
-
-      - name: Go Mod Cache
-        uses: actions/cache@v3
-        with:
-          path: ${{ steps.go-cache-paths.outputs.go-mod }}
-          key: ${{ runner.os }}-go-mod-${{ hashFiles('**/go.sum') }}
+          go version
 
       - name: Git Current branch name (Version)
         run: |
           echo ${{ github.ref_name }}
 
       - name: Build Distribution Cross-Platform
-        run: GIT_VERSION=${{ github.ref_name }} make build-dist
+        run: |
+          GIT_VERSION=${{ github.ref_name }} make build-dist
 
-      - uses: actions/upload-artifact@v2
+      - name: Upload Distribution files
+        uses: actions/upload-artifact@v3
         with:
           name: dist
           path: ./dist/
 
-  create_github_release:
+  create-github-release:
     name: Create Github Release
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - name: Set up Go 1.x
-        uses: actions/setup-go@v4
-        with:
-          go-version: ${{ env.GO_VERSION }}
-        id: go
-
       - name: Check out code
         uses: actions/checkout@v4
 
-      - id: go-cache-paths
+      - name: Set up Go 1.x
+        id: go
+        uses: actions/setup-go@v4
+        with:
+          go-version-file: ./go.mod
+
+      - name: Go version
         run: |
-          echo "go-build=$(go env GOCACHE)" >> $GITHUB_OUTPUT
-          echo "go-mod=$(go env GOMODCACHE)" >> $GITHUB_OUTPUT
-
-      - name: Go Build Cache
-        uses: actions/cache@v3
-        with:
-          path: ${{ steps.go-cache-paths.outputs.go-build }}
-          key: ${{ runner.os }}-go-build-${{ hashFiles('**/go.sum') }}
-
-      - name: Go Mod Cache
-        uses: actions/cache@v3
-        with:
-          path: ${{ steps.go-cache-paths.outputs.go-mod }}
-          key: ${{ runner.os }}-go-mod-${{ hashFiles('**/go.sum') }}
+          go version
 
       - name: Docker Version
-        run: docker version
+        run: |
+          docker version
 
       - name: Git Current branch name (Version)
         run: |
           echo ${{ github.ref_name }}
 
-      - uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cache/go-build
-            ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-
-
-      - uses: actions/download-artifact@v3
+      - name: Download Distribution files
+        uses: actions/download-artifact@v3
         with:
           name: dist
           path: ./dist/
 
       - name: Build Distribution zip Assets
-        run: GIT_VERSION=${{ github.ref_name }} make build-dist-zip
+        run: |
+          GIT_VERSION=${{ github.ref_name }} make build-dist-zip
 
       - name: Create Release
-        id: create_github_release
+        id: create-github-release
         uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ github.ref_name }}
@@ -172,12 +123,12 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          release_id: ${{ steps.create_github_release.outputs.id }}
+          release_id: ${{ steps.create-github-release.outputs.id }}
           assets_path: dist/assets
 
   container_image:
     name: Create and Publish Container Image
-    needs: create_github_release
+    needs: create-github-release
     uses: slashdevops/idp-scim-sync/.github/workflows/container-image.yml@main
     secrets:
       GH_PAT: ${{ secrets.GH_PAT }}
@@ -188,7 +139,7 @@ jobs:
 
   aws_sam:
     name: Create and Publish AWS SAM Serverless Application
-    needs: create_github_release
+    needs: create-github-release
     uses: slashdevops/idp-scim-sync/.github/workflows/aws-sam.yml@main
     secrets:
       AWS_OIDC_ROLE_TO_ASSUME: ${{ secrets.AWS_OIDC_ROLE_TO_ASSUME }}
