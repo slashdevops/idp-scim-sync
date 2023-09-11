@@ -28,6 +28,17 @@ __First time implementing [AWS IAM Identity Center (Successor to AWS Single Sign
 
 The best way to to deploy and use this is through the [AWS Serverless public repository - slashdevops/idp-scim-sync](https://serverlessrepo.aws.amazon.com/applications/us-east-1/889836709304/idp-scim-sync)
 
+## Compatibility
+
+AWS recently announced `AWS Lambda Deprecates Go Runtime 1.x` and posted this article [Migrating AWS Lambda functions from the Go1.x runtime to the custom runtime on Amazon Linux 2](https://aws.amazon.com/blogs/compute/migrating-aws-lambda-functions-from-the-go1-x-runtime-to-the-custom-runtime-on-amazon-linux-2/) to help customers with the migration.
+
+This project is already migrated since version `v0.0.19` to the `provided.al2` runtime, so you can use it without any problem.
+
+| idp-scim-sync version | AWS Lambda Runtime | Architecture       | AWS Lambda Deprecates Go Runtime |
+|-----------------------|--------------------|--------------------|----------------------------------|
+| v0.0.18               | Go 1.x             | amd64 (Intel)      | 2023-12-31                       |
+| v0.0.19               | provided.al2       | arm64 (Graviton 2) | ----------                       |
+
 ## Features
 
 * Efficient data retrieval from Google Workspace API using [Partial response](https://cloud.google.com/storage/docs/json_api#partial-response)
