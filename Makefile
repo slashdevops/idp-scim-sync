@@ -110,7 +110,7 @@ go-mod-tidy: ## Clean go.mod and go.sum
 .PHONY: go-mod-update
 go-mod-update: go-mod-tidy ## Update go.mod and go.sum
 	@printf "👉 Updating go.mod and go.sum...\n"
-	$(foreach DEP, $(APP_DEPENDENCIES), \
+	$(foreach DEP, $(PROJECT_DEPENDENCIES), \
 		$(call exec_cmd, go get -u $(DEP)) \
 	)
 
