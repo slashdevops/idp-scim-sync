@@ -82,12 +82,6 @@ endef # don't remove the whiteline before endef
 .PHONY: all
 all: clean test build
 
-##@ lint
-.PHONY: lint
-lint: ## Run linters
-	@printf "👉 Running linters...\n"
-	$(call exec_cmd, golangci-lint run --timeout 5m)
-
 ##@ go-fmt
 .PHONY: go-fmt
 go-fmt: ## Format go code

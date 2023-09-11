@@ -7,7 +7,6 @@ on:
       - v[0-9].[0-9]+.[0-9]*
 
 env:
-  GO_VERSION: 1.21.1
   AWS_REGION: us-east-1
 
 permissions:
@@ -25,8 +24,11 @@ jobs:
       - name: Set up Go 1.x
         uses: actions/setup-go@v4
         with:
-          go-version: ${{ env.GO_VERSION }}
-        id: go
+          go-version-file: ./go.mod
+
+      - name: Go version
+        run: |
+          go version
 
       - name: Check out code
         uses: actions/checkout@v4
@@ -48,11 +50,6 @@ jobs:
           path: ${{ steps.go-cache-paths.outputs.go-mod }}
           key: ${{ runner.os }}-go-mod-${{ hashFiles('**/go.sum') }}
 
-      # - name: golangci-lint
-      #   uses: golangci/golangci-lint-action@v3
-      #   with:
-      #     version: latest
-
       - name: Test
         run: make test
 
@@ -64,8 +61,11 @@ jobs:
       - name: Set up Go 1.x
         uses: actions/setup-go@v4
         with:
-          go-version: ${{ env.GO_VERSION }}
-        id: go
+          go-version-file: ./go.mod
+
+      - name: Go version
+        run: |
+          go version
 
       - name: Check out code
         uses: actions/checkout@v4
@@ -107,8 +107,11 @@ jobs:
       - name: Set up Go 1.x
         uses: actions/setup-go@v4
         with:
-          go-version: ${{ env.GO_VERSION }}
-        id: go
+          go-version-file: ./go.mod
+
+      - name: Go version
+        run: |
+          go version
 
       - name: Check out code
         uses: actions/checkout@v4

@@ -1,18 +1,14 @@
 ---
 name: "Gosec"
-on:
-  push:
-    branches:
-      - main
 
+on:
+  # push:
+  #   branches:
+  #     - main
   pull_request:
     branches:
       - main
-
   workflow_dispatch:
-
-env:
-  GO_VERSION: 1.21.1
 
 jobs:
   tests:
@@ -25,10 +21,11 @@ jobs:
         id: go
         uses: actions/setup-go@v4
         with:
-          go-version: ${{ env.GO_VERSION }}
+          go-version-file: ./go.mod
 
-      - name: Go Version
-        run: go version
+      - name: Go version
+        run: |
+          go version
 
       - name: Go Envirioment Variables
         run: go env
