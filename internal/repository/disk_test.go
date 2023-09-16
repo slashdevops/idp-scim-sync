@@ -105,7 +105,7 @@ func TestStateRepository_SetState(t *testing.T) {
 							IPID:        "1",
 							Name:        model.Name{FamilyName: "1", GivenName: "user"},
 							DisplayName: "user 1",
-							Email:       "user.1@mail.com",
+							Emails:      []model.Email{{Value: "user.1@mail.com", Type: "work", Primary: true}},
 							HashCode:    "123456789",
 						},
 					},

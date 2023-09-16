@@ -16,20 +16,36 @@ type Member struct {
 	HashCode string `json:"hashCode"`
 }
 
-// GobEncode implements the gob.GobEncoder interface for Member entity.
+// MarshalBinary implements the gob.GobEncoder interface for Member entity.
 // This is necessary to avoid include the value in the field SCIMID until
 // the hashcode calculation is done.
 // the Hash function use gob to calculate the hash code.
-func (m *Member) GobEncode() ([]byte, error) {
+func (m Member) MarshalBinary() ([]byte, error) {
 	buf := new(bytes.Buffer)
 	enc := gob.NewEncoder(buf)
 	if err := enc.Encode(m.IPID); err != nil {
-		panic(err)
+		return nil, err
 	}
 	if err := enc.Encode(m.Email); err != nil {
-		panic(err)
+		return nil, err
 	}
 	return buf.Bytes(), nil
+}
+
+// UnmarshalBinary implements the gob.GobDecoder interface for Member entity.
+// This is necessary to avoid include the value in the field SCIMID until
+// the hashcode calculation is done.
+// the Hash function use gob to calculate the hash code.
+func (m *Member) UnmarshalBinary(data []byte) error {
+	buf := bytes.NewBuffer(data)
+	dec := gob.NewDecoder(buf)
+	if err := dec.Decode(&m.IPID); err != nil {
+		return err
+	}
+	if err := dec.Decode(&m.Email); err != nil {
+		return err
+	}
+	return nil
 }
 
 // SetHashCode is a helper function to avoid errors when calculating hash code.

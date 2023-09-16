@@ -40,6 +40,9 @@ var (
 
 	// ErrPhoneNumbersTooMany is returned when the phone numbers has more than one entity.
 	ErrPhoneNumbersTooMany = errors.Errorf("aws: phone numbers may not be more than 1")
+
+	// ErrTooManyPrimaryEmails when there are more than one primary email
+	ErrTooManyPrimaryEmails = errors.Errorf("aws: there can only be one primary email")
 )
 
 // Name represent a name entity
@@ -162,11 +165,18 @@ func (u *User) Validate() error {
 	if len(u.Emails) > 1 {
 		return ErrEmailsTooMany
 	}
+
+	primaryCount := 0
 	for _, email := range u.Emails {
 		if !email.Primary {
 			return ErrPrimaryEmailEmpty
 		}
+		primaryCount++
 	}
+	if primaryCount != 1 {
+		return ErrTooManyPrimaryEmails
+	}
+
 	if len(u.Addresses) > 1 {
 		return ErrAddressesTooMany
 	}
@@ -184,6 +194,36 @@ func (u *User) String() string {
 		log.Fatalf(err.Error())
 	}
 	return string(JSON)
+}
+
+// GetPrimaryEmail returns the primary email of the user
+func (u *User) GetPrimaryEmail() *Email {
+	for _, email := range u.Emails {
+		if email.Primary {
+			return &email
+		}
+	}
+	return nil
+}
+
+// GetPrimaryEmailAddress returns the primary email address of the user
+func (u *User) GetPrimaryEmailAddress() string {
+	for _, email := range u.Emails {
+		if email.Primary {
+			return email.Value
+		}
+	}
+	return ""
+}
+
+// GetPrimaryAddress returns the primary address of the user
+func (u *User) GetPrimaryAddress() *Address {
+	for _, address := range u.Addresses {
+		if address.Primary {
+			return &address
+		}
+	}
+	return nil
 }
 
 // GetUserResponse represent a get user response entity

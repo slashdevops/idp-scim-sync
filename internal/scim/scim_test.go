@@ -627,8 +627,8 @@ func TestGetUsers(t *testing.T) {
 		assert.Equal(t, "2", gr.Resources[1].Name.FamilyName)
 		assert.Equal(t, "user", gr.Resources[1].Name.GivenName)
 
-		assert.Equal(t, "user.1@mail.com", gr.Resources[0].Email)
-		assert.Equal(t, "user.2@mail.com", gr.Resources[1].Email)
+		assert.Equal(t, "user.1@mail.com", gr.Resources[0].Emails[0].Value)
+		assert.Equal(t, "user.2@mail.com", gr.Resources[1].Emails[0].Value)
 	})
 }
 
@@ -671,7 +671,7 @@ func TestCreateUsers(t *testing.T) {
 					IPID:        "1",
 					Name:        model.Name{FamilyName: "1", GivenName: "user"},
 					DisplayName: "user 1",
-					Email:       "user.1@mail.com",
+					Emails:      []model.Email{{Value: "user.1@mail.com", Type: "work", Primary: true}},
 					Active:      true,
 				},
 			},
@@ -708,7 +708,7 @@ func TestCreateUsers(t *testing.T) {
 					IPID:        "1",
 					Name:        model.Name{FamilyName: "1", GivenName: "user"},
 					DisplayName: "user 1",
-					Email:       "user.1@mail.com",
+					Emails:      []model.Email{{Value: "user.1@mail.com", Type: "work", Primary: true}},
 				},
 			},
 		}
@@ -778,14 +778,14 @@ func TestCreateUsers(t *testing.T) {
 					IPID:        "1",
 					Name:        model.Name{FamilyName: "1", GivenName: "user"},
 					DisplayName: "user 1",
-					Email:       "user.1@mail.com",
+					Emails:      []model.Email{{Value: "user.1@mail.com", Type: "work", Primary: true}},
 					Active:      true,
 				},
 				{
 					IPID:        "2",
 					Name:        model.Name{FamilyName: "2", GivenName: "user"},
 					DisplayName: "user 2",
-					Email:       "user.2@mail.com",
+					Emails:      []model.Email{{Value: "user.2@mail.com", Type: "work", Primary: true}},
 					Active:      true,
 				},
 			},
@@ -861,7 +861,7 @@ func TestUpdateUsers(t *testing.T) {
 					SCIMID:      "1",
 					Name:        model.Name{FamilyName: "1", GivenName: "user"},
 					DisplayName: "user 1",
-					Email:       "user.1@mail.com",
+					Emails:      []model.Email{{Value: "user.1@mail.com", Type: "work", Primary: true}},
 					Active:      true,
 				},
 			},
@@ -914,7 +914,7 @@ func TestUpdateUsers(t *testing.T) {
 					SCIMID:      "1",
 					Name:        model.Name{FamilyName: "1", GivenName: "user"},
 					DisplayName: "user 1",
-					Email:       "user.1@mail.com",
+					Emails:      []model.Email{{Value: "user.1@mail.com", Type: "work", Primary: true}},
 				},
 			},
 		}
@@ -986,7 +986,7 @@ func TestUpdateUsers(t *testing.T) {
 					SCIMID:      "1",
 					Name:        model.Name{FamilyName: "1", GivenName: "user"},
 					DisplayName: "user 1",
-					Email:       "user.1@mail.com",
+					Emails:      []model.Email{{Value: "user.1@mail.com", Type: "work", Primary: true}},
 					Active:      true,
 				},
 				{
@@ -994,7 +994,7 @@ func TestUpdateUsers(t *testing.T) {
 					SCIMID:      "2",
 					Name:        model.Name{FamilyName: "2", GivenName: "user"},
 					DisplayName: "user 2",
-					Email:       "user.2@mail.com",
+					Emails:      []model.Email{{Value: "user.2@mail.com", Type: "work", Primary: true}},
 					Active:      true,
 				},
 			},
@@ -1047,7 +1047,7 @@ func TestDeleteUsers(t *testing.T) {
 					SCIMID:      "1",
 					Name:        model.Name{FamilyName: "1", GivenName: "user"},
 					DisplayName: "user 1",
-					Email:       "user.1@mail.com",
+					Emails:      []model.Email{{Value: "user.1@mail.com", Type: "work", Primary: true}},
 					Active:      true,
 				},
 			},
@@ -1072,7 +1072,7 @@ func TestDeleteUsers(t *testing.T) {
 					SCIMID:      "1",
 					Name:        model.Name{FamilyName: "1", GivenName: "user"},
 					DisplayName: "user 1",
-					Email:       "user.1@mail.com",
+					Emails:      []model.Email{{Value: "user.1@mail.com", Type: "work", Primary: true}},
 				},
 			},
 		}
@@ -1099,7 +1099,7 @@ func TestDeleteUsers(t *testing.T) {
 					SCIMID:      "1",
 					Name:        model.Name{FamilyName: "1", GivenName: "user"},
 					DisplayName: "user 1",
-					Email:       "user.1@mail.com",
+					Emails:      []model.Email{{Value: "user.1@mail.com", Type: "work", Primary: true}},
 					Active:      true,
 				},
 				{
@@ -1107,7 +1107,7 @@ func TestDeleteUsers(t *testing.T) {
 					SCIMID:      "2",
 					Name:        model.Name{FamilyName: "2", GivenName: "user"},
 					DisplayName: "user 2",
-					Email:       "user.2@mail.com",
+					Emails:      []model.Email{{Value: "user.2@mail.com", Type: "work", Primary: true}},
 					Active:      true,
 				},
 			},
@@ -1723,7 +1723,7 @@ func TestGetGroupsMembersBruteForce(t *testing.T) {
 					},
 					DisplayName: "user 1",
 					Active:      true,
-					Email:       "user.1@mail.com",
+					Emails:      []model.Email{{Value: "user.1@mail.com", Type: "work", Primary: true}},
 				},
 				{
 					IPID:   "2",
@@ -1734,7 +1734,7 @@ func TestGetGroupsMembersBruteForce(t *testing.T) {
 					},
 					DisplayName: "user 2",
 					Active:      true,
-					Email:       "user.2@mail.com",
+					Emails:      []model.Email{{Value: "user.2@mail.com", Type: "work", Primary: true}},
 				},
 			},
 		}
@@ -1845,7 +1845,7 @@ func TestGetGroupsMembersBruteForce(t *testing.T) {
 					},
 					DisplayName: "user 1",
 					Active:      true,
-					Email:       "group.1@mail.com",
+					Emails:      []model.Email{{Value: "user.1@mail.com", Type: "work", Primary: true}},
 				},
 			},
 		}
@@ -1877,7 +1877,7 @@ func TestGetGroupsMembersBruteForce(t *testing.T) {
 					},
 					DisplayName: "user 1",
 					Active:      true,
-					Email:       "user.1@mail.com",
+					Emails:      []model.Email{{Value: "user.1@mail.com", Type: "work", Primary: true}},
 				},
 			},
 		}
@@ -1913,7 +1913,7 @@ func TestGetGroupsMembersBruteForce(t *testing.T) {
 					},
 					DisplayName: "user 1",
 					Active:      true,
-					Email:       "group.1@mail.com",
+					Emails:      []model.Email{{Value: "user.1@mail.com", Type: "work", Primary: true}},
 				},
 			},
 		}
@@ -1957,7 +1957,7 @@ func TestGetGroupsMembersBruteForce(t *testing.T) {
 					},
 					DisplayName: "user 1",
 					Active:      true,
-					Email:       "user.1@mail.com",
+					Emails:      []model.Email{{Value: "user.1@mail.com", Type: "work", Primary: true}},
 				},
 			},
 		}

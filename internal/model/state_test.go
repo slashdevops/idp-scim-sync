@@ -70,7 +70,7 @@ func TestState_MarshalJSON(t *testing.T) {
 								IPID:     "ipid",
 								SCIMID:   "scimid",
 								Name:     Name{FamilyName: "lastName", GivenName: "name"},
-								Email:    "email",
+								Emails:   []Email{{Value: "email", Type: "work", Primary: true}},
 								HashCode: "hashCode",
 							},
 						},
@@ -163,13 +163,13 @@ func TestState_SetHashCode(t *testing.T) {
 	})
 
 	t.Run("full state", func(t *testing.T) {
-		u1 := User{IPID: "1", SCIMID: "1", Name: Name{FamilyName: "user", GivenName: "1"}, DisplayName: "user.1", Active: true, Email: "user.1@mail.com"}
+		u1 := User{IPID: "1", SCIMID: "1", Name: Name{FamilyName: "user", GivenName: "1"}, DisplayName: "user.1", Active: true, Emails: []Email{{Value: "user.1@mail.com", Type: "work", Primary: true}}}
 		u1.SetHashCode()
 
-		u2 := User{IPID: "2", SCIMID: "2", Name: Name{FamilyName: "user", GivenName: "2"}, DisplayName: "user.2", Active: true, Email: "user.2@mail.com"}
+		u2 := User{IPID: "2", SCIMID: "2", Name: Name{FamilyName: "user", GivenName: "2"}, DisplayName: "user.2", Active: true, Emails: []Email{{Value: "user.2@mail.com", Type: "work", Primary: true}}}
 		u2.SetHashCode()
 
-		u3 := User{IPID: "3", SCIMID: "3", Name: Name{FamilyName: "user", GivenName: "3"}, DisplayName: "user.3", Active: false, Email: "user.3@mail.com"}
+		u3 := User{IPID: "3", SCIMID: "3", Name: Name{FamilyName: "user", GivenName: "3"}, DisplayName: "user.3", Active: false, Emails: []Email{{Value: "user.3@mail.com", Type: "work", Primary: true}}}
 		u3.SetHashCode()
 
 		usrs := &UsersResult{Items: 3, Resources: []*User{&u1, &u2, &u3}}
@@ -187,13 +187,13 @@ func TestState_SetHashCode(t *testing.T) {
 		grs := &GroupsResult{Items: 3, Resources: []*Group{g1, g2, g3}}
 		grs.SetHashCode()
 
-		m1 := Member{IPID: "1", SCIMID: "1", Email: u1.Email, Status: "ACTIVE"}
+		m1 := Member{IPID: "1", SCIMID: "1", Email: u1.GetPrimaryEmailAddress(), Status: "ACTIVE"}
 		m1.SetHashCode()
 
-		m2 := Member{IPID: "2", SCIMID: "2", Email: u2.Email, Status: "ACTIVE"}
+		m2 := Member{IPID: "2", SCIMID: "2", Email: u2.GetPrimaryEmailAddress(), Status: "ACTIVE"}
 		m2.SetHashCode()
 
-		m3 := Member{IPID: "2", SCIMID: "2", Email: u3.Email, Status: "ACTIVE"}
+		m3 := Member{IPID: "2", SCIMID: "2", Email: u3.GetPrimaryEmailAddress(), Status: "ACTIVE"}
 		m3.SetHashCode()
 
 		gm1 := GroupMembers{Items: 1, Group: g1, Resources: []*Member{&m1}}

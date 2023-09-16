@@ -9,6 +9,396 @@ import (
 	"github.com/slashdevops/idp-scim-sync/internal/utils"
 )
 
+func TestName_GobEncode(t *testing.T) {
+	tests := []struct {
+		name   string
+		toTest Name
+	}{
+		{
+			name:   "empty Name",
+			toTest: Name{},
+		},
+		{
+			name: "filled Name",
+			toTest: Name{
+				Formatted:       "formatted",
+				FamilyName:      "familyName",
+				GivenName:       "givenName",
+				MiddleName:      "middleName",
+				HonorificPrefix: "honorificPrefix",
+				HonorificSuffix: "honorificSuffix",
+			},
+		},
+		{
+			name: "filled Name with empty values",
+			toTest: Name{
+				FamilyName:      "familyName",
+				GivenName:       "givenName",
+				HonorificSuffix: "honorificSuffix",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			b := new(bytes.Buffer)
+			enc := gob.NewEncoder(b)
+
+			if err := enc.Encode(tt.toTest); err != nil {
+				t.Errorf("Name.GobEncode() error = %v", err)
+			}
+
+			dec := gob.NewDecoder(b)
+			var got Name
+			if err := dec.Decode(&got); err != nil {
+				t.Errorf("Name.GobEncode() error = %v", err)
+			}
+
+			if !reflect.DeepEqual(got, tt.toTest) {
+				t.Errorf("Name.GobEncode() = %v, want %v", got, tt.toTest)
+			}
+		})
+	}
+}
+
+func TestEmail_GobEncode(t *testing.T) {
+	tests := []struct {
+		name   string
+		toTest Email
+	}{
+		{
+			name:   "empty Email",
+			toTest: Email{},
+		},
+		{
+			name: "filled Email",
+			toTest: Email{
+				Value:   "value",
+				Type:    "type",
+				Primary: true,
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			b := new(bytes.Buffer)
+			enc := gob.NewEncoder(b)
+
+			if err := enc.Encode(tt.toTest); err != nil {
+				t.Errorf("Email.GobEncode() error = %v", err)
+			}
+
+			dec := gob.NewDecoder(b)
+			var got Email
+			if err := dec.Decode(&got); err != nil {
+				t.Errorf("Email.GobEncode() error = %v", err)
+			}
+
+			if !reflect.DeepEqual(got, tt.toTest) {
+				t.Errorf("Email.GobEncode() = %v, want %v", got, tt.toTest)
+			}
+		})
+	}
+}
+
+func TestAddress_GobEncode(t *testing.T) {
+	tests := []struct {
+		name   string
+		toTest Address
+	}{
+		{
+			name:   "empty Address",
+			toTest: Address{},
+		},
+		{
+			name: "filled Address",
+			toTest: Address{
+				Formatted:     "formatted",
+				StreetAddress: "streetAddress",
+				Locality:      "locality",
+				Region:        "region",
+				PostalCode:    "postalCode",
+				Country:       "country",
+				Type:          "type",
+				Primary:       true,
+			},
+		},
+		{
+			name: "filled Address with empty values",
+			toTest: Address{
+				StreetAddress: "streetAddress",
+				Locality:      "locality",
+				Region:        "region",
+				PostalCode:    "postalCode",
+				Country:       "country",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			b := new(bytes.Buffer)
+			enc := gob.NewEncoder(b)
+
+			if err := enc.Encode(tt.toTest); err != nil {
+				t.Errorf("Address.GobEncode() error = %v", err)
+			}
+
+			dec := gob.NewDecoder(b)
+			var got Address
+			if err := dec.Decode(&got); err != nil {
+				t.Errorf("Address.GobEncode() error = %v", err)
+			}
+
+			if !reflect.DeepEqual(got, tt.toTest) {
+				t.Errorf("Address.GobEncode() = %v, want %v", got, tt.toTest)
+			}
+		})
+	}
+}
+
+func TestPhoneNumber_GobEncode(t *testing.T) {
+	tests := []struct {
+		name   string
+		toTest PhoneNumber
+	}{
+		{
+			name:   "empty PhoneNumber",
+			toTest: PhoneNumber{},
+		},
+		{
+			name: "filled PhoneNumber",
+			toTest: PhoneNumber{
+				Value: "value",
+				Type:  "type",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			b := new(bytes.Buffer)
+			enc := gob.NewEncoder(b)
+
+			if err := enc.Encode(tt.toTest); err != nil {
+				t.Errorf("PhoneNumber.GobEncode() error = %v", err)
+			}
+
+			dec := gob.NewDecoder(b)
+			var got PhoneNumber
+			if err := dec.Decode(&got); err != nil {
+				t.Errorf("PhoneNumber.GobEncode() error = %v", err)
+			}
+
+			if !reflect.DeepEqual(got, tt.toTest) {
+				t.Errorf("PhoneNumber.GobEncode() = %v, want %v", got, tt.toTest)
+			}
+		})
+	}
+}
+
+func TestManager_GobEncode(t *testing.T) {
+	tests := []struct {
+		name   string
+		toTest Manager
+	}{
+		{
+			name:   "empty Manager",
+			toTest: Manager{},
+		},
+		{
+			name: "filled Manager",
+			toTest: Manager{
+				Value: "value",
+				Ref:   "ref",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			b := new(bytes.Buffer)
+			enc := gob.NewEncoder(b)
+
+			if err := enc.Encode(tt.toTest); err != nil {
+				t.Errorf("Manager.GobEncode() error = %v", err)
+			}
+
+			dec := gob.NewDecoder(b)
+			var got Manager
+			if err := dec.Decode(&got); err != nil {
+				t.Errorf("Manager.GobEncode() error = %v", err)
+			}
+
+			if !reflect.DeepEqual(got, tt.toTest) {
+				t.Errorf("Manager.GobEncode() = %v, want %v", got, tt.toTest)
+			}
+		})
+	}
+}
+
+func TestEnterpriseData_GobEncode(t *testing.T) {
+	tests := []struct {
+		name   string
+		toTest EnterpriseData
+	}{
+		{
+			name:   "empty EnterpriseData",
+			toTest: EnterpriseData{},
+		},
+		{
+			name: "filled EnterpriseData",
+			toTest: EnterpriseData{
+				EmployeeNumber: "employeeNumber",
+				CostCenter:     "costCenter",
+				Organization:   "organization",
+				Manager:        Manager{Value: "123456789", Ref: "https://idp.example.com/idp/user/123456789"},
+				Department:     "department",
+				Division:       "division",
+			},
+		},
+		{
+			name: "filled EnterpriseData with empty values",
+			toTest: EnterpriseData{
+				EmployeeNumber: "employeeNumber",
+				CostCenter:     "costCenter",
+				Department:     "department",
+				Division:       "division",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			b := new(bytes.Buffer)
+			enc := gob.NewEncoder(b)
+
+			if err := enc.Encode(tt.toTest); err != nil {
+				t.Errorf("EnterpriseData.GobEncode() error = %v", err)
+			}
+
+			dec := gob.NewDecoder(b)
+			var got EnterpriseData
+			if err := dec.Decode(&got); err != nil {
+				t.Errorf("EnterpriseData.GobEncode() error = %v", err)
+			}
+
+			if !reflect.DeepEqual(got, tt.toTest) {
+				t.Errorf("EnterpriseData.GobEncode() = %v, want %v", got, tt.toTest)
+			}
+		})
+	}
+}
+
+func TestUser_GobEncode(t *testing.T) {
+	tests := []struct {
+		name   string
+		toTest User
+	}{
+		{
+			name:   "empty User",
+			toTest: User{},
+		},
+		{
+			name: "filled User",
+			toTest: User{
+				IPID:              "1",
+				SCIMID:            "this should not be encoded",
+				UserName:          "user1",
+				DisplayName:       "user 1",
+				NickName:          "the user1",
+				ProfileURL:        "https://idp.example.com/idp/user/1",
+				Title:             "title",
+				UserType:          "userType",
+				PreferredLanguage: "preferredLanguage",
+				Locale:            "locale",
+				Timezone:          "timezone",
+				Name: Name{
+					Formatted:       "User 1",
+					FamilyName:      "1",
+					GivenName:       "user",
+					MiddleName:      "the",
+					HonorificPrefix: "Mr.",
+					HonorificSuffix: "Jr.",
+				},
+				Active:       true,
+				Emails:       []Email{{Value: "user.1@mail.com", Type: "work", Primary: true}},
+				Addresses:    []Address{{Formatted: "formatted", StreetAddress: "156", Locality: "LA", Region: "CA", PostalCode: "08860", Country: "USA", Type: "Work", Primary: true}},
+				PhoneNumbers: []PhoneNumber{{Value: "value", Type: "type"}},
+				EnterpriseData: EnterpriseData{
+					EmployeeNumber: "employeeNumber",
+					CostCenter:     "costCenter",
+					Organization:   "organization",
+					Manager:        Manager{Value: "123456", Ref: "https://idp.example.com/idp/user/123456"},
+					Department:     "department",
+					Division:       "division",
+				},
+				HashCode: "this should not be encoded",
+			},
+		},
+		{
+			name: "filled User with empty values",
+			toTest: User{
+				IPID:        "1",
+				UserName:    "user1",
+				DisplayName: "user 1",
+				ProfileURL:  "https://idp.example.com/idp/user/1",
+				Name: Name{
+					FamilyName: "1",
+					GivenName:  "user",
+				},
+				Active:       true,
+				Emails:       []Email{{Value: "user.1@mail.com", Type: "work", Primary: true}},
+				PhoneNumbers: []PhoneNumber{{Value: "value", Type: "type"}},
+				HashCode:     "this should not be encoded",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			b := new(bytes.Buffer)
+			enc := gob.NewEncoder(b)
+
+			if err := enc.Encode(tt.toTest); err != nil {
+				t.Errorf("User.GobEncode() error = %v", err)
+			}
+
+			dec := gob.NewDecoder(b)
+			var got User
+			if err := dec.Decode(&got); err != nil {
+				t.Errorf("User.GobEncode() error = %v", err)
+			}
+
+			// SCIMID is not exported, so it will not be encoded
+			// HashCode is not exported, so it will not be encoded
+			expected := User{
+				IPID:              tt.toTest.IPID,
+				UserName:          tt.toTest.UserName,
+				DisplayName:       tt.toTest.DisplayName,
+				NickName:          tt.toTest.NickName,
+				ProfileURL:        tt.toTest.ProfileURL,
+				Title:             tt.toTest.Title,
+				UserType:          tt.toTest.UserType,
+				PreferredLanguage: tt.toTest.PreferredLanguage,
+				Locale:            tt.toTest.Locale,
+				Timezone:          tt.toTest.Timezone,
+				Emails:            tt.toTest.Emails,
+				Addresses:         tt.toTest.Addresses,
+				PhoneNumbers:      tt.toTest.PhoneNumbers,
+				Name:              tt.toTest.Name,
+				EnterpriseData:    tt.toTest.EnterpriseData,
+				Active:            tt.toTest.Active,
+			}
+
+			if !reflect.DeepEqual(got, expected) {
+				t.Errorf("User.GobEncode() = %v, want %v", got, expected)
+			}
+		})
+	}
+}
+
 func TestUser_SetHashCode(t *testing.T) {
 	tests := []struct {
 		name string
@@ -26,7 +416,7 @@ func TestUser_SetHashCode(t *testing.T) {
 				},
 				DisplayName: "user 1",
 				Active:      true,
-				Email:       "user.1@mail.com",
+				Emails:      []Email{{Value: "user.1@mail.com", Type: "work", Primary: true}},
 				HashCode:    "test",
 			},
 			want: User{
@@ -37,7 +427,7 @@ func TestUser_SetHashCode(t *testing.T) {
 				},
 				DisplayName: "user 1",
 				Active:      true,
-				Email:       "user.1@mail.com",
+				Emails:      []Email{{Value: "user.1@mail.com", Type: "work", Primary: true}},
 			},
 		},
 		{
@@ -49,7 +439,7 @@ func TestUser_SetHashCode(t *testing.T) {
 				},
 				DisplayName: "user 1",
 				Active:      true,
-				Email:       "user.1@mail.com",
+				Emails:      []Email{{Value: "user.1@mail.com", Type: "work", Primary: true}},
 				HashCode:    "test",
 			},
 			want: User{
@@ -59,7 +449,7 @@ func TestUser_SetHashCode(t *testing.T) {
 				},
 				DisplayName: "user 1",
 				Active:      true,
-				Email:       "user.1@mail.com",
+				Emails:      []Email{{Value: "user.1@mail.com", Type: "work", Primary: true}},
 			},
 		},
 		{
@@ -68,6 +458,7 @@ func TestUser_SetHashCode(t *testing.T) {
 			want: User{},
 		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.user.SetHashCode()
@@ -75,55 +466,6 @@ func TestUser_SetHashCode(t *testing.T) {
 			got := tt.user.HashCode
 			if got != tt.want.HashCode {
 				t.Errorf("User.SetHashCode() = %s, want %s", got, tt.want.HashCode)
-			}
-		})
-	}
-}
-
-func TestUser_GobEncode(t *testing.T) {
-	tests := []struct {
-		name    string
-		u       User
-		wantErr bool
-	}{
-		{
-			name: "Test User GobEncode",
-			u: User{
-				IPID:     "1",
-				SCIMID:   "1",
-				Name:     Name{FamilyName: "user", GivenName: "1"},
-				Email:    "user.1@mail.com",
-				HashCode: "",
-			},
-			wantErr: false,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := tt.u.GobEncode()
-			if (err != nil) != tt.wantErr {
-				t.Errorf("User.GobEncode() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			b := new(bytes.Buffer)
-			enc := gob.NewEncoder(b)
-			if err := enc.Encode(tt.u.IPID); err != nil {
-				panic(err)
-			}
-			if err := enc.Encode(tt.u.Name); err != nil {
-				panic(err)
-			}
-			if err := enc.Encode(tt.u.DisplayName); err != nil {
-				panic(err)
-			}
-			if err := enc.Encode(tt.u.Active); err != nil {
-				panic(err)
-			}
-			if err := enc.Encode(tt.u.Email); err != nil {
-				panic(err)
-			}
-			if !bytes.Equal(got, b.Bytes()) {
-				t.Errorf("Group.GobEncode() = %v\n, want %v\n", got, b.Bytes())
 			}
 		})
 	}
@@ -146,7 +488,7 @@ func TestUser_SetHashCode_pointer(t *testing.T) {
 				},
 				DisplayName: "user 1",
 				Active:      true,
-				Email:       "user.1@mail.com",
+				Emails:      []Email{{Value: "user.1@mail.com", Type: "work", Primary: true}},
 				HashCode:    "test",
 			},
 			want: &User{
@@ -157,10 +499,11 @@ func TestUser_SetHashCode_pointer(t *testing.T) {
 				},
 				DisplayName: "user 1",
 				Active:      true,
-				Email:       "user.1@mail.com",
+				Emails:      []Email{{Value: "user.1@mail.com", Type: "work", Primary: true}},
 			},
 		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.user.SetHashCode()
@@ -210,7 +553,7 @@ func TestUsersResult_MarshalJSON(t *testing.T) {
 						},
 						DisplayName: "user 1",
 						Active:      true,
-						Email:       "user.1@mail.com",
+						Emails:      []Email{{Value: "user.1@mail.com", Type: "work", Primary: true}},
 						HashCode:    "1111",
 					},
 				},
@@ -236,6 +579,7 @@ func TestUsersResult_MarshalJSON(t *testing.T) {
 			wantErr: false,
 		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			ur := &UsersResult{
@@ -256,9 +600,9 @@ func TestUsersResult_MarshalJSON(t *testing.T) {
 }
 
 func TestUsersResult_SetHashCode(t *testing.T) {
-	u2 := &User{IPID: "2", SCIMID: "2", Name: Name{GivenName: "User", FamilyName: "2"}, Email: "user.2@mail.com"}
-	u1 := &User{IPID: "1", SCIMID: "1", Name: Name{GivenName: "User", FamilyName: "1"}, Email: "user.1@mail.com"}
-	u3 := &User{IPID: "3", SCIMID: "3", Name: Name{GivenName: "User", FamilyName: "3"}, Email: "user.3@mail.com"}
+	u2 := &User{IPID: "2", SCIMID: "2", Name: Name{GivenName: "User", FamilyName: "2"}, Emails: []Email{{Value: "user.2@mail.com", Type: "work", Primary: true}}}
+	u1 := &User{IPID: "1", SCIMID: "1", Name: Name{GivenName: "User", FamilyName: "1"}, Emails: []Email{{Value: "user.1@mail.com", Type: "work", Primary: true}}}
+	u3 := &User{IPID: "3", SCIMID: "3", Name: Name{GivenName: "User", FamilyName: "3"}, Emails: []Email{{Value: "user.3@mail.com", Type: "work", Primary: true}}}
 
 	u1.SetHashCode()
 	u2.SetHashCode()

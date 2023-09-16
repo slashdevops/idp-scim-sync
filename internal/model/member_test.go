@@ -11,41 +11,44 @@ import (
 
 func TestMember_GobEncode(t *testing.T) {
 	tests := []struct {
-		name    string
-		m       Member
-		wantErr bool
+		name   string
+		toTest Member
 	}{
 		{
 			name: "Test Member GobEncode",
-			m: Member{
+			toTest: Member{
 				IPID:     "1",
 				SCIMID:   "1",
 				Email:    "member.1@mail.com",
 				HashCode: "",
 			},
-			wantErr: false,
 		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := tt.m.GobEncode()
-			if (err != nil) != tt.wantErr {
-				t.Errorf("Member.GobEncode() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-
 			b := new(bytes.Buffer)
 			enc := gob.NewEncoder(b)
-			if err := enc.Encode(tt.m.IPID); err != nil {
-				t.Fatal(err)
+
+			if err := enc.Encode(tt.toTest); err != nil {
+				t.Errorf("Member.MarshalBinary() error = %v", err)
 			}
 
-			if err := enc.Encode(tt.m.Email); err != nil {
-				t.Fatal(err)
+			dec := gob.NewDecoder(b)
+			var got Member
+			if err := dec.Decode(&got); err != nil {
+				t.Errorf("Member.UnmarshalBinary() error = %v", err)
 			}
 
-			if !bytes.Equal(got, b.Bytes()) {
-				t.Errorf("Group.GobEncode() = %v\n, want %v\n", got, b.Bytes())
+			// SCIMID is not exported, so it will not be encoded
+			// HashCode is not exported, so it will not be encoded
+			expected := Member{
+				IPID:  tt.toTest.IPID,
+				Email: tt.toTest.Email,
+			}
+
+			if !reflect.DeepEqual(got, expected) {
+				t.Errorf("Member.MarshalBinary() = %v, want %v", got, expected)
 			}
 		})
 	}

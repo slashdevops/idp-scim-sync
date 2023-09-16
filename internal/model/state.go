@@ -115,7 +115,13 @@ func (s *State) SetHashCode() {
 			WithGivenName(user.Name.GivenName).
 			WithFamilyName(user.Name.FamilyName).
 			WithDisplayName(user.DisplayName).
-			WithEmail(user.Email).
+			WithEmail(
+				EmailBuilder().
+					WithValue(user.GetPrimaryEmailAddress()).
+					WithType("work").
+					WithPrimary(true).
+					Build(),
+			).
 			WithActive(user.Active).
 			Build()
 

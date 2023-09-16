@@ -31,6 +31,7 @@ func TestGroup_SetHashCode(t *testing.T) {
 			},
 		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.group.SetHashCode()
@@ -45,44 +46,50 @@ func TestGroup_SetHashCode(t *testing.T) {
 
 func TestGroup_GobEncode(t *testing.T) {
 	tests := []struct {
-		name    string
-		g       *Group
-		wantErr bool
+		name   string
+		toTest *Group
 	}{
 		{
+			name:   "empty group",
+			toTest: &Group{},
+		},
+		{
 			name: "Test Group GobEncode",
-			g: &Group{
+			toTest: &Group{
 				IPID:     "1",
 				SCIMID:   "1",
 				Name:     "group",
 				Email:    "user.1@mail.com",
-				HashCode: "",
+				HashCode: "this should not be encoded",
 			},
-			wantErr: false,
 		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := tt.g.GobEncode()
-			if (err != nil) != tt.wantErr {
-				t.Errorf("Group.GobEncode() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-
 			b := new(bytes.Buffer)
 			enc := gob.NewEncoder(b)
-			if err := enc.Encode(tt.g.IPID); err != nil {
-				t.Fatal(err)
-			}
-			if err := enc.Encode(tt.g.Name); err != nil {
-				t.Fatal(err)
-			}
-			if err := enc.Encode(tt.g.Email); err != nil {
-				t.Fatal(err)
+
+			if err := enc.Encode(tt.toTest); err != nil {
+				t.Errorf("Group.MarshalBinary() error = %v", err)
 			}
 
-			if !bytes.Equal(got, b.Bytes()) {
-				t.Errorf("Group.GobEncode() = %v\n, want %v\n", got, b.Bytes())
+			dec := gob.NewDecoder(b)
+			var got Group
+			if err := dec.Decode(&got); err != nil {
+				t.Errorf("Group.UnmarshalBinary() error = %v", err)
+			}
+
+			// SCIMID is not exported, so it will not be encoded
+			// HashCode is not exported, so it will not be encoded
+			expected := Group{
+				IPID:  tt.toTest.IPID,
+				Name:  tt.toTest.Name,
+				Email: tt.toTest.Email,
+			}
+
+			if !reflect.DeepEqual(got, expected) {
+				t.Errorf("Group.MarshalBinary() = %v, want %v", got, expected)
 			}
 		})
 	}

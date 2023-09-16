@@ -19,7 +19,7 @@ func TestUserBuilder(t *testing.T) {
 		assert.Equal(t, "", ub.Name.FamilyName)
 		assert.Equal(t, "", ub.DisplayName)
 		assert.Equal(t, false, ub.Active)
-		assert.Equal(t, "", ub.Email)
+		assert.Equal(t, nil, ub.Emails)
 		assert.Equal(t, u.HashCode, ub.HashCode)
 	})
 
@@ -31,7 +31,7 @@ func TestUserBuilder(t *testing.T) {
 			WithFamilyName("familyname").
 			WithDisplayName("displayname").
 			WithActive(true).
-			WithEmail("email").
+			WithEmail(Email{Value: "email"}).
 			Build()
 
 		u := &User{
@@ -40,7 +40,7 @@ func TestUserBuilder(t *testing.T) {
 			Name:        Name{GivenName: "givenname", FamilyName: "familyname"},
 			DisplayName: "displayname",
 			Active:      true,
-			Email:       "email",
+			Emails:      []Email{{Value: "email"}},
 		}
 		u.SetHashCode()
 
@@ -50,7 +50,7 @@ func TestUserBuilder(t *testing.T) {
 		assert.Equal(t, "familyname", ub.u.Name.FamilyName)
 		assert.Equal(t, "displayname", ub.u.DisplayName)
 		assert.Equal(t, true, ub.u.Active)
-		assert.Equal(t, "email", ub.u.Email)
+		assert.Equal(t, "email", ub.u.Emails[0].Value)
 		assert.Equal(t, u.HashCode, ub.u.HashCode)
 	})
 
@@ -74,7 +74,7 @@ func TestUserBuilder(t *testing.T) {
 		assert.Equal(t, "", ub.u.Name.FamilyName)
 		assert.Equal(t, "", ub.u.DisplayName)
 		assert.Equal(t, true, ub.u.Active)
-		assert.Equal(t, "", ub.u.Email)
+		assert.Equal(t, nil, ub.u.Emails)
 		assert.Equal(t, u.HashCode, ub.u.HashCode)
 	})
 }
@@ -95,15 +95,15 @@ func TestUsersResultBuilder(t *testing.T) {
 	t.Run("all options resources", func(t *testing.T) {
 		urb := UsersResultBuilder()
 		urb.WithResources([]*User{
-			{IPID: "ipid", SCIMID: "scimid", Name: Name{FamilyName: "1", GivenName: "user"}, DisplayName: "user 1", Email: "email", Active: true},
-			{IPID: "ipid2", SCIMID: "scimid2", Name: Name{FamilyName: "2", GivenName: "user"}, DisplayName: "user 2", Email: "email2", Active: true},
+			{IPID: "ipid", SCIMID: "scimid", Name: Name{FamilyName: "1", GivenName: "user"}, DisplayName: "user 1", Emails: []Email{{Value: "email"}}, Active: true},
+			{IPID: "ipid2", SCIMID: "scimid2", Name: Name{FamilyName: "2", GivenName: "user"}, DisplayName: "user 2", Emails: []Email{{Value: "email2"}}, Active: true},
 		}).Build()
 
 		ur := &UsersResult{
 			Items: 2,
 			Resources: []*User{
-				{IPID: "ipid", SCIMID: "scimid", Name: Name{FamilyName: "1", GivenName: "user"}, DisplayName: "user 1", Email: "email", Active: true},
-				{IPID: "ipid2", SCIMID: "scimid2", Name: Name{FamilyName: "2", GivenName: "user"}, DisplayName: "user 2", Email: "email2", Active: true},
+				{IPID: "ipid", SCIMID: "scimid", Name: Name{FamilyName: "1", GivenName: "user"}, DisplayName: "user 1", Emails: []Email{{Value: "email"}}, Active: true},
+				{IPID: "ipid2", SCIMID: "scimid2", Name: Name{FamilyName: "2", GivenName: "user"}, DisplayName: "user 2", Emails: []Email{{Value: "email2"}}, Active: true},
 			},
 		}
 		ur.SetHashCode()
@@ -117,8 +117,8 @@ func TestUsersResultBuilder(t *testing.T) {
 		assert.Equal(t, "user", urb.ur.Resources[0].Name.GivenName)
 		assert.Equal(t, "2", urb.ur.Resources[1].Name.FamilyName)
 		assert.Equal(t, "user", urb.ur.Resources[1].Name.GivenName)
-		assert.Equal(t, "email", urb.ur.Resources[0].Email)
-		assert.Equal(t, "email2", urb.ur.Resources[1].Email)
+		assert.Equal(t, "email", urb.ur.Resources[0].Emails[0].Value)
+		assert.Equal(t, "email2", urb.ur.Resources[1].Emails[0].Value)
 		assert.Equal(t, true, urb.ur.Resources[0].Active)
 		assert.Equal(t, true, urb.ur.Resources[1].Active)
 		assert.Equal(t, ur.HashCode, urb.ur.HashCode)
@@ -127,19 +127,19 @@ func TestUsersResultBuilder(t *testing.T) {
 	t.Run("all options resource", func(t *testing.T) {
 		urb := UsersResultBuilder()
 		urb.WithResource(
-			&User{IPID: "ipid", SCIMID: "scimid", Name: Name{FamilyName: "1", GivenName: "user"}, DisplayName: "user 1", Email: "email", Active: true},
+			&User{IPID: "ipid", SCIMID: "scimid", Name: Name{FamilyName: "1", GivenName: "user"}, DisplayName: "user 1", Emails: []Email{{Value: "email"}}, Active: true},
 		).WithResource(
-			&User{IPID: "ipid2", SCIMID: "scimid2", Name: Name{FamilyName: "2", GivenName: "user"}, DisplayName: "user 2", Email: "email2", Active: true},
+			&User{IPID: "ipid2", SCIMID: "scimid2", Name: Name{FamilyName: "2", GivenName: "user"}, DisplayName: "user 2", Emails: []Email{{Value: "email2"}}, Active: true},
 		).WithResource(
-			&User{IPID: "ipid3", SCIMID: "scimid3", Name: Name{FamilyName: "3", GivenName: "user"}, DisplayName: "user 3", Email: "email3", Active: true},
+			&User{IPID: "ipid3", SCIMID: "scimid3", Name: Name{FamilyName: "3", GivenName: "user"}, DisplayName: "user 3", Emails: []Email{{Value: "email3"}}, Active: true},
 		).Build()
 
 		ur := &UsersResult{
 			Items: 3,
 			Resources: []*User{
-				{IPID: "ipid", SCIMID: "scimid", Name: Name{FamilyName: "1", GivenName: "user"}, DisplayName: "user 1", Email: "email", Active: true},
-				{IPID: "ipid2", SCIMID: "scimid2", Name: Name{FamilyName: "2", GivenName: "user"}, DisplayName: "user 2", Email: "email2", Active: true},
-				{IPID: "ipid3", SCIMID: "scimid3", Name: Name{FamilyName: "3", GivenName: "user"}, DisplayName: "user 3", Email: "email3", Active: true},
+				{IPID: "ipid", SCIMID: "scimid", Name: Name{FamilyName: "1", GivenName: "user"}, DisplayName: "user 1", Emails: []Email{{Value: "email"}}, Active: true},
+				{IPID: "ipid2", SCIMID: "scimid2", Name: Name{FamilyName: "2", GivenName: "user"}, DisplayName: "user 2", Emails: []Email{{Value: "email2"}}, Active: true},
+				{IPID: "ipid3", SCIMID: "scimid3", Name: Name{FamilyName: "3", GivenName: "user"}, DisplayName: "user 3", Emails: []Email{{Value: "email3"}}, Active: true},
 			},
 		}
 		ur.SetHashCode()
@@ -157,9 +157,9 @@ func TestUsersResultBuilder(t *testing.T) {
 		assert.Equal(t, "user", urb.ur.Resources[1].Name.GivenName)
 		assert.Equal(t, "3", urb.ur.Resources[2].Name.FamilyName)
 		assert.Equal(t, "user", urb.ur.Resources[2].Name.GivenName)
-		assert.Equal(t, "email", urb.ur.Resources[0].Email)
-		assert.Equal(t, "email2", urb.ur.Resources[1].Email)
-		assert.Equal(t, "email3", urb.ur.Resources[2].Email)
+		assert.Equal(t, "email", urb.ur.Resources[0].Emails[0].Value)
+		assert.Equal(t, "email2", urb.ur.Resources[1].Emails[0].Value)
+		assert.Equal(t, "email3", urb.ur.Resources[2].Emails[0].Value)
 		assert.Equal(t, true, urb.ur.Resources[0].Active)
 		assert.Equal(t, true, urb.ur.Resources[1].Active)
 		assert.Equal(t, true, urb.ur.Resources[2].Active)

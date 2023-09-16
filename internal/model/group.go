@@ -16,23 +16,42 @@ type Group struct {
 	HashCode string `json:"hashCode"`
 }
 
-// GobEncode implements the gob.GobEncoder interface for Group entity.
+// MarshalBinary implements the gob.GobEncoder interface for Group entity.
 // This is necessary to avoid include the value in the field SCIMID until
 // the hashcode calculation is done.
 // the Hash function use gob to calculate the hash code.
-func (g *Group) GobEncode() ([]byte, error) {
+func (g Group) MarshalBinary() ([]byte, error) {
 	buf := new(bytes.Buffer)
 	enc := gob.NewEncoder(buf)
 	if err := enc.Encode(g.IPID); err != nil {
-		panic(err)
+		return nil, err
 	}
 	if err := enc.Encode(g.Name); err != nil {
-		panic(err)
+		return nil, err
 	}
 	if err := enc.Encode(g.Email); err != nil {
-		panic(err)
+		return nil, err
 	}
 	return buf.Bytes(), nil
+}
+
+// UnmarshalBinary implements the gob.GobDecoder interface for Group entity.
+// This is necessary to avoid include the value in the field SCIMID until
+// the hashcode calculation is done.
+// the Hash function use gob to calculate the hash code.
+func (g *Group) UnmarshalBinary(data []byte) error {
+	buf := bytes.NewBuffer(data)
+	dec := gob.NewDecoder(buf)
+	if err := dec.Decode(&g.IPID); err != nil {
+		return err
+	}
+	if err := dec.Decode(&g.Name); err != nil {
+		return err
+	}
+	if err := dec.Decode(&g.Email); err != nil {
+		return err
+	}
+	return nil
 }
 
 // SetHashCode is a helper function to avoid errors when calculating hash code.

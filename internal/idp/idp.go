@@ -114,12 +114,19 @@ func (i *IdentityProvider) GetUsers(ctx context.Context, filter []string) (*mode
 
 	syncUsers := make([]*model.User, len(pUsers))
 	for i, usr := range pUsers {
+
+		email := model.EmailBuilder().
+			WithValue(usr.PrimaryEmail).
+			WithType("work").
+			WithPrimary(true).
+			Build()
+
 		e := model.UserBuilder().
 			WithIPID(usr.Id).
 			WithGivenName(usr.Name.GivenName).
 			WithFamilyName(usr.Name.FamilyName).
 			WithDisplayName(fmt.Sprintf("%s %s", usr.Name.GivenName, usr.Name.FamilyName)).
-			WithEmail(usr.PrimaryEmail).
+			WithEmail(email).
 			WithActive(!usr.Suspended).
 			Build()
 
@@ -193,17 +200,23 @@ func (i *IdentityProvider) GetUsersByGroupsMembers(ctx context.Context, gmr *mod
 				return nil, fmt.Errorf("idp: error getting user: %+v, email: %s, error: %w", member.IPID, member.Email, err)
 			}
 
+			email := model.EmailBuilder().
+				WithValue(u.PrimaryEmail).
+				WithType("work").
+				WithPrimary(true).
+				Build()
+
 			e := model.UserBuilder().
 				WithIPID(u.Id).
 				WithGivenName(u.Name.GivenName).
 				WithFamilyName(u.Name.FamilyName).
 				WithDisplayName(fmt.Sprintf("%s %s", u.Name.GivenName, u.Name.FamilyName)).
-				WithEmail(u.PrimaryEmail).
+				WithEmail(email).
 				WithActive(!u.Suspended).
 				Build()
 
-			if _, ok := uniqUsers[e.Email]; !ok {
-				uniqUsers[e.Email] = struct{}{}
+			if _, ok := uniqUsers[e.GetPrimaryEmailAddress()]; !ok {
+				uniqUsers[e.GetPrimaryEmailAddress()] = struct{}{}
 				pUsers = append(pUsers, e)
 			}
 		}

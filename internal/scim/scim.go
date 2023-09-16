@@ -224,15 +224,56 @@ func (s *Provider) GetUsers(ctx context.Context) (*model.UsersResult, error) {
 
 	users := make([]*model.User, 0)
 	for _, user := range usersResponse.Resources {
+
 		e := model.UserBuilder().
 			WithIPID(user.ExternalID).
 			WithSCIMID(user.ID).
+			WithUserName(user.UserName).
 			WithGivenName(user.Name.GivenName).
 			WithFamilyName(user.Name.FamilyName).
 			WithDisplayName(user.DisplayName).
-			WithEmail(user.Emails[0].Value).
+			WithNickName(user.NickName).
+			WithProfileURL(user.ProfileURL).
+			WithTitle(user.Title).
+			WithUserType(user.UserType).
+			WithPreferredLanguage(user.PreferredLanguage).
+			WithLocale(user.Locale).
+			WithTimezone(user.Timezone).
 			WithActive(user.Active).
 			Build()
+
+		if len(user.Emails) != 0 {
+			address := model.AddressBuilder().
+				WithFormatted(user.Addresses[0].Formatted).
+				WithStreetAddress(user.Addresses[0].StreetAddress).
+				WithLocality(user.Addresses[0].Locality).
+				WithRegion(user.Addresses[0].Region).
+				WithPostalCode(user.Addresses[0].PostalCode).
+				WithCountry(user.Addresses[0].Country).
+				WithPrimary(user.Addresses[0].Primary).
+				Build()
+
+			e.Addresses = append(e.Addresses, address)
+		}
+
+		if len(user.Emails) != 0 {
+			email := model.EmailBuilder().
+				WithValue(user.Emails[0].Value).
+				WithType(user.Emails[0].Type).
+				WithPrimary(user.Emails[0].Primary).
+				Build()
+
+			e.Emails = append(e.Emails, email)
+		}
+
+		if len(user.PhoneNumbers) != 0 {
+			phone := model.PhoneNumberBuilder().
+				WithValue(user.PhoneNumbers[0].Value).
+				WithType(user.PhoneNumbers[0].Type).
+				Build()
+
+			e.PhoneNumbers = append(e.PhoneNumbers, phone)
+		}
 
 		users = append(users, e)
 	}
@@ -249,7 +290,7 @@ func (s *Provider) CreateUsers(ctx context.Context, ur *model.UsersResult) (*mod
 	for _, user := range ur.Resources {
 		userRequest := &aws.CreateUserRequest{
 			ID:          "",
-			UserName:    user.Email,
+			UserName:    user.GetPrimaryEmailAddress(),
 			DisplayName: user.DisplayName,
 			ExternalID:  user.IPID,
 			Name: aws.Name{
@@ -258,7 +299,7 @@ func (s *Provider) CreateUsers(ctx context.Context, ur *model.UsersResult) (*mod
 			},
 			Emails: []aws.Email{
 				{
-					Value:   user.Email,
+					Value:   user.GetPrimaryEmailAddress(),
 					Type:    "work",
 					Primary: true,
 				},
@@ -268,13 +309,13 @@ func (s *Provider) CreateUsers(ctx context.Context, ur *model.UsersResult) (*mod
 
 		log.WithFields(log.Fields{
 			"user":  user.DisplayName,
-			"email": user.Email,
+			"email": user.GetPrimaryEmailAddress(),
 			"ipdid": user.IPID,
 		}).Trace("creating user")
 
 		log.WithFields(log.Fields{
 			"user":  user.DisplayName,
-			"email": user.Email,
+			"email": user.GetPrimaryEmailAddress(),
 		}).Warn("creating user")
 
 		// TODO: r, err := s.scim.CreateUser(ctx, userRequest)
@@ -286,12 +327,52 @@ func (s *Provider) CreateUsers(ctx context.Context, ur *model.UsersResult) (*mod
 		e := model.UserBuilder().
 			WithIPID(user.IPID).
 			WithSCIMID(r.ID).
+			WithUserName(user.UserName).
 			WithGivenName(user.Name.GivenName).
 			WithFamilyName(user.Name.FamilyName).
 			WithDisplayName(user.DisplayName).
-			WithEmail(user.Email).
+			WithNickName(user.NickName).
+			WithProfileURL(user.ProfileURL).
+			WithTitle(user.Title).
+			WithUserType(user.UserType).
+			WithPreferredLanguage(user.PreferredLanguage).
+			WithLocale(user.Locale).
+			WithTimezone(user.Timezone).
 			WithActive(user.Active).
 			Build()
+
+		if len(user.Emails) != 0 {
+			address := model.AddressBuilder().
+				WithFormatted(user.Addresses[0].Formatted).
+				WithStreetAddress(user.Addresses[0].StreetAddress).
+				WithLocality(user.Addresses[0].Locality).
+				WithRegion(user.Addresses[0].Region).
+				WithPostalCode(user.Addresses[0].PostalCode).
+				WithCountry(user.Addresses[0].Country).
+				WithPrimary(user.Addresses[0].Primary).
+				Build()
+
+			e.Addresses = append(e.Addresses, address)
+		}
+
+		if len(user.Emails) != 0 {
+			email := model.EmailBuilder().
+				WithValue(user.Emails[0].Value).
+				WithType(user.Emails[0].Type).
+				WithPrimary(user.Emails[0].Primary).
+				Build()
+
+			e.Emails = append(e.Emails, email)
+		}
+
+		if len(user.PhoneNumbers) != 0 {
+			phone := model.PhoneNumberBuilder().
+				WithValue(user.PhoneNumbers[0].Value).
+				WithType(user.PhoneNumbers[0].Type).
+				Build()
+
+			e.PhoneNumbers = append(e.PhoneNumbers, phone)
+		}
 
 		users = append(users, e)
 	}
@@ -309,7 +390,7 @@ func (s *Provider) UpdateUsers(ctx context.Context, ur *model.UsersResult) (*mod
 		userRequest := &aws.PutUserRequest{
 			ID:          user.SCIMID,
 			DisplayName: user.DisplayName,
-			UserName:    user.Email,
+			UserName:    user.GetPrimaryEmailAddress(),
 			ExternalID:  user.IPID,
 			Name: aws.Name{
 				FamilyName: user.Name.FamilyName,
@@ -317,7 +398,7 @@ func (s *Provider) UpdateUsers(ctx context.Context, ur *model.UsersResult) (*mod
 			},
 			Emails: []aws.Email{
 				{
-					Value:   user.Email,
+					Value:   user.GetPrimaryEmailAddress(),
 					Type:    "work",
 					Primary: true,
 				},
@@ -327,14 +408,14 @@ func (s *Provider) UpdateUsers(ctx context.Context, ur *model.UsersResult) (*mod
 
 		log.WithFields(log.Fields{
 			"user":   user.DisplayName,
-			"email":  user.Email,
+			"email":  user.GetPrimaryEmailAddress(),
 			"ipdid":  user.IPID,
 			"scimid": user.SCIMID,
 		}).Trace("updating user (details)")
 
 		log.WithFields(log.Fields{
 			"user":  user.DisplayName,
-			"email": user.Email,
+			"email": user.GetPrimaryEmailAddress(),
 		}).Warn("updating user")
 
 		r, err := s.scim.PutUser(ctx, userRequest)
@@ -345,12 +426,52 @@ func (s *Provider) UpdateUsers(ctx context.Context, ur *model.UsersResult) (*mod
 		e := model.UserBuilder().
 			WithIPID(user.IPID).
 			WithSCIMID(r.ID).
+			WithUserName(user.UserName).
 			WithGivenName(user.Name.GivenName).
 			WithFamilyName(user.Name.FamilyName).
 			WithDisplayName(user.DisplayName).
-			WithEmail(user.Email).
+			WithNickName(user.NickName).
+			WithProfileURL(user.ProfileURL).
+			WithTitle(user.Title).
+			WithUserType(user.UserType).
+			WithPreferredLanguage(user.PreferredLanguage).
+			WithLocale(user.Locale).
+			WithTimezone(user.Timezone).
 			WithActive(user.Active).
 			Build()
+
+		if len(user.Emails) != 0 {
+			address := model.AddressBuilder().
+				WithFormatted(user.Addresses[0].Formatted).
+				WithStreetAddress(user.Addresses[0].StreetAddress).
+				WithLocality(user.Addresses[0].Locality).
+				WithRegion(user.Addresses[0].Region).
+				WithPostalCode(user.Addresses[0].PostalCode).
+				WithCountry(user.Addresses[0].Country).
+				WithPrimary(user.Addresses[0].Primary).
+				Build()
+
+			e.Addresses = append(e.Addresses, address)
+		}
+
+		if len(user.Emails) != 0 {
+			email := model.EmailBuilder().
+				WithValue(user.Emails[0].Value).
+				WithType(user.Emails[0].Type).
+				WithPrimary(user.Emails[0].Primary).
+				Build()
+
+			e.Emails = append(e.Emails, email)
+		}
+
+		if len(user.PhoneNumbers) != 0 {
+			phone := model.PhoneNumberBuilder().
+				WithValue(user.PhoneNumbers[0].Value).
+				WithType(user.PhoneNumbers[0].Type).
+				Build()
+
+			e.PhoneNumbers = append(e.PhoneNumbers, phone)
+		}
 
 		users = append(users, e)
 	}
@@ -365,14 +486,14 @@ func (s *Provider) DeleteUsers(ctx context.Context, ur *model.UsersResult) error
 	for _, user := range ur.Resources {
 		log.WithFields(log.Fields{
 			"user":   user.DisplayName,
-			"email":  user.Email,
+			"email":  user.GetPrimaryEmailAddress(),
 			"scimid": user.SCIMID,
 			"idpid":  user.IPID,
 		}).Trace("deleting user (details)")
 
 		log.WithFields(log.Fields{
 			"user":  user.DisplayName,
-			"email": user.Email,
+			"email": user.GetPrimaryEmailAddress(),
 		}).Warn("deleting user")
 
 		if err := s.scim.DeleteUser(ctx, user.SCIMID); err != nil {
@@ -560,7 +681,7 @@ func (s *Provider) GetGroupsMembersBruteForce(ctx context.Context, gr *model.Gro
 		for _, user := range ur.Resources {
 			log.WithFields(log.Fields{
 				"group":  group.Name,
-				"user":   user.Email,
+				"user":   user.GetPrimaryEmailAddress(),
 				"SCIMID": user.SCIMID,
 				"IPID":   user.IPID,
 			}).Trace("scim GetGroupsMembersBruteForce: checking if user is member of group")
@@ -576,7 +697,7 @@ func (s *Provider) GetGroupsMembersBruteForce(ctx context.Context, gr *model.Gro
 				m := model.MemberBuilder().
 					WithIPID(user.IPID).
 					WithSCIMID(user.SCIMID).
-					WithEmail(user.Email).
+					WithEmail(user.GetPrimaryEmailAddress()).
 					Build()
 
 				if user.Active {
