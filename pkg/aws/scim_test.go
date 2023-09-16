@@ -5,10 +5,10 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"os"
 	"path"
 	"strings"
 	"testing"
@@ -25,7 +25,7 @@ func (e mockErrReader) Read(b []byte) (n int, err error) {
 }
 
 func ReadJSONFileAsString(t *testing.T, fileName string) string {
-	bytes, err := ioutil.ReadFile(fileName)
+	bytes, err := os.ReadFile(fileName)
 	assert.NoError(t, err)
 
 	return string(bytes)
@@ -430,7 +430,7 @@ func TestCreateUser(t *testing.T) {
 				GivenName:  "test",
 			},
 			DisplayName: "user 1",
-			Emails: []*Email{
+			Emails: []Email{
 				{
 					Value:   "user.1@mail.com",
 					Type:    "work",
@@ -485,7 +485,7 @@ func TestCreateUser(t *testing.T) {
 				GivenName:  "test",
 			},
 			DisplayName: "user 1",
-			Emails: []*Email{
+			Emails: []Email{
 				{
 					Value:   "user.1@mail.com",
 					Type:    "work",
@@ -517,7 +517,7 @@ func TestCreateUser(t *testing.T) {
 				GivenName:  "test",
 			},
 			DisplayName: "",
-			Emails: []*Email{
+			Emails: []Email{
 				{
 					Value:   "user.1@mail.com",
 					Type:    "work",
@@ -549,7 +549,7 @@ func TestCreateUser(t *testing.T) {
 				GivenName:  "",
 			},
 			DisplayName: "user 1",
-			Emails: []*Email{
+			Emails: []Email{
 				{
 					Value:   "user.1@mail.com",
 					Type:    "work",
@@ -581,7 +581,7 @@ func TestCreateUser(t *testing.T) {
 				GivenName:  "user",
 			},
 			DisplayName: "user 1",
-			Emails: []*Email{
+			Emails: []Email{
 				{
 					Value:   "user.1@mail.com",
 					Type:    "work",
@@ -595,6 +595,63 @@ func TestCreateUser(t *testing.T) {
 		assert.Error(t, err)
 		assert.Nil(t, got)
 		assert.ErrorIs(t, err, ErrFamilyNameEmpty)
+	})
+
+	t.Run("should return an error when usr.Emails == 0", func(t *testing.T) {
+		mockHTTPClient := mocks.NewMockHTTPClient(mockCtrl)
+
+		service, err := NewSCIMService(mockHTTPClient, endpoint, "MyToken")
+		assert.NoError(t, err)
+		assert.NotNil(t, service)
+
+		usrr := &CreateUserRequest{
+			ID:         "1",
+			ExternalID: "1",
+			UserName:   "user.1",
+			Name: Name{
+				FamilyName: "1",
+				GivenName:  "user",
+			},
+			DisplayName: "user 1",
+			Active:      true,
+		}
+
+		got, err := service.CreateUser(context.Background(), usrr)
+		assert.Error(t, err)
+		assert.Nil(t, got)
+		assert.ErrorIs(t, err, ErrEmailsEmpty)
+	})
+
+	t.Run("should return an error when usr.Emails has no Primary", func(t *testing.T) {
+		mockHTTPClient := mocks.NewMockHTTPClient(mockCtrl)
+
+		service, err := NewSCIMService(mockHTTPClient, endpoint, "MyToken")
+		assert.NoError(t, err)
+		assert.NotNil(t, service)
+
+		usrr := &CreateUserRequest{
+			ID:         "1",
+			ExternalID: "1",
+			UserName:   "user.1",
+			Name: Name{
+				FamilyName: "1",
+				GivenName:  "user",
+			},
+			DisplayName: "user 1",
+			Emails: []Email{
+				{
+					Value:   "user.1@mail.com",
+					Type:    "work",
+					Primary: false,
+				},
+			},
+			Active: true,
+		}
+
+		got, err := service.CreateUser(context.Background(), usrr)
+		assert.Error(t, err)
+		assert.Nil(t, got)
+		assert.ErrorIs(t, err, ErrPrimaryEmailEmpty)
 	})
 
 	t.Run("should return an error when usr.Emails > 1", func(t *testing.T) {
@@ -613,7 +670,7 @@ func TestCreateUser(t *testing.T) {
 				GivenName:  "user",
 			},
 			DisplayName: "user 1",
-			Emails: []*Email{
+			Emails: []Email{
 				{
 					Value:   "user.1@mail.com",
 					Type:    "work",
@@ -632,6 +689,100 @@ func TestCreateUser(t *testing.T) {
 		assert.Error(t, err)
 		assert.Nil(t, got)
 		assert.ErrorIs(t, err, ErrEmailsTooMany)
+	})
+
+	t.Run("should return an error when usr.Addresses > 1", func(t *testing.T) {
+		mockHTTPClient := mocks.NewMockHTTPClient(mockCtrl)
+
+		service, err := NewSCIMService(mockHTTPClient, endpoint, "MyToken")
+		assert.NoError(t, err)
+		assert.NotNil(t, service)
+
+		usrr := &CreateUserRequest{
+			ID:         "1",
+			ExternalID: "1",
+			UserName:   "user.1",
+			Name: Name{
+				FamilyName: "1",
+				GivenName:  "user",
+			},
+			DisplayName: "user 1",
+			Emails: []Email{
+				{
+					Value:   "user.1@mail.com",
+					Type:    "work",
+					Primary: true,
+				},
+			},
+			Addresses: []Address{
+				{
+					StreetAddress: "street 1",
+					Locality:      "locality 1",
+					Region:        "region 1",
+					PostalCode:    "postal code 1",
+					Country:       "country 1",
+					Type:          "work",
+					Primary:       true,
+				},
+				{
+					StreetAddress: "street 2",
+					Locality:      "locality 2",
+					Region:        "region 2",
+					PostalCode:    "postal code 2",
+					Country:       "country 2",
+					Type:          "home",
+					Primary:       false,
+				},
+			},
+			Active: true,
+		}
+
+		got, err := service.CreateUser(context.Background(), usrr)
+		assert.Error(t, err)
+		assert.Nil(t, got)
+		assert.ErrorIs(t, err, ErrAddressesTooMany)
+	})
+
+	t.Run("should return an error when usr.PhoneNumbers > 1", func(t *testing.T) {
+		mockHTTPClient := mocks.NewMockHTTPClient(mockCtrl)
+
+		service, err := NewSCIMService(mockHTTPClient, endpoint, "MyToken")
+		assert.NoError(t, err)
+		assert.NotNil(t, service)
+
+		usrr := &CreateUserRequest{
+			ID:         "1",
+			ExternalID: "1",
+			UserName:   "user.1",
+			Name: Name{
+				FamilyName: "1",
+				GivenName:  "user",
+			},
+			DisplayName: "user 1",
+			Emails: []Email{
+				{
+					Value:   "user.1@mail.com",
+					Type:    "work",
+					Primary: true,
+				},
+			},
+			PhoneNumbers: []PhoneNumber{
+				{
+					Value: "123456789",
+					Type:  "work",
+				},
+				{
+					Value: "987654321",
+					Type:  "home",
+				},
+			},
+			Active: true,
+		}
+
+		got, err := service.CreateUser(context.Background(), usrr)
+		assert.Error(t, err)
+		assert.Nil(t, got)
+		assert.ErrorIs(t, err, ErrPhoneNumbersTooMany)
 	})
 }
 
@@ -673,7 +824,7 @@ func TestCreateOrGetUser(t *testing.T) {
 				GivenName:  "test",
 			},
 			DisplayName: "user 1",
-			Emails: []*Email{
+			Emails: []Email{
 				{
 					Value:   "user.1@mail.com",
 					Type:    "work",
@@ -765,7 +916,7 @@ func TestCreateOrGetUser(t *testing.T) {
 				GivenName:  "Mark",
 			},
 			DisplayName: "Mark Jackson",
-			Emails: []*Email{
+			Emails: []Email{
 				{
 					Value:   "mjack@example.com",
 					Type:    "work",
@@ -857,7 +1008,7 @@ func TestCreateOrGetUser(t *testing.T) {
 				GivenName:  "Mark",
 			},
 			DisplayName: "Mark Jackson",
-			Emails: []*Email{
+			Emails: []Email{
 				{
 					Value:   "mjack@example.com",
 					Type:    "work",
@@ -1153,7 +1304,7 @@ func TestPutUser(t *testing.T) {
 				GivenName:  "Mark",
 			},
 			DisplayName: "Mark Jackson",
-			Emails: []*Email{
+			Emails: []Email{
 				{
 					Value:   "mjack@example.com",
 					Type:    "work",
@@ -1203,7 +1354,7 @@ func TestPutUser(t *testing.T) {
 				GivenName:  "test",
 			},
 			DisplayName: "",
-			Emails: []*Email{
+			Emails: []Email{
 				{
 					Value:   "user.1@mail.com",
 					Type:    "work",
@@ -1235,7 +1386,7 @@ func TestPutUser(t *testing.T) {
 				GivenName:  "",
 			},
 			DisplayName: "user 1",
-			Emails: []*Email{
+			Emails: []Email{
 				{
 					Value:   "user.1@mail.com",
 					Type:    "work",
@@ -1267,7 +1418,7 @@ func TestPutUser(t *testing.T) {
 				GivenName:  "user",
 			},
 			DisplayName: "user 1",
-			Emails: []*Email{
+			Emails: []Email{
 				{
 					Value:   "user.1@mail.com",
 					Type:    "work",
@@ -1299,7 +1450,7 @@ func TestPutUser(t *testing.T) {
 				GivenName:  "user",
 			},
 			DisplayName: "user 1",
-			Emails: []*Email{
+			Emails: []Email{
 				{
 					Value:   "user.1@mail.com",
 					Type:    "work",

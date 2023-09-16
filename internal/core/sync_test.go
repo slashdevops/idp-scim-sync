@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -82,7 +81,7 @@ func TestSyncService_SyncGroupsAndTheirMembers(t *testing.T) {
 		tmpDir := os.TempDir()
 		defer os.Remove(tmpDir)
 
-		stateFile, err := ioutil.TempFile(tmpDir, "state.json")
+		stateFile, err := os.CreateTemp(tmpDir, "state.json")
 		assert.NoError(t, err)
 		assert.NotNil(t, stateFile)
 		defer stateFile.Close()
@@ -119,7 +118,7 @@ func TestSyncService_SyncGroupsAndTheirMembers(t *testing.T) {
 		assert.NotNil(t, jsonSate)
 		defer jsonSate.Close()
 
-		jsonStateBytes, err := ioutil.ReadAll(jsonSate)
+		jsonStateBytes, err := io.ReadAll(jsonSate)
 		assert.NoError(t, err)
 		assert.NotNil(t, jsonStateBytes)
 		assert.Greater(t, len(jsonStateBytes), 0)
@@ -142,7 +141,7 @@ func TestSyncService_SyncGroupsAndTheirMembers(t *testing.T) {
 		tmpDir := os.TempDir()
 		defer os.Remove(tmpDir)
 
-		stateFile, err := ioutil.TempFile(tmpDir, "state.json")
+		stateFile, err := os.CreateTemp(tmpDir, "state.json")
 		assert.NoError(t, err)
 		assert.NotNil(t, stateFile)
 		defer stateFile.Close()
@@ -153,14 +152,14 @@ func TestSyncService_SyncGroupsAndTheirMembers(t *testing.T) {
 			Kind: "directory#groups",
 			Groups: []*admin.Group{
 				{
-					Id:    "group-123456789",
-					Etag:  "etag-group-123456789",
+					Id:    "group-1",
+					Etag:  "etag-group-1",
 					Email: "group.1@mail.com",
 					Name:  "group 1",
 				},
 				{
-					Id:    "group-987654321",
-					Etag:  "etag-group-987654321",
+					Id:    "group-2",
+					Etag:  "etag-group-2",
 					Email: "group.2@mail.com",
 					Name:  "group 2",
 				},
@@ -174,15 +173,15 @@ func TestSyncService_SyncGroupsAndTheirMembers(t *testing.T) {
 			Kind: "directory#members",
 			Members: []*admin.Member{
 				{
-					Id:     "user-123456789",
-					Etag:   "etag-member-123456789",
+					Id:     "user-1",
+					Etag:   "etag-member-1",
 					Email:  "user.1@mail.com",
 					Status: "ACTIVE",
 					Type:   "USER",
 				},
 				{
-					Id:     "987654321",
-					Etag:   "etag-member-987654321",
+					Id:     "user-2",
+					Etag:   "etag-member-2",
 					Email:  "user.2@mail.com",
 					Status: "ACTIVE",
 					Type:   "USER",
@@ -193,8 +192,8 @@ func TestSyncService_SyncGroupsAndTheirMembers(t *testing.T) {
 		assert.NoError(t, err)
 
 		user1 := &admin.User{
-			Id:           "user-123456789",
-			Etag:         "etag-user-123456789",
+			Id:           "user-1",
+			Etag:         "etag-user-1",
 			PrimaryEmail: "user.1@mail.com",
 			Name: &admin.UserName{
 				FamilyName: "1",
@@ -214,8 +213,8 @@ func TestSyncService_SyncGroupsAndTheirMembers(t *testing.T) {
 		assert.NoError(t, err)
 
 		user2 := &admin.User{
-			Id:           "user-987654321",
-			Etag:         "etag-user-987654321",
+			Id:           "user-2",
+			Etag:         "etag-user-2",
 			PrimaryEmail: "user.2@mail.com",
 			Name: &admin.UserName{
 				FamilyName: "2",
@@ -235,7 +234,7 @@ func TestSyncService_SyncGroupsAndTheirMembers(t *testing.T) {
 		assert.NoError(t, err)
 
 		createGroup1Response := &aws.CreateGroupResponse{
-			ID: "group-123456789",
+			ID: "group-1",
 			Meta: aws.Meta{
 				ResourceType: "Group",
 				Created:      "2020-01-01T00:00:00Z",
@@ -248,7 +247,7 @@ func TestSyncService_SyncGroupsAndTheirMembers(t *testing.T) {
 		assert.NoError(t, err)
 
 		createGroup2Response := &aws.CreateGroupResponse{
-			ID: "group-987654321",
+			ID: "group-2",
 			Meta: aws.Meta{
 				ResourceType: "Group",
 				Created:      "2020-01-01T00:00:00Z",
@@ -261,8 +260,8 @@ func TestSyncService_SyncGroupsAndTheirMembers(t *testing.T) {
 		assert.NoError(t, err)
 
 		createUser1Response := &aws.CreateUserResponse{
-			ID:         "user-123456789",
-			ExternalID: "user-123456789",
+			ID:         "user-1",
+			ExternalID: "user-1",
 			Meta: aws.Meta{
 				ResourceType: "User",
 				Created:      "2020-01-01T00:00:00Z",
@@ -276,7 +275,7 @@ func TestSyncService_SyncGroupsAndTheirMembers(t *testing.T) {
 			},
 			DisplayName: "user 1",
 			Active:      true,
-			Emails: []*aws.Email{{
+			Emails: []aws.Email{{
 				Value:   "user.1@mail.com",
 				Type:    "work",
 				Primary: true,
@@ -286,8 +285,8 @@ func TestSyncService_SyncGroupsAndTheirMembers(t *testing.T) {
 		assert.NoError(t, err)
 
 		createUser2Response := &aws.CreateUserResponse{
-			ID:         "user-987654321",
-			ExternalID: "user-987654321",
+			ID:         "user-2",
+			ExternalID: "user-2",
 			Meta: aws.Meta{
 				ResourceType: "User",
 				Created:      "2020-01-01T00:00:00Z",
@@ -301,7 +300,7 @@ func TestSyncService_SyncGroupsAndTheirMembers(t *testing.T) {
 			},
 			DisplayName: "user 2",
 			Active:      true,
-			Emails: []*aws.Email{{
+			Emails: []aws.Email{{
 				Value:   "user.2@mail.com",
 				Type:    "work",
 				Primary: true,
@@ -319,7 +318,7 @@ func TestSyncService_SyncGroupsAndTheirMembers(t *testing.T) {
 			},
 			Resources: []*aws.Group{
 				{
-					ID: "group-123456789",
+					ID: "group-1",
 					Meta: aws.Meta{
 						ResourceType: "Group",
 						Created:      "2020-01-01T00:00:00Z",
@@ -343,7 +342,7 @@ func TestSyncService_SyncGroupsAndTheirMembers(t *testing.T) {
 			},
 			Resources: []*aws.Group{
 				{
-					ID: "group-123456789",
+					ID: "group-1",
 					Meta: aws.Meta{
 						ResourceType: "Group",
 						Created:      "2020-01-01T00:00:00Z",
@@ -367,7 +366,7 @@ func TestSyncService_SyncGroupsAndTheirMembers(t *testing.T) {
 			},
 			Resources: []*aws.Group{
 				{
-					ID: "group-987654321",
+					ID: "group-2",
 					Meta: aws.Meta{
 						ResourceType: "Group",
 						Created:      "2020-01-01T00:00:00Z",
@@ -391,7 +390,7 @@ func TestSyncService_SyncGroupsAndTheirMembers(t *testing.T) {
 			},
 			Resources: []*aws.Group{
 				{
-					ID: "group-987654321",
+					ID: "group-2",
 					Meta: aws.Meta{
 						ResourceType: "Group",
 						Created:      "2020-01-01T00:00:00Z",
@@ -412,9 +411,9 @@ func TestSyncService_SyncGroupsAndTheirMembers(t *testing.T) {
 			switch r.URL.Path {
 			case "/admin/directory/v1/groups":
 				w.Write(groupsListJSONBytes)
-			case "/admin/directory/v1/groups/group-123456789/members":
+			case "/admin/directory/v1/groups/group-1/members":
 				w.Write(membersListJSONBytes)
-			case "/admin/directory/v1/groups/group-987654321/members":
+			case "/admin/directory/v1/groups/group-2/members":
 				w.Write(membersListJSONBytes)
 			case "/admin/directory/v1/users/user.1@mail.com":
 				w.Write(user1JSONBytes)
@@ -436,13 +435,13 @@ func TestSyncService_SyncGroupsAndTheirMembers(t *testing.T) {
 					switch filter {
 					case "": // first time getting groups
 						w.Write([]byte(`{}`))
-					case "id eq \"group-123456789\" and members eq \"user-123456789\"":
+					case "id eq \"group-1\" and members eq \"user-1\"":
 						w.Write(listGroupsResponseGroup1User1JSONBytes)
-					case "id eq \"group-123456789\" and members eq \"user-987654321\"":
+					case "id eq \"group-1\" and members eq \"user-2\"":
 						w.Write(listGroupsResponseGroup1User2JSONBytes) // user 2 is not in group 1
-					case "id eq \"group-987654321\" and members eq \"user-123456789\"":
+					case "id eq \"group-2\" and members eq \"user-1\"":
 						w.Write(listGroupsResponseGroup2User1JSONBytes) // user 1 is not in group 2
-					case "id eq \"group-987654321\" and members eq \"user-987654321\"":
+					case "id eq \"group-2\" and members eq \"user-2\"":
 						w.Write(listGroupsResponseGroup2User2JSONBytes)
 					default:
 						w.WriteHeader(http.StatusBadRequest)
@@ -498,7 +497,7 @@ func TestSyncService_SyncGroupsAndTheirMembers(t *testing.T) {
 		assert.NotNil(t, jsonSate)
 		defer jsonSate.Close()
 
-		jsonStateBytes, err := ioutil.ReadAll(jsonSate)
+		jsonStateBytes, err := io.ReadAll(jsonSate)
 		assert.NoError(t, err)
 		assert.NotNil(t, jsonStateBytes)
 		assert.Greater(t, len(jsonStateBytes), 0)

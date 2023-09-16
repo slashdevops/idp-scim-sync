@@ -256,10 +256,11 @@ func (s *Provider) CreateUsers(ctx context.Context, ur *model.UsersResult) (*mod
 				FamilyName: user.Name.FamilyName,
 				GivenName:  user.Name.GivenName,
 			},
-			Emails: []*aws.Email{
+			Emails: []aws.Email{
 				{
-					Value: user.Email,
-					Type:  "work",
+					Value:   user.Email,
+					Type:    "work",
+					Primary: true,
 				},
 			},
 			Active: user.Active,
@@ -314,7 +315,7 @@ func (s *Provider) UpdateUsers(ctx context.Context, ur *model.UsersResult) (*mod
 				FamilyName: user.Name.FamilyName,
 				GivenName:  user.Name.GivenName,
 			},
-			Emails: []*aws.Email{
+			Emails: []aws.Email{
 				{
 					Value:   user.Email,
 					Type:    "work",

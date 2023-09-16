@@ -22,20 +22,9 @@ import (
 // reference: https://docs.aws.amazon.com/singlesignon/latest/developerguide/what-is-scim.html
 
 var (
+
 	// ErrURLEmpty is returned when the URL is empty.
 	ErrURLEmpty = errors.Errorf("aws: url may not be empty")
-
-	// ErrDisplayNameEmpty is returned when the display name is empty.
-	ErrDisplayNameEmpty = errors.Errorf("aws: display name may not be empty")
-
-	// ErrGivenNameEmpty is returned when the given name is empty.
-	ErrGivenNameEmpty = errors.Errorf("aws: given name may not be empty")
-
-	// ErrFamilyNameEmpty is returned when the family name is empty.
-	ErrFamilyNameEmpty = errors.Errorf("aws: family name may not be empty")
-
-	// ErrEmailsTooMany is returned when the emails has more than one entity.
-	ErrEmailsTooMany = errors.Errorf("aws: emails may not be more than 1")
 
 	// ErrCreateGroupRequestEmpty is returned when the create group request is empty.
 	ErrCreateGroupRequestEmpty = errors.Errorf("aws: create group request may not be empty")
@@ -49,20 +38,11 @@ var (
 	// ErrGroupIDEmpty is returned when the group id is empty.
 	ErrGroupIDEmpty = errors.Errorf("aws: group id may not be empty")
 
-	// ErrUserIDEmpty is returned when the user id is empty.
-	ErrUserIDEmpty = errors.Errorf("aws: user id may not be empty")
-
 	// ErrPatchUserRequestEmpty is returned when the patch user request is empty.
 	ErrPatchUserRequestEmpty = errors.Errorf("aws: patch user request may not be empty")
 
 	// ErrPutUserRequestEmpty is returned when the put user request is empty.
 	ErrPutUserRequestEmpty = errors.Errorf("aws: put user request may not be empty")
-
-	// ErrUserNameEmpty is returned when the user name is empty.
-	ErrUserNameEmpty = errors.Errorf("aws: user name may not be empty")
-
-	// ErrUserUserNameEmpty is returned when the userName is empty.
-	ErrUserUserNameEmpty = errors.Errorf("aws: userName may not be empty")
 
 	// ErrUserExternalIDEmpty is returned when the user externalId is empty.
 	ErrUserExternalIDEmpty = errors.Errorf("aws: externalId may not be empty")
@@ -188,28 +168,13 @@ func (s *SCIMService) checkHTTPResponse(resp *http.Response) error {
 // CreateUser creates a new user in the AWS SSO Using the API.
 // references:
 // + https://docs.aws.amazon.com/singlesignon/latest/developerguide/createuser.html
-func (s *SCIMService) CreateUser(ctx context.Context, usr *CreateUserRequest) (*CreateUserResponse, error) {
-	if usr == nil {
+func (s *SCIMService) CreateUser(ctx context.Context, cur *CreateUserRequest) (*CreateUserResponse, error) {
+	if cur == nil {
 		return nil, ErrCreateUserRequestEmpty
 	}
-	// Check constraints in the reference document
-	if usr.UserName == "" {
-		return nil, ErrUserNameEmpty
+	if err := cur.Validate(); err != nil {
+		return nil, fmt.Errorf("aws CreateUser: error validating user: %w", err)
 	}
-	if usr.DisplayName == "" {
-		return nil, ErrDisplayNameEmpty
-	}
-	if usr.Name.GivenName == "" {
-		return nil, ErrGivenNameEmpty
-	}
-	if usr.Name.FamilyName == "" {
-		return nil, ErrFamilyNameEmpty
-	}
-
-	if len(usr.Emails) > 1 {
-		return nil, ErrEmailsTooMany
-	}
-	usr.Emails[0].Primary = true
 
 	reqURL, err := url.Parse(s.url.String())
 	if err != nil {
@@ -218,14 +183,14 @@ func (s *SCIMService) CreateUser(ctx context.Context, usr *CreateUserRequest) (*
 
 	reqURL.Path = path.Join(reqURL.Path, "/Users")
 
-	req, err := s.newRequest(ctx, http.MethodPost, reqURL, *usr)
+	req, err := s.newRequest(ctx, http.MethodPost, reqURL, *cur)
 	if err != nil {
-		return nil, fmt.Errorf("aws CreateUser: error creating request, user: %s, http method: %s, url: %v, error: %w", usr.UserName, http.MethodPost, reqURL.String(), err)
+		return nil, fmt.Errorf("aws CreateUser: error creating request, user: %s, http method: %s, url: %v, error: %w", cur.UserName, http.MethodPost, reqURL.String(), err)
 	}
 
 	resp, err := s.do(ctx, req)
 	if err != nil {
-		return nil, fmt.Errorf("aws CreateUser: error sending request, user: %s, http method: %s, url: %v, error: %w", usr.UserName, http.MethodPost, reqURL.String(), err)
+		return nil, fmt.Errorf("aws CreateUser: error sending request, user: %s, http method: %s, url: %v, error: %w", cur.UserName, http.MethodPost, reqURL.String(), err)
 	}
 	defer resp.Body.Close()
 
@@ -235,7 +200,7 @@ func (s *SCIMService) CreateUser(ctx context.Context, usr *CreateUserRequest) (*
 
 	var response CreateUserResponse
 	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
-		return nil, fmt.Errorf("aws CreateUser: user: %s, error decoding response body: %w", usr.UserName, err)
+		return nil, fmt.Errorf("aws CreateUser: user: %s, error decoding response body: %w", cur.UserName, err)
 	}
 
 	return &response, nil
@@ -251,28 +216,13 @@ func (s *SCIMService) CreateUser(ctx context.Context, usr *CreateUserRequest) (*
 // references:
 // + https://docs.aws.amazon.com/singlesignon/latest/developerguide/createuser.html
 // + https://docs.aws.amazon.com/singlesignon/latest/developerguide/getuser.html
-func (s *SCIMService) CreateOrGetUser(ctx context.Context, usr *CreateUserRequest) (*CreateUserResponse, error) {
-	if usr == nil {
+func (s *SCIMService) CreateOrGetUser(ctx context.Context, cur *CreateUserRequest) (*CreateUserResponse, error) {
+	if cur == nil {
 		return nil, ErrCreateUserRequestEmpty
 	}
-	// Check constraints in the reference document
-	if usr.UserName == "" {
-		return nil, ErrUserNameEmpty
+	if err := cur.Validate(); err != nil {
+		return nil, fmt.Errorf("aws CreateOrGetUser: error validating user: %w", err)
 	}
-	if usr.DisplayName == "" {
-		return nil, ErrDisplayNameEmpty
-	}
-	if usr.Name.GivenName == "" {
-		return nil, ErrGivenNameEmpty
-	}
-	if usr.Name.FamilyName == "" {
-		return nil, ErrFamilyNameEmpty
-	}
-
-	if len(usr.Emails) > 1 {
-		return nil, ErrEmailsTooMany
-	}
-	usr.Emails[0].Primary = true
 
 	reqURL, err := url.Parse(s.url.String())
 	if err != nil {
@@ -281,14 +231,14 @@ func (s *SCIMService) CreateOrGetUser(ctx context.Context, usr *CreateUserReques
 
 	reqURL.Path = path.Join(reqURL.Path, "/Users")
 
-	req, err := s.newRequest(ctx, http.MethodPost, reqURL, *usr)
+	req, err := s.newRequest(ctx, http.MethodPost, reqURL, *cur)
 	if err != nil {
-		return nil, fmt.Errorf("aws CreateUser: error creating request, user: %s, http method: %s, url: %v, error: %w", usr.UserName, http.MethodPost, reqURL.String(), err)
+		return nil, fmt.Errorf("aws CreateUser: error creating request, user: %s, http method: %s, url: %v, error: %w", cur.UserName, http.MethodPost, reqURL.String(), err)
 	}
 
 	resp, err := s.do(ctx, req)
 	if err != nil {
-		return nil, fmt.Errorf("aws CreateUser: error sending request, user: %s, http method: %s, url: %v, error: %w", usr.UserName, http.MethodPost, reqURL.String(), err)
+		return nil, fmt.Errorf("aws CreateUser: error sending request, user: %s, http method: %s, url: %v, error: %w", cur.UserName, http.MethodPost, reqURL.String(), err)
 	}
 	defer resp.Body.Close()
 
@@ -298,18 +248,18 @@ func (s *SCIMService) CreateOrGetUser(ctx context.Context, usr *CreateUserReques
 		// http.StatusConflict is 409
 		if errors.As(e, &httpErr) && httpErr.StatusCode == http.StatusConflict {
 			log.WithFields(log.Fields{
-				"user": usr.UserName,
-				"name": usr.DisplayName,
-				"id":   usr.ID,
+				"user": cur.UserName,
+				"name": cur.DisplayName,
+				"id":   cur.ID,
 			}).Warn("aws CreateOrGetUser: user already exists with same name or externalId, trying to get the user information")
 
-			response, err := s.GetUserByUserName(ctx, usr.UserName)
+			response, err := s.GetUserByUserName(ctx, cur.UserName)
 			if err != nil {
 				return nil, fmt.Errorf("aws CreateOrGetUser: error getting user information: %w", err)
 			}
 
 			log.WithFields(log.Fields{
-				"user":        usr.UserName,
+				"user":        cur.UserName,
 				"id":          response.ID,
 				"externalId":  response.ExternalID,
 				"active":      response.Active,
@@ -321,20 +271,20 @@ func (s *SCIMService) CreateOrGetUser(ctx context.Context, usr *CreateUserReques
 			// with a different email same externalId.
 			if response.ID == "" {
 				log.WithFields(log.Fields{
-					"userName": usr.UserName,
-					"name":     usr.DisplayName,
+					"userName": cur.UserName,
+					"name":     cur.DisplayName,
 				}).Warn("aws CreateOrGetUser: group already exists, but with a different name, same id")
 
 				// remove the ExternalID from the user request, and call itself again to create the new user
 				log.WithFields(log.Fields{
-					"userName": usr.UserName,
-					"name":     usr.DisplayName,
+					"userName": cur.UserName,
+					"name":     cur.DisplayName,
 				}).Warn("aws CreateOrGetUser: removing ExternalID from the group request, calling itself again to create the new group name")
-				usr.ExternalID = ""
-				return s.CreateOrGetUser(ctx, usr)
+				cur.ExternalID = ""
+				return s.CreateOrGetUser(ctx, cur)
 			}
 
-			cur := &CreateUserResponse{
+			curesp := &CreateUserResponse{
 				ID:          response.ID,
 				ExternalID:  response.ExternalID,
 				Meta:        response.Meta,
@@ -349,9 +299,9 @@ func (s *SCIMService) CreateOrGetUser(ctx context.Context, usr *CreateUserReques
 			// check if the user attributes are the same
 			// maybe the user in the SCIM side was changed, so we need to update the user in the SCIM Side
 			// according to the create user request
-			if usr.Name.FamilyName != response.Name.FamilyName || usr.Name.GivenName != response.Name.GivenName ||
-				usr.Active != response.Active || usr.ExternalID != response.ExternalID || usr.DisplayName != response.DisplayName ||
-				usr.Emails[0].Value != response.Emails[0].Value {
+			if cur.Name.FamilyName != response.Name.FamilyName || cur.Name.GivenName != response.Name.GivenName ||
+				cur.Active != response.Active || cur.ExternalID != response.ExternalID || cur.DisplayName != response.DisplayName ||
+				cur.Emails[0].Value != response.Emails[0].Value {
 				log.Warn("aws CreateOrGetUser: user already exists, but attributes are different, updating the user")
 
 				log.WithFields(log.Fields{
@@ -364,25 +314,25 @@ func (s *SCIMService) CreateOrGetUser(ctx context.Context, usr *CreateUserReques
 				}).Warn("aws CreateOrGetUser: attributes before update")
 
 				log.WithFields(log.Fields{
-					"user":        usr.UserName,
-					"id":          usr.ID,
-					"externalId":  usr.ExternalID,
-					"active":      usr.Active,
-					"displayName": usr.DisplayName,
-					"email":       usr.Emails[0].Value,
+					"user":        cur.UserName,
+					"id":          cur.ID,
+					"externalId":  cur.ExternalID,
+					"active":      cur.Active,
+					"displayName": cur.DisplayName,
+					"email":       cur.Emails[0].Value,
 				}).Warn("aws CreateOrGetUser: attributes after update")
 
 				pur := &PutUserRequest{
 					ID:          response.ID,
-					DisplayName: usr.DisplayName,
-					UserName:    usr.UserName,
-					ExternalID:  usr.ExternalID,
+					DisplayName: cur.DisplayName,
+					UserName:    cur.UserName,
+					ExternalID:  cur.ExternalID,
 					Name: Name{
-						FamilyName: usr.Name.FamilyName,
-						GivenName:  usr.Name.GivenName,
+						FamilyName: cur.Name.FamilyName,
+						GivenName:  cur.Name.GivenName,
 					},
-					Emails: usr.Emails,
-					Active: usr.Active,
+					Emails: cur.Emails,
+					Active: cur.Active,
 				}
 
 				resp, err := s.PutUser(ctx, pur)
@@ -391,25 +341,25 @@ func (s *SCIMService) CreateOrGetUser(ctx context.Context, usr *CreateUserReques
 				}
 
 				// update the user information
-				cur.ID = resp.ID
-				cur.ExternalID = resp.ExternalID
-				cur.Meta = resp.Meta
-				cur.Schemas = resp.Schemas
-				cur.UserName = resp.UserName
-				cur.Name = resp.Name
-				cur.DisplayName = resp.DisplayName
-				cur.Active = resp.Active
-				cur.Emails = resp.Emails
+				curesp.ID = resp.ID
+				curesp.ExternalID = resp.ExternalID
+				curesp.Meta = resp.Meta
+				curesp.Schemas = resp.Schemas
+				curesp.UserName = resp.UserName
+				curesp.Name = resp.Name
+				curesp.DisplayName = resp.DisplayName
+				curesp.Active = resp.Active
+				curesp.Emails = resp.Emails
 			}
 
-			return cur, nil
+			return curesp, nil
 		}
 		return nil, e
 	}
 
 	var response CreateUserResponse
 	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
-		return nil, fmt.Errorf("aws CreateOrGetUser: user: %s, error decoding response body: %w", usr.UserName, err)
+		return nil, fmt.Errorf("aws CreateOrGetUser: user: %s, error decoding response body: %w", cur.UserName, err)
 	}
 
 	return &response, nil
@@ -603,8 +553,8 @@ func (s *SCIMService) PatchUser(ctx context.Context, pur *PatchUserRequest) erro
 	if pur == nil {
 		return ErrPatchUserRequestEmpty
 	}
-	if pur.User.ID == "" {
-		return ErrUserIDEmpty
+	if err := pur.Validate(); err != nil {
+		return fmt.Errorf("aws: error validating user: %w", err)
 	}
 
 	reqURL, err := url.Parse(s.url.String())
@@ -634,23 +584,12 @@ func (s *SCIMService) PatchUser(ctx context.Context, pur *PatchUserRequest) erro
 }
 
 // PutUser creates a new user in the AWS SSO Using the API.
-func (s *SCIMService) PutUser(ctx context.Context, usr *PutUserRequest) (*PutUserResponse, error) {
-	if usr == nil {
+func (s *SCIMService) PutUser(ctx context.Context, pur *PutUserRequest) (*PutUserResponse, error) {
+	if pur == nil {
 		return nil, ErrPutUserRequestEmpty
 	}
-	// Check constraints in the reference document
-	if usr.DisplayName == "" {
-		return nil, ErrDisplayNameEmpty
-	}
-	if usr.Name.GivenName == "" {
-		return nil, ErrGivenNameEmpty
-	}
-	if usr.Name.FamilyName == "" {
-		return nil, ErrFamilyNameEmpty
-	}
-
-	if len(usr.Emails) > 1 {
-		return nil, ErrEmailsTooMany
+	if err := pur.Validate(); err != nil {
+		return nil, fmt.Errorf("aws PutUser: error validating user: %w", err)
 	}
 
 	reqURL, err := url.Parse(s.url.String())
@@ -658,9 +597,9 @@ func (s *SCIMService) PutUser(ctx context.Context, usr *PutUserRequest) (*PutUse
 		return nil, fmt.Errorf("aws PutUser: error parsing url: %w", err)
 	}
 
-	reqURL.Path = path.Join(reqURL.Path, fmt.Sprintf("/Users/%s", usr.ID))
+	reqURL.Path = path.Join(reqURL.Path, fmt.Sprintf("/Users/%s", pur.ID))
 
-	req, err := s.newRequest(ctx, http.MethodPut, reqURL, *usr)
+	req, err := s.newRequest(ctx, http.MethodPut, reqURL, *pur)
 	if err != nil {
 		return nil, fmt.Errorf("aws PutUser: error creating request, http method: %s, url: %v, error: %w", http.MethodPut, reqURL.String(), err)
 	}
@@ -779,12 +718,12 @@ func (s *SCIMService) ListGroups(ctx context.Context, filter string) (*ListGroup
 // CreateGroup creates a new group in the AWS SSO Using the API
 // reference:
 // + https://docs.aws.amazon.com/singlesignon/latest/developerguide/creategroup.html
-func (s *SCIMService) CreateGroup(ctx context.Context, group *CreateGroupRequest) (*CreateGroupResponse, error) {
-	if group == nil {
+func (s *SCIMService) CreateGroup(ctx context.Context, cgr *CreateGroupRequest) (*CreateGroupResponse, error) {
+	if cgr == nil {
 		return nil, ErrCreateGroupRequestEmpty
 	}
-	if group.DisplayName == "" {
-		return nil, ErrDisplayNameEmpty
+	if err := cgr.Validate(); err != nil {
+		return nil, fmt.Errorf("aws CreateGroup: error validating group: %w", err)
 	}
 
 	reqURL, err := url.Parse(s.url.String())
@@ -794,7 +733,7 @@ func (s *SCIMService) CreateGroup(ctx context.Context, group *CreateGroupRequest
 
 	reqURL.Path = path.Join(reqURL.Path, "/Groups")
 
-	req, err := s.newRequest(ctx, http.MethodPost, reqURL, *group)
+	req, err := s.newRequest(ctx, http.MethodPost, reqURL, *cgr)
 	if err != nil {
 		return nil, fmt.Errorf("aws CreateGroup: error creating request, http method: %s, url: %v, error: %w", http.MethodPost, reqURL.String(), err)
 	}
@@ -832,12 +771,12 @@ func (s *SCIMService) CreateGroup(ctx context.Context, group *CreateGroupRequest
 // references:
 // + https://docs.aws.amazon.com/singlesignon/latest/developerguide/creategroup.html
 // + https://docs.aws.amazon.com/singlesignon/latest/developerguide/getgroup.html
-func (s *SCIMService) CreateOrGetGroup(ctx context.Context, gr *CreateGroupRequest) (*CreateGroupResponse, error) {
-	if gr == nil {
+func (s *SCIMService) CreateOrGetGroup(ctx context.Context, cgr *CreateGroupRequest) (*CreateGroupResponse, error) {
+	if cgr == nil {
 		return nil, ErrCreateGroupRequestEmpty
 	}
-	if gr.DisplayName == "" {
-		return nil, ErrDisplayNameEmpty
+	if err := cgr.Validate(); err != nil {
+		return nil, fmt.Errorf("aws CreateOrGetGroup: error validating group: %w", err)
 	}
 
 	reqURL, err := url.Parse(s.url.String())
@@ -847,14 +786,14 @@ func (s *SCIMService) CreateOrGetGroup(ctx context.Context, gr *CreateGroupReque
 
 	reqURL.Path = path.Join(reqURL.Path, "/Groups")
 
-	req, err := s.newRequest(ctx, http.MethodPost, reqURL, *gr)
+	req, err := s.newRequest(ctx, http.MethodPost, reqURL, *cgr)
 	if err != nil {
-		return nil, fmt.Errorf("aws CreateOrGetGroup: error creating request, group: %s, http method: %s, url: %v, error: %w", gr.DisplayName, http.MethodPost, reqURL.String(), err)
+		return nil, fmt.Errorf("aws CreateOrGetGroup: error creating request, group: %s, http method: %s, url: %v, error: %w", cgr.DisplayName, http.MethodPost, reqURL.String(), err)
 	}
 
 	resp, err := s.do(ctx, req)
 	if err != nil {
-		return nil, fmt.Errorf("aws CreateOrGetGroup: error sending request, group: %s, http method: %s, url: %v, error: %w", gr.DisplayName, http.MethodPost, reqURL.String(), err)
+		return nil, fmt.Errorf("aws CreateOrGetGroup: error sending request, group: %s, http method: %s, url: %v, error: %w", cgr.DisplayName, http.MethodPost, reqURL.String(), err)
 	}
 	defer resp.Body.Close()
 
@@ -864,17 +803,17 @@ func (s *SCIMService) CreateOrGetGroup(ctx context.Context, gr *CreateGroupReque
 		// http.StatusConflict is 409
 		if errors.As(e, &httpErr) && httpErr.StatusCode == http.StatusConflict {
 			log.WithFields(log.Fields{
-				"name": gr.DisplayName,
+				"name": cgr.DisplayName,
 			}).Warn("aws CreateOrGetGroup: groups already exists with same name or externalId, trying to get the group information")
 
 			// This is because the group already exists, but exists with the same name
-			response, err := s.GetGroupByDisplayName(ctx, gr.DisplayName)
+			response, err := s.GetGroupByDisplayName(ctx, cgr.DisplayName)
 			if err != nil {
 				return nil, fmt.Errorf("aws CreateOrGetGroup: error getting group information: %w", err)
 			}
 
 			log.WithFields(log.Fields{
-				"group": gr.DisplayName,
+				"group": cgr.DisplayName,
 				"id":    response.ID,
 			}).Warn("aws CreateOrGetGroup: obtained group information")
 
@@ -883,15 +822,15 @@ func (s *SCIMService) CreateOrGetGroup(ctx context.Context, gr *CreateGroupReque
 			// with a different name same externalId.
 			if response.ID == "" {
 				log.WithFields(log.Fields{
-					"group": gr.DisplayName,
+					"group": cgr.DisplayName,
 				}).Warn("aws CreateOrGetGroup: group already exists, but with a different name, same id")
 
 				// remove the ExternalID from the group request, and call itself again to create the new group name
 				log.WithFields(log.Fields{
-					"group": gr.DisplayName,
+					"group": cgr.DisplayName,
 				}).Warn("aws CreateOrGetGroup: removing ExternalID from the group request, calling itself again to create the new group name")
-				gr.ExternalID = ""
-				return s.CreateOrGetGroup(ctx, gr)
+				cgr.ExternalID = ""
+				return s.CreateOrGetGroup(ctx, cgr)
 			}
 
 			return &CreateGroupResponse{
@@ -908,10 +847,10 @@ func (s *SCIMService) CreateOrGetGroup(ctx context.Context, gr *CreateGroupReque
 	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
 		b, err := io.ReadAll(resp.Body)
 		if err != nil {
-			return nil, fmt.Errorf("aws CreateOrGetGroup: group: %s, error reading response body: %w", gr.DisplayName, err)
+			return nil, fmt.Errorf("aws CreateOrGetGroup: group: %s, error reading response body: %w", cgr.DisplayName, err)
 		}
 
-		return nil, fmt.Errorf("aws CreateOrGetGroup: group: %s, error decoding response body: %w, body: %s", gr.DisplayName, err, string(b))
+		return nil, fmt.Errorf("aws CreateOrGetGroup: group: %s, error decoding response body: %w, body: %s", cgr.DisplayName, err, string(b))
 	}
 
 	return &response, nil
