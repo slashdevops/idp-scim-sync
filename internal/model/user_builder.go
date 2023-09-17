@@ -301,7 +301,7 @@ func (b *EnterpriseDataBuilderChoice) WithDepartment(department string) *Enterpr
 
 // WithManager sets the Manager field of the EnterpriseData entity.
 func (b *EnterpriseDataBuilderChoice) WithManager(manager Manager) *EnterpriseDataBuilderChoice {
-	b.ed.Manager = manager
+	b.ed.Manager = &manager
 	return b
 }
 

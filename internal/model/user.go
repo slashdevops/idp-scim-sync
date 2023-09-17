@@ -258,12 +258,12 @@ func (m *Manager) UnmarshalBinary(data []byte) error {
 }
 
 type EnterpriseData struct {
-	EmployeeNumber string  `json:"employeeNumber,omitempty"`
-	CostCenter     string  `json:"costCenter,omitempty"`
-	Organization   string  `json:"organization,omitempty"`
-	Division       string  `json:"division,omitempty"`
-	Department     string  `json:"department,omitempty"`
-	Manager        Manager `json:"manager,omitempty"`
+	EmployeeNumber string   `json:"employeeNumber,omitempty"`
+	CostCenter     string   `json:"costCenter,omitempty"`
+	Organization   string   `json:"organization,omitempty"`
+	Division       string   `json:"division,omitempty"`
+	Department     string   `json:"department,omitempty"`
+	Manager        *Manager `json:"manager,omitempty"`
 }
 
 // MarshalBinary implements the gob.GobEncoder interface for EnterpriseData entity.
@@ -286,8 +286,11 @@ func (ed EnterpriseData) MarshalBinary() ([]byte, error) {
 	if err := enc.Encode(ed.Department); err != nil {
 		return nil, err
 	}
-	if err := enc.Encode(ed.Manager); err != nil {
-		return nil, err
+
+	if ed.Manager != nil {
+		if err := enc.Encode(ed.Manager); err != nil {
+			return nil, err
+		}
 	}
 
 	return buf.Bytes(), nil
@@ -312,8 +315,18 @@ func (ed *EnterpriseData) UnmarshalBinary(data []byte) error {
 	if err := dec.Decode(&ed.Department); err != nil {
 		return err
 	}
-	if err := dec.Decode(&ed.Manager); err != nil {
-		return err
+
+	if ed.Manager != nil {
+		if err := dec.Decode(&ed.Manager); err != nil {
+			return err
+		}
+	} else {
+		// when the user has pointer to Manager, but the Manager is nil, the gob decoder returns an error
+		if err := dec.Decode(&ed.Manager); err != nil {
+			if err.Error() != "EOF" {
+				return err
+			}
+		}
 	}
 
 	return nil
