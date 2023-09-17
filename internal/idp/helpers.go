@@ -15,7 +15,23 @@ func buildUser(usr *admin.User) *model.User {
 	}
 
 	if usr.Name == nil {
-		usr.Name = &admin.UserName{}
+		log.Warn("idp: User name is nil")
+		return nil
+	}
+
+	if usr.Name.GivenName == "" {
+		log.Warn("idp: User given name is empty")
+		return nil
+	}
+
+	if usr.Name.FamilyName == "" {
+		log.Warn("idp: User family name is empty")
+		return nil
+	}
+
+	if usr.PrimaryEmail == "" {
+		log.Warn("idp: User primary email is empty")
+		return nil
 	}
 
 	// get the first language from the list of languages
@@ -49,6 +65,8 @@ func buildUser(usr *admin.User) *model.User {
 			WithPostalCode(addresses[0].PostalCode).
 			WithCountry(addresses[0].Country).
 			WithFormatted(addresses[0].Formatted).
+			WithPrimary(addresses[0].Primary).
+			WithType(addresses[0].Type).
 			Build()
 
 		locale = addresses[0].CountryCode
@@ -136,6 +154,9 @@ func buildUser(usr *admin.User) *model.User {
 	if title != "" {
 		modUser.Title = title
 	}
+
+	// recalculate the hashcode because we have modified the user after building it
+	modUser.SetHashCode()
 
 	return modUser
 }
