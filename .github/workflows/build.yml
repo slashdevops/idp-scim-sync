@@ -19,6 +19,8 @@ jobs:
   test:
     name: "Test and Build"
     runs-on: ubuntu-latest
+    env:
+      MAKE_DEBUG: "true"
     steps:
       - name: Check out code
         uses: actions/checkout@v4
