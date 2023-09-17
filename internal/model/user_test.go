@@ -303,37 +303,37 @@ func TestUser_GobEncode(t *testing.T) {
 		{
 			name: "filled User",
 			toTest: User{
-				IPID:              "1",
+				IPID:              "IPID",
 				SCIMID:            "this should not be encoded",
-				UserName:          "user1",
-				DisplayName:       "user 1",
-				NickName:          "the user1",
-				ProfileURL:        "https://idp.example.com/idp/user/1",
+				UserName:          "username",
+				DisplayName:       "displayname",
+				NickName:          "nickname",
+				ProfileURL:        "profileURL",
 				Title:             "title",
 				UserType:          "userType",
 				PreferredLanguage: "preferredLanguage",
 				Locale:            "locale",
 				Timezone:          "timezone",
-				Name: Name{
-					Formatted:       "User 1",
-					FamilyName:      "1",
-					GivenName:       "user",
-					MiddleName:      "the",
-					HonorificPrefix: "Mr.",
-					HonorificSuffix: "Jr.",
+				Emails:            []Email{{Value: "email value", Type: "email type", Primary: true}},
+				Addresses:         []Address{{Formatted: "formatted", StreetAddress: "street address", Locality: "locality", Region: "region", PostalCode: "postal code", Country: "country", Type: "type", Primary: true}},
+				PhoneNumbers:      []PhoneNumber{{Value: "phone value", Type: "phone type"}},
+				Name: &Name{
+					Formatted:       "formatted",
+					FamilyName:      "familyName",
+					GivenName:       "givenName",
+					MiddleName:      "middleName",
+					HonorificPrefix: "honorificPrefix",
+					HonorificSuffix: "honorificSuffix",
 				},
-				Active:       true,
-				Emails:       []Email{{Value: "user.1@mail.com", Type: "work", Primary: true}},
-				Addresses:    []Address{{Formatted: "formatted", StreetAddress: "156", Locality: "LA", Region: "CA", PostalCode: "08860", Country: "USA", Type: "Work", Primary: true}},
-				PhoneNumbers: []PhoneNumber{{Value: "value", Type: "type"}},
-				EnterpriseData: EnterpriseData{
+				EnterpriseData: &EnterpriseData{
 					EmployeeNumber: "employeeNumber",
 					CostCenter:     "costCenter",
 					Organization:   "organization",
-					Manager:        Manager{Value: "123456", Ref: "https://idp.example.com/idp/user/123456"},
+					Manager:        Manager{Value: "manager value", Ref: "manager ref"},
 					Department:     "department",
 					Division:       "division",
 				},
+				Active:   true,
 				HashCode: "this should not be encoded",
 			},
 		},
@@ -344,7 +344,7 @@ func TestUser_GobEncode(t *testing.T) {
 				UserName:    "user1",
 				DisplayName: "user 1",
 				ProfileURL:  "https://idp.example.com/idp/user/1",
-				Name: Name{
+				Name: &Name{
 					FamilyName: "1",
 					GivenName:  "user",
 				},
@@ -410,7 +410,7 @@ func TestUser_SetHashCode(t *testing.T) {
 			user: User{
 				IPID:   "1",
 				SCIMID: "1",
-				Name: Name{
+				Name: &Name{
 					GivenName:  "user",
 					FamilyName: "1",
 				},
@@ -421,7 +421,7 @@ func TestUser_SetHashCode(t *testing.T) {
 			},
 			want: User{
 				IPID: "1",
-				Name: Name{
+				Name: &Name{
 					GivenName:  "user",
 					FamilyName: "1",
 				},
@@ -433,7 +433,7 @@ func TestUser_SetHashCode(t *testing.T) {
 		{
 			name: "success with default field values",
 			user: User{
-				Name: Name{
+				Name: &Name{
 					GivenName:  "user",
 					FamilyName: "1",
 				},
@@ -443,7 +443,7 @@ func TestUser_SetHashCode(t *testing.T) {
 				HashCode:    "test",
 			},
 			want: User{
-				Name: Name{
+				Name: &Name{
 					GivenName:  "user",
 					FamilyName: "1",
 				},
@@ -482,7 +482,7 @@ func TestUser_SetHashCode_pointer(t *testing.T) {
 			user: &User{
 				IPID:   "1",
 				SCIMID: "1",
-				Name: Name{
+				Name: &Name{
 					GivenName:  "user",
 					FamilyName: "1",
 				},
@@ -493,7 +493,7 @@ func TestUser_SetHashCode_pointer(t *testing.T) {
 			},
 			want: &User{
 				IPID: "1",
-				Name: Name{
+				Name: &Name{
 					GivenName:  "user",
 					FamilyName: "1",
 				},
@@ -547,7 +547,7 @@ func TestUsersResult_MarshalJSON(t *testing.T) {
 					{
 						IPID:   "1",
 						SCIMID: "1",
-						Name: Name{
+						Name: &Name{
 							GivenName:  "user",
 							FamilyName: "1",
 						},
@@ -600,9 +600,9 @@ func TestUsersResult_MarshalJSON(t *testing.T) {
 }
 
 func TestUsersResult_SetHashCode(t *testing.T) {
-	u2 := &User{IPID: "2", SCIMID: "2", Name: Name{GivenName: "User", FamilyName: "2"}, Emails: []Email{{Value: "user.2@mail.com", Type: "work", Primary: true}}}
-	u1 := &User{IPID: "1", SCIMID: "1", Name: Name{GivenName: "User", FamilyName: "1"}, Emails: []Email{{Value: "user.1@mail.com", Type: "work", Primary: true}}}
-	u3 := &User{IPID: "3", SCIMID: "3", Name: Name{GivenName: "User", FamilyName: "3"}, Emails: []Email{{Value: "user.3@mail.com", Type: "work", Primary: true}}}
+	u2 := &User{IPID: "2", SCIMID: "2", Name: &Name{GivenName: "User", FamilyName: "2"}, Emails: []Email{{Value: "user.2@mail.com", Type: "work", Primary: true}}}
+	u1 := &User{IPID: "1", SCIMID: "1", Name: &Name{GivenName: "User", FamilyName: "1"}, Emails: []Email{{Value: "user.1@mail.com", Type: "work", Primary: true}}}
+	u3 := &User{IPID: "3", SCIMID: "3", Name: &Name{GivenName: "User", FamilyName: "3"}, Emails: []Email{{Value: "user.3@mail.com", Type: "work", Primary: true}}}
 
 	u1.SetHashCode()
 	u2.SetHashCode()

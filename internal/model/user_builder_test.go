@@ -37,7 +37,7 @@ func TestUserBuilder(t *testing.T) {
 		u := &User{
 			IPID:        "ipid",
 			SCIMID:      "scimid",
-			Name:        Name{GivenName: "givenname", FamilyName: "familyname"},
+			Name:        &Name{GivenName: "givenname", FamilyName: "familyname"},
 			DisplayName: "displayname",
 			Active:      true,
 			Emails:      []Email{{Value: "email"}},
@@ -63,7 +63,7 @@ func TestUserBuilder(t *testing.T) {
 
 		u := &User{
 			IPID:   "ipid",
-			Name:   Name{GivenName: "givenname"},
+			Name:   &Name{GivenName: "givenname"},
 			Active: true,
 		}
 		u.SetHashCode()
@@ -95,15 +95,15 @@ func TestUsersResultBuilder(t *testing.T) {
 	t.Run("all options resources", func(t *testing.T) {
 		urb := UsersResultBuilder()
 		urb.WithResources([]*User{
-			{IPID: "ipid", SCIMID: "scimid", Name: Name{FamilyName: "1", GivenName: "user"}, DisplayName: "user 1", Emails: []Email{{Value: "email"}}, Active: true},
-			{IPID: "ipid2", SCIMID: "scimid2", Name: Name{FamilyName: "2", GivenName: "user"}, DisplayName: "user 2", Emails: []Email{{Value: "email2"}}, Active: true},
+			{IPID: "ipid", SCIMID: "scimid", Name: &Name{FamilyName: "1", GivenName: "user"}, DisplayName: "user 1", Emails: []Email{{Value: "email"}}, Active: true},
+			{IPID: "ipid2", SCIMID: "scimid2", Name: &Name{FamilyName: "2", GivenName: "user"}, DisplayName: "user 2", Emails: []Email{{Value: "email2"}}, Active: true},
 		}).Build()
 
 		ur := &UsersResult{
 			Items: 2,
 			Resources: []*User{
-				{IPID: "ipid", SCIMID: "scimid", Name: Name{FamilyName: "1", GivenName: "user"}, DisplayName: "user 1", Emails: []Email{{Value: "email"}}, Active: true},
-				{IPID: "ipid2", SCIMID: "scimid2", Name: Name{FamilyName: "2", GivenName: "user"}, DisplayName: "user 2", Emails: []Email{{Value: "email2"}}, Active: true},
+				{IPID: "ipid", SCIMID: "scimid", Name: &Name{FamilyName: "1", GivenName: "user"}, DisplayName: "user 1", Emails: []Email{{Value: "email"}}, Active: true},
+				{IPID: "ipid2", SCIMID: "scimid2", Name: &Name{FamilyName: "2", GivenName: "user"}, DisplayName: "user 2", Emails: []Email{{Value: "email2"}}, Active: true},
 			},
 		}
 		ur.SetHashCode()
@@ -127,19 +127,19 @@ func TestUsersResultBuilder(t *testing.T) {
 	t.Run("all options resource", func(t *testing.T) {
 		urb := UsersResultBuilder()
 		urb.WithResource(
-			&User{IPID: "ipid", SCIMID: "scimid", Name: Name{FamilyName: "1", GivenName: "user"}, DisplayName: "user 1", Emails: []Email{{Value: "email"}}, Active: true},
+			&User{IPID: "ipid", SCIMID: "scimid", Name: &Name{FamilyName: "1", GivenName: "user"}, DisplayName: "user 1", Emails: []Email{{Value: "email"}}, Active: true},
 		).WithResource(
-			&User{IPID: "ipid2", SCIMID: "scimid2", Name: Name{FamilyName: "2", GivenName: "user"}, DisplayName: "user 2", Emails: []Email{{Value: "email2"}}, Active: true},
+			&User{IPID: "ipid2", SCIMID: "scimid2", Name: &Name{FamilyName: "2", GivenName: "user"}, DisplayName: "user 2", Emails: []Email{{Value: "email2"}}, Active: true},
 		).WithResource(
-			&User{IPID: "ipid3", SCIMID: "scimid3", Name: Name{FamilyName: "3", GivenName: "user"}, DisplayName: "user 3", Emails: []Email{{Value: "email3"}}, Active: true},
+			&User{IPID: "ipid3", SCIMID: "scimid3", Name: &Name{FamilyName: "3", GivenName: "user"}, DisplayName: "user 3", Emails: []Email{{Value: "email3"}}, Active: true},
 		).Build()
 
 		ur := &UsersResult{
 			Items: 3,
 			Resources: []*User{
-				{IPID: "ipid", SCIMID: "scimid", Name: Name{FamilyName: "1", GivenName: "user"}, DisplayName: "user 1", Emails: []Email{{Value: "email"}}, Active: true},
-				{IPID: "ipid2", SCIMID: "scimid2", Name: Name{FamilyName: "2", GivenName: "user"}, DisplayName: "user 2", Emails: []Email{{Value: "email2"}}, Active: true},
-				{IPID: "ipid3", SCIMID: "scimid3", Name: Name{FamilyName: "3", GivenName: "user"}, DisplayName: "user 3", Emails: []Email{{Value: "email3"}}, Active: true},
+				{IPID: "ipid", SCIMID: "scimid", Name: &Name{FamilyName: "1", GivenName: "user"}, DisplayName: "user 1", Emails: []Email{{Value: "email"}}, Active: true},
+				{IPID: "ipid2", SCIMID: "scimid2", Name: &Name{FamilyName: "2", GivenName: "user"}, DisplayName: "user 2", Emails: []Email{{Value: "email2"}}, Active: true},
+				{IPID: "ipid3", SCIMID: "scimid3", Name: &Name{FamilyName: "3", GivenName: "user"}, DisplayName: "user 3", Emails: []Email{{Value: "email3"}}, Active: true},
 			},
 		}
 		ur.SetHashCode()

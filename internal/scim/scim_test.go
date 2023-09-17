@@ -669,7 +669,7 @@ func TestCreateUsers(t *testing.T) {
 			Resources: []*model.User{
 				{
 					IPID:        "1",
-					Name:        model.Name{FamilyName: "1", GivenName: "user"},
+					Name:        &model.Name{FamilyName: "1", GivenName: "user"},
 					DisplayName: "user 1",
 					Emails:      []model.Email{{Value: "user.1@mail.com", Type: "work", Primary: true}},
 					Active:      true,
@@ -706,7 +706,7 @@ func TestCreateUsers(t *testing.T) {
 			Resources: []*model.User{
 				{
 					IPID:        "1",
-					Name:        model.Name{FamilyName: "1", GivenName: "user"},
+					Name:        &model.Name{FamilyName: "1", GivenName: "user"},
 					DisplayName: "user 1",
 					Emails:      []model.Email{{Value: "user.1@mail.com", Type: "work", Primary: true}},
 				},
@@ -776,14 +776,14 @@ func TestCreateUsers(t *testing.T) {
 			Resources: []*model.User{
 				{
 					IPID:        "1",
-					Name:        model.Name{FamilyName: "1", GivenName: "user"},
+					Name:        &model.Name{FamilyName: "1", GivenName: "user"},
 					DisplayName: "user 1",
 					Emails:      []model.Email{{Value: "user.1@mail.com", Type: "work", Primary: true}},
 					Active:      true,
 				},
 				{
 					IPID:        "2",
-					Name:        model.Name{FamilyName: "2", GivenName: "user"},
+					Name:        &model.Name{FamilyName: "2", GivenName: "user"},
 					DisplayName: "user 2",
 					Emails:      []model.Email{{Value: "user.2@mail.com", Type: "work", Primary: true}},
 					Active:      true,
@@ -859,7 +859,7 @@ func TestUpdateUsers(t *testing.T) {
 				{
 					IPID:        "1",
 					SCIMID:      "1",
-					Name:        model.Name{FamilyName: "1", GivenName: "user"},
+					Name:        &model.Name{FamilyName: "1", GivenName: "user"},
 					DisplayName: "user 1",
 					Emails:      []model.Email{{Value: "user.1@mail.com", Type: "work", Primary: true}},
 					Active:      true,
@@ -912,7 +912,7 @@ func TestUpdateUsers(t *testing.T) {
 				{
 					IPID:        "1",
 					SCIMID:      "1",
-					Name:        model.Name{FamilyName: "1", GivenName: "user"},
+					Name:        &model.Name{FamilyName: "1", GivenName: "user"},
 					DisplayName: "user 1",
 					Emails:      []model.Email{{Value: "user.1@mail.com", Type: "work", Primary: true}},
 				},
@@ -984,7 +984,7 @@ func TestUpdateUsers(t *testing.T) {
 				{
 					IPID:        "1",
 					SCIMID:      "1",
-					Name:        model.Name{FamilyName: "1", GivenName: "user"},
+					Name:        &model.Name{FamilyName: "1", GivenName: "user"},
 					DisplayName: "user 1",
 					Emails:      []model.Email{{Value: "user.1@mail.com", Type: "work", Primary: true}},
 					Active:      true,
@@ -992,7 +992,7 @@ func TestUpdateUsers(t *testing.T) {
 				{
 					IPID:        "2",
 					SCIMID:      "2",
-					Name:        model.Name{FamilyName: "2", GivenName: "user"},
+					Name:        &model.Name{FamilyName: "2", GivenName: "user"},
 					DisplayName: "user 2",
 					Emails:      []model.Email{{Value: "user.2@mail.com", Type: "work", Primary: true}},
 					Active:      true,
@@ -1045,7 +1045,7 @@ func TestDeleteUsers(t *testing.T) {
 				{
 					IPID:        "1",
 					SCIMID:      "1",
-					Name:        model.Name{FamilyName: "1", GivenName: "user"},
+					Name:        &model.Name{FamilyName: "1", GivenName: "user"},
 					DisplayName: "user 1",
 					Emails:      []model.Email{{Value: "user.1@mail.com", Type: "work", Primary: true}},
 					Active:      true,
@@ -1070,7 +1070,7 @@ func TestDeleteUsers(t *testing.T) {
 				{
 					IPID:        "1",
 					SCIMID:      "1",
-					Name:        model.Name{FamilyName: "1", GivenName: "user"},
+					Name:        &model.Name{FamilyName: "1", GivenName: "user"},
 					DisplayName: "user 1",
 					Emails:      []model.Email{{Value: "user.1@mail.com", Type: "work", Primary: true}},
 				},
@@ -1097,7 +1097,7 @@ func TestDeleteUsers(t *testing.T) {
 				{
 					IPID:        "1",
 					SCIMID:      "1",
-					Name:        model.Name{FamilyName: "1", GivenName: "user"},
+					Name:        &model.Name{FamilyName: "1", GivenName: "user"},
 					DisplayName: "user 1",
 					Emails:      []model.Email{{Value: "user.1@mail.com", Type: "work", Primary: true}},
 					Active:      true,
@@ -1105,7 +1105,7 @@ func TestDeleteUsers(t *testing.T) {
 				{
 					IPID:        "2",
 					SCIMID:      "2",
-					Name:        model.Name{FamilyName: "2", GivenName: "user"},
+					Name:        &model.Name{FamilyName: "2", GivenName: "user"},
 					DisplayName: "user 2",
 					Emails:      []model.Email{{Value: "user.2@mail.com", Type: "work", Primary: true}},
 					Active:      true,
@@ -1715,23 +1715,17 @@ func TestGetGroupsMembersBruteForce(t *testing.T) {
 			Items: 2,
 			Resources: []*model.User{
 				{
-					IPID:   "1",
-					SCIMID: "1",
-					Name: model.Name{
-						FamilyName: "1",
-						GivenName:  "user",
-					},
+					IPID:        "1",
+					SCIMID:      "1",
+					Name:        &model.Name{FamilyName: "1", GivenName: "user"},
 					DisplayName: "user 1",
 					Active:      true,
 					Emails:      []model.Email{{Value: "user.1@mail.com", Type: "work", Primary: true}},
 				},
 				{
-					IPID:   "2",
-					SCIMID: "2",
-					Name: model.Name{
-						FamilyName: "2",
-						GivenName:  "user",
-					},
+					IPID:        "2",
+					SCIMID:      "2",
+					Name:        &model.Name{FamilyName: "2", GivenName: "user"},
 					DisplayName: "user 2",
 					Active:      true,
 					Emails:      []model.Email{{Value: "user.2@mail.com", Type: "work", Primary: true}},
@@ -1837,12 +1831,9 @@ func TestGetGroupsMembersBruteForce(t *testing.T) {
 			Items: 1,
 			Resources: []*model.User{
 				{
-					IPID:   "1",
-					SCIMID: "1",
-					Name: model.Name{
-						FamilyName: "1",
-						GivenName:  "user",
-					},
+					IPID:        "1",
+					SCIMID:      "1",
+					Name:        &model.Name{FamilyName: "1", GivenName: "user"},
 					DisplayName: "user 1",
 					Active:      true,
 					Emails:      []model.Email{{Value: "user.1@mail.com", Type: "work", Primary: true}},
@@ -1869,12 +1860,9 @@ func TestGetGroupsMembersBruteForce(t *testing.T) {
 			Items: 1,
 			Resources: []*model.User{
 				{
-					IPID:   "1",
-					SCIMID: "1",
-					Name: model.Name{
-						FamilyName: "1",
-						GivenName:  "user",
-					},
+					IPID:        "1",
+					SCIMID:      "1",
+					Name:        &model.Name{FamilyName: "1", GivenName: "user"},
 					DisplayName: "user 1",
 					Active:      true,
 					Emails:      []model.Email{{Value: "user.1@mail.com", Type: "work", Primary: true}},
@@ -1905,12 +1893,9 @@ func TestGetGroupsMembersBruteForce(t *testing.T) {
 			Items: 1,
 			Resources: []*model.User{
 				{
-					IPID:   "1",
-					SCIMID: "1",
-					Name: model.Name{
-						FamilyName: "1",
-						GivenName:  "user",
-					},
+					IPID:        "1",
+					SCIMID:      "1",
+					Name:        &model.Name{FamilyName: "1", GivenName: "user"},
 					DisplayName: "user 1",
 					Active:      true,
 					Emails:      []model.Email{{Value: "user.1@mail.com", Type: "work", Primary: true}},
@@ -1949,12 +1934,9 @@ func TestGetGroupsMembersBruteForce(t *testing.T) {
 			Items: 1,
 			Resources: []*model.User{
 				{
-					IPID:   "1",
-					SCIMID: "1",
-					Name: model.Name{
-						FamilyName: "1",
-						GivenName:  "user",
-					},
+					IPID:        "1",
+					SCIMID:      "1",
+					Name:        &model.Name{FamilyName: "1", GivenName: "user"},
 					DisplayName: "user 1",
 					Active:      true,
 					Emails:      []model.Email{{Value: "user.1@mail.com", Type: "work", Primary: true}},

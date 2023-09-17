@@ -69,7 +69,7 @@ func TestState_MarshalJSON(t *testing.T) {
 							{
 								IPID:     "ipid",
 								SCIMID:   "scimid",
-								Name:     Name{FamilyName: "lastName", GivenName: "name"},
+								Name:     &Name{FamilyName: "lastName", GivenName: "name"},
 								Emails:   []Email{{Value: "email", Type: "work", Primary: true}},
 								HashCode: "hashCode",
 							},
@@ -104,14 +104,18 @@ func TestState_MarshalJSON(t *testing.T) {
         {
           "ipid": "ipid",
           "scimid": "scimid",
+          "hashCode": "hashCode",
+          "emails": [
+            {
+              "value": "email",
+              "type": "work",
+              "primary": true
+            }
+          ],
           "name": {
             "familyName": "lastName",
             "givenName": "name"
-          },
-          "displayName": "",
-          "active": false,
-          "email": "email",
-          "hashCode": "hashCode"
+          }
         }
       ]
     },
@@ -163,13 +167,13 @@ func TestState_SetHashCode(t *testing.T) {
 	})
 
 	t.Run("full state", func(t *testing.T) {
-		u1 := User{IPID: "1", SCIMID: "1", Name: Name{FamilyName: "user", GivenName: "1"}, DisplayName: "user.1", Active: true, Emails: []Email{{Value: "user.1@mail.com", Type: "work", Primary: true}}}
+		u1 := User{IPID: "1", SCIMID: "1", Name: &Name{FamilyName: "user", GivenName: "1"}, DisplayName: "user.1", Active: true, Emails: []Email{{Value: "user.1@mail.com", Type: "work", Primary: true}}}
 		u1.SetHashCode()
 
-		u2 := User{IPID: "2", SCIMID: "2", Name: Name{FamilyName: "user", GivenName: "2"}, DisplayName: "user.2", Active: true, Emails: []Email{{Value: "user.2@mail.com", Type: "work", Primary: true}}}
+		u2 := User{IPID: "2", SCIMID: "2", Name: &Name{FamilyName: "user", GivenName: "2"}, DisplayName: "user.2", Active: true, Emails: []Email{{Value: "user.2@mail.com", Type: "work", Primary: true}}}
 		u2.SetHashCode()
 
-		u3 := User{IPID: "3", SCIMID: "3", Name: Name{FamilyName: "user", GivenName: "3"}, DisplayName: "user.3", Active: false, Emails: []Email{{Value: "user.3@mail.com", Type: "work", Primary: true}}}
+		u3 := User{IPID: "3", SCIMID: "3", Name: &Name{FamilyName: "user", GivenName: "3"}, DisplayName: "user.3", Active: false, Emails: []Email{{Value: "user.3@mail.com", Type: "work", Primary: true}}}
 		u3.SetHashCode()
 
 		usrs := &UsersResult{Items: 3, Resources: []*User{&u1, &u2, &u3}}

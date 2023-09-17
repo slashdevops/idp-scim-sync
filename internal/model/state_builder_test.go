@@ -83,7 +83,7 @@ func TestStateBuilder(t *testing.T) {
 					Items:    1,
 					HashCode: "hashCode",
 					Resources: []*User{
-						{IPID: "ipid", SCIMID: "scimid", Name: Name{FamilyName: "1", GivenName: "user"}, Emails: []Email{{Value: "email"}}},
+						{IPID: "ipid", SCIMID: "scimid", Name: &Name{FamilyName: "1", GivenName: "user"}, Emails: []Email{{Value: "email"}}},
 					},
 				},
 			).
@@ -120,7 +120,7 @@ func TestStateBuilder(t *testing.T) {
 					Items:    1,
 					HashCode: "hashCode",
 					Resources: []*User{
-						{IPID: "ipid", SCIMID: "scimid", Name: Name{FamilyName: "1", GivenName: "user"}, Emails: []Email{{Value: "email"}}},
+						{IPID: "ipid", SCIMID: "scimid", Name: &Name{FamilyName: "1", GivenName: "user"}, Emails: []Email{{Value: "email"}}},
 					},
 				},
 				GroupsMembers: &GroupsMembersResult{

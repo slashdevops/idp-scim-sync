@@ -321,24 +321,24 @@ func (ed *EnterpriseData) UnmarshalBinary(data []byte) error {
 
 // User represents a user entity.
 type User struct {
-	IPID              string         `json:"ipid,omitempty"`
-	SCIMID            string         `json:"scimid,omitempty"`
-	UserName          string         `json:"userName,omitempty"`
-	DisplayName       string         `json:"displayName,omitempty"`
-	NickName          string         `json:"nickName,omitempty"`
-	ProfileURL        string         `json:"profileURL,omitempty"`
-	Title             string         `json:"title,omitempty"`
-	UserType          string         `json:"userType,omitempty"`
-	PreferredLanguage string         `json:"preferredLanguage,omitempty"`
-	Locale            string         `json:"locale,omitempty"`
-	Timezone          string         `json:"timezone,omitempty"`
-	HashCode          string         `json:"hashCode,omitempty"`
-	Emails            []Email        `json:"emails,omitempty"`
-	Addresses         []Address      `json:"addresses,omitempty"`
-	PhoneNumbers      []PhoneNumber  `json:"phoneNumbers,omitempty"`
-	Name              Name           `json:"name,omitempty"`
-	EnterpriseData    EnterpriseData `json:"enterpriseData,omitempty"`
-	Active            bool           `json:"active,omitempty"`
+	IPID              string          `json:"ipid,omitempty"`
+	SCIMID            string          `json:"scimid,omitempty"`
+	UserName          string          `json:"userName,omitempty"`
+	DisplayName       string          `json:"displayName,omitempty"`
+	NickName          string          `json:"nickName,omitempty"`
+	ProfileURL        string          `json:"profileURL,omitempty"`
+	Title             string          `json:"title,omitempty"`
+	UserType          string          `json:"userType,omitempty"`
+	PreferredLanguage string          `json:"preferredLanguage,omitempty"`
+	Locale            string          `json:"locale,omitempty"`
+	Timezone          string          `json:"timezone,omitempty"`
+	HashCode          string          `json:"hashCode,omitempty"`
+	Emails            []Email         `json:"emails,omitempty"`
+	Addresses         []Address       `json:"addresses,omitempty"`
+	PhoneNumbers      []PhoneNumber   `json:"phoneNumbers,omitempty"`
+	Name              *Name           `json:"name,omitempty"`
+	EnterpriseData    *EnterpriseData `json:"enterpriseData,omitempty"`
+	Active            bool            `json:"active,omitempty"`
 }
 
 // MarshalBinary implements the gob.GobEncoder interface for User entity.
@@ -353,9 +353,6 @@ func (u User) MarshalBinary() ([]byte, error) {
 		return nil, err
 	}
 	if err := enc.Encode(u.UserName); err != nil {
-		return nil, err
-	}
-	if err := enc.Encode(u.Name); err != nil {
 		return nil, err
 	}
 	if err := enc.Encode(u.DisplayName); err != nil {
@@ -394,8 +391,17 @@ func (u User) MarshalBinary() ([]byte, error) {
 	if err := enc.Encode(u.PhoneNumbers); err != nil {
 		return nil, err
 	}
-	if err := enc.Encode(u.EnterpriseData); err != nil {
-		return nil, err
+
+	if u.Name != nil {
+		if err := enc.Encode(u.Name); err != nil {
+			return nil, err
+		}
+	}
+
+	if u.EnterpriseData != nil {
+		if err := enc.Encode(u.EnterpriseData); err != nil {
+			return nil, err
+		}
 	}
 
 	return buf.Bytes(), nil
@@ -409,9 +415,6 @@ func (u *User) UnmarshalBinary(data []byte) error {
 		return err
 	}
 	if err := dec.Decode(&u.UserName); err != nil {
-		return err
-	}
-	if err := dec.Decode(&u.Name); err != nil {
 		return err
 	}
 	if err := dec.Decode(&u.DisplayName); err != nil {
@@ -450,8 +453,31 @@ func (u *User) UnmarshalBinary(data []byte) error {
 	if err := dec.Decode(&u.PhoneNumbers); err != nil {
 		return err
 	}
-	if err := dec.Decode(&u.EnterpriseData); err != nil {
-		return err
+
+	if u.Name != nil {
+		if err := dec.Decode(&u.Name); err != nil {
+			return err
+		}
+	} else {
+		// when the user has pointer to Name, but the Name is nil, the gob decoder returns an error
+		if err := dec.Decode(&u.Name); err != nil {
+			if err.Error() != "EOF" {
+				return err
+			}
+		}
+	}
+
+	if u.EnterpriseData != nil {
+		if err := dec.Decode(&u.EnterpriseData); err != nil {
+			return err
+		}
+	} else {
+		// when the user has pointer to EnterpriseData, but the Name is nil, the gob decoder returns an error
+		if err := dec.Decode(&u.EnterpriseData); err != nil {
+			if err.Error() != "EOF" {
+				return err
+			}
+		}
 	}
 
 	return nil

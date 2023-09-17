@@ -186,9 +186,9 @@ func BenchmarkGetGroups(b *testing.B) {
 }
 
 func TestGetUsers(t *testing.T) {
-	u1 := &model.User{IPID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, DisplayName: "user 1", Active: true, Emails: []model.Email{model.EmailBuilder().WithValue("user.1@mail.com").WithType("work").WithPrimary(true).Build()}}
+	u1 := &model.User{IPID: "1", Name: &model.Name{GivenName: "user", FamilyName: "1"}, DisplayName: "user 1", Active: true, Emails: []model.Email{model.EmailBuilder().WithValue("user.1@mail.com").WithType("work").WithPrimary(true).Build()}}
 	u1.SetHashCode()
-	u2 := &model.User{IPID: "2", Name: model.Name{GivenName: "user", FamilyName: "2"}, DisplayName: "user 2", Active: false, Emails: []model.Email{model.EmailBuilder().WithValue("user.2@mail.com").WithType("work").WithPrimary(true).Build()}}
+	u2 := &model.User{IPID: "2", Name: &model.Name{GivenName: "user", FamilyName: "2"}, DisplayName: "user 2", Active: false, Emails: []model.Email{model.EmailBuilder().WithValue("user.2@mail.com").WithType("work").WithPrimary(true).Build()}}
 	u2.SetHashCode()
 
 	type fields struct {
@@ -493,10 +493,10 @@ func TestGetUsersByGroupsMembers(t *testing.T) {
 			want: &model.UsersResult{
 				Items: 4,
 				Resources: []*model.User{
-					{IPID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Emails: []model.Email{model.EmailBuilder().WithValue("user.1@mail.com").WithType("work").WithPrimary(true).Build()}, DisplayName: "user 1", Active: true, HashCode: model.Hash(&model.User{IPID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Emails: []model.Email{model.EmailBuilder().WithValue("user.1@mail.com").WithType("work").WithPrimary(true).Build()}, DisplayName: "user 1", Active: true})},
-					{IPID: "2", Name: model.Name{GivenName: "user", FamilyName: "2"}, Emails: []model.Email{model.EmailBuilder().WithValue("user.2@mail.com").WithType("work").WithPrimary(true).Build()}, DisplayName: "user 2", Active: false, HashCode: model.Hash(&model.User{IPID: "2", Name: model.Name{GivenName: "user", FamilyName: "2"}, Emails: []model.Email{model.EmailBuilder().WithValue("user.2@mail.com").WithType("work").WithPrimary(true).Build()}, DisplayName: "user 2", Active: false})},
-					{IPID: "3", Name: model.Name{GivenName: "user", FamilyName: "3"}, Emails: []model.Email{model.EmailBuilder().WithValue("user.3@mail.com").WithType("work").WithPrimary(true).Build()}, DisplayName: "user 3", Active: false, HashCode: model.Hash(&model.User{IPID: "3", Name: model.Name{GivenName: "user", FamilyName: "3"}, Emails: []model.Email{model.EmailBuilder().WithValue("user.3@mail.com").WithType("work").WithPrimary(true).Build()}, DisplayName: "user 3", Active: false})},
-					{IPID: "4", Name: model.Name{GivenName: "user", FamilyName: "4"}, Emails: []model.Email{model.EmailBuilder().WithValue("user.1@mail.com").WithType("work").WithPrimary(true).Build()}, DisplayName: "user 4", Active: false, HashCode: model.Hash(&model.User{IPID: "4", Name: model.Name{GivenName: "user", FamilyName: "4"}, Emails: []model.Email{model.EmailBuilder().WithValue("user.4@mail.com").WithType("work").WithPrimary(true).Build()}, DisplayName: "user 4", Active: false})},
+					{IPID: "1", Name: &model.Name{GivenName: "user", FamilyName: "1"}, Emails: []model.Email{model.EmailBuilder().WithValue("user.1@mail.com").WithType("work").WithPrimary(true).Build()}, DisplayName: "user 1", Active: true, HashCode: model.Hash(&model.User{IPID: "1", Name: &model.Name{GivenName: "user", FamilyName: "1"}, Emails: []model.Email{model.EmailBuilder().WithValue("user.1@mail.com").WithType("work").WithPrimary(true).Build()}, DisplayName: "user 1", Active: true})},
+					{IPID: "2", Name: &model.Name{GivenName: "user", FamilyName: "2"}, Emails: []model.Email{model.EmailBuilder().WithValue("user.2@mail.com").WithType("work").WithPrimary(true).Build()}, DisplayName: "user 2", Active: false, HashCode: model.Hash(&model.User{IPID: "2", Name: &model.Name{GivenName: "user", FamilyName: "2"}, Emails: []model.Email{model.EmailBuilder().WithValue("user.2@mail.com").WithType("work").WithPrimary(true).Build()}, DisplayName: "user 2", Active: false})},
+					{IPID: "3", Name: &model.Name{GivenName: "user", FamilyName: "3"}, Emails: []model.Email{model.EmailBuilder().WithValue("user.3@mail.com").WithType("work").WithPrimary(true).Build()}, DisplayName: "user 3", Active: false, HashCode: model.Hash(&model.User{IPID: "3", Name: &model.Name{GivenName: "user", FamilyName: "3"}, Emails: []model.Email{model.EmailBuilder().WithValue("user.3@mail.com").WithType("work").WithPrimary(true).Build()}, DisplayName: "user 3", Active: false})},
+					{IPID: "4", Name: &model.Name{GivenName: "user", FamilyName: "4"}, Emails: []model.Email{model.EmailBuilder().WithValue("user.1@mail.com").WithType("work").WithPrimary(true).Build()}, DisplayName: "user 4", Active: false, HashCode: model.Hash(&model.User{IPID: "4", Name: &model.Name{GivenName: "user", FamilyName: "4"}, Emails: []model.Email{model.EmailBuilder().WithValue("user.4@mail.com").WithType("work").WithPrimary(true).Build()}, DisplayName: "user 4", Active: false})},
 				},
 			},
 			wantErr: false,

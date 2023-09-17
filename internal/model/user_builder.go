@@ -8,7 +8,13 @@ type UserBuilderChoice struct {
 // UserBuilder creates a new UserBuilderChoice entity.
 func UserBuilder() *UserBuilderChoice {
 	return &UserBuilderChoice{
-		u: &User{},
+		u: &User{
+			Name:           new(Name),
+			Emails:         make([]Email, 0),
+			Addresses:      make([]Address, 0),
+			PhoneNumbers:   make([]PhoneNumber, 0),
+			EnterpriseData: new(EnterpriseData),
+		},
 	}
 }
 
@@ -161,7 +167,7 @@ func (b *UserBuilderChoice) WithPhoneNumbers(phoneNumbers []PhoneNumber) *UserBu
 
 // WithEnterpriseData sets the EnterpriseData field of the User entity.
 func (b *UserBuilderChoice) WithEnterpriseData(enterpriseData EnterpriseData) *UserBuilderChoice {
-	b.u.EnterpriseData = enterpriseData
+	b.u.EnterpriseData = &enterpriseData
 	return b
 }
 
