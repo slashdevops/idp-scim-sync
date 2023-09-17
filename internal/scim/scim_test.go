@@ -673,6 +673,7 @@ func TestCreateUsers(t *testing.T) {
 					DisplayName: "user 1",
 					Emails:      []model.Email{{Value: "user.1@mail.com", Type: "work", Primary: true}},
 					Active:      true,
+					UserName:    "user.1@mail.com",
 				},
 			},
 		}
@@ -709,6 +710,7 @@ func TestCreateUsers(t *testing.T) {
 					Name:        &model.Name{FamilyName: "1", GivenName: "user"},
 					DisplayName: "user 1",
 					Emails:      []model.Email{{Value: "user.1@mail.com", Type: "work", Primary: true}},
+					UserName:    "user.1@mail.com",
 				},
 			},
 		}
@@ -752,6 +754,7 @@ func TestCreateUsers(t *testing.T) {
 			DisplayName: "user 1",
 			Active:      true,
 			Emails:      []aws.Email{{Value: "user.1@mail.com", Type: "work", Primary: true}},
+			UserName:    "user.1@mail.com",
 		}
 		resp2 := &aws.CreateUserResponse{
 			ID:         "22",
@@ -763,6 +766,7 @@ func TestCreateUsers(t *testing.T) {
 			DisplayName: "user 2",
 			Active:      true,
 			Emails:      []aws.Email{{Value: "user.2@mail.com", Type: "work", Primary: true}},
+			UserName:    "user.2@mail.com",
 		}
 		ctx := context.TODO()
 
@@ -780,6 +784,7 @@ func TestCreateUsers(t *testing.T) {
 					DisplayName: "user 1",
 					Emails:      []model.Email{{Value: "user.1@mail.com", Type: "work", Primary: true}},
 					Active:      true,
+					UserName:    "user.1@mail.com",
 				},
 				{
 					IPID:        "2",
@@ -787,6 +792,7 @@ func TestCreateUsers(t *testing.T) {
 					DisplayName: "user 2",
 					Emails:      []model.Email{{Value: "user.2@mail.com", Type: "work", Primary: true}},
 					Active:      true,
+					UserName:    "user.2@mail.com",
 				},
 			},
 		}
@@ -848,6 +854,7 @@ func TestUpdateUsers(t *testing.T) {
 			},
 			DisplayName: "user 1",
 			Active:      true,
+			UserName:    "user.1@mail.com",
 		}
 		ctx := context.TODO()
 
@@ -863,6 +870,7 @@ func TestUpdateUsers(t *testing.T) {
 					DisplayName: "user 1",
 					Emails:      []model.Email{{Value: "user.1@mail.com", Type: "work", Primary: true}},
 					Active:      true,
+					UserName:    "user.1@mail.com",
 				},
 			},
 		}
@@ -901,6 +909,7 @@ func TestUpdateUsers(t *testing.T) {
 			},
 			DisplayName: "user 1",
 			Active:      true,
+			UserName:    "user.1@mail.com",
 		}
 		ctx := context.TODO()
 
@@ -915,6 +924,7 @@ func TestUpdateUsers(t *testing.T) {
 					Name:        &model.Name{FamilyName: "1", GivenName: "user"},
 					DisplayName: "user 1",
 					Emails:      []model.Email{{Value: "user.1@mail.com", Type: "work", Primary: true}},
+					UserName:    "user.1@mail.com",
 				},
 			},
 		}
@@ -959,6 +969,7 @@ func TestUpdateUsers(t *testing.T) {
 			DisplayName: "user 1",
 			Active:      true,
 			Emails:      []aws.Email{{Value: "user.1@mail.com", Type: "work", Primary: true}},
+			UserName:    "user.1@mail.com",
 		}
 		resp2 := &aws.PutUserResponse{
 			ID:         "22",
@@ -970,6 +981,7 @@ func TestUpdateUsers(t *testing.T) {
 			DisplayName: "user 2",
 			Active:      true,
 			Emails:      []aws.Email{{Value: "user.2@mail.com", Type: "work", Primary: true}},
+			UserName:    "user.2@mail.com",
 		}
 		ctx := context.TODO()
 
@@ -988,6 +1000,7 @@ func TestUpdateUsers(t *testing.T) {
 					DisplayName: "user 1",
 					Emails:      []model.Email{{Value: "user.1@mail.com", Type: "work", Primary: true}},
 					Active:      true,
+					UserName:    "user.1@mail.com",
 				},
 				{
 					IPID:        "2",
@@ -996,6 +1009,7 @@ func TestUpdateUsers(t *testing.T) {
 					DisplayName: "user 2",
 					Emails:      []model.Email{{Value: "user.2@mail.com", Type: "work", Primary: true}},
 					Active:      true,
+					UserName:    "user.2@mail.com",
 				},
 			},
 		}

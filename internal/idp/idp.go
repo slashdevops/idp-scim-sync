@@ -75,13 +75,13 @@ func (i *IdentityProvider) GetGroups(ctx context.Context, filter []string) (*mod
 		if _, ok := uniqueGroups[grp.Name]; !ok {
 			uniqueGroups[grp.Name] = struct{}{}
 
-			e := model.GroupBuilder().
+			gg := model.GroupBuilder().
 				WithIPID(grp.Id).
 				WithName(grp.Name).
 				WithEmail(grp.Email).
 				Build()
 
-			syncGroups = append(syncGroups, e)
+			syncGroups = append(syncGroups, gg)
 		} else {
 			log.WithFields(log.Fields{
 				"id":    grp.Id,
@@ -114,23 +114,8 @@ func (i *IdentityProvider) GetUsers(ctx context.Context, filter []string) (*mode
 
 	syncUsers := make([]*model.User, len(pUsers))
 	for i, usr := range pUsers {
-
-		email := model.EmailBuilder().
-			WithValue(usr.PrimaryEmail).
-			WithType("work").
-			WithPrimary(true).
-			Build()
-
-		e := model.UserBuilder().
-			WithIPID(usr.Id).
-			WithGivenName(usr.Name.GivenName).
-			WithFamilyName(usr.Name.FamilyName).
-			WithDisplayName(fmt.Sprintf("%s %s", usr.Name.GivenName, usr.Name.FamilyName)).
-			WithEmail(email).
-			WithActive(!usr.Suspended).
-			Build()
-
-		syncUsers[i] = e
+		gu := buildUser(usr)
+		syncUsers[i] = gu
 	}
 	uResult := model.UsersResultBuilder().WithResources(syncUsers).Build()
 
@@ -165,13 +150,13 @@ func (i *IdentityProvider) GetGroupMembers(ctx context.Context, groupID string) 
 			continue
 		}
 
-		e := model.MemberBuilder().
+		gm := model.MemberBuilder().
 			WithIPID(member.Id).
 			WithEmail(member.Email).
 			WithStatus(member.Status).
 			Build()
 
-		syncMembers = append(syncMembers, e)
+		syncMembers = append(syncMembers, gm)
 	}
 
 	syncMembersResult := model.MembersResultBuilder().WithResources(syncMembers).Build()
@@ -200,24 +185,11 @@ func (i *IdentityProvider) GetUsersByGroupsMembers(ctx context.Context, gmr *mod
 				return nil, fmt.Errorf("idp: error getting user: %+v, email: %s, error: %w", member.IPID, member.Email, err)
 			}
 
-			email := model.EmailBuilder().
-				WithValue(u.PrimaryEmail).
-				WithType("work").
-				WithPrimary(true).
-				Build()
+			gu := buildUser(u)
 
-			e := model.UserBuilder().
-				WithIPID(u.Id).
-				WithGivenName(u.Name.GivenName).
-				WithFamilyName(u.Name.FamilyName).
-				WithDisplayName(fmt.Sprintf("%s %s", u.Name.GivenName, u.Name.FamilyName)).
-				WithEmail(email).
-				WithActive(!u.Suspended).
-				Build()
-
-			if _, ok := uniqUsers[e.GetPrimaryEmailAddress()]; !ok {
-				uniqUsers[e.GetPrimaryEmailAddress()] = struct{}{}
-				pUsers = append(pUsers, e)
+			if _, ok := uniqUsers[gu.GetPrimaryEmailAddress()]; !ok {
+				uniqUsers[gu.GetPrimaryEmailAddress()] = struct{}{}
+				pUsers = append(pUsers, gu)
 			}
 		}
 	}
@@ -251,13 +223,17 @@ func (i *IdentityProvider) GetGroupsMembers(ctx context.Context, gr *model.Group
 			return nil, fmt.Errorf("idp: error getting group members: %w", err)
 		}
 
-		e := model.GroupBuilder().
+		ggm := model.GroupBuilder().
 			WithIPID(group.IPID).
 			WithName(group.Name).
 			WithEmail(group.Email).
 			Build()
 
-		groupMember := model.GroupMembersBuilder().WithGroup(e).WithResources(members.Resources).Build()
+		groupMember := model.GroupMembersBuilder().
+			WithGroup(ggm).
+			WithResources(members.Resources).
+			Build()
+
 		groupMembers[j] = groupMember
 	}
 

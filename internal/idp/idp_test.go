@@ -268,6 +268,7 @@ func TestGetUsers(t *testing.T) {
 						WithGivenName("user").
 						WithFamilyName("1").
 						WithDisplayName("user 1").
+						WithUserName("user.1@mail.com").
 						WithActive(true).
 						Build(),
 					model.UserBuilder().
@@ -282,6 +283,7 @@ func TestGetUsers(t *testing.T) {
 						WithGivenName("user").
 						WithFamilyName("2").
 						WithDisplayName("user 2").
+						WithUserName("user.2@mail.com").
 						WithActive(false).
 						Build(),
 				},
@@ -562,6 +564,7 @@ func TestGetUsersByGroupsMembers(t *testing.T) {
 								WithPrimary(true).
 								Build(),
 						).
+						WithUserName("user.1@mail.com").
 						Build(),
 					model.UserBuilder().WithIPID("2").WithGivenName("user").WithFamilyName("2").WithDisplayName("user 2").WithActive(false).
 						WithEmail(
@@ -571,6 +574,7 @@ func TestGetUsersByGroupsMembers(t *testing.T) {
 								WithPrimary(true).
 								Build(),
 						).
+						WithUserName("user.2@mail.com").
 						Build(),
 					model.UserBuilder().WithIPID("3").WithGivenName("user").WithFamilyName("3").WithDisplayName("user 3").WithActive(false).
 						WithEmail(
@@ -580,6 +584,7 @@ func TestGetUsersByGroupsMembers(t *testing.T) {
 								WithPrimary(true).
 								Build(),
 						).
+						WithUserName("user.3@mail.com").
 						Build(),
 					model.UserBuilder().WithIPID("4").WithGivenName("user").WithFamilyName("4").WithDisplayName("user 4").WithActive(false).
 						WithEmail(
@@ -589,6 +594,7 @@ func TestGetUsersByGroupsMembers(t *testing.T) {
 								WithPrimary(true).
 								Build(),
 						).
+						WithUserName("user.4@mail.com").
 						Build(),
 				},
 			},
@@ -617,11 +623,11 @@ func TestGetUsersByGroupsMembers(t *testing.T) {
 
 			got, err := g.GetUsersByGroupsMembers(tt.args.ctx, tt.args.gmr)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("GoogleProvider.GetUsersFromGroupMembers() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("GoogleProvider.GetUsersFromGroupMembers() got error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("GoogleProvider.GetUsersFromGroupMembers() = %s, want %s", utils.ToJSON(got), utils.ToJSON(tt.want))
+				t.Errorf("GoogleProvider.GetUsersFromGroupMembers() got = %s, want %s", utils.ToJSON(got), utils.ToJSON(tt.want))
 			}
 		})
 	}

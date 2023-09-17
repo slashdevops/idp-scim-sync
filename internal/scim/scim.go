@@ -290,7 +290,7 @@ func (s *Provider) CreateUsers(ctx context.Context, ur *model.UsersResult) (*mod
 	for _, user := range ur.Resources {
 		userRequest := &aws.CreateUserRequest{
 			ID:          "",
-			UserName:    user.GetPrimaryEmailAddress(),
+			UserName:    user.UserName,
 			DisplayName: user.DisplayName,
 			ExternalID:  user.IPID,
 			Name: aws.Name{
@@ -299,7 +299,7 @@ func (s *Provider) CreateUsers(ctx context.Context, ur *model.UsersResult) (*mod
 			},
 			Emails: []aws.Email{
 				{
-					Value:   user.GetPrimaryEmailAddress(),
+					Value:   user.UserName,
 					Type:    "work",
 					Primary: true,
 				},
@@ -390,7 +390,7 @@ func (s *Provider) UpdateUsers(ctx context.Context, ur *model.UsersResult) (*mod
 		userRequest := &aws.PutUserRequest{
 			ID:          user.SCIMID,
 			DisplayName: user.DisplayName,
-			UserName:    user.GetPrimaryEmailAddress(),
+			UserName:    user.UserName,
 			ExternalID:  user.IPID,
 			Name: aws.Name{
 				FamilyName: user.Name.FamilyName,
