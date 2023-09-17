@@ -165,6 +165,12 @@ func (b *UserBuilderChoice) WithPhoneNumbers(phoneNumbers []PhoneNumber) *UserBu
 	return b
 }
 
+// WithName sets the Name field of the User entity.
+func (b *UserBuilderChoice) WithName(name Name) *UserBuilderChoice {
+	b.u.Name = &name
+	return b
+}
+
 // WithEnterpriseData sets the EnterpriseData field of the User entity.
 func (b *UserBuilderChoice) WithEnterpriseData(enterpriseData EnterpriseData) *UserBuilderChoice {
 	b.u.EnterpriseData = &enterpriseData
@@ -183,37 +189,57 @@ func (b *UserBuilderChoice) Build() *User {
 	return b.u
 }
 
-// UsersResultBuilderChoice is used to build a UsersResult entity and ensure the calculated hash code and items.
-type UsersResultBuilderChoice struct {
-	ur *UsersResult
+// NameBuilderChoice is the builder of Name entity.
+type NameBuilderChoice struct {
+	n *Name
 }
 
-// UsersResultBuilder creates a new UsersResultBuilderChoice entity.
-func UsersResultBuilder() *UsersResultBuilderChoice {
-	return &UsersResultBuilderChoice{
-		ur: &UsersResult{
-			Resources: make([]*User, 0),
-		},
+// NameBuilder creates a new NameBuilderChoice entity.
+func NameBuilder() *NameBuilderChoice {
+	return &NameBuilderChoice{
+		n: &Name{},
 	}
 }
 
-// WithResources sets the Resources field of the UsersResult entity.
-func (b *UsersResultBuilderChoice) WithResources(resources []*User) *UsersResultBuilderChoice {
-	b.ur.Resources = resources
+// WithFormatted sets the Formatted field of the Name entity.
+func (b *NameBuilderChoice) WithFormatted(formatted string) *NameBuilderChoice {
+	b.n.Formatted = formatted
 	return b
 }
 
-// WithResource add the resource to a Resources field of the UsersResult entity.
-func (b *UsersResultBuilderChoice) WithResource(resource *User) *UsersResultBuilderChoice {
-	b.ur.Resources = append(b.ur.Resources, resource)
+// WithFamilyName sets the FamilyName field of the Name entity.
+func (b *NameBuilderChoice) WithFamilyName(familyName string) *NameBuilderChoice {
+	b.n.FamilyName = familyName
 	return b
 }
 
-// Build returns the UserResult entity.
-func (b *UsersResultBuilderChoice) Build() *UsersResult {
-	b.ur.Items = len(b.ur.Resources)
-	b.ur.SetHashCode()
-	return b.ur
+// WithGivenName sets the GivenName field of the Name entity.
+func (b *NameBuilderChoice) WithGivenName(givenName string) *NameBuilderChoice {
+	b.n.GivenName = givenName
+	return b
+}
+
+// WithMiddleName sets the MiddleName field of the Name entity.
+func (b *NameBuilderChoice) WithMiddleName(middleName string) *NameBuilderChoice {
+	b.n.MiddleName = middleName
+	return b
+}
+
+// WithHonorificPrefix sets the HonorificPrefix field of the Name entity.
+func (b *NameBuilderChoice) WithHonorificPrefix(honorificPrefix string) *NameBuilderChoice {
+	b.n.HonorificPrefix = honorificPrefix
+	return b
+}
+
+// WithHonorificSuffix sets the HonorificSuffix field of the Name entity.
+func (b *NameBuilderChoice) WithHonorificSuffix(honorificSuffix string) *NameBuilderChoice {
+	b.n.HonorificSuffix = honorificSuffix
+	return b
+}
+
+// Build returns the Name entity.
+func (b *NameBuilderChoice) Build() *Name {
+	return b.n
 }
 
 // EnterpriseDataBuilderChoice is the builder of EnterpriseData entity.
@@ -425,4 +451,37 @@ func (b *PhoneNumberBuilderChoice) WithType(phoneNumberType string) *PhoneNumber
 // Build returns the PhoneNumber entity.
 func (b *PhoneNumberBuilderChoice) Build() PhoneNumber {
 	return b.pn
+}
+
+// UsersResultBuilderChoice is used to build a UsersResult entity and ensure the calculated hash code and items.
+type UsersResultBuilderChoice struct {
+	ur *UsersResult
+}
+
+// UsersResultBuilder creates a new UsersResultBuilderChoice entity.
+func UsersResultBuilder() *UsersResultBuilderChoice {
+	return &UsersResultBuilderChoice{
+		ur: &UsersResult{
+			Resources: make([]*User, 0),
+		},
+	}
+}
+
+// WithResources sets the Resources field of the UsersResult entity.
+func (b *UsersResultBuilderChoice) WithResources(resources []*User) *UsersResultBuilderChoice {
+	b.ur.Resources = resources
+	return b
+}
+
+// WithResource add the resource to a Resources field of the UsersResult entity.
+func (b *UsersResultBuilderChoice) WithResource(resource *User) *UsersResultBuilderChoice {
+	b.ur.Resources = append(b.ur.Resources, resource)
+	return b
+}
+
+// Build returns the UserResult entity.
+func (b *UsersResultBuilderChoice) Build() *UsersResult {
+	b.ur.Items = len(b.ur.Resources)
+	b.ur.SetHashCode()
+	return b.ur
 }
