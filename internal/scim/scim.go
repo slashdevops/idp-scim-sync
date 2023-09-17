@@ -242,7 +242,7 @@ func (s *Provider) GetUsers(ctx context.Context) (*model.UsersResult, error) {
 			WithActive(user.Active).
 			Build()
 
-		if len(user.Emails) != 0 {
+		if len(user.Addresses) != 0 {
 			address := model.AddressBuilder().
 				WithFormatted(user.Addresses[0].Formatted).
 				WithStreetAddress(user.Addresses[0].StreetAddress).
@@ -341,7 +341,7 @@ func (s *Provider) CreateUsers(ctx context.Context, ur *model.UsersResult) (*mod
 			WithActive(user.Active).
 			Build()
 
-		if len(user.Emails) != 0 {
+		if len(user.Addresses) != 0 {
 			address := model.AddressBuilder().
 				WithFormatted(user.Addresses[0].Formatted).
 				WithStreetAddress(user.Addresses[0].StreetAddress).
@@ -440,7 +440,7 @@ func (s *Provider) UpdateUsers(ctx context.Context, ur *model.UsersResult) (*mod
 			WithActive(user.Active).
 			Build()
 
-		if len(user.Emails) != 0 {
+		if len(user.Addresses) != 0 {
 			address := model.AddressBuilder().
 				WithFormatted(user.Addresses[0].Formatted).
 				WithStreetAddress(user.Addresses[0].StreetAddress).
