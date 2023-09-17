@@ -8,13 +8,7 @@ type UserBuilderChoice struct {
 // UserBuilder creates a new UserBuilderChoice entity.
 func UserBuilder() *UserBuilderChoice {
 	return &UserBuilderChoice{
-		u: &User{
-			// Emails:         make([]Email, 0),
-			// Addresses:      make([]Address, 0),
-			// PhoneNumbers:   make([]PhoneNumber, 0),
-			Name:           new(Name),
-			EnterpriseData: new(EnterpriseData),
-		},
+		u: &User{},
 	}
 }
 
@@ -38,36 +32,54 @@ func (b *UserBuilderChoice) WithUserName(userName string) *UserBuilderChoice {
 
 // WithFormattedName sets the Formatted field of the User entity.
 func (b *UserBuilderChoice) WithFormattedName(formatted string) *UserBuilderChoice {
+	if b.u.Name == nil {
+		b.u.Name = &Name{}
+	}
 	b.u.Name.Formatted = formatted
 	return b
 }
 
 // WithFamilyName sets the FamilyName field of the User entity.
 func (b *UserBuilderChoice) WithFamilyName(familyName string) *UserBuilderChoice {
+	if b.u.Name == nil {
+		b.u.Name = &Name{}
+	}
 	b.u.Name.FamilyName = familyName
 	return b
 }
 
 // WithGivenName sets the GivenName field of the User entity.
 func (b *UserBuilderChoice) WithGivenName(givenName string) *UserBuilderChoice {
+	if b.u.Name == nil {
+		b.u.Name = &Name{}
+	}
 	b.u.Name.GivenName = givenName
 	return b
 }
 
 // WithMiddleName sets the MiddleName field of the User entity.
 func (b *UserBuilderChoice) WithMiddleName(middleName string) *UserBuilderChoice {
+	if b.u.Name == nil {
+		b.u.Name = &Name{}
+	}
 	b.u.Name.MiddleName = middleName
 	return b
 }
 
 // WithHonorificPrefixName sets the HonorificPrefix field of the User entity.
 func (b *UserBuilderChoice) WithHonorificPrefixName(honorificPrefix string) *UserBuilderChoice {
+	if b.u.Name == nil {
+		b.u.Name = &Name{}
+	}
 	b.u.Name.HonorificPrefix = honorificPrefix
 	return b
 }
 
 // WithHonorificSuffixName sets the HonorificSuffix field of the User entity.
 func (b *UserBuilderChoice) WithHonorificSuffixName(honorificSuffix string) *UserBuilderChoice {
+	if b.u.Name == nil {
+		b.u.Name = &Name{}
+	}
 	b.u.Name.HonorificSuffix = honorificSuffix
 	return b
 }
@@ -167,6 +179,9 @@ func (b *UserBuilderChoice) WithPhoneNumbers(phoneNumbers []PhoneNumber) *UserBu
 
 // WithName sets the Name field of the User entity.
 func (b *UserBuilderChoice) WithName(name Name) *UserBuilderChoice {
+	if b.u.Name == nil {
+		b.u.Name = &Name{}
+	}
 	b.u.Name = &name
 	return b
 }

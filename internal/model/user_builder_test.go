@@ -10,10 +10,7 @@ func TestUserBuilder(t *testing.T) {
 	t.Run("empty", func(t *testing.T) {
 		ub := UserBuilder().Build()
 
-		u := &User{
-			Name:           new(Name),
-			EnterpriseData: new(EnterpriseData),
-		}
+		u := &User{}
 		u.SetHashCode()
 
 		assert.Equal(t, u.IPID, ub.IPID)
@@ -36,13 +33,12 @@ func TestUserBuilder(t *testing.T) {
 			Build()
 
 		u := &User{
-			IPID:           "ipid",
-			SCIMID:         "scimid",
-			Name:           &Name{GivenName: "givenname", FamilyName: "familyname"},
-			DisplayName:    "displayname",
-			Active:         true,
-			Emails:         []Email{{Value: "email"}},
-			EnterpriseData: new(EnterpriseData),
+			IPID:        "ipid",
+			SCIMID:      "scimid",
+			Name:        &Name{GivenName: "givenname", FamilyName: "familyname"},
+			DisplayName: "displayname",
+			Active:      true,
+			Emails:      []Email{{Value: "email"}},
 		}
 		u.SetHashCode()
 
@@ -62,10 +58,9 @@ func TestUserBuilder(t *testing.T) {
 			Build()
 
 		u := &User{
-			IPID:           "ipid",
-			Name:           &Name{GivenName: "givenname"},
-			Active:         true,
-			EnterpriseData: new(EnterpriseData),
+			IPID:   "ipid",
+			Name:   &Name{GivenName: "givenname"},
+			Active: true,
 		}
 		u.SetHashCode()
 
