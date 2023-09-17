@@ -10,16 +10,17 @@ func TestUserBuilder(t *testing.T) {
 	t.Run("empty", func(t *testing.T) {
 		ub := UserBuilder().Build()
 
-		u := &User{}
+		u := &User{
+			Name:           new(Name),
+			EnterpriseData: new(EnterpriseData),
+		}
 		u.SetHashCode()
 
-		assert.Equal(t, "", ub.IPID)
-		assert.Equal(t, "", ub.SCIMID)
-		assert.Equal(t, "", ub.Name.GivenName)
-		assert.Equal(t, "", ub.Name.FamilyName)
-		assert.Equal(t, "", ub.DisplayName)
-		assert.Equal(t, false, ub.Active)
-		assert.Equal(t, nil, ub.Emails)
+		assert.Equal(t, u.IPID, ub.IPID)
+		assert.Equal(t, u.SCIMID, ub.SCIMID)
+		assert.Equal(t, u.Name, ub.Name)
+		assert.Equal(t, u.Active, ub.Active)
+		assert.Equal(t, u.Emails, ub.Emails)
 		assert.Equal(t, u.HashCode, ub.HashCode)
 	})
 
@@ -35,22 +36,21 @@ func TestUserBuilder(t *testing.T) {
 			Build()
 
 		u := &User{
-			IPID:        "ipid",
-			SCIMID:      "scimid",
-			Name:        &Name{GivenName: "givenname", FamilyName: "familyname"},
-			DisplayName: "displayname",
-			Active:      true,
-			Emails:      []Email{{Value: "email"}},
+			IPID:           "ipid",
+			SCIMID:         "scimid",
+			Name:           &Name{GivenName: "givenname", FamilyName: "familyname"},
+			DisplayName:    "displayname",
+			Active:         true,
+			Emails:         []Email{{Value: "email"}},
+			EnterpriseData: new(EnterpriseData),
 		}
 		u.SetHashCode()
 
-		assert.Equal(t, "ipid", ub.u.IPID)
-		assert.Equal(t, "scimid", ub.u.SCIMID)
-		assert.Equal(t, "givenname", ub.u.Name.GivenName)
-		assert.Equal(t, "familyname", ub.u.Name.FamilyName)
-		assert.Equal(t, "displayname", ub.u.DisplayName)
-		assert.Equal(t, true, ub.u.Active)
-		assert.Equal(t, "email", ub.u.Emails[0].Value)
+		assert.Equal(t, u.IPID, ub.u.IPID)
+		assert.Equal(t, u.SCIMID, ub.u.SCIMID)
+		assert.Equal(t, u.Name, ub.u.Name)
+		assert.Equal(t, u.Active, ub.u.Active)
+		assert.Equal(t, u.Emails, ub.u.Emails)
 		assert.Equal(t, u.HashCode, ub.u.HashCode)
 	})
 
@@ -62,19 +62,18 @@ func TestUserBuilder(t *testing.T) {
 			Build()
 
 		u := &User{
-			IPID:   "ipid",
-			Name:   &Name{GivenName: "givenname"},
-			Active: true,
+			IPID:           "ipid",
+			Name:           &Name{GivenName: "givenname"},
+			Active:         true,
+			EnterpriseData: new(EnterpriseData),
 		}
 		u.SetHashCode()
 
-		assert.Equal(t, "ipid", ub.u.IPID)
-		assert.Equal(t, "", ub.u.SCIMID)
-		assert.Equal(t, "givenname", ub.u.Name.GivenName)
-		assert.Equal(t, "", ub.u.Name.FamilyName)
-		assert.Equal(t, "", ub.u.DisplayName)
-		assert.Equal(t, true, ub.u.Active)
-		assert.Equal(t, nil, ub.u.Emails)
+		assert.Equal(t, u.IPID, ub.u.IPID)
+		assert.Equal(t, u.SCIMID, ub.u.SCIMID)
+		assert.Equal(t, u.Name, ub.u.Name)
+		assert.Equal(t, u.Active, ub.u.Active)
+		assert.Equal(t, u.Emails, ub.u.Emails)
 		assert.Equal(t, u.HashCode, ub.u.HashCode)
 	})
 }

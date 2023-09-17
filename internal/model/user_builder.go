@@ -9,10 +9,10 @@ type UserBuilderChoice struct {
 func UserBuilder() *UserBuilderChoice {
 	return &UserBuilderChoice{
 		u: &User{
+			// Emails:         make([]Email, 0),
+			// Addresses:      make([]Address, 0),
+			// PhoneNumbers:   make([]PhoneNumber, 0),
 			Name:           new(Name),
-			Emails:         make([]Email, 0),
-			Addresses:      make([]Address, 0),
-			PhoneNumbers:   make([]PhoneNumber, 0),
 			EnterpriseData: new(EnterpriseData),
 		},
 	}

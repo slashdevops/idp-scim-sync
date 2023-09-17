@@ -565,14 +565,20 @@ func TestUsersResult_MarshalJSON(t *testing.T) {
     {
       "ipid": "1",
       "scimid": "1",
+      "displayName": "user 1",
+      "hashCode": "1111",
+      "emails": [
+        {
+          "value": "user.1@mail.com",
+          "type": "work",
+          "primary": true
+        }
+      ],
       "name": {
         "familyName": "1",
         "givenName": "user"
       },
-      "displayName": "user 1",
-      "active": true,
-      "email": "user.1@mail.com",
-      "hashCode": "1111"
+      "active": true
     }
   ]
 }`),
