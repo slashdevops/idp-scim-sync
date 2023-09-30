@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	gomock "github.com/golang/mock/gomock"
-	"github.com/slashdevops/idp-scim-sync/internal/utils"
+	"github.com/slashdevops/idp-scim-sync/convert"
 	mocks "github.com/slashdevops/idp-scim-sync/mocks/core"
 )
 
@@ -53,7 +53,7 @@ func TestWithIdentityProviderGroupsFilter(t *testing.T) {
 		}
 
 		if !reflect.DeepEqual(got, want) {
-			t.Errorf("got = %s, want %s", utils.ToJSON(got), utils.ToJSON(want))
+			t.Errorf("got = %s, want %s", convert.ToJSONString(got, true), convert.ToJSONString(want, true))
 		}
 	})
 }
@@ -102,7 +102,7 @@ func TestWithIdentityProviderUsersFilter(t *testing.T) {
 		}
 
 		if !reflect.DeepEqual(got, want) {
-			t.Errorf("got = %s, want %s", utils.ToJSON(got), utils.ToJSON(want))
+			t.Errorf("got = %s, want %s", convert.ToJSONString(got, true), convert.ToJSONString(want, true))
 		}
 	})
 }

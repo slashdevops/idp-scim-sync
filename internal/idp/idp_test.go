@@ -7,8 +7,9 @@ import (
 	"testing"
 
 	gomock "github.com/golang/mock/gomock"
+	"github.com/slashdevops/idp-scim-sync/convert"
 	"github.com/slashdevops/idp-scim-sync/internal/model"
-	"github.com/slashdevops/idp-scim-sync/internal/utils"
+
 	mocks "github.com/slashdevops/idp-scim-sync/mocks/idp"
 	"github.com/stretchr/testify/assert"
 	admin "google.golang.org/api/admin/directory/v1"
@@ -146,7 +147,7 @@ func TestGetGroups(t *testing.T) {
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("GoogleProvider.GetGroups() = %s, want %s", utils.ToJSON(got), utils.ToJSON(tt.want))
+				t.Errorf("GoogleProvider.GetGroups() = %s, want %s", convert.ToJSONString(got, true), convert.ToJSONString(tt.want, true))
 			}
 		})
 	}
@@ -318,7 +319,7 @@ func TestGetUsers(t *testing.T) {
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("GoogleProvider.GetUsers() got = %s, want %s", utils.ToJSON(got), utils.ToJSON(tt.want))
+				t.Errorf("GoogleProvider.GetUsers() got = %s, want %s", convert.ToJSONString(got, true), convert.ToJSONString(tt.want, true))
 			}
 		})
 	}
@@ -453,7 +454,7 @@ func TestGetGroupMembers(t *testing.T) {
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("GoogleProvider.GetGroupMembers() = %s, want %s", utils.ToJSON(got), utils.ToJSON(tt.want))
+				t.Errorf("GoogleProvider.GetGroupMembers() = %s, want %s", convert.ToJSONString(got, true), convert.ToJSONString(tt.want, true))
 			}
 		})
 	}
@@ -627,7 +628,7 @@ func TestGetUsersByGroupsMembers(t *testing.T) {
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("GoogleProvider.GetUsersFromGroupMembers() got = %s, want %s", utils.ToJSON(got), utils.ToJSON(tt.want))
+				t.Errorf("GoogleProvider.GetUsersFromGroupMembers() got = %s, want %s", convert.ToJSONString(got, true), convert.ToJSONString(tt.want, true))
 			}
 		})
 	}
@@ -794,7 +795,7 @@ func TestGetGroupsMembers(t *testing.T) {
 			}
 
 			if !tt.wantErr && !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("GoogleProvider.GetGroupsMembers() = %s, want %s", utils.ToJSON(got), utils.ToJSON(tt.want))
+				t.Errorf("GoogleProvider.GetGroupsMembers() = %s, want %s", convert.ToJSONString(got, true), convert.ToJSONString(tt.want, true))
 			}
 		})
 	}

@@ -6,7 +6,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/slashdevops/idp-scim-sync/internal/utils"
+	"github.com/slashdevops/idp-scim-sync/convert"
 )
 
 func TestName_GobEncode(t *testing.T) {
@@ -637,8 +637,8 @@ func TestUsersResult_SetHashCode(t *testing.T) {
 	ur5 := MergeUsersResult(&ur3, &ur2, &ur1)
 	ur5.SetHashCode()
 
-	t.Logf("ur4: %s\n", utils.ToJSON(ur4))
-	t.Logf("ur5: %s\n", utils.ToJSON(ur5))
+	t.Logf("ur4: %s\n", convert.ToJSONString(ur4, true))
+	t.Logf("ur5: %s\n", convert.ToJSONString(ur5, true))
 
 	t.Logf("ur4.HashCode: %s\n", ur4.HashCode)
 	t.Logf("ur5.HashCode: %s\n", ur5.HashCode)

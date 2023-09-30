@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/slashdevops/idp-scim-sync/internal/utils"
+	"github.com/slashdevops/idp-scim-sync/convert"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -231,16 +231,16 @@ func TestGroupsOperations(t *testing.T) {
 				return
 			}
 			if !reflect.DeepEqual(gotCreate, tt.wantCreate) {
-				t.Errorf("GroupsOperations() gotCreate = %s, want %s", utils.ToJSON(gotCreate), utils.ToJSON(tt.wantCreate))
+				t.Errorf("GroupsOperations() gotCreate = %s, want %s", convert.ToJSONString(gotCreate, true), convert.ToJSONString(tt.wantCreate, true))
 			}
 			if !reflect.DeepEqual(gotUpdate, tt.wantUpdate) {
-				t.Errorf("GroupsOperations() gotUpdate = %s, want %s", utils.ToJSON(gotUpdate), utils.ToJSON(tt.wantUpdate))
+				t.Errorf("GroupsOperations() gotUpdate = %s, want %s", convert.ToJSONString(gotUpdate, true), convert.ToJSONString(tt.wantUpdate, true))
 			}
 			if !reflect.DeepEqual(gotEqual, tt.wantEqual) {
-				t.Errorf("GroupsOperations() gotEqual = %s, want %s", utils.ToJSON(gotEqual), utils.ToJSON(tt.wantEqual))
+				t.Errorf("GroupsOperations() gotEqual = %s, want %s", convert.ToJSONString(gotEqual, true), convert.ToJSONString(tt.wantEqual, true))
 			}
 			if !reflect.DeepEqual(gotDelete, tt.wantDelete) {
-				t.Errorf("GroupsOperations() gotDelete = %s, want %s", utils.ToJSON(gotDelete), utils.ToJSON(tt.wantDelete))
+				t.Errorf("GroupsOperations() gotDelete = %s, want %s", convert.ToJSONString(gotDelete, true), convert.ToJSONString(tt.wantDelete, true))
 			}
 		})
 	}
@@ -494,16 +494,16 @@ func TestUsersOperations(t *testing.T) {
 				return
 			}
 			if !reflect.DeepEqual(gotCreate, tt.wantCreate) {
-				t.Errorf("UsersOperations() gotCreate = %s, want %s", utils.ToJSON(gotCreate), utils.ToJSON(tt.wantCreate))
+				t.Errorf("UsersOperations() gotCreate = %s, want %s", convert.ToJSONString(gotCreate), convert.ToJSONString(tt.wantCreate))
 			}
 			if !reflect.DeepEqual(gotUpdate, tt.wantUpdate) {
-				t.Errorf("UsersOperations() gotUpdate = %s, want %s", utils.ToJSON(gotUpdate), utils.ToJSON(tt.wantUpdate))
+				t.Errorf("UsersOperations() gotUpdate = %s, want %s", convert.ToJSONString(gotUpdate), convert.ToJSONString(tt.wantUpdate))
 			}
 			if !reflect.DeepEqual(gotEqual, tt.wantEqual) {
-				t.Errorf("UsersOperations() gotEqual = %s, want %s", utils.ToJSON(gotEqual), utils.ToJSON(tt.wantEqual))
+				t.Errorf("UsersOperations() gotEqual = %s, want %s", convert.ToJSONString(gotEqual), convert.ToJSONString(tt.wantEqual))
 			}
 			if !reflect.DeepEqual(gotDelete, tt.wantDelete) {
-				t.Errorf("UsersOperations() gotDelete = %s, want %s", utils.ToJSON(gotDelete), utils.ToJSON(tt.wantDelete))
+				t.Errorf("UsersOperations() gotDelete = %s, want %s", convert.ToJSONString(gotDelete), convert.ToJSONString(tt.wantDelete))
 			}
 		})
 	}
@@ -847,13 +847,13 @@ func TestMembersOperations(t *testing.T) {
 				return
 			}
 			if !reflect.DeepEqual(gotCreate, tt.wantCreate) {
-				t.Errorf("MembersOperations() gotCreate = %s, want %s", utils.ToJSON(gotCreate), utils.ToJSON(tt.wantCreate))
+				t.Errorf("MembersOperations() gotCreate = %s, want %s", convert.ToJSONString(gotCreate), convert.ToJSONString(tt.wantCreate))
 			}
 			if !reflect.DeepEqual(gotEqual, tt.wantEqual) {
-				t.Errorf("MembersOperations() gotEqual = %s, want %s", utils.ToJSON(gotEqual), utils.ToJSON(tt.wantEqual))
+				t.Errorf("MembersOperations() gotEqual = %s, want %s", convert.ToJSONString(gotEqual), convert.ToJSONString(tt.wantEqual))
 			}
 			if !reflect.DeepEqual(gotDelete, tt.wantDelete) {
-				t.Errorf("MembersOperations() gotDelete = %s, want %s", utils.ToJSON(gotDelete), utils.ToJSON(tt.wantDelete))
+				t.Errorf("MembersOperations() gotDelete = %s, want %s", convert.ToJSONString(gotDelete), convert.ToJSONString(tt.wantDelete))
 			}
 		})
 	}
@@ -926,7 +926,7 @@ func TestMergeGroupsResult(t *testing.T) {
 			tt.wantMerged.SetHashCode()
 
 			if gotMerged := MergeGroupsResult(tt.args.grs...); !reflect.DeepEqual(gotMerged, tt.wantMerged) {
-				t.Errorf("MergeGroupsResult() = %s, want %s", utils.ToJSON(gotMerged), utils.ToJSON(tt.wantMerged))
+				t.Errorf("MergeGroupsResult() = %s, want %s", convert.ToJSONString(gotMerged), convert.ToJSONString(tt.wantMerged))
 			}
 		})
 	}
@@ -999,7 +999,7 @@ func TestMergeUsersResult(t *testing.T) {
 			tt.wantMerged.SetHashCode()
 
 			if gotMerged := MergeUsersResult(tt.args.urs...); !reflect.DeepEqual(gotMerged, tt.wantMerged) {
-				t.Errorf("MergeUsersResult() = %s, want %s", utils.ToJSON(gotMerged), utils.ToJSON(tt.wantMerged))
+				t.Errorf("MergeUsersResult() = %s, want %s", convert.ToJSONString(gotMerged), convert.ToJSONString(tt.wantMerged))
 			}
 		})
 	}
@@ -1170,7 +1170,7 @@ func TestMergeGroupsMembersResult(t *testing.T) {
 			tt.wantMerged.SetHashCode()
 
 			if gotMerged := MergeGroupsMembersResult(tt.args.gms...); !reflect.DeepEqual(gotMerged, tt.wantMerged) {
-				t.Errorf("MergeGroupsMembersResult() = %s, want %s", utils.ToJSON(gotMerged), utils.ToJSON(tt.wantMerged))
+				t.Errorf("MergeGroupsMembersResult() = %s, want %s", convert.ToJSONString(gotMerged), convert.ToJSONString(tt.wantMerged))
 			}
 		})
 	}
@@ -1497,13 +1497,13 @@ func TestMembersDataSets(t *testing.T) {
 			gotCreate, gotEqual, gotDelete := membersDataSets(tt.args.idp, tt.args.scim)
 
 			if !reflect.DeepEqual(gotCreate, tt.wantCreate) {
-				t.Errorf("membersDataSets() gotCreate = %s, want %s", utils.ToJSON(gotCreate), utils.ToJSON(tt.wantCreate))
+				t.Errorf("membersDataSets() gotCreate = %s, want %s", convert.ToJSONString(gotCreate), convert.ToJSONString(tt.wantCreate))
 			}
 			if !reflect.DeepEqual(gotEqual, tt.wantEqual) {
-				t.Errorf("membersDataSets() gotEqual = %s, want %s", utils.ToJSON(gotEqual), utils.ToJSON(tt.wantEqual))
+				t.Errorf("membersDataSets() gotEqual = %s, want %s", convert.ToJSONString(gotEqual), convert.ToJSONString(tt.wantEqual))
 			}
 			if !reflect.DeepEqual(gotDelete, tt.wantDelete) {
-				t.Errorf("membersDataSets() gotDelete = %s, want %s", utils.ToJSON(gotDelete), utils.ToJSON(tt.wantDelete))
+				t.Errorf("membersDataSets() gotDelete = %s, want %s", convert.ToJSONString(gotDelete), convert.ToJSONString(tt.wantDelete))
 			}
 		})
 	}

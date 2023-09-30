@@ -3,6 +3,8 @@ package convert
 import (
 	"encoding/json"
 	"log"
+
+	"gopkg.in/yaml.v3"
 )
 
 // ToJSON converts any type to JSON []byte
@@ -33,4 +35,20 @@ func ToJSON(stc interface{}, ident ...bool) []byte {
 // ToJSONString converts any type to JSON string
 func ToJSONString(stc interface{}, ident ...bool) string {
 	return string(ToJSON(stc, ident...))
+}
+
+// ToYAML converts any type to YAML []byte
+func ToYAML(stc interface{}) []byte {
+	if stc == nil {
+		return []byte("")
+	}
+	if stc == "" {
+		return []byte("")
+	}
+
+	YAML, err := yaml.Marshal(stc)
+	if err != nil {
+		log.Panic(err.Error())
+	}
+	return YAML
 }

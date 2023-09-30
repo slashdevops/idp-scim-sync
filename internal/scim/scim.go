@@ -94,6 +94,10 @@ func (s *Provider) GetGroups(ctx context.Context) (*model.GroupsResult, error) {
 
 	groupsResult := model.GroupsResultBuilder().WithResources(groups).Build()
 
+	log.WithFields(log.Fields{
+		"object": convert.ToJSONString(groupsResult),
+	}).Trace("scim: GetGroups")
+
 	return groupsResult, nil
 }
 
@@ -134,6 +138,10 @@ func (s *Provider) CreateGroups(ctx context.Context, gr *model.GroupsResult) (*m
 	}
 
 	groupsResult := model.GroupsResultBuilder().WithResources(groups).Build()
+
+	log.WithFields(log.Fields{
+		"object": convert.ToJSONString(groupsResult),
+	}).Trace("scim: CreateGroups")
 
 	return groupsResult, nil
 }
@@ -191,6 +199,10 @@ func (s *Provider) UpdateGroups(ctx context.Context, gr *model.GroupsResult) (*m
 
 	groupsResult := model.GroupsResultBuilder().WithResources(groups).Build()
 
+	log.WithFields(log.Fields{
+		"object": convert.ToJSONString(groupsResult),
+	}).Trace("scim: UpdateGroups")
+
 	return groupsResult, nil
 }
 
@@ -202,6 +214,7 @@ func (s *Provider) DeleteGroups(ctx context.Context, gr *model.GroupsResult) err
 			"idpid":  group.IPID,
 			"scimid": group.SCIMID,
 			"email":  group.Email,
+			"object": convert.ToJSONString(group),
 		}).Trace("deleting group (details)")
 
 		log.WithFields(log.Fields{
@@ -280,6 +293,10 @@ func (s *Provider) GetUsers(ctx context.Context) (*model.UsersResult, error) {
 	}
 
 	usersResult := model.UsersResultBuilder().WithResources(users).Build()
+
+	log.WithFields(log.Fields{
+		"object": convert.ToJSONString(usersResult),
+	}).Trace("scim: GetUsers")
 
 	return usersResult, nil
 }
@@ -373,6 +390,10 @@ func (s *Provider) CreateUsers(ctx context.Context, ur *model.UsersResult) (*mod
 
 	usersResult := model.UsersResultBuilder().WithResources(users).Build()
 
+	log.WithFields(log.Fields{
+		"object": convert.ToJSONString(usersResult),
+	}).Trace("scim: CreateUsers")
+
 	return usersResult, nil
 }
 
@@ -381,30 +402,14 @@ func (s *Provider) UpdateUsers(ctx context.Context, ur *model.UsersResult) (*mod
 	users := make([]*model.User, 0)
 
 	for _, user := range ur.Resources {
-		userRequest := &aws.PutUserRequest{
-			ID:          user.SCIMID,
-			DisplayName: user.DisplayName,
-			UserName:    user.UserName,
-			ExternalID:  user.IPID,
-			Name: aws.Name{
-				FamilyName: user.Name.FamilyName,
-				GivenName:  user.Name.GivenName,
-			},
-			Emails: []aws.Email{
-				{
-					Value:   user.GetPrimaryEmailAddress(),
-					Type:    "work",
-					Primary: true,
-				},
-			},
-			Active: user.Active,
-		}
+		userRequest := buildPutUserRequest(user)
 
 		log.WithFields(log.Fields{
 			"user":   user.DisplayName,
 			"email":  user.GetPrimaryEmailAddress(),
 			"ipdid":  user.IPID,
 			"scimid": user.SCIMID,
+			"object": convert.ToJSONString(userRequest),
 		}).Trace("updating user (details)")
 
 		log.WithFields(log.Fields{
@@ -421,8 +426,6 @@ func (s *Provider) UpdateUsers(ctx context.Context, ur *model.UsersResult) (*mod
 			WithIPID(user.IPID).
 			WithSCIMID(r.ID).
 			WithUserName(user.UserName).
-			WithGivenName(user.Name.GivenName).
-			WithFamilyName(user.Name.FamilyName).
 			WithDisplayName(user.DisplayName).
 			WithNickName(user.NickName).
 			WithProfileURL(user.ProfileURL).
@@ -433,6 +436,17 @@ func (s *Provider) UpdateUsers(ctx context.Context, ur *model.UsersResult) (*mod
 			WithTimezone(user.Timezone).
 			WithActive(user.Active).
 			Build()
+
+		if user.Name != nil {
+			e.Name = model.NameBuilder().
+				WithFamilyName(user.Name.FamilyName).
+				WithGivenName(user.Name.GivenName).
+				WithFormatted(user.Name.Formatted).
+				WithMiddleName(user.Name.MiddleName).
+				WithHonorificPrefix(user.Name.HonorificPrefix).
+				WithHonorificSuffix(user.Name.HonorificSuffix).
+				Build()
+		}
 
 		if len(user.Addresses) != 0 {
 			address := model.AddressBuilder().
@@ -472,6 +486,10 @@ func (s *Provider) UpdateUsers(ctx context.Context, ur *model.UsersResult) (*mod
 
 	usersResult := model.UsersResultBuilder().WithResources(users).Build()
 
+	log.WithFields(log.Fields{
+		"object": convert.ToJSONString(usersResult),
+	}).Trace("scim: UpdateUsers")
+
 	return usersResult, nil
 }
 
@@ -483,6 +501,7 @@ func (s *Provider) DeleteUsers(ctx context.Context, ur *model.UsersResult) error
 			"email":  user.GetPrimaryEmailAddress(),
 			"scimid": user.SCIMID,
 			"idpid":  user.IPID,
+			"object": convert.ToJSONString(user),
 		}).Trace("deleting user (details)")
 
 		log.WithFields(log.Fields{
@@ -494,6 +513,7 @@ func (s *Provider) DeleteUsers(ctx context.Context, ur *model.UsersResult) error
 			return fmt.Errorf("scim: error deleting user: %s, %w", user.SCIMID, err)
 		}
 	}
+
 	return nil
 }
 
@@ -571,6 +591,10 @@ func (s *Provider) CreateGroupsMembers(ctx context.Context, gmr *model.GroupsMem
 
 	groupsMembersResult := model.GroupsMembersResultBuilder().WithResources(groupsMembers).Build()
 
+	log.WithFields(log.Fields{
+		"object": convert.ToJSONString(groupsMembersResult),
+	}).Trace("scim: CreateGroupsMembers")
+
 	return groupsMembersResult, nil
 }
 
@@ -589,6 +613,8 @@ func (s *Provider) DeleteGroupsMembers(ctx context.Context, gmr *model.GroupsMem
 				"idpid":  member.IPID,
 				"scimid": member.SCIMID,
 				"email":  member.Email,
+				"status": member.Status,
+				"object": convert.ToJSONString(member),
 			}).Trace("removing member from group (details)")
 
 			log.WithFields(log.Fields{
@@ -660,6 +686,10 @@ func (s *Provider) GetGroupsMembers(ctx context.Context, gr *model.GroupsResult)
 
 	groupsMembersResult := model.GroupsMembersResultBuilder().WithResources(groupMembers).Build()
 
+	log.WithFields(log.Fields{
+		"object": convert.ToJSONString(groupsMembersResult),
+	}).Trace("scim: GetGroupsMembers")
+
 	return groupsMembersResult, nil
 }
 
@@ -709,6 +739,10 @@ func (s *Provider) GetGroupsMembersBruteForce(ctx context.Context, gr *model.Gro
 	}
 
 	groupsMembersResult := model.GroupsMembersResultBuilder().WithResources(groupMembers).Build()
+
+	log.WithFields(log.Fields{
+		"object": convert.ToJSONString(groupsMembersResult),
+	}).Trace("scim: GetGroupsMembersBruteForce")
 
 	return groupsMembersResult, nil
 }
