@@ -48,12 +48,24 @@ func buildUser(usr *admin.User) *model.User {
 	var emails []model.Email
 	if m, ok := usr.Emails.([]interface{}); ok {
 		for _, v := range m {
-			if v.(map[string]interface{})["primary"].(bool) {
-				emails = append(emails, model.EmailBuilder().
-					WithValue(v.(map[string]interface{})["address"].(string)).
-					WithType(v.(map[string]interface{})["type"].(string)).
-					WithPrimary(v.(map[string]interface{})["primary"].(bool)).
-					Build())
+			if v.(map[string]interface{})["primary"] != nil {
+				if v.(map[string]interface{})["primary"].(bool) {
+					emails = append(emails, model.EmailBuilder().
+						// WithValue(v.(map[string]interface{})["address"].(string)).
+						// WithType(v.(map[string]interface{})["type"].(string)).
+						WithPrimary(v.(map[string]interface{})["primary"].(bool)).
+						Build())
+
+					if v.(map[string]interface{})["address"] != nil {
+						emails[0].Value = v.(map[string]interface{})["address"].(string)
+					}
+
+					if v.(map[string]interface{})["type"] != nil {
+						emails[0].Type = v.(map[string]interface{})["type"].(string)
+					}
+
+					break
+				}
 			}
 		}
 	}
