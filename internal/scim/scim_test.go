@@ -835,10 +835,9 @@ func TestUpdateUsers(t *testing.T) {
 	t.Run("Should call PutUser 1 time and no return error", func(t *testing.T) {
 		mockSCIM := mocks.NewMockAWSSCIMProvider(mockCtrl)
 		pur := &aws.PutUserRequest{
-			ID:          "1",
+			ExternalID:  "1",
 			UserName:    "user.1@mail.com",
 			DisplayName: "user 1",
-			ExternalID:  "1",
 			Name:        aws.Name{FamilyName: "1", GivenName: "user"},
 			Emails: []aws.Email{
 				{Value: "user.1@mail.com", Type: "work", Primary: true},
@@ -851,6 +850,7 @@ func TestUpdateUsers(t *testing.T) {
 			Name: aws.Name{
 				FamilyName: "1",
 				GivenName:  "user",
+				Formatted:  "user 1",
 			},
 			DisplayName: "user 1",
 			Active:      true,
@@ -890,10 +890,9 @@ func TestUpdateUsers(t *testing.T) {
 	t.Run("Should call PutUser 1 time and return error", func(t *testing.T) {
 		mockSCIM := mocks.NewMockAWSSCIMProvider(mockCtrl)
 		pur := &aws.PutUserRequest{
-			ID:          "1",
+			ExternalID:  "1",
 			UserName:    "user.1@mail.com",
 			DisplayName: "user 1",
-			ExternalID:  "1",
 			Name:        aws.Name{FamilyName: "1", GivenName: "user"},
 			Emails: []aws.Email{
 				{Value: "user.1@mail.com", Type: "work", Primary: true},
@@ -938,10 +937,9 @@ func TestUpdateUsers(t *testing.T) {
 	t.Run("Should call CreateUser 2 time and no return error", func(t *testing.T) {
 		mockSCIM := mocks.NewMockAWSSCIMProvider(mockCtrl)
 		pur1 := &aws.PutUserRequest{
-			ID:          "1",
+			ExternalID:  "1",
 			UserName:    "user.1@mail.com",
 			DisplayName: "user 1",
-			ExternalID:  "1",
 			Name:        aws.Name{FamilyName: "1", GivenName: "user"},
 			Emails: []aws.Email{
 				{Value: "user.1@mail.com", Type: "work", Primary: true},
@@ -949,10 +947,9 @@ func TestUpdateUsers(t *testing.T) {
 			Active: true,
 		}
 		pur2 := &aws.PutUserRequest{
-			ID:          "2",
+			ExternalID:  "2",
 			UserName:    "user.2@mail.com",
 			DisplayName: "user 2",
-			ExternalID:  "2",
 			Name:        aws.Name{FamilyName: "2", GivenName: "user"},
 			Emails: []aws.Email{
 				{Value: "user.2@mail.com", Type: "work", Primary: true},

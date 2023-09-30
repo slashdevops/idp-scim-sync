@@ -125,10 +125,7 @@ type ListResponse struct {
 type User struct {
 	ID                   string               `json:"id,omitempty"`
 	ExternalID           string               `json:"externalId,omitempty"`
-	Meta                 Meta                 `json:"meta,omitempty"`
-	Schemas              []string             `json:"schemas,omitempty"`
 	UserName             string               `json:"userName,omitempty"`
-	Name                 Name                 `json:"name,omitempty"`
 	DisplayName          string               `json:"displayName,omitempty"`
 	NickName             string               `json:"nickName,omitempty"`
 	ProfileURL           string               `json:"profileURL,omitempty"`
@@ -138,10 +135,13 @@ type User struct {
 	Locale               string               `json:"locale,omitempty"`
 	Timezone             string               `json:"timezone,omitempty"`
 	Active               bool                 `json:"active,omitempty"`
-	Emails               []Email              `json:"emails,omitempty"`
-	Addresses            []Address            `json:"addresses,omitempty"`
-	PhoneNumbers         []PhoneNumber        `json:"phoneNumbers,omitempty"`
+	Name                 Name                 `json:"name,omitempty"`
+	Meta                 Meta                 `json:"meta,omitempty"`
 	SchemaEnterpriseUser SchemaEnterpriseUser `json:"urn:ietf:params:scim:schemas:extension:enterprise:2.0:User,omitempty"`
+	Schemas              []string             `json:"schemas,omitempty"`
+	Addresses            []Address            `json:"addresses,omitempty"`
+	Emails               []Email              `json:"emails,omitempty"`
+	PhoneNumbers         []PhoneNumber        `json:"phoneNumbers,omitempty"`
 }
 
 // Validate check if the user entity is valid according to the SCIM spec constraints

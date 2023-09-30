@@ -248,6 +248,13 @@ func TestGetUsers(t *testing.T) {
 						PrimaryEmail: "user.2@mail.com",
 						Name:         &admin.UserName{GivenName: "user", FamilyName: "2"},
 						Suspended:    true,
+						Emails: []admin.UserEmail{
+							{
+								Address: "user.2@mailcom",
+								Type:    "work",
+								Primary: true,
+							},
+						},
 					},
 				)
 
@@ -259,28 +266,23 @@ func TestGetUsers(t *testing.T) {
 				Resources: []*model.User{
 					model.UserBuilder().
 						WithIPID("1").
-						WithEmail(
-							model.EmailBuilder().
-								WithValue("user.1@mail.com").
-								WithType("work").
-								WithPrimary(true).
-								Build(),
-						).
 						WithGivenName("user").
 						WithFamilyName("1").
 						WithDisplayName("user 1").
 						WithUserName("user.1@mail.com").
 						WithActive(true).
+						WithEmails(
+							[]model.Email{
+								model.EmailBuilder().
+									WithValue("user.1@mail.com").
+									WithType("work").
+									WithPrimary(true).
+									Build(),
+							},
+						).
 						Build(),
 					model.UserBuilder().
 						WithIPID("2").
-						WithEmail(
-							model.EmailBuilder().
-								WithValue("user.2@mail.com").
-								WithType("work").
-								WithPrimary(true).
-								Build(),
-						).
 						WithGivenName("user").
 						WithFamilyName("2").
 						WithDisplayName("user 2").
@@ -518,10 +520,58 @@ func TestGetUsersByGroupsMembers(t *testing.T) {
 			name: "Should return UsersResult and no error",
 			prepare: func(f *fields) {
 				ctx := context.Background()
-				googleUser1 := &admin.User{PrimaryEmail: "user.1@mail.com", Id: "1", Name: &admin.UserName{GivenName: "user", FamilyName: "1"}, Suspended: false}
-				googleUser2 := &admin.User{PrimaryEmail: "user.2@mail.com", Id: "2", Name: &admin.UserName{GivenName: "user", FamilyName: "2"}, Suspended: true}
-				googleUser3 := &admin.User{PrimaryEmail: "user.3@mail.com", Id: "3", Name: &admin.UserName{GivenName: "user", FamilyName: "3"}, Suspended: true}
-				googleUser4 := &admin.User{PrimaryEmail: "user.4@mail.com", Id: "4", Name: &admin.UserName{GivenName: "user", FamilyName: "4"}, Suspended: true}
+				googleUser1 := &admin.User{
+					Id:           "1",
+					PrimaryEmail: "user.1@mail.com",
+					Name:         &admin.UserName{GivenName: "user", FamilyName: "1"},
+					Suspended:    false,
+					// Emails: []admin.UserEmail{
+					// 	{
+					// 		Address: "user.1@mail.com",
+					// 		Type:    "work",
+					// 		Primary: true,
+					// 	},
+					// },
+				}
+				googleUser2 := &admin.User{
+					Id:           "2",
+					PrimaryEmail: "user.2@mail.com",
+					Name:         &admin.UserName{GivenName: "user", FamilyName: "2"},
+					Suspended:    true,
+					// Emails: []admin.UserEmail{
+					// 	{
+					// 		Address: "user.2@mail.com",
+					// 		Type:    "work",
+					// 		Primary: true,
+					// 	},
+					// },
+				}
+				googleUser3 := &admin.User{
+					Id:           "3",
+					PrimaryEmail: "user.3@mail.com",
+					Name:         &admin.UserName{GivenName: "user", FamilyName: "3"},
+					Suspended:    true,
+					// Emails: []admin.UserEmail{
+					// 	{
+					// 		Address: "user.3@mail.com",
+					// 		Type:    "work",
+					// 		Primary: true,
+					// 	},
+					// },
+				}
+				googleUser4 := &admin.User{
+					Id:           "4",
+					PrimaryEmail: "user.4@mail.com",
+					Name:         &admin.UserName{GivenName: "user", FamilyName: "4"},
+					Suspended:    true,
+					// Emails: []admin.UserEmail{
+					// 	{
+					// 		Address: "user.4@mail.com",
+					// 		Type:    "work",
+					// 		Primary: true,
+					// 	},
+					// },
+				}
 
 				gomock.InOrder(
 					f.ds.EXPECT().GetUser(ctx, gomock.Eq("user.1@mail.com")).Return(googleUser1, nil).Times(1),
@@ -557,45 +607,73 @@ func TestGetUsersByGroupsMembers(t *testing.T) {
 			want: &model.UsersResult{
 				Items: 4,
 				Resources: []*model.User{
-					model.UserBuilder().WithIPID("1").WithGivenName("user").WithFamilyName("1").WithDisplayName("user 1").WithActive(true).
-						WithEmail(
-							model.EmailBuilder().
-								WithValue("user.1@mail.com").
-								WithType("work").
-								WithPrimary(true).
-								Build(),
-						).
+					model.UserBuilder().
+						WithIPID("1").
+						WithGivenName("user").
+						WithFamilyName("1").
+						WithDisplayName("user 1").
+						WithActive(true).
 						WithUserName("user.1@mail.com").
-						Build(),
-					model.UserBuilder().WithIPID("2").WithGivenName("user").WithFamilyName("2").WithDisplayName("user 2").WithActive(false).
-						WithEmail(
-							model.EmailBuilder().
-								WithValue("user.2@mail.com").
-								WithType("work").
-								WithPrimary(true).
-								Build(),
+						WithEmails(
+							[]model.Email{
+								model.EmailBuilder().
+									WithValue("user.1@mail.com").
+									WithType("work").
+									WithPrimary(true).
+									Build(),
+							},
 						).
+						Build(),
+					model.UserBuilder().
+						WithIPID("2").
+						WithGivenName("user").
+						WithFamilyName("2").
+						WithDisplayName("user 2").
+						WithActive(false).
 						WithUserName("user.2@mail.com").
-						Build(),
-					model.UserBuilder().WithIPID("3").WithGivenName("user").WithFamilyName("3").WithDisplayName("user 3").WithActive(false).
-						WithEmail(
-							model.EmailBuilder().
-								WithValue("user.3@mail.com").
-								WithType("work").
-								WithPrimary(true).
-								Build(),
+						WithEmails(
+							[]model.Email{
+								model.EmailBuilder().
+									WithValue("user.2@mail.com").
+									WithType("work").
+									WithPrimary(true).
+									Build(),
+							},
 						).
+						Build(),
+					model.UserBuilder().
+						WithIPID("3").
+						WithGivenName("user").
+						WithFamilyName("3").
+						WithDisplayName("user 3").
+						WithActive(false).
 						WithUserName("user.3@mail.com").
-						Build(),
-					model.UserBuilder().WithIPID("4").WithGivenName("user").WithFamilyName("4").WithDisplayName("user 4").WithActive(false).
-						WithEmail(
-							model.EmailBuilder().
-								WithValue("user.4@mail.com").
-								WithType("work").
-								WithPrimary(true).
-								Build(),
+						WithEmails(
+							[]model.Email{
+								model.EmailBuilder().
+									WithValue("user.3@mail.com").
+									WithType("work").
+									WithPrimary(true).
+									Build(),
+							},
 						).
+						Build(),
+					model.UserBuilder().
+						WithIPID("4").
+						WithGivenName("user").
+						WithFamilyName("4").
+						WithDisplayName("user 4").
+						WithActive(false).
 						WithUserName("user.4@mail.com").
+						WithEmails(
+							[]model.Email{
+								model.EmailBuilder().
+									WithValue("user.4@mail.com").
+									WithType("work").
+									WithPrimary(true).
+									Build(),
+							},
+						).
 						Build(),
 				},
 			},

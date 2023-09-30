@@ -34,6 +34,30 @@ func buildUser(usr *admin.User) *model.User {
 		return nil
 	}
 
+	if usr.Emails == nil {
+		log.Warn("idp: User emails is nil, setting primary email as the only email")
+		usr.Emails = []interface{}{
+			map[string]interface{}{
+				"address": usr.PrimaryEmail,
+				"type":    "work",
+				"primary": true,
+			},
+		}
+	}
+
+	var emails []model.Email
+	if m, ok := usr.Emails.([]interface{}); ok {
+		for _, v := range m {
+			if v.(map[string]interface{})["primary"].(bool) {
+				emails = append(emails, model.EmailBuilder().
+					WithValue(v.(map[string]interface{})["address"].(string)).
+					WithType(v.(map[string]interface{})["type"].(string)).
+					WithPrimary(v.(map[string]interface{})["primary"].(bool)).
+					Build())
+			}
+		}
+	}
+
 	// get the first language from the list of languages
 	var preferredLanguage string
 	if m, ok := usr.Languages.([]interface{}); ok {
@@ -139,12 +163,6 @@ func buildUser(usr *admin.User) *model.User {
 		}
 	}
 
-	email := model.EmailBuilder().
-		WithValue(usr.PrimaryEmail).
-		WithType("work").
-		WithPrimary(true).
-		Build()
-
 	var displayName string
 	if usr.Name.FullName != "" {
 		displayName = usr.Name.FullName
@@ -161,18 +179,34 @@ func buildUser(usr *admin.User) *model.User {
 		// WithTimezone("Not Provided").
 		// WithProfileURL("Not Provided").
 		WithUserType(usr.Kind).
-		WithEmail(email).
-		WithGivenName(usr.Name.GivenName).
-		WithFamilyName(usr.Name.FamilyName).
 		WithActive(!usr.Suspended).
 		WithPreferredLanguage(preferredLanguage).
-		// WithLocale(locale).
-		WithAddress(mainAddress).
-		WithPhoneNumber(mainPhone).
 		WithTitle(title).
 		Build()
 
-	createdUser.EnterpriseData = &mainOrganization
+	if emails != nil {
+		createdUser.Emails = emails
+	}
+
+	if usr.Name != nil {
+		createdUser.Name = model.NameBuilder().
+			WithGivenName(usr.Name.GivenName).
+			WithFamilyName(usr.Name.FamilyName).
+			WithFormatted(usr.Name.FullName).
+			Build()
+	}
+
+	if mainOrganization != (model.EnterpriseData{}) {
+		createdUser.EnterpriseData = &mainOrganization
+	}
+
+	if mainAddress != (model.Address{}) {
+		createdUser.Addresses = append(createdUser.Addresses, mainAddress)
+	}
+
+	if mainPhone != (model.PhoneNumber{}) {
+		createdUser.PhoneNumbers = append(createdUser.PhoneNumbers, mainPhone)
+	}
 
 	// recalculate the hashcode because we have modified the user after building it
 	createdUser.SetHashCode()

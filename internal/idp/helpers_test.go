@@ -70,6 +70,7 @@ func Test_buildUser(t *testing.T) {
 				WithGivenName("givenName").
 				WithFamilyName("familyName").
 				WithDisplayName("fullName").
+				WithFormattedName("fullName").
 				WithEmail(
 					model.EmailBuilder().
 						WithValue("primaryEmail").
