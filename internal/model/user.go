@@ -263,7 +263,9 @@ type EnterpriseData struct {
 	Organization   string   `json:"organization,omitempty"`
 	Division       string   `json:"division,omitempty"`
 	Department     string   `json:"department,omitempty"`
+	Title          string   `json:"title,omitempty"`
 	Manager        *Manager `json:"manager,omitempty"`
+	Primary        bool     `json:"primary,omitempty"`
 }
 
 // MarshalBinary implements the gob.GobEncoder interface for EnterpriseData entity.

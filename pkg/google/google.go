@@ -10,14 +10,15 @@ import (
 	"google.golang.org/api/option"
 
 	log "github.com/sirupsen/logrus"
+	"github.com/slashdevops/idp-scim-sync/convert"
 )
 
 const (
 	// https://cloud.google.com/storage/docs/json_api
 	groupsRequiredFields    googleapi.Field = "nextPageToken, groups(id,name,email,etag)"
 	membersRequiredFields   googleapi.Field = "nextPageToken, members(id,email,status,type,etag)"
-	listUsersRequiredFields googleapi.Field = "nextPageToken, users(id,name,primaryEmail,suspended,etag,emails)"
-	getUsersRequiredFields  googleapi.Field = "id,name,primaryEmail,suspended,etag"
+	listUsersRequiredFields googleapi.Field = "nextPageToken, users(id,name,primaryEmail,suspended,etag,addresses,languages,phones,organizations,emails)"
+	getUsersRequiredFields  googleapi.Field = "id,name,primaryEmail,suspended,etag,addresses,languages,phones,organizations,emails"
 )
 
 var (
@@ -105,6 +106,11 @@ func (ds *DirectoryService) ListUsers(ctx context.Context, query []string) ([]*a
 			return nil, err
 		}
 	}
+
+	log.WithFields(log.Fields{
+		"object": convert.ToJSONString(u),
+	}).Trace("google: ListUsers")
+
 	return u, nil
 }
 
@@ -143,6 +149,11 @@ func (ds *DirectoryService) ListGroups(ctx context.Context, query []string) ([]*
 			return nil, err
 		}
 	}
+
+	log.WithFields(log.Fields{
+		"object": convert.ToJSONString(g),
+	}).Trace("google: ListGroups")
+
 	return g, nil
 }
 
@@ -192,6 +203,10 @@ func (ds *DirectoryService) ListGroupMembers(ctx context.Context, groupID string
 		return nil, err
 	}
 
+	log.WithFields(log.Fields{
+		"object": convert.ToJSONString(m),
+	}).Trace("google: ListGroupMembers")
+
 	return m, nil
 }
 
@@ -220,6 +235,10 @@ func (ds *DirectoryService) GetGroup(ctx context.Context, groupID string) (*admi
 	if err != nil {
 		return nil, fmt.Errorf("google: error getting group %s: %v", groupID, err)
 	}
+
+	log.WithFields(log.Fields{
+		"object": convert.ToJSONString(g),
+	}).Trace("google: GetGroup")
 
 	return g, nil
 }

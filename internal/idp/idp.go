@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	log "github.com/sirupsen/logrus"
+	"github.com/slashdevops/idp-scim-sync/convert"
 	"github.com/slashdevops/idp-scim-sync/internal/model"
 	"github.com/slashdevops/idp-scim-sync/pkg/google"
 	admin "google.golang.org/api/admin/directory/v1"
@@ -93,6 +94,10 @@ func (i *IdentityProvider) GetGroups(ctx context.Context, filter []string) (*mod
 
 	syncResult := model.GroupsResultBuilder().WithResources(syncGroups).Build()
 
+	log.WithFields(log.Fields{
+		"object": convert.ToJSONString(syncResult),
+	}).Trace("idp: GetGroups")
+
 	return syncResult, nil
 }
 
@@ -118,6 +123,10 @@ func (i *IdentityProvider) GetUsers(ctx context.Context, filter []string) (*mode
 		syncUsers[i] = gu
 	}
 	uResult := model.UsersResultBuilder().WithResources(syncUsers).Build()
+
+	log.WithFields(log.Fields{
+		"object": convert.ToJSONString(uResult),
+	}).Trace("idp: GetUsers")
 
 	return uResult, nil
 }
@@ -161,6 +170,10 @@ func (i *IdentityProvider) GetGroupMembers(ctx context.Context, groupID string) 
 
 	syncMembersResult := model.MembersResultBuilder().WithResources(syncMembers).Build()
 
+	log.WithFields(log.Fields{
+		"object": convert.ToJSONString(syncMembersResult),
+	}).Trace("idp: GetGroupMembers")
+
 	return syncMembersResult, nil
 }
 
@@ -195,6 +208,10 @@ func (i *IdentityProvider) GetUsersByGroupsMembers(ctx context.Context, gmr *mod
 	}
 
 	pUsersResult := model.UsersResultBuilder().WithResources(pUsers).Build()
+
+	log.WithFields(log.Fields{
+		"object": convert.ToJSONString(pUsersResult),
+	}).Trace("idp: GetUsersByGroupsMembers")
 
 	return pUsersResult, nil
 }
@@ -242,6 +259,10 @@ func (i *IdentityProvider) GetGroupsMembers(ctx context.Context, gr *model.Group
 		Resources: groupMembers,
 	}
 	groupsMembersResult.SetHashCode()
+
+	log.WithFields(log.Fields{
+		"object": convert.ToJSONString(groupsMembersResult),
+	}).Trace("idp: GetGroupsMembers")
 
 	return groupsMembersResult, nil
 }

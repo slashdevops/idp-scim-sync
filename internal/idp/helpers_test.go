@@ -43,16 +43,21 @@ func Test_buildUser(t *testing.T) {
 		{
 			name: "should return a valid user with all the fields",
 			given: &admin.User{
-				Addresses:     []byte(`[{"country":"country","formatted":"formatted","locality":"locality","postalCode":"postalCode","primary":true,"region":"region","streetAddress":"streetAddress","type":"type"}]`),
-				Emails:        []byte(`[{"address":"address","customType":"customType","primary":true,"type":"type"}]`),
-				Languages:     []byte(`[{"customLanguage":"customLanguage","languageCode":"languageCode"}]`),
-				Organizations: []byte(`[{"costCenter":"costCenter","customType":"customType","department":"department","description":"description","domain":"domain","fullTimeEquivalent":0,"location":"location","name":"name","primary":true,"symbol":"symbol","title":"title","type":"type"}]`),
-				Phones:        []byte(`[{"customType":"customType","primary":true,"type":"type","value":"value"}]`),
-				Id:            "id",
-				Kind:          "kind",
-				PrimaryEmail:  "primaryEmail",
-				Suspended:     false,
-				OrgUnitPath:   "orgUnitPath",
+				Addresses: []interface{}{
+					map[string]interface{}{"formatted": "formatted work", "type": "work"},
+					map[string]interface{}{"formatted": "formatted home", "type": "home"},
+				},
+				Emails:        []interface{}{map[string]interface{}{"address": "primaryEmail", "type": "work", "primary": true}},
+				Languages:     []interface{}{map[string]interface{}{"languageCode": "languageCode", "preference": "preferred"}},
+				Organizations: []interface{}{map[string]interface{}{"costCenter": "costCenter", "department": "department", "name": "name", "title": "title", "primary": true}},
+				Phones: []interface{}{
+					map[string]interface{}{"value": "value work", "type": "work"},
+					map[string]interface{}{"value": "value home", "type": "home"},
+				},
+				Id:           "id",
+				Kind:         "kind",
+				PrimaryEmail: "primaryEmail",
+				Suspended:    false,
 				Name: &admin.UserName{
 					GivenName:   "givenName",
 					FamilyName:  "familyName",
@@ -64,7 +69,7 @@ func Test_buildUser(t *testing.T) {
 			want: model.UserBuilder().
 				WithGivenName("givenName").
 				WithFamilyName("familyName").
-				WithDisplayName("displayName").
+				WithDisplayName("fullName").
 				WithEmail(
 					model.EmailBuilder().
 						WithValue("primaryEmail").
@@ -76,12 +81,13 @@ func Test_buildUser(t *testing.T) {
 				WithIPID("id").
 				WithUserName("primaryEmail").
 				WithUserType("kind").
-				WithProfileURL("orgUnitPath").
 				WithEnterpriseData(
 					*model.EnterpriseDataBuilder().
 						WithCostCenter("costCenter").
 						WithDepartment("department").
 						WithOrganization("name").
+						WithPrimary(true).
+						WithTitle("title").
 						Build(),
 				).
 				WithPreferredLanguage("languageCode").
@@ -89,20 +95,15 @@ func Test_buildUser(t *testing.T) {
 				WithTimezone("").
 				WithPhoneNumber(
 					model.PhoneNumberBuilder().
-						WithValue("value").
-						WithType("type").
+						WithValue("value work").
+						WithType("work").
 						Build(),
 				).
 				WithAddress(
 					model.AddressBuilder().
-						WithCountry("country").
-						WithFormatted("formatted").
-						WithLocality("locality").
-						WithPostalCode("postalCode").
+						WithFormatted("formatted work").
+						WithType("work").
 						WithPrimary(true).
-						WithType("type").
-						WithRegion("region").
-						WithStreetAddress("streetAddress").
 						Build(),
 				).
 				Build(),

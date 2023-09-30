@@ -300,8 +300,20 @@ func (b *EnterpriseDataBuilderChoice) WithDepartment(department string) *Enterpr
 }
 
 // WithManager sets the Manager field of the EnterpriseData entity.
-func (b *EnterpriseDataBuilderChoice) WithManager(manager Manager) *EnterpriseDataBuilderChoice {
-	b.ed.Manager = &manager
+func (b *EnterpriseDataBuilderChoice) WithManager(manager *Manager) *EnterpriseDataBuilderChoice {
+	b.ed.Manager = manager
+	return b
+}
+
+// WithPrimary sets the Primary field of the EnterpriseData entity.
+func (b *EnterpriseDataBuilderChoice) WithPrimary(primary bool) *EnterpriseDataBuilderChoice {
+	b.ed.Primary = primary
+	return b
+}
+
+// WithTitle sets the Title field of the EnterpriseData entity.
+func (b *EnterpriseDataBuilderChoice) WithTitle(title string) *EnterpriseDataBuilderChoice {
+	b.ed.Title = title
 	return b
 }
 

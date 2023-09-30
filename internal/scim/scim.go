@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/slashdevops/idp-scim-sync/convert"
 	"github.com/slashdevops/idp-scim-sync/internal/model"
 	"github.com/slashdevops/idp-scim-sync/pkg/aws"
 
@@ -308,9 +309,10 @@ func (s *Provider) CreateUsers(ctx context.Context, ur *model.UsersResult) (*mod
 		}
 
 		log.WithFields(log.Fields{
-			"user":  user.DisplayName,
-			"email": user.GetPrimaryEmailAddress(),
-			"ipdid": user.IPID,
+			"user":    user.DisplayName,
+			"email":   user.GetPrimaryEmailAddress(),
+			"ipdid":   user.IPID,
+			"request": convert.ToJSONString(userRequest),
 		}).Trace("creating user")
 
 		log.WithFields(log.Fields{
