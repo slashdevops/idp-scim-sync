@@ -289,30 +289,13 @@ func (s *Provider) CreateUsers(ctx context.Context, ur *model.UsersResult) (*mod
 	users := make([]*model.User, 0)
 
 	for _, user := range ur.Resources {
-		userRequest := &aws.CreateUserRequest{
-			ID:          "",
-			UserName:    user.UserName,
-			DisplayName: user.DisplayName,
-			ExternalID:  user.IPID,
-			Name: aws.Name{
-				FamilyName: user.Name.FamilyName,
-				GivenName:  user.Name.GivenName,
-			},
-			Emails: []aws.Email{
-				{
-					Value:   user.UserName,
-					Type:    "work",
-					Primary: true,
-				},
-			},
-			Active: user.Active,
-		}
+		userRequest := buildCreateUserRequest(user)
 
 		log.WithFields(log.Fields{
-			"user":    user.DisplayName,
-			"email":   user.GetPrimaryEmailAddress(),
-			"ipdid":   user.IPID,
-			"request": convert.ToJSONString(userRequest),
+			"user":   user.DisplayName,
+			"email":  user.GetPrimaryEmailAddress(),
+			"ipdid":  user.IPID,
+			"object": convert.ToJSONString(userRequest),
 		}).Trace("creating user")
 
 		log.WithFields(log.Fields{
@@ -330,8 +313,6 @@ func (s *Provider) CreateUsers(ctx context.Context, ur *model.UsersResult) (*mod
 			WithIPID(user.IPID).
 			WithSCIMID(r.ID).
 			WithUserName(user.UserName).
-			WithGivenName(user.Name.GivenName).
-			WithFamilyName(user.Name.FamilyName).
 			WithDisplayName(user.DisplayName).
 			WithNickName(user.NickName).
 			WithProfileURL(user.ProfileURL).
@@ -342,6 +323,17 @@ func (s *Provider) CreateUsers(ctx context.Context, ur *model.UsersResult) (*mod
 			WithTimezone(user.Timezone).
 			WithActive(user.Active).
 			Build()
+
+		if user.Name != nil {
+			e.Name = model.NameBuilder().
+				WithFamilyName(user.Name.FamilyName).
+				WithGivenName(user.Name.GivenName).
+				WithFormatted(user.Name.Formatted).
+				WithMiddleName(user.Name.MiddleName).
+				WithHonorificPrefix(user.Name.HonorificPrefix).
+				WithHonorificSuffix(user.Name.HonorificSuffix).
+				Build()
+		}
 
 		if len(user.Addresses) != 0 {
 			address := model.AddressBuilder().
