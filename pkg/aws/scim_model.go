@@ -47,9 +47,9 @@ var (
 
 // Name represent a name entity
 type Name struct {
-	Formatted       string `json:"formatted"`
-	FamilyName      string `json:"familyName"`
-	GivenName       string `json:"givenName"`
+	Formatted       string `json:"formatted,omitempty"`
+	FamilyName      string `json:"familyName,omitempty"`
+	GivenName       string `json:"givenName,omitempty"`
 	MiddleName      string `json:"middleName,omitempty"`
 	HonorificPrefix string `json:"honorificPrefix,omitempty"`
 	HonorificSuffix string `json:"honorificSuffix,omitempty"`
@@ -57,47 +57,47 @@ type Name struct {
 
 // Email represent an email entity
 type Email struct {
-	Value   string `json:"value"`
-	Type    string `json:"type"`
-	Primary bool   `json:"primary"`
+	Value   string `json:"value,omitempty"`
+	Type    string `json:"type,omitempty"`
+	Primary bool   `json:"primary,omitempty"`
 }
 
 // Addresses represent an address entity
 type Address struct {
-	Type          string `json:"type"`
-	Formatted     string `json:"formatted"`
-	StreetAddress string `json:"streetAddress"`
-	Locality      string `json:"locality"`
-	Region        string `json:"region"`
-	PostalCode    string `json:"postalCode"`
-	Country       string `json:"country"`
-	Primary       bool   `json:"primary"`
+	Type          string `json:"type,omitempty"`
+	Formatted     string `json:"formatted,omitempty"`
+	StreetAddress string `json:"streetAddress,omitempty"`
+	Locality      string `json:"locality,omitempty"`
+	Region        string `json:"region,omitempty"`
+	PostalCode    string `json:"postalCode,omitempty"`
+	Country       string `json:"country,omitempty"`
+	Primary       bool   `json:"primary,omitempty"`
 }
 
 type PhoneNumber struct {
-	Value string `json:"value"`
-	Type  string `json:"type"`
+	Value string `json:"value,omitempty"`
+	Type  string `json:"type,omitempty"`
 }
 
 type Manager struct {
-	Value string `json:"value"`
-	Ref   string `json:"$ref"`
+	Value string `json:"value,omitempty"`
+	Ref   string `json:"$ref,omitempty"`
 }
 
 type SchemaEnterpriseUser struct {
-	EmployeeNumber string  `json:"employeeNumber"`
-	CostCenter     string  `json:"costCenter"`
-	Organization   string  `json:"organization"`
-	Division       string  `json:"division"`
-	Department     string  `json:"department"`
-	Manager        Manager `json:"manager"`
+	EmployeeNumber string  `json:"employeeNumber,omitempty"`
+	CostCenter     string  `json:"costCenter,omitempty"`
+	Organization   string  `json:"organization,omitempty"`
+	Division       string  `json:"division,omitempty"`
+	Department     string  `json:"department,omitempty"`
+	Manager        Manager `json:"manager,omitempty"`
 }
 
 // Meta represent a meta entity
 type Meta struct {
-	ResourceType string `json:"resourceType"`
-	Created      string `json:"created"`
-	LastModified string `json:"lastModified"`
+	ResourceType string `json:"resourceType,omitempty"`
+	Created      string `json:"created,omitempty"`
+	LastModified string `json:"lastModified,omitempty"`
 }
 
 // Operation represent an operation entity
@@ -123,11 +123,11 @@ type ListResponse struct {
 
 // User represent a user entity
 type User struct {
-	ID                   string               `json:"id"`
+	ID                   string               `json:"id,omitempty"`
 	ExternalID           string               `json:"externalId,omitempty"`
 	Meta                 Meta                 `json:"meta,omitempty"`
 	Schemas              []string             `json:"schemas,omitempty"`
-	UserName             string               `json:"userName"`
+	UserName             string               `json:"userName,omitempty"`
 	Name                 Name                 `json:"name,omitempty"`
 	DisplayName          string               `json:"displayName,omitempty"`
 	NickName             string               `json:"nickName,omitempty"`
