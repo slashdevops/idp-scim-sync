@@ -1,9 +1,133 @@
 package model
 
 import (
-	"reflect"
+	"bytes"
+	"encoding/gob"
 	"testing"
+
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 )
+
+func TestStateResources_GobEncode(t *testing.T) {
+	tests := []struct {
+		name   string
+		toTest *StateResources
+	}{
+		{
+			name:   "empty",
+			toTest: &StateResources{},
+		},
+		{
+			name: "filled with Group",
+			toTest: &StateResources{
+				Groups: &GroupsResult{
+					Items:    1,
+					HashCode: "hashCode",
+					Resources: []*Group{
+						{
+							IPID:     "ipid",
+							SCIMID:   "scimid",
+							Name:     "name",
+							Email:    "email",
+							HashCode: "hashCode",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			buf := new(bytes.Buffer)
+			enc := gob.NewEncoder(buf)
+
+			if err := enc.Encode(tt.toTest); err != nil {
+				t.Errorf("User.GobEncode() error = %v", err)
+			}
+
+			dec := gob.NewDecoder(buf)
+			var got StateResources
+			if err := dec.Decode(&got); err != nil {
+				t.Errorf("User.GobEncode() error = %v", err)
+			}
+
+			var expectedGroupsResources *GroupsResult
+			if tt.toTest.Groups != nil {
+				expectedGroupsResources = &GroupsResult{
+					Items:     tt.toTest.Groups.Items,
+					Resources: make([]*Group, 0),
+				}
+
+				for _, g := range tt.toTest.Groups.Resources {
+					expectedGroupsResources.Resources = append(expectedGroupsResources.Resources, &Group{
+						IPID:  g.IPID,
+						Name:  g.Name,
+						Email: g.Email,
+					})
+				}
+			}
+
+			var expectedUsersResources *UsersResult
+			if tt.toTest.Users != nil {
+				expectedUsersResources = &UsersResult{
+					Items:     tt.toTest.Users.Items,
+					Resources: make([]*User, 0),
+				}
+
+				for _, u := range tt.toTest.Users.Resources {
+					expectedUsersResources.Resources = append(expectedUsersResources.Resources, &User{
+						IPID:        u.IPID,
+						Name:        u.Name,
+						DisplayName: u.DisplayName,
+						Emails:      u.Emails,
+						Active:      u.Active,
+					})
+				}
+			}
+
+			var expectedGroupsMembersResources *GroupsMembersResult
+			if tt.toTest.GroupsMembers != nil {
+				expectedGroupsMembersResources = &GroupsMembersResult{
+					Items:     tt.toTest.GroupsMembers.Items,
+					Resources: make([]*GroupMembers, 0),
+				}
+
+				for _, gm := range tt.toTest.GroupsMembers.Resources {
+					expectedGroupsMembersResources.Resources = append(expectedGroupsMembersResources.Resources, &GroupMembers{
+						Items: gm.Items,
+						Group: &Group{
+							IPID:  gm.Group.IPID,
+							Name:  gm.Group.Name,
+							Email: gm.Group.Email,
+						},
+						Resources: make([]*Member, 0),
+					})
+
+					for _, m := range gm.Resources {
+						expectedGroupsMembersResources.Resources[len(expectedGroupsMembersResources.Resources)-1].Resources = append(expectedGroupsMembersResources.Resources[len(expectedGroupsMembersResources.Resources)-1].Resources, &Member{
+							IPID:   m.IPID,
+							Email:  m.Email,
+							Status: m.Status,
+						})
+					}
+				}
+			}
+
+			expected := StateResources{
+				Groups:        expectedGroupsResources,
+				Users:         expectedUsersResources,
+				GroupsMembers: expectedGroupsMembersResources,
+			}
+
+			sort := func(x, y string) bool { return x > y }
+			if diff := cmp.Diff(expected, got, cmpopts.SortSlices(sort)); diff != "" {
+				t.Errorf("mismatch (-expected +got):\n%s", diff)
+			}
+		})
+	}
+}
 
 func TestState_MarshalJSON(t *testing.T) {
 	type fields struct {
@@ -27,7 +151,6 @@ func TestState_MarshalJSON(t *testing.T) {
   "resources": {
     "groups": {
       "items": 0,
-      "hashCode": "",
       "resources": []
     },
     "users": {
@@ -140,8 +263,10 @@ func TestState_MarshalJSON(t *testing.T) {
 				t.Errorf("State.MarshalJSON() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("State.MarshalJSON() = %s, want %s", string(got), tt.want)
+
+			sort := func(x, y string) bool { return x > y }
+			if diff := cmp.Diff(tt.want, got, cmpopts.SortSlices(sort)); diff != "" {
+				t.Errorf("mismatch (-tt.want +got):\n%s", diff)
 			}
 		})
 	}

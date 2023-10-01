@@ -1,6 +1,10 @@
 package model
 
-import "encoding/json"
+import (
+	"bytes"
+	"encoding/gob"
+	"encoding/json"
+)
 
 const (
 	// StateSchemaVersion is the current schema version for the state file.
@@ -12,6 +16,57 @@ type StateResources struct {
 	Groups        *GroupsResult        `json:"groups"`
 	Users         *UsersResult         `json:"users"`
 	GroupsMembers *GroupsMembersResult `json:"groupsMembers"`
+}
+
+// MarshalBinary marshals the StateResources to binary.
+func (s *StateResources) MarshalBinary() ([]byte, error) {
+	buf := new(bytes.Buffer)
+	enc := gob.NewEncoder(buf)
+
+	if s.Groups != nil {
+		if err := enc.Encode(s.Groups); err != nil {
+			return nil, err
+		}
+	}
+
+	if s.Users != nil {
+		if err := enc.Encode(s.Users); err != nil {
+			return nil, err
+		}
+	}
+
+	if s.GroupsMembers != nil {
+		if err := enc.Encode(s.GroupsMembers); err != nil {
+			return nil, err
+		}
+	}
+
+	return buf.Bytes(), nil
+}
+
+// UnmarshalBinary unmarshal the StateResources from binary.
+func (s *StateResources) UnmarshalBinary(data []byte) error {
+	dec := gob.NewDecoder(bytes.NewReader(data))
+
+	if err := dec.Decode(&s.Groups); err != nil {
+		if err.Error() != "EOF" {
+			return err
+		}
+	}
+
+	if err := dec.Decode(&s.Users); err != nil {
+		if err.Error() != "EOF" {
+			return err
+		}
+	}
+
+	if err := dec.Decode(&s.GroupsMembers); err != nil {
+		if err.Error() != "EOF" {
+			return err
+		}
+	}
+
+	return nil
 }
 
 // State is the state of the system.

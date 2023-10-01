@@ -6,6 +6,8 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/slashdevops/idp-scim-sync/internal/convert"
 )
 
@@ -287,6 +289,10 @@ func TestEnterpriseData_GobEncode(t *testing.T) {
 			if !reflect.DeepEqual(got, tt.toTest) {
 				t.Errorf("EnterpriseData.GobEncode() = %v, want %v", got, tt.toTest)
 			}
+			sort := func(x, y string) bool { return x > y }
+			if diff := cmp.Diff(tt.toTest, got, cmpopts.SortSlices(sort)); diff != "" {
+				t.Errorf("mismatch (-tt.toTest +got):\n%s", diff)
+			}
 		})
 	}
 }
@@ -358,14 +364,14 @@ func TestUser_GobEncode(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			b := new(bytes.Buffer)
-			enc := gob.NewEncoder(b)
+			buf := new(bytes.Buffer)
+			enc := gob.NewEncoder(buf)
 
 			if err := enc.Encode(tt.toTest); err != nil {
 				t.Errorf("User.GobEncode() error = %v", err)
 			}
 
-			dec := gob.NewDecoder(b)
+			dec := gob.NewDecoder(buf)
 			var got User
 			if err := dec.Decode(&got); err != nil {
 				t.Errorf("User.GobEncode() error = %v", err)
@@ -392,8 +398,9 @@ func TestUser_GobEncode(t *testing.T) {
 				Active:            tt.toTest.Active,
 			}
 
-			if !reflect.DeepEqual(got, expected) {
-				t.Errorf("User.GobEncode() = %v, want %v", got, expected)
+			sort := func(x, y string) bool { return x > y }
+			if diff := cmp.Diff(expected, got, cmpopts.SortSlices(sort)); diff != "" {
+				t.Errorf("mismatch (-expected +got):\n%s", diff)
 			}
 		})
 	}

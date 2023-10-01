@@ -6,6 +6,8 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/slashdevops/idp-scim-sync/internal/convert"
 )
 
@@ -36,6 +38,7 @@ func TestGroup_SetHashCode(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.group.SetHashCode()
 			tt.want.SetHashCode()
+
 			got := tt.group.HashCode
 			if got != tt.want.HashCode {
 				t.Errorf("Group.SetHashCode() = %s, want %s", got, tt.want.HashCode)
@@ -50,11 +53,11 @@ func TestGroup_GobEncode(t *testing.T) {
 		toTest *Group
 	}{
 		{
-			name:   "empty group",
+			name:   "empty",
 			toTest: &Group{},
 		},
 		{
-			name: "Test Group GobEncode",
+			name: "filled",
 			toTest: &Group{
 				IPID:     "1",
 				SCIMID:   "1",
@@ -63,18 +66,26 @@ func TestGroup_GobEncode(t *testing.T) {
 				HashCode: "this should not be encoded",
 			},
 		},
+		{
+			name: "filled partial",
+			toTest: &Group{
+				IPID:     "1",
+				Name:     "group",
+				HashCode: "this should not be encoded",
+			},
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			b := new(bytes.Buffer)
-			enc := gob.NewEncoder(b)
+			var buf bytes.Buffer
+			enc := gob.NewEncoder(&buf)
 
 			if err := enc.Encode(tt.toTest); err != nil {
 				t.Errorf("Group.MarshalBinary() error = %v", err)
 			}
 
-			dec := gob.NewDecoder(b)
+			dec := gob.NewDecoder(&buf)
 			var got Group
 			if err := dec.Decode(&got); err != nil {
 				t.Errorf("Group.UnmarshalBinary() error = %v", err)
@@ -88,8 +99,109 @@ func TestGroup_GobEncode(t *testing.T) {
 				Email: tt.toTest.Email,
 			}
 
-			if !reflect.DeepEqual(got, expected) {
-				t.Errorf("Group.MarshalBinary() = %v, want %v", got, expected)
+			sort := func(x, y string) bool { return x > y }
+			if diff := cmp.Diff(expected, got, cmpopts.SortSlices(sort)); diff != "" {
+				t.Errorf("mismatch (-expected +got):\n%s", diff)
+			}
+		})
+	}
+}
+
+func TestGroupsResult_GobEncode(t *testing.T) {
+	tests := []struct {
+		name   string
+		toTest *GroupsResult
+	}{
+		{
+			name:   "empty",
+			toTest: &GroupsResult{},
+		},
+		{
+			name: "filled",
+			toTest: &GroupsResult{
+				Items:    1,
+				HashCode: "hashcode",
+				Resources: []*Group{
+					{
+						IPID:     "1",
+						SCIMID:   "1",
+						Name:     "group",
+						Email:    "user.1@mail.com",
+						HashCode: "hashcode",
+					},
+				},
+			},
+		},
+		{
+			name: "filled partial",
+			toTest: &GroupsResult{
+				Items:    1,
+				HashCode: "test",
+				Resources: []*Group{
+					{
+						IPID:     "1",
+						Name:     "group",
+						HashCode: "test",
+					},
+				},
+			},
+		},
+		{
+			name: "filled partial 2",
+			toTest: &GroupsResult{
+				Items:    2,
+				HashCode: "test",
+				Resources: []*Group{
+					{
+						IPID:     "1",
+						Name:     "group",
+						HashCode: "test",
+					},
+					{
+						IPID:     "2",
+						Name:     "group",
+						HashCode: "test",
+					},
+				},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			buf := new(bytes.Buffer)
+			enc := gob.NewEncoder(buf)
+
+			if err := enc.Encode(tt.toTest); err != nil {
+				t.Errorf("User.GobEncode() error = %v", err)
+			}
+
+			dec := gob.NewDecoder(buf)
+			var got GroupsResult
+			if err := dec.Decode(&got); err != nil {
+				t.Errorf("User.GobEncode() error = %v", err)
+			}
+
+			// SCIMID is not exported, so it will not be encoded
+			// HashCode is not exported, so it will not be encoded
+			var expectedGroups []*Group
+
+			for _, g := range tt.toTest.Resources {
+				expectedGroups = append(expectedGroups, &Group{
+					IPID:  g.IPID,
+					Name:  g.Name,
+					Email: g.Email,
+				})
+			}
+
+			expected := GroupsResult{
+				Items:     tt.toTest.Items,
+				Resources: expectedGroups,
+			}
+
+			sort := func(x, y string) bool { return x > y }
+			if diff := cmp.Diff(expected, got, cmpopts.SortSlices(sort)); diff != "" {
+				t.Errorf("mismatch (-expected +got):\n%s", diff)
 			}
 		})
 	}
@@ -165,7 +277,6 @@ func TestGroupsResult_MarshalJSON(t *testing.T) {
 			fields: fields{},
 			want: []byte(`{
   "items": 0,
-  "hashCode": "",
   "resources": []
 }`),
 			wantErr: false,

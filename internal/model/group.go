@@ -16,41 +16,42 @@ type Group struct {
 	HashCode string `json:"hashCode,omitempty"`
 }
 
-// MarshalBinary implements the gob.GobEncoder interface for Group entity.
-// This is necessary to avoid include the value in the field SCIMID until
-// the hashcode calculation is done.
-// the Hash function use gob to calculate the hash code.
+// MarshalBinary implements the encoding.BinaryMarshaler interface for Group entity.
 func (g Group) MarshalBinary() ([]byte, error) {
-	buf := new(bytes.Buffer)
-	enc := gob.NewEncoder(buf)
+	var buf bytes.Buffer
+	enc := gob.NewEncoder(&buf)
+
 	if err := enc.Encode(g.IPID); err != nil {
 		return nil, err
 	}
+
 	if err := enc.Encode(g.Name); err != nil {
 		return nil, err
 	}
+
 	if err := enc.Encode(g.Email); err != nil {
 		return nil, err
 	}
+
 	return buf.Bytes(), nil
 }
 
-// UnmarshalBinary implements the gob.GobDecoder interface for Group entity.
-// This is necessary to avoid include the value in the field SCIMID until
-// the hashcode calculation is done.
-// the Hash function use gob to calculate the hash code.
+// UnmarshalBinary implements the encoding.BinaryUnmarshaler interface for Group entity.
 func (g *Group) UnmarshalBinary(data []byte) error {
-	buf := bytes.NewBuffer(data)
-	dec := gob.NewDecoder(buf)
+	dec := gob.NewDecoder(bytes.NewReader(data))
+
 	if err := dec.Decode(&g.IPID); err != nil {
 		return err
 	}
+
 	if err := dec.Decode(&g.Name); err != nil {
 		return err
 	}
+
 	if err := dec.Decode(&g.Email); err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -64,8 +65,45 @@ func (g *Group) SetHashCode() {
 // GroupsResult represents a group result list entity.
 type GroupsResult struct {
 	Items     int      `json:"items"`
-	HashCode  string   `json:"hashCode"`
+	HashCode  string   `json:"hashCode,omitempty"`
 	Resources []*Group `json:"resources"`
+}
+
+// MarshalBinary modifies the receiver so it must take a pointer receiver.
+func (gr GroupsResult) MarshalBinary() ([]byte, error) {
+	var buf bytes.Buffer
+	enc := gob.NewEncoder(&buf)
+
+	if err := enc.Encode(gr.Items); err != nil {
+		return nil, err
+	}
+
+	for _, g := range gr.Resources {
+		if err := enc.Encode(g); err != nil {
+			return nil, err
+		}
+	}
+
+	return buf.Bytes(), nil
+}
+
+// UnmarshalBinary modifies the receiver so it must take a pointer receiver.
+func (gr *GroupsResult) UnmarshalBinary(data []byte) error {
+	dec := gob.NewDecoder(bytes.NewReader(data))
+
+	if err := dec.Decode(&gr.Items); err != nil {
+		return err
+	}
+
+	for i := 0; i < gr.Items; i++ {
+		var g Group
+		if err := dec.Decode(&g); err != nil {
+			return err
+		}
+		gr.Resources = append(gr.Resources, &g)
+	}
+
+	return nil
 }
 
 // MarshalJSON implements the json.Marshaler interface for GroupsResult entity.
@@ -73,6 +111,7 @@ func (gr *GroupsResult) MarshalJSON() ([]byte, error) {
 	if gr.Resources == nil {
 		gr.Resources = make([]*Group, 0)
 	}
+
 	return json.MarshalIndent(*gr, "", "  ")
 }
 
