@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/slashdevops/idp-scim-sync/convert"
+	"github.com/slashdevops/idp-scim-sync/internal/convert"
 	"github.com/stretchr/testify/assert"
 )
 

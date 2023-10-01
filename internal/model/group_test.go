@@ -6,7 +6,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/slashdevops/idp-scim-sync/convert"
+	"github.com/slashdevops/idp-scim-sync/internal/convert"
 )
 
 func TestGroup_SetHashCode(t *testing.T) {

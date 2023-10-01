@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	gomock "github.com/golang/mock/gomock"
-	"github.com/slashdevops/idp-scim-sync/convert"
+	"github.com/slashdevops/idp-scim-sync/internal/convert"
 	"github.com/slashdevops/idp-scim-sync/internal/model"
 
 	mocks "github.com/slashdevops/idp-scim-sync/mocks/idp"

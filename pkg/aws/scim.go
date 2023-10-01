@@ -13,7 +13,6 @@ import (
 
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
-	"github.com/slashdevops/idp-scim-sync/convert"
 )
 
 // Consume http methods
@@ -126,7 +125,7 @@ func (s *SCIMService) newRequest(ctx context.Context, method string, u *url.URL,
 		"url":    u.String(),
 		"query":  u.RawQuery,
 		"path":   u.Path,
-		"body":   convert.ToJSONString(body),
+		"body":   toJSONString(body),
 	}).Trace("aws newRequest")
 
 	return req, nil
@@ -205,7 +204,7 @@ func (s *SCIMService) CreateUser(ctx context.Context, cur *CreateUserRequest) (*
 	}
 
 	log.WithFields(log.Fields{
-		"object": convert.ToJSONString(response),
+		"object": toJSONString(response),
 	}).Trace("aws CreateUser: user created response")
 
 	return &response, nil

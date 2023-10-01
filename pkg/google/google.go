@@ -10,7 +10,6 @@ import (
 	"google.golang.org/api/option"
 
 	log "github.com/sirupsen/logrus"
-	"github.com/slashdevops/idp-scim-sync/convert"
 )
 
 const (
@@ -108,7 +107,7 @@ func (ds *DirectoryService) ListUsers(ctx context.Context, query []string) ([]*a
 	}
 
 	log.WithFields(log.Fields{
-		"object": convert.ToJSONString(u),
+		"object": toJSONString(u),
 	}).Trace("google: ListUsers")
 
 	return u, nil
@@ -151,7 +150,7 @@ func (ds *DirectoryService) ListGroups(ctx context.Context, query []string) ([]*
 	}
 
 	log.WithFields(log.Fields{
-		"object": convert.ToJSONString(g),
+		"object": toJSONString(g),
 	}).Trace("google: ListGroups")
 
 	return g, nil
@@ -204,7 +203,7 @@ func (ds *DirectoryService) ListGroupMembers(ctx context.Context, groupID string
 	}
 
 	log.WithFields(log.Fields{
-		"object": convert.ToJSONString(m),
+		"object": toJSONString(m),
 	}).Trace("google: ListGroupMembers")
 
 	return m, nil
@@ -237,7 +236,7 @@ func (ds *DirectoryService) GetGroup(ctx context.Context, groupID string) (*admi
 	}
 
 	log.WithFields(log.Fields{
-		"object": convert.ToJSONString(g),
+		"object": toJSONString(g),
 	}).Trace("google: GetGroup")
 
 	return g, nil
