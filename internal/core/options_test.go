@@ -53,7 +53,7 @@ func TestWithIdentityProviderGroupsFilter(t *testing.T) {
 		}
 
 		if !reflect.DeepEqual(got, want) {
-			t.Errorf("got = %s, want %s", convert.ToJSONString(got, true), convert.ToJSONString(want, true))
+			t.Errorf("NewSyncService() got = %s, want %s", convert.ToJSONString(got, true), convert.ToJSONString(want, true))
 		}
 	})
 }
@@ -102,7 +102,7 @@ func TestWithIdentityProviderUsersFilter(t *testing.T) {
 		}
 
 		if !reflect.DeepEqual(got, want) {
-			t.Errorf("got = %s, want %s", convert.ToJSONString(got, true), convert.ToJSONString(want, true))
+			t.Errorf("NewSyncService() got = %s, want %s", convert.ToJSONString(got, true), convert.ToJSONString(want, true))
 		}
 	})
 }

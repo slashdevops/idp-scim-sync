@@ -3,11 +3,11 @@ package idp
 import (
 	"context"
 	"errors"
-	"reflect"
 	"testing"
 
 	gomock "github.com/golang/mock/gomock"
-	"github.com/slashdevops/idp-scim-sync/internal/convert"
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/slashdevops/idp-scim-sync/internal/model"
 
 	mocks "github.com/slashdevops/idp-scim-sync/mocks/idp"
@@ -146,8 +146,10 @@ func TestGetGroups(t *testing.T) {
 				t.Errorf("GoogleProvider.GetGroups() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("GoogleProvider.GetGroups() = %s, want %s", convert.ToJSONString(got, true), convert.ToJSONString(tt.want, true))
+
+			sort := func(x, y string) bool { return x > y }
+			if diff := cmp.Diff(tt.want, got, cmpopts.SortSlices(sort)); diff != "" {
+				t.Errorf("GetGroups() (-want +got):\n%s", diff)
 			}
 		})
 	}
@@ -320,8 +322,10 @@ func TestGetUsers(t *testing.T) {
 				t.Errorf("GoogleProvider.GetUsers() got error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("GoogleProvider.GetUsers() got = %s, want %s", convert.ToJSONString(got, true), convert.ToJSONString(tt.want, true))
+
+			sort := func(x, y string) bool { return x > y }
+			if diff := cmp.Diff(tt.want, got, cmpopts.SortSlices(sort)); diff != "" {
+				t.Errorf("GetUsers() (-want +got):\n%s", diff)
 			}
 		})
 	}
@@ -455,8 +459,10 @@ func TestGetGroupMembers(t *testing.T) {
 				t.Errorf("GoogleProvider.GetGroupMembers() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("GoogleProvider.GetGroupMembers() = %s, want %s", convert.ToJSONString(got, true), convert.ToJSONString(tt.want, true))
+
+			sort := func(x, y string) bool { return x > y }
+			if diff := cmp.Diff(tt.want, got, cmpopts.SortSlices(sort)); diff != "" {
+				t.Errorf("GetGroupMembers() (-want +got):\n%s", diff)
 			}
 		})
 	}
@@ -705,8 +711,10 @@ func TestGetUsersByGroupsMembers(t *testing.T) {
 				t.Errorf("GoogleProvider.GetUsersFromGroupMembers() got error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("GoogleProvider.GetUsersFromGroupMembers() got = %s, want %s", convert.ToJSONString(got, true), convert.ToJSONString(tt.want, true))
+
+			sort := func(x, y string) bool { return x > y }
+			if diff := cmp.Diff(tt.want, got, cmpopts.SortSlices(sort)); diff != "" {
+				t.Errorf("GetUsersByGroupsMembers() (-want +got):\n%s", diff)
 			}
 		})
 	}
@@ -872,8 +880,9 @@ func TestGetGroupsMembers(t *testing.T) {
 				return
 			}
 
-			if !tt.wantErr && !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("GoogleProvider.GetGroupsMembers() = %s, want %s", convert.ToJSONString(got, true), convert.ToJSONString(tt.want, true))
+			sort := func(x, y string) bool { return x > y }
+			if diff := cmp.Diff(tt.want, got, cmpopts.SortSlices(sort)); diff != "" {
+				t.Errorf("GetGroupsMembers() (-want +got):\n%s", diff)
 			}
 		})
 	}

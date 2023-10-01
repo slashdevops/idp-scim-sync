@@ -6,6 +6,8 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/slashdevops/idp-scim-sync/internal/convert"
 )
 
@@ -310,8 +312,10 @@ func TestGroupsMembersResult_MarshalJSON(t *testing.T) {
 				t.Errorf("UsersResult.MarshalJSON() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("UsersResult.MarshalJSON() = %s, want %s", string(got), string(tt.want))
+
+			sort := func(x, y string) bool { return x > y }
+			if diff := cmp.Diff(tt.want, got, cmpopts.SortSlices(sort)); diff != "" {
+				t.Errorf("MarshalJSON() (-want +got):\n%s", diff)
 			}
 		})
 	}

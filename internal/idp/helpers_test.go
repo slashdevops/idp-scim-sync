@@ -114,10 +114,6 @@ func Test_buildUser(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			got := buildUser(tt.given)
 
-			// if !reflect.DeepEqual(got, tt.want) {
-			// 	t.Errorf("buildUser() got = %v, want %v", string(utils.ToJSON(got)), string(utils.ToJSON(tt.want)))
-			// }
-
 			sort := func(x, y string) bool { return x > y }
 			if diff := cmp.Diff(tt.want, got, cmpopts.SortSlices(sort)); diff != "" {
 				t.Errorf("mismatch (-want +got):\n%s", diff)
