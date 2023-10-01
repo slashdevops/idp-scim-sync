@@ -25,8 +25,7 @@ func TestUserBuilder(t *testing.T) {
 		ub := UserBuilder()
 		ub.WithIPID("ipid").
 			WithSCIMID("scimid").
-			WithGivenName("givenname").
-			WithFamilyName("familyname").
+			WithName(&Name{GivenName: "givenname", FamilyName: "familyname"}).
 			WithDisplayName("displayname").
 			WithActive(true).
 			WithEmail(Email{Value: "email"}).
@@ -53,7 +52,7 @@ func TestUserBuilder(t *testing.T) {
 	t.Run("few options", func(t *testing.T) {
 		ub := UserBuilder()
 		ub.WithIPID("ipid").
-			WithGivenName("givenname").
+			WithName(&Name{GivenName: "givenname"}).
 			WithActive(true).
 			Build()
 

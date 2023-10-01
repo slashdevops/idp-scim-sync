@@ -236,8 +236,6 @@ func (s *Provider) GetUsers(ctx context.Context) (*model.UsersResult, error) {
 			WithIPID(user.ExternalID).
 			WithSCIMID(user.ID).
 			WithUserName(user.UserName).
-			WithGivenName(user.Name.GivenName).
-			WithFamilyName(user.Name.FamilyName).
 			WithDisplayName(user.DisplayName).
 			WithNickName(user.NickName).
 			WithProfileURL(user.ProfileURL).
@@ -262,6 +260,28 @@ func (s *Provider) GetUsers(ctx context.Context) (*model.UsersResult, error) {
 
 			e.Addresses = append(e.Addresses, address)
 		}
+
+		if user.Name != nil {
+			e.Name = model.NameBuilder().
+				WithFormatted(user.Name.Formatted).
+				WithFamilyName(user.Name.FamilyName).
+				WithGivenName(user.Name.GivenName).
+				WithMiddleName(user.Name.MiddleName).
+				WithHonorificPrefix(user.Name.HonorificPrefix).
+				WithHonorificSuffix(user.Name.HonorificSuffix).
+				Build()
+		}
+
+		// if user.SchemaEnterpriseUser != nil {
+		// 	e.SchemaEnterpriseUser = model.SchemaEnterpriseUserBuilder().
+		// 		WithEmployeeNumber(user.SchemaEnterpriseUser.EmployeeNumber).
+		// 		WithCostCenter(user.SchemaEnterpriseUser.CostCenter).
+		// 		WithOrganization(user.SchemaEnterpriseUser.Organization).
+		// 		WithDivision(user.SchemaEnterpriseUser.Division).
+		// 		WithDepartment(user.SchemaEnterpriseUser.Department).
+		// 		WithManager(user.SchemaEnterpriseUser.Manager).
+		// 		Build()
+		// }
 
 		if len(user.Emails) != 0 {
 			email := model.EmailBuilder().

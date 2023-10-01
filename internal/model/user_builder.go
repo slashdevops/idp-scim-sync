@@ -30,60 +30,6 @@ func (b *UserBuilderChoice) WithUserName(userName string) *UserBuilderChoice {
 	return b
 }
 
-// WithFormattedName sets the Formatted field of the User entity.
-func (b *UserBuilderChoice) WithFormattedName(formatted string) *UserBuilderChoice {
-	if b.u.Name == nil {
-		b.u.Name = &Name{}
-	}
-	b.u.Name.Formatted = formatted
-	return b
-}
-
-// WithFamilyName sets the FamilyName field of the User entity.
-func (b *UserBuilderChoice) WithFamilyName(familyName string) *UserBuilderChoice {
-	if b.u.Name == nil {
-		b.u.Name = &Name{}
-	}
-	b.u.Name.FamilyName = familyName
-	return b
-}
-
-// WithGivenName sets the GivenName field of the User entity.
-func (b *UserBuilderChoice) WithGivenName(givenName string) *UserBuilderChoice {
-	if b.u.Name == nil {
-		b.u.Name = &Name{}
-	}
-	b.u.Name.GivenName = givenName
-	return b
-}
-
-// WithMiddleName sets the MiddleName field of the User entity.
-func (b *UserBuilderChoice) WithMiddleName(middleName string) *UserBuilderChoice {
-	if b.u.Name == nil {
-		b.u.Name = &Name{}
-	}
-	b.u.Name.MiddleName = middleName
-	return b
-}
-
-// WithHonorificPrefixName sets the HonorificPrefix field of the User entity.
-func (b *UserBuilderChoice) WithHonorificPrefixName(honorificPrefix string) *UserBuilderChoice {
-	if b.u.Name == nil {
-		b.u.Name = &Name{}
-	}
-	b.u.Name.HonorificPrefix = honorificPrefix
-	return b
-}
-
-// WithHonorificSuffixName sets the HonorificSuffix field of the User entity.
-func (b *UserBuilderChoice) WithHonorificSuffixName(honorificSuffix string) *UserBuilderChoice {
-	if b.u.Name == nil {
-		b.u.Name = &Name{}
-	}
-	b.u.Name.HonorificSuffix = honorificSuffix
-	return b
-}
-
 // WithDisplayName sets the DisplayName field of the User entity.
 func (b *UserBuilderChoice) WithDisplayName(displayName string) *UserBuilderChoice {
 	b.u.DisplayName = displayName
@@ -178,11 +124,11 @@ func (b *UserBuilderChoice) WithPhoneNumbers(phoneNumbers []PhoneNumber) *UserBu
 }
 
 // WithName sets the Name field of the User entity.
-func (b *UserBuilderChoice) WithName(name Name) *UserBuilderChoice {
+func (b *UserBuilderChoice) WithName(name *Name) *UserBuilderChoice {
 	if b.u.Name == nil {
 		b.u.Name = &Name{}
 	}
-	b.u.Name = &name
+	b.u.Name = name
 	return b
 }
 

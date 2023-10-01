@@ -67,10 +67,8 @@ func Test_buildUser(t *testing.T) {
 				IsAdmin: false,
 			},
 			want: model.UserBuilder().
-				WithGivenName("givenName").
-				WithFamilyName("familyName").
+				WithName(&model.Name{GivenName: "givenName", FamilyName: "familyName", Formatted: "fullName"}).
 				WithDisplayName("fullName").
-				WithFormattedName("fullName").
 				WithEmail(
 					model.EmailBuilder().
 						WithValue("primaryEmail").

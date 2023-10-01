@@ -112,8 +112,7 @@ func (s *State) SetHashCode() {
 	for _, user := range s.Resources.Users.Resources {
 		e := UserBuilder().
 			WithIPID(user.IPID).
-			WithGivenName(user.Name.GivenName).
-			WithFamilyName(user.Name.FamilyName).
+			WithName(user.Name).
 			WithDisplayName(user.DisplayName).
 			WithEmail(
 				EmailBuilder().

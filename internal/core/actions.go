@@ -18,10 +18,11 @@ func scimSync(
 	idpUsersResult *model.UsersResult,
 	idpGroupsMembersResult *model.GroupsMembersResult,
 ) (*model.GroupsResult, *model.UsersResult, *model.GroupsMembersResult, error) {
+	log.Warn("reconciling the SCIM data with the Identity Provider data")
+
 	var totalGroupsResult *model.GroupsResult
 	var totalUsersResult *model.UsersResult
 	var totalGroupsMembersResult *model.GroupsMembersResult
-	log.Warn("reconciling the SCIM data with the Identity Provider data")
 
 	log.Info("getting SCIM Groups")
 	scimGroupsResult, err := scim.GetGroups(ctx)

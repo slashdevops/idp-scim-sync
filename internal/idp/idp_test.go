@@ -268,8 +268,7 @@ func TestGetUsers(t *testing.T) {
 				Resources: []*model.User{
 					model.UserBuilder().
 						WithIPID("1").
-						WithGivenName("user").
-						WithFamilyName("1").
+						WithName(&model.Name{GivenName: "user", FamilyName: "1"}).
 						WithDisplayName("user 1").
 						WithUserName("user.1@mail.com").
 						WithActive(true).
@@ -285,8 +284,7 @@ func TestGetUsers(t *testing.T) {
 						Build(),
 					model.UserBuilder().
 						WithIPID("2").
-						WithGivenName("user").
-						WithFamilyName("2").
+						WithName(&model.Name{GivenName: "user", FamilyName: "2"}).
 						WithDisplayName("user 2").
 						WithUserName("user.2@mail.com").
 						WithActive(false).
@@ -615,8 +613,7 @@ func TestGetUsersByGroupsMembers(t *testing.T) {
 				Resources: []*model.User{
 					model.UserBuilder().
 						WithIPID("1").
-						WithGivenName("user").
-						WithFamilyName("1").
+						WithName(&model.Name{GivenName: "user", FamilyName: "1"}).
 						WithDisplayName("user 1").
 						WithActive(true).
 						WithUserName("user.1@mail.com").
@@ -632,8 +629,7 @@ func TestGetUsersByGroupsMembers(t *testing.T) {
 						Build(),
 					model.UserBuilder().
 						WithIPID("2").
-						WithGivenName("user").
-						WithFamilyName("2").
+						WithName(&model.Name{GivenName: "user", FamilyName: "2"}).
 						WithDisplayName("user 2").
 						WithActive(false).
 						WithUserName("user.2@mail.com").
@@ -649,8 +645,7 @@ func TestGetUsersByGroupsMembers(t *testing.T) {
 						Build(),
 					model.UserBuilder().
 						WithIPID("3").
-						WithGivenName("user").
-						WithFamilyName("3").
+						WithName(&model.Name{GivenName: "user", FamilyName: "3"}).
 						WithDisplayName("user 3").
 						WithActive(false).
 						WithUserName("user.3@mail.com").
@@ -666,8 +661,7 @@ func TestGetUsersByGroupsMembers(t *testing.T) {
 						Build(),
 					model.UserBuilder().
 						WithIPID("4").
-						WithGivenName("user").
-						WithFamilyName("4").
+						WithName(&model.Name{GivenName: "user", FamilyName: "4"}).
 						WithDisplayName("user 4").
 						WithActive(false).
 						WithUserName("user.4@mail.com").
