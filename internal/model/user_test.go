@@ -56,8 +56,9 @@ func TestName_GobEncode(t *testing.T) {
 				t.Errorf("Name.GobEncode() error = %v", err)
 			}
 
-			if !reflect.DeepEqual(got, tt.toTest) {
-				t.Errorf("Name.GobEncode() = %v, want %v", got, tt.toTest)
+			sort := func(x, y string) bool { return x > y }
+			if diff := cmp.Diff(tt.toTest, got, cmpopts.SortSlices(sort)); diff != "" {
+				t.Errorf("UsersResult.GobEncode() mismatch (-tt.toTest +got):\n%s", diff)
 			}
 		})
 	}
@@ -97,8 +98,9 @@ func TestEmail_GobEncode(t *testing.T) {
 				t.Errorf("Email.GobEncode() error = %v", err)
 			}
 
-			if !reflect.DeepEqual(got, tt.toTest) {
-				t.Errorf("Email.GobEncode() = %v, want %v", got, tt.toTest)
+			sort := func(x, y string) bool { return x > y }
+			if diff := cmp.Diff(tt.toTest, got, cmpopts.SortSlices(sort)); diff != "" {
+				t.Errorf("UsersResult.GobEncode() mismatch (-tt.toTest +got):\n%s", diff)
 			}
 		})
 	}
@@ -153,8 +155,9 @@ func TestAddress_GobEncode(t *testing.T) {
 				t.Errorf("Address.GobEncode() error = %v", err)
 			}
 
-			if !reflect.DeepEqual(got, tt.toTest) {
-				t.Errorf("Address.GobEncode() = %v, want %v", got, tt.toTest)
+			sort := func(x, y string) bool { return x > y }
+			if diff := cmp.Diff(tt.toTest, got, cmpopts.SortSlices(sort)); diff != "" {
+				t.Errorf("UsersResult.GobEncode() mismatch (-tt.toTest +got):\n%s", diff)
 			}
 		})
 	}
@@ -193,8 +196,9 @@ func TestPhoneNumber_GobEncode(t *testing.T) {
 				t.Errorf("PhoneNumber.GobEncode() error = %v", err)
 			}
 
-			if !reflect.DeepEqual(got, tt.toTest) {
-				t.Errorf("PhoneNumber.GobEncode() = %v, want %v", got, tt.toTest)
+			sort := func(x, y string) bool { return x > y }
+			if diff := cmp.Diff(tt.toTest, got, cmpopts.SortSlices(sort)); diff != "" {
+				t.Errorf("UsersResult.GobEncode() mismatch (-tt.toTest +got):\n%s", diff)
 			}
 		})
 	}
@@ -214,6 +218,12 @@ func TestManager_GobEncode(t *testing.T) {
 			toTest: Manager{
 				Value: "value",
 				Ref:   "ref",
+			},
+		},
+		{
+			name: "filled Manager with empty values",
+			toTest: Manager{
+				Value: "value",
 			},
 		},
 	}
@@ -289,6 +299,7 @@ func TestEnterpriseData_GobEncode(t *testing.T) {
 			if !reflect.DeepEqual(got, tt.toTest) {
 				t.Errorf("EnterpriseData.GobEncode() = %v, want %v", got, tt.toTest)
 			}
+
 			sort := func(x, y string) bool { return x > y }
 			if diff := cmp.Diff(tt.toTest, got, cmpopts.SortSlices(sort)); diff != "" {
 				t.Errorf("mismatch (-tt.toTest +got):\n%s", diff)
@@ -470,7 +481,9 @@ func TestUser_SetHashCode(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.user.SetHashCode()
 			tt.want.SetHashCode()
+
 			got := tt.user.HashCode
+
 			if got != tt.want.HashCode {
 				t.Errorf("User.SetHashCode() = %s, want %s", got, tt.want.HashCode)
 			}
@@ -515,9 +528,65 @@ func TestUser_SetHashCode_pointer(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.user.SetHashCode()
 			tt.want.SetHashCode()
+
 			got := tt.user.HashCode
+
 			if got != tt.want.HashCode {
 				t.Errorf("User.SetHashCode() = %s, want %s", got, tt.want.HashCode)
+			}
+		})
+	}
+}
+
+func UsersResult_GobEncode(t *testing.T) {
+	tests := []struct {
+		name   string
+		toTest UsersResult
+	}{
+		{
+			name:   "empty UsersResult",
+			toTest: UsersResult{},
+		},
+		{
+			name: "filled UsersResult",
+			toTest: UsersResult{
+				Items: 1,
+				Resources: []*User{
+					{
+						IPID:   "1",
+						SCIMID: "1",
+						Name: &Name{
+							GivenName:  "User",
+							FamilyName: "1",
+						},
+						Emails: []Email{
+							{Value: "user.1@mail.com", Type: "work", Primary: true},
+						},
+					},
+				},
+				HashCode: "test",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			b := new(bytes.Buffer)
+			enc := gob.NewEncoder(b)
+
+			if err := enc.Encode(tt.toTest); err != nil {
+				t.Errorf("UsersResult.GobEncode() error = %v", err)
+			}
+
+			dec := gob.NewDecoder(b)
+			var got UsersResult
+			if err := dec.Decode(&got); err != nil {
+				t.Errorf("UsersResult.GobEncode() error = %v", err)
+			}
+
+			sort := func(x, y string) bool { return x > y }
+			if diff := cmp.Diff(tt.toTest, got, cmpopts.SortSlices(sort)); diff != "" {
+				t.Errorf("UsersResult.GobEncode() mismatch (-tt.toTest +got):\n%s", diff)
 			}
 		})
 	}
@@ -600,13 +669,17 @@ func TestUsersResult_MarshalJSON(t *testing.T) {
 				Resources: tt.fields.Resources,
 				HashCode:  tt.fields.HashCode,
 			}
+
 			got, err := ur.MarshalJSON()
+
 			if (err != nil) != tt.wantErr {
 				t.Errorf("UsersResult.MarshalJSON() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("UsersResult.MarshalJSON() = %s, want %s", string(got), string(tt.want))
+
+			sort := func(x, y string) bool { return x > y }
+			if diff := cmp.Diff(tt.want, got, cmpopts.SortSlices(sort)); diff != "" {
+				t.Errorf("UsersResult.GobEncode() mismatch (-tt.want +got):\n%s", diff)
 			}
 		})
 	}

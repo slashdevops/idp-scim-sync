@@ -324,16 +324,9 @@ func (ed *EnterpriseData) UnmarshalBinary(data []byte) error {
 		return err
 	}
 
-	if ed.Manager != nil {
-		if err := dec.Decode(&ed.Manager); err != nil {
+	if err := dec.Decode(&ed.Manager); err != nil {
+		if err.Error() != "EOF" {
 			return err
-		}
-	} else {
-		// when the user has pointer to Manager, but the Manager is nil, the gob decoder returns an error
-		if err := dec.Decode(&ed.Manager); err != nil {
-			if err.Error() != "EOF" {
-				return err
-			}
 		}
 	}
 
@@ -475,29 +468,17 @@ func (u *User) UnmarshalBinary(data []byte) error {
 		return err
 	}
 
-	if u.Name != nil {
-		if err := dec.Decode(&u.Name); err != nil {
+	// when the user has pointer to Name, but the Name is nil, the gob decoder returns an error
+	if err := dec.Decode(&u.Name); err != nil {
+		if err.Error() != "EOF" {
 			return err
-		}
-	} else {
-		// when the user has pointer to Name, but the Name is nil, the gob decoder returns an error
-		if err := dec.Decode(&u.Name); err != nil {
-			if err.Error() != "EOF" {
-				return err
-			}
 		}
 	}
 
-	if u.EnterpriseData != nil {
-		if err := dec.Decode(&u.EnterpriseData); err != nil {
+	// when the user has pointer to EnterpriseData, but the Name is nil, the gob decoder returns an error
+	if err := dec.Decode(&u.EnterpriseData); err != nil {
+		if err.Error() != "EOF" {
 			return err
-		}
-	} else {
-		// when the user has pointer to EnterpriseData, but the Name is nil, the gob decoder returns an error
-		if err := dec.Decode(&u.EnterpriseData); err != nil {
-			if err.Error() != "EOF" {
-				return err
-			}
 		}
 	}
 
@@ -554,16 +535,9 @@ func (ur *UsersResult) UnmarshalBinary(data []byte) error {
 		return err
 	}
 
-	if ur.Resources != nil {
-		if err := dec.Decode(&ur.Resources); err != nil {
+	if err := dec.Decode(&ur.Resources); err != nil {
+		if err.Error() != "EOF" {
 			return err
-		}
-	} else {
-		// when the user has pointer to Resources, but the Resources is nil, the gob decoder returns an error
-		if err := dec.Decode(&ur.Resources); err != nil {
-			if err.Error() != "EOF" {
-				return err
-			}
 		}
 	}
 
