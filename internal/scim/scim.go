@@ -247,6 +247,34 @@ func (s *Provider) GetUsers(ctx context.Context) (*model.UsersResult, error) {
 			WithActive(user.Active).
 			Build()
 
+		if user.Name != nil {
+			e.Name = model.NameBuilder().
+				WithFormatted(user.Name.Formatted).
+				WithFamilyName(user.Name.FamilyName).
+				WithGivenName(user.Name.GivenName).
+				WithMiddleName(user.Name.MiddleName).
+				WithHonorificPrefix(user.Name.HonorificPrefix).
+				WithHonorificSuffix(user.Name.HonorificSuffix).
+				Build()
+		}
+
+		if user.SchemaEnterpriseUser != nil {
+			e.EnterpriseData = model.EnterpriseDataBuilder().
+				WithCostCenter(user.SchemaEnterpriseUser.CostCenter).
+				WithDepartment(user.SchemaEnterpriseUser.Department).
+				WithDivision(user.SchemaEnterpriseUser.Division).
+				WithEmployeeNumber(user.SchemaEnterpriseUser.EmployeeNumber).
+				WithOrganization(user.SchemaEnterpriseUser.Organization).
+				Build()
+
+			if user.SchemaEnterpriseUser.Manager != nil {
+				e.EnterpriseData.Manager = model.ManagerBuilder().
+					WithValue(user.SchemaEnterpriseUser.Manager.Value).
+					WithRef(user.SchemaEnterpriseUser.Manager.Ref).
+					Build()
+			}
+		}
+
 		if len(user.Addresses) != 0 {
 			address := model.AddressBuilder().
 				WithFormatted(user.Addresses[0].Formatted).
@@ -260,28 +288,6 @@ func (s *Provider) GetUsers(ctx context.Context) (*model.UsersResult, error) {
 
 			e.Addresses = append(e.Addresses, address)
 		}
-
-		if user.Name != nil {
-			e.Name = model.NameBuilder().
-				WithFormatted(user.Name.Formatted).
-				WithFamilyName(user.Name.FamilyName).
-				WithGivenName(user.Name.GivenName).
-				WithMiddleName(user.Name.MiddleName).
-				WithHonorificPrefix(user.Name.HonorificPrefix).
-				WithHonorificSuffix(user.Name.HonorificSuffix).
-				Build()
-		}
-
-		// if user.SchemaEnterpriseUser != nil {
-		// 	e.SchemaEnterpriseUser = model.SchemaEnterpriseUserBuilder().
-		// 		WithEmployeeNumber(user.SchemaEnterpriseUser.EmployeeNumber).
-		// 		WithCostCenter(user.SchemaEnterpriseUser.CostCenter).
-		// 		WithOrganization(user.SchemaEnterpriseUser.Organization).
-		// 		WithDivision(user.SchemaEnterpriseUser.Division).
-		// 		WithDepartment(user.SchemaEnterpriseUser.Department).
-		// 		WithManager(user.SchemaEnterpriseUser.Manager).
-		// 		Build()
-		// }
 
 		if len(user.Emails) != 0 {
 			email := model.EmailBuilder().
@@ -360,6 +366,23 @@ func (s *Provider) CreateUsers(ctx context.Context, ur *model.UsersResult) (*mod
 				WithHonorificPrefix(user.Name.HonorificPrefix).
 				WithHonorificSuffix(user.Name.HonorificSuffix).
 				Build()
+		}
+
+		if user.EnterpriseData != nil {
+			e.EnterpriseData = model.EnterpriseDataBuilder().
+				WithCostCenter(user.EnterpriseData.CostCenter).
+				WithDepartment(user.EnterpriseData.Department).
+				WithDivision(user.EnterpriseData.Division).
+				WithEmployeeNumber(user.EnterpriseData.EmployeeNumber).
+				WithOrganization(user.EnterpriseData.Organization).
+				Build()
+
+			if user.EnterpriseData.Manager != nil {
+				e.EnterpriseData.Manager = model.ManagerBuilder().
+					WithValue(user.EnterpriseData.Manager.Value).
+					WithRef(user.EnterpriseData.Manager.Ref).
+					Build()
+			}
 		}
 
 		if len(user.Addresses) != 0 {
@@ -457,6 +480,23 @@ func (s *Provider) UpdateUsers(ctx context.Context, ur *model.UsersResult) (*mod
 				WithHonorificPrefix(user.Name.HonorificPrefix).
 				WithHonorificSuffix(user.Name.HonorificSuffix).
 				Build()
+		}
+
+		if user.EnterpriseData != nil {
+			e.EnterpriseData = model.EnterpriseDataBuilder().
+				WithCostCenter(user.EnterpriseData.CostCenter).
+				WithDepartment(user.EnterpriseData.Department).
+				WithDivision(user.EnterpriseData.Division).
+				WithEmployeeNumber(user.EnterpriseData.EmployeeNumber).
+				WithOrganization(user.EnterpriseData.Organization).
+				Build()
+
+			if user.EnterpriseData.Manager != nil {
+				e.EnterpriseData.Manager = model.ManagerBuilder().
+					WithValue(user.EnterpriseData.Manager.Value).
+					WithRef(user.EnterpriseData.Manager.Ref).
+					Build()
+			}
 		}
 
 		if len(user.Addresses) != 0 {
