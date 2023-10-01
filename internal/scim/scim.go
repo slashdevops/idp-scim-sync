@@ -390,6 +390,10 @@ func (s *Provider) UpdateUsers(ctx context.Context, ur *model.UsersResult) (*mod
 	users := make([]*model.User, 0)
 
 	for _, user := range ur.Resources {
+		if user.SCIMID == "" {
+			return nil, fmt.Errorf("scim: error updating user, user ID is empty: %s", user.SCIMID)
+		}
+
 		userRequest := buildPutUserRequest(user)
 
 		log.WithFields(log.Fields{

@@ -1,19 +1,22 @@
 package scim
 
 import (
+	log "github.com/sirupsen/logrus"
+	"github.com/slashdevops/idp-scim-sync/internal/convert"
 	"github.com/slashdevops/idp-scim-sync/internal/model"
 	"github.com/slashdevops/idp-scim-sync/pkg/aws"
 )
 
+// buildCreateUserRequest builds a CreateUserRequest from a User model
 func buildCreateUserRequest(user *model.User) *aws.CreateUserRequest {
 	if user == nil {
 		return nil
 	}
 
 	userRequest := &aws.CreateUserRequest{
+		ExternalID:        user.IPID,
 		UserName:          user.UserName,
 		DisplayName:       user.DisplayName,
-		ExternalID:        user.IPID,
 		UserType:          user.UserType,
 		Title:             user.Title,
 		PreferredLanguage: user.PreferredLanguage,
@@ -89,18 +92,22 @@ func buildCreateUserRequest(user *model.User) *aws.CreateUserRequest {
 		}
 	}
 
+	log.Tracef("scim buildCreateUserRequest(): %+v", convert.ToJSONString(userRequest))
+
 	return userRequest
 }
 
+// buildPutUserRequest builds a PutUserRequest from a User model
 func buildPutUserRequest(user *model.User) *aws.PutUserRequest {
 	if user == nil {
 		return nil
 	}
 
 	userRequest := &aws.PutUserRequest{
+		ID:                user.SCIMID,
+		ExternalID:        user.IPID,
 		UserName:          user.UserName,
 		DisplayName:       user.DisplayName,
-		ExternalID:        user.IPID,
 		UserType:          user.UserType,
 		Title:             user.Title,
 		PreferredLanguage: user.PreferredLanguage,
@@ -175,6 +182,8 @@ func buildPutUserRequest(user *model.User) *aws.PutUserRequest {
 			}
 		}
 	}
+
+	log.Tracef("scim buildPutUserRequest(): %+v", convert.ToJSONString(userRequest))
 
 	return userRequest
 }

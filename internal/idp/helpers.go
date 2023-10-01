@@ -9,6 +9,7 @@ import (
 	admin "google.golang.org/api/admin/directory/v1"
 )
 
+// buildUser builds a User model from a User coming from the IDP API
 func buildUser(usr *admin.User) *model.User {
 	if usr == nil {
 		return nil
@@ -51,8 +52,6 @@ func buildUser(usr *admin.User) *model.User {
 			if v.(map[string]interface{})["primary"] != nil {
 				if v.(map[string]interface{})["primary"].(bool) {
 					emails = append(emails, model.EmailBuilder().
-						// WithValue(v.(map[string]interface{})["address"].(string)).
-						// WithType(v.(map[string]interface{})["type"].(string)).
 						WithPrimary(v.(map[string]interface{})["primary"].(bool)).
 						Build())
 

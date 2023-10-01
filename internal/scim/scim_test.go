@@ -835,6 +835,7 @@ func TestUpdateUsers(t *testing.T) {
 	t.Run("Should call PutUser 1 time and no return error", func(t *testing.T) {
 		mockSCIM := mocks.NewMockAWSSCIMProvider(mockCtrl)
 		pur := &aws.PutUserRequest{
+			ID:          "1",
 			ExternalID:  "1",
 			UserName:    "user.1@mail.com",
 			DisplayName: "user 1",
@@ -890,6 +891,7 @@ func TestUpdateUsers(t *testing.T) {
 	t.Run("Should call PutUser 1 time and return error", func(t *testing.T) {
 		mockSCIM := mocks.NewMockAWSSCIMProvider(mockCtrl)
 		pur := &aws.PutUserRequest{
+			ID:          "1",
 			ExternalID:  "1",
 			UserName:    "user.1@mail.com",
 			DisplayName: "user 1",
@@ -937,6 +939,7 @@ func TestUpdateUsers(t *testing.T) {
 	t.Run("Should call CreateUser 2 time and no return error", func(t *testing.T) {
 		mockSCIM := mocks.NewMockAWSSCIMProvider(mockCtrl)
 		pur1 := &aws.PutUserRequest{
+			ID:          "1",
 			ExternalID:  "1",
 			UserName:    "user.1@mail.com",
 			DisplayName: "user 1",
@@ -947,6 +950,7 @@ func TestUpdateUsers(t *testing.T) {
 			Active: true,
 		}
 		pur2 := &aws.PutUserRequest{
+			ID:          "2",
 			ExternalID:  "2",
 			UserName:    "user.2@mail.com",
 			DisplayName: "user 2",
