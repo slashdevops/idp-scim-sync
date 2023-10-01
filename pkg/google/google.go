@@ -106,9 +106,7 @@ func (ds *DirectoryService) ListUsers(ctx context.Context, query []string) ([]*a
 		}
 	}
 
-	log.WithFields(log.Fields{
-		"object": toJSONString(u),
-	}).Trace("google: ListUsers")
+	log.Tracef("google: ListUsers(): %v", toJSONString(u))
 
 	return u, nil
 }
@@ -149,9 +147,7 @@ func (ds *DirectoryService) ListGroups(ctx context.Context, query []string) ([]*
 		}
 	}
 
-	log.WithFields(log.Fields{
-		"object": toJSONString(g),
-	}).Trace("google: ListGroups")
+	log.Tracef("google: ListGroups(): %v", toJSONString(g))
 
 	return g, nil
 }
@@ -202,9 +198,7 @@ func (ds *DirectoryService) ListGroupMembers(ctx context.Context, groupID string
 		return nil, err
 	}
 
-	log.WithFields(log.Fields{
-		"object": toJSONString(m),
-	}).Trace("google: ListGroupMembers")
+	log.Tracef("google: ListGroupMembers(): %v", toJSONString(m))
 
 	return m, nil
 }
@@ -235,9 +229,7 @@ func (ds *DirectoryService) GetGroup(ctx context.Context, groupID string) (*admi
 		return nil, fmt.Errorf("google: error getting group %s: %v", groupID, err)
 	}
 
-	log.WithFields(log.Fields{
-		"object": toJSONString(g),
-	}).Trace("google: GetGroup")
+	log.Tracef("google: GetGroup(): %v", toJSONString(g))
 
 	return g, nil
 }

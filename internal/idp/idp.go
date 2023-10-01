@@ -94,9 +94,7 @@ func (i *IdentityProvider) GetGroups(ctx context.Context, filter []string) (*mod
 
 	syncResult := model.GroupsResultBuilder().WithResources(syncGroups).Build()
 
-	log.WithFields(log.Fields{
-		"object": convert.ToJSONString(syncResult),
-	}).Trace("idp: GetGroups")
+	log.Tracef("idp: GetGroups(): %s", convert.ToJSONString(syncResult))
 
 	return syncResult, nil
 }
@@ -124,9 +122,7 @@ func (i *IdentityProvider) GetUsers(ctx context.Context, filter []string) (*mode
 	}
 	uResult := model.UsersResultBuilder().WithResources(syncUsers).Build()
 
-	log.WithFields(log.Fields{
-		"object": convert.ToJSONString(uResult),
-	}).Trace("idp: GetUsers")
+	log.Tracef("idp: GetUsers(): %s", convert.ToJSONString(uResult))
 
 	return uResult, nil
 }
@@ -170,9 +166,7 @@ func (i *IdentityProvider) GetGroupMembers(ctx context.Context, groupID string) 
 
 	syncMembersResult := model.MembersResultBuilder().WithResources(syncMembers).Build()
 
-	log.WithFields(log.Fields{
-		"object": convert.ToJSONString(syncMembersResult),
-	}).Trace("idp: GetGroupMembers")
+	log.Tracef("idp: GetGroupMembers(): %s", convert.ToJSONString(syncMembersResult))
 
 	return syncMembersResult, nil
 }
@@ -209,9 +203,7 @@ func (i *IdentityProvider) GetUsersByGroupsMembers(ctx context.Context, gmr *mod
 
 	pUsersResult := model.UsersResultBuilder().WithResources(pUsers).Build()
 
-	log.WithFields(log.Fields{
-		"object": convert.ToJSONString(pUsersResult),
-	}).Trace("idp: GetUsersByGroupsMembers")
+	log.Tracef("idp: GetUsersByGroupsMembers(): %s", convert.ToJSONString(pUsersResult))
 
 	return pUsersResult, nil
 }
@@ -260,9 +252,7 @@ func (i *IdentityProvider) GetGroupsMembers(ctx context.Context, gr *model.Group
 	}
 	groupsMembersResult.SetHashCode()
 
-	log.WithFields(log.Fields{
-		"object": convert.ToJSONString(groupsMembersResult),
-	}).Trace("idp: GetGroupsMembers")
+	log.Tracef("idp: GetGroupsMembers(): %s", convert.ToJSONString(groupsMembersResult))
 
 	return groupsMembersResult, nil
 }

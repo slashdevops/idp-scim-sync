@@ -125,8 +125,7 @@ func (s *SCIMService) newRequest(ctx context.Context, method string, u *url.URL,
 		"url":    u.String(),
 		"query":  u.RawQuery,
 		"path":   u.Path,
-		"body":   toJSONString(body),
-	}).Trace("aws newRequest")
+	}).Tracef("aws: newRequest(), body: %s", toJSONString(body))
 
 	return req, nil
 }
@@ -203,9 +202,7 @@ func (s *SCIMService) CreateUser(ctx context.Context, cur *CreateUserRequest) (*
 		return nil, fmt.Errorf("aws CreateUser: user: %s, error decoding response body: %w", cur.UserName, err)
 	}
 
-	log.WithFields(log.Fields{
-		"object": toJSONString(response),
-	}).Trace("aws CreateUser: user created response")
+	log.Tracef("aws CreateUser: user created response: %s", toJSONString(response))
 
 	return &response, nil
 }
@@ -451,9 +448,7 @@ func (s *SCIMService) GetUserByUserName(ctx context.Context, userName string) (*
 			log.Error(er)
 		}
 
-		log.WithFields(log.Fields{
-			"body": string(bodyBytes),
-		}).Trace("aws GetUserByUserName: response raw body data")
+		log.Tracef("aws GetUserByUserName(), response raw body data: %s", string(bodyBytes))
 	}
 
 	var lur ListUsersResponse

@@ -223,13 +223,7 @@ func buildUser(usr *admin.User) *model.User {
 	// recalculate the hashcode because we have modified the user after building it
 	createdUser.SetHashCode()
 
-	log.WithFields(log.Fields{
-		"object": convert.ToJSONString(usr),
-	}).Trace("idp: building user from")
-
-	log.WithFields(log.Fields{
-		"object": convert.ToJSONString(createdUser),
-	}).Trace("idp: building user to")
+	log.Tracef("idp: buildUser() from: %s, --> to: %s", convert.ToJSONString(usr), convert.ToJSONString(createdUser))
 
 	return createdUser
 }
