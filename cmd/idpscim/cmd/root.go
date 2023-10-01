@@ -253,7 +253,7 @@ func getSecrets() {
 }
 
 func sync() error {
-	log.Tracef("viper config: %s", convert.ToJSON(viper.AllSettings(), true))
+	log.Tracef("viper config: %s", convert.ToJSONString(viper.AllSettings(), true))
 
 	if cfg.SyncMethod == "groups" {
 		return syncGroups()
