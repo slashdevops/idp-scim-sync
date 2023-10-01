@@ -72,3 +72,64 @@ func Test_toJSON(t *testing.T) {
 		})
 	}
 }
+
+func Test_toJSONString(t *testing.T) {
+	type args struct {
+		stc   interface{}
+		ident []bool
+	}
+	tests := []struct {
+		name string
+		args args
+		want string
+	}{
+		{
+			name: "nil",
+			args: args{
+				stc: nil,
+			},
+			want: "",
+		},
+		{
+			name: "empty",
+			args: args{
+				stc: "",
+			},
+			want: "",
+		},
+		{
+			name: "string",
+			args: args{
+				stc: "test",
+			},
+			want: "\"test\"",
+		},
+		{
+			name: "int",
+			args: args{
+				stc: 1,
+			},
+			want: "1",
+		},
+		{
+			name: "struct",
+			args: args{
+				stc: struct {
+					Name string `json:"name"`
+					Age  int    `json:"age"`
+				}{
+					Name: "test",
+					Age:  1,
+				},
+			},
+			want: `{"name":"test","age":1}`,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := toJSONString(tt.args.stc, tt.args.ident...); got != tt.want {
+				t.Errorf("toJSONString() got = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
