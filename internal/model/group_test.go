@@ -192,7 +192,6 @@ func TestGroupsResult_MarshalJSON(t *testing.T) {
       "ipid": "1",
       "scimid": "1",
       "name": "group",
-      "email": "",
       "hashCode": "1111"
     }
   ]

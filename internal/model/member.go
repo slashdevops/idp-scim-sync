@@ -9,11 +9,11 @@ import (
 
 // Member represents a member entity.
 type Member struct {
-	IPID     string `json:"ipid"`
-	SCIMID   string `json:"scimid"`
-	Email    string `json:"email"`
-	Status   string `json:"status"`
-	HashCode string `json:"hashCode"`
+	IPID     string `json:"ipid,omitempty"`
+	SCIMID   string `json:"scimid,omitempty"`
+	Email    string `json:"email,omitempty"`
+	Status   string `json:"status,omitempty"`
+	HashCode string `json:"hashCode,omitempty"`
 }
 
 // MarshalBinary implements the gob.GobEncoder interface for Member entity.

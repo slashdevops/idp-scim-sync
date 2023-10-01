@@ -128,6 +128,7 @@ func (s *State) SetHashCode() {
 			WithPhoneNumbers(user.PhoneNumbers).
 			Build()
 
+		e.SetHashCode()
 		users = append(users, e)
 	}
 	usersResult := UsersResultBuilder().WithResources(users).Build()

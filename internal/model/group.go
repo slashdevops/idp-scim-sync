@@ -9,11 +9,11 @@ import (
 
 // Group represents a group entity.
 type Group struct {
-	IPID     string `json:"ipid"`
-	SCIMID   string `json:"scimid"`
-	Name     string `json:"name"`
-	Email    string `json:"email"`
-	HashCode string `json:"hashCode"`
+	IPID     string `json:"ipid,omitempty"`
+	SCIMID   string `json:"scimid,omitempty"`
+	Name     string `json:"name,omitempty"`
+	Email    string `json:"email,omitempty"`
+	HashCode string `json:"hashCode,omitempty"`
 }
 
 // MarshalBinary implements the gob.GobEncoder interface for Group entity.
