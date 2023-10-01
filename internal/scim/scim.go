@@ -300,13 +300,13 @@ func (s *Provider) CreateUsers(ctx context.Context, ur *model.UsersResult) (*mod
 		userRequest := buildCreateUserRequest(user)
 
 		log.WithFields(log.Fields{
-			"user":  user.DisplayName,
+			"name":  user.DisplayName,
 			"email": user.GetPrimaryEmailAddress(),
 			"ipdid": user.IPID,
 		}).Tracef("creating user, details: %s", convert.ToJSONString(userRequest))
 
 		log.WithFields(log.Fields{
-			"user":  user.DisplayName,
+			"name":  user.DisplayName,
 			"email": user.GetPrimaryEmailAddress(),
 		}).Warn("creating user")
 
@@ -397,14 +397,14 @@ func (s *Provider) UpdateUsers(ctx context.Context, ur *model.UsersResult) (*mod
 		userRequest := buildPutUserRequest(user)
 
 		log.WithFields(log.Fields{
-			"user":   user.DisplayName,
+			"name":   user.DisplayName,
 			"email":  user.GetPrimaryEmailAddress(),
 			"ipdid":  user.IPID,
 			"scimid": user.SCIMID,
 		}).Tracef("updating user, details: %s", convert.ToJSONString(userRequest))
 
 		log.WithFields(log.Fields{
-			"user":  user.DisplayName,
+			"name":  user.DisplayName,
 			"email": user.GetPrimaryEmailAddress(),
 		}).Warn("updating user")
 
@@ -486,14 +486,14 @@ func (s *Provider) UpdateUsers(ctx context.Context, ur *model.UsersResult) (*mod
 func (s *Provider) DeleteUsers(ctx context.Context, ur *model.UsersResult) error {
 	for _, user := range ur.Resources {
 		log.WithFields(log.Fields{
-			"user":   user.DisplayName,
+			"name":   user.DisplayName,
 			"email":  user.GetPrimaryEmailAddress(),
 			"scimid": user.SCIMID,
 			"idpid":  user.IPID,
 		}).Tracef("deleting user, details: %s", convert.ToJSONString(user))
 
 		log.WithFields(log.Fields{
-			"user":  user.DisplayName,
+			"name":  user.DisplayName,
 			"email": user.GetPrimaryEmailAddress(),
 		}).Warn("deleting user")
 
