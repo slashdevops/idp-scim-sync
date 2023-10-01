@@ -634,6 +634,7 @@ func TestUsersResult_SetHashCode(t *testing.T) {
 
 	ur4 := MergeUsersResult(&ur2, &ur1, &ur3)
 	ur4.SetHashCode()
+
 	ur5 := MergeUsersResult(&ur3, &ur2, &ur1)
 	ur5.SetHashCode()
 

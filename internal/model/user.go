@@ -528,11 +528,54 @@ type UsersResult struct {
 	Resources []*User `json:"resources"`
 }
 
+// MarshalBinary implements the gob.GobEncoder interface for UsersResult entity.
+func (ur UsersResult) MarshalBinary() ([]byte, error) {
+	buf := new(bytes.Buffer)
+	enc := gob.NewEncoder(buf)
+
+	if err := enc.Encode(ur.Items); err != nil {
+		return nil, err
+	}
+
+	if ur.Resources != nil {
+		if err := enc.Encode(ur.Resources); err != nil {
+			return nil, err
+		}
+	}
+
+	return buf.Bytes(), nil
+}
+
+// UnmarshalBinary implements the gob.GobDecoder interface for UsersResult entity.
+func (ur *UsersResult) UnmarshalBinary(data []byte) error {
+	dec := gob.NewDecoder(bytes.NewReader(data))
+
+	if err := dec.Decode(&ur.Items); err != nil {
+		return err
+	}
+
+	if ur.Resources != nil {
+		if err := dec.Decode(&ur.Resources); err != nil {
+			return err
+		}
+	} else {
+		// when the user has pointer to Resources, but the Resources is nil, the gob decoder returns an error
+		if err := dec.Decode(&ur.Resources); err != nil {
+			if err.Error() != "EOF" {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
 // MarshalJSON implements the json.Marshaler interface for UsersResult entity.
 func (ur *UsersResult) MarshalJSON() ([]byte, error) {
 	if ur.Resources == nil {
 		ur.Resources = make([]*User, 0)
 	}
+
 	return json.MarshalIndent(*ur, "", "  ")
 }
 
@@ -540,13 +583,16 @@ func (ur *UsersResult) MarshalJSON() ([]byte, error) {
 // this method discards fields that are not used in the hash calculation.
 // only fields coming from the Identity Provider are used.
 func (ur *UsersResult) SetHashCode() {
-	copyResources := make([]*User, len(ur.Resources))
-	copy(copyResources, ur.Resources)
+	// this copy is necessary to avoid changing the original data
+	// with the sort.Slice function and always be consistent
+	// when calculating the hash code
+	c := make([]*User, len(ur.Resources))
+	copy(c, ur.Resources)
 
 	// only these fields are used in the hash calculation
 	copyStruct := &UsersResult{
 		Items:     ur.Items,
-		Resources: copyResources,
+		Resources: c,
 	}
 
 	// order the resources by their hash code to be consistency always
