@@ -56,6 +56,96 @@ func Test_buildCreateUserRequest(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "user with name and email",
+			args: args{
+				user: &model.User{
+					Name: &model.Name{
+						FamilyName:      "familyName",
+						GivenName:       "givenName",
+						Formatted:       "formatted",
+						MiddleName:      "middleName",
+						HonorificPrefix: "honorificPrefix",
+						HonorificSuffix: "honorificSuffix",
+					},
+					Emails: []model.Email{
+						{
+							Value:   "email",
+							Type:    "work",
+							Primary: true,
+						},
+					},
+				},
+			},
+			want: &aws.CreateUserRequest{
+				Name: &aws.Name{
+					FamilyName:      "familyName",
+					GivenName:       "givenName",
+					Formatted:       "formatted",
+					MiddleName:      "middleName",
+					HonorificPrefix: "honorificPrefix",
+					HonorificSuffix: "honorificSuffix",
+				},
+				Emails: []aws.Email{
+					{
+						Value:   "email",
+						Type:    "work",
+						Primary: true,
+					},
+				},
+			},
+		},
+		{
+			name: "user with name and email and phone",
+			args: args{
+				user: &model.User{
+					Name: &model.Name{
+						FamilyName:      "familyName",
+						GivenName:       "givenName",
+						Formatted:       "formatted",
+						MiddleName:      "middleName",
+						HonorificPrefix: "honorificPrefix",
+						HonorificSuffix: "honorificSuffix",
+					},
+					Emails: []model.Email{
+						{
+							Value:   "email",
+							Type:    "work",
+							Primary: true,
+						},
+					},
+					PhoneNumbers: []model.PhoneNumber{
+						{
+							Value: "phone",
+							Type:  "work",
+						},
+					},
+				},
+			},
+			want: &aws.CreateUserRequest{
+				Name: &aws.Name{
+					FamilyName:      "familyName",
+					GivenName:       "givenName",
+					Formatted:       "formatted",
+					MiddleName:      "middleName",
+					HonorificPrefix: "honorificPrefix",
+					HonorificSuffix: "honorificSuffix",
+				},
+				Emails: []aws.Email{
+					{
+						Value:   "email",
+						Type:    "work",
+						Primary: true,
+					},
+				},
+				PhoneNumbers: []aws.PhoneNumber{
+					{
+						Value: "phone",
+						Type:  "work",
+					},
+				},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
