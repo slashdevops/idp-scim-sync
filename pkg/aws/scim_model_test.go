@@ -8,10 +8,10 @@ func TestUser_Validate(t *testing.T) {
 	type fields struct {
 		ID                   string
 		ExternalID           string
-		Meta                 Meta
+		Meta                 *Meta
 		Schemas              []string
 		UserName             string
-		Name                 Name
+		Name                 *Name
 		DisplayName          string
 		NickName             string
 		ProfileURL           string
@@ -24,7 +24,7 @@ func TestUser_Validate(t *testing.T) {
 		Emails               []Email
 		Addresses            []Address
 		PhoneNumbers         []PhoneNumber
-		SchemaEnterpriseUser SchemaEnterpriseUser
+		SchemaEnterpriseUser *SchemaEnterpriseUser
 	}
 	tests := []struct {
 		name    string
@@ -39,7 +39,7 @@ func TestUser_Validate(t *testing.T) {
 				UserName:    "bjensen",
 				ExternalID:  "701984",
 				DisplayName: "Babs Jensen",
-				Name: Name{
+				Name: &Name{
 					GivenName:       "Barbara",
 					FamilyName:      "Jensen",
 					Formatted:       "Ms. Barbara J Jensen, III",
@@ -80,13 +80,13 @@ func TestUser_Validate(t *testing.T) {
 				Locale:            "en-US",
 				Timezone:          "America/Los_Angeles",
 				Active:            true,
-				SchemaEnterpriseUser: SchemaEnterpriseUser{
+				SchemaEnterpriseUser: &SchemaEnterpriseUser{
 					EmployeeNumber: "701984",
 					CostCenter:     "4130",
 					Organization:   "Universal Studios",
 					Division:       "Theme Park",
 					Department:     "Tour Operations",
-					Manager: Manager{
+					Manager: &Manager{
 						Value: "9067729b3d-ee533c18-538a-4cd3-a572-63fb863ed734",
 						Ref:   "../Users/9067729b3d-ee533c18-538a-4cd3-a572-63fb863ed734",
 					},
@@ -100,7 +100,7 @@ func TestUser_Validate(t *testing.T) {
 				ID:          "2819c223-7f76-453a-919d-413861904646",
 				ExternalID:  "701984",
 				DisplayName: "Babs Jensen",
-				Name: Name{
+				Name: &Name{
 					GivenName:       "Barbara",
 					FamilyName:      "Jensen",
 					Formatted:       "Ms. Barbara J Jensen, III",
@@ -141,13 +141,13 @@ func TestUser_Validate(t *testing.T) {
 				Locale:            "en-US",
 				Timezone:          "America/Los_Angeles",
 				Active:            true,
-				SchemaEnterpriseUser: SchemaEnterpriseUser{
+				SchemaEnterpriseUser: &SchemaEnterpriseUser{
 					EmployeeNumber: "701984",
 					CostCenter:     "4130",
 					Organization:   "Universal Studios",
 					Division:       "Theme Park",
 					Department:     "Tour Operations",
-					Manager: Manager{
+					Manager: &Manager{
 						Value: "9067729b3d-ee533c18-538a-4cd3-a572-63fb863ed734",
 						Ref:   "../Users/9067729b3d-ee533c18-538a-4cd3-a572-63fb863ed734",
 					},
@@ -161,7 +161,7 @@ func TestUser_Validate(t *testing.T) {
 				ID:         "2819c223-7f76-453a-919d-413861904646",
 				ExternalID: "701984",
 				UserName:   "bjensen",
-				Name: Name{
+				Name: &Name{
 					GivenName:       "Barbara",
 					FamilyName:      "Jensen",
 					Formatted:       "Ms. Barbara J Jensen, III",
@@ -202,13 +202,13 @@ func TestUser_Validate(t *testing.T) {
 				Locale:            "en-US",
 				Timezone:          "America/Los_Angeles",
 				Active:            true,
-				SchemaEnterpriseUser: SchemaEnterpriseUser{
+				SchemaEnterpriseUser: &SchemaEnterpriseUser{
 					EmployeeNumber: "701984",
 					CostCenter:     "4130",
 					Organization:   "Universal Studios",
 					Division:       "Theme Park",
 					Department:     "Tour Operations",
-					Manager: Manager{
+					Manager: &Manager{
 						Value: "9067729b3d-ee533c18-538a-4cd3-a572-63fb863ed734",
 						Ref:   "../Users/9067729b3d-ee533c18-538a-4cd3-a572-63fb863ed734",
 					},
@@ -223,7 +223,7 @@ func TestUser_Validate(t *testing.T) {
 				UserName:    "bjensen",
 				ExternalID:  "701984",
 				DisplayName: "Babs Jensen",
-				Name: Name{
+				Name: &Name{
 					FamilyName:      "Jensen",
 					Formatted:       "Ms. Barbara J Jensen, III",
 					MiddleName:      "Jane",
@@ -263,13 +263,13 @@ func TestUser_Validate(t *testing.T) {
 				Locale:            "en-US",
 				Timezone:          "America/Los_Angeles",
 				Active:            true,
-				SchemaEnterpriseUser: SchemaEnterpriseUser{
+				SchemaEnterpriseUser: &SchemaEnterpriseUser{
 					EmployeeNumber: "701984",
 					CostCenter:     "4130",
 					Organization:   "Universal Studios",
 					Division:       "Theme Park",
 					Department:     "Tour Operations",
-					Manager: Manager{
+					Manager: &Manager{
 						Value: "9067729b3d-ee533c18-538a-4cd3-a572-63fb863ed734",
 						Ref:   "../Users/9067729b3d-ee533c18-538a-4cd3-a572-63fb863ed734",
 					},
@@ -284,7 +284,7 @@ func TestUser_Validate(t *testing.T) {
 				UserName:    "bjensen",
 				ExternalID:  "701984",
 				DisplayName: "Babs Jensen",
-				Name: Name{
+				Name: &Name{
 					GivenName:       "Barbara",
 					Formatted:       "Ms. Barbara J Jensen, III",
 					MiddleName:      "Jane",
@@ -324,13 +324,13 @@ func TestUser_Validate(t *testing.T) {
 				Locale:            "en-US",
 				Timezone:          "America/Los_Angeles",
 				Active:            true,
-				SchemaEnterpriseUser: SchemaEnterpriseUser{
+				SchemaEnterpriseUser: &SchemaEnterpriseUser{
 					EmployeeNumber: "701984",
 					CostCenter:     "4130",
 					Organization:   "Universal Studios",
 					Division:       "Theme Park",
 					Department:     "Tour Operations",
-					Manager: Manager{
+					Manager: &Manager{
 						Value: "9067729b3d-ee533c18-538a-4cd3-a572-63fb863ed734",
 						Ref:   "../Users/9067729b3d-ee533c18-538a-4cd3-a572-63fb863ed734",
 					},
@@ -345,7 +345,7 @@ func TestUser_Validate(t *testing.T) {
 				UserName:    "bjensen",
 				ExternalID:  "701984",
 				DisplayName: "Babs Jensen",
-				Name: Name{
+				Name: &Name{
 					GivenName:       "Barbara",
 					FamilyName:      "Jensen",
 					Formatted:       "Ms. Barbara J Jensen, III",
@@ -379,13 +379,13 @@ func TestUser_Validate(t *testing.T) {
 				Locale:            "en-US",
 				Timezone:          "America/Los_Angeles",
 				Active:            true,
-				SchemaEnterpriseUser: SchemaEnterpriseUser{
+				SchemaEnterpriseUser: &SchemaEnterpriseUser{
 					EmployeeNumber: "701984",
 					CostCenter:     "4130",
 					Organization:   "Universal Studios",
 					Division:       "Theme Park",
 					Department:     "Tour Operations",
-					Manager: Manager{
+					Manager: &Manager{
 						Value: "9067729b3d-ee533c18-538a-4cd3-a572-63fb863ed734",
 						Ref:   "../Users/9067729b3d-ee533c18-538a-4cd3-a572-63fb863ed734",
 					},
@@ -400,7 +400,7 @@ func TestUser_Validate(t *testing.T) {
 				UserName:    "bjensen",
 				ExternalID:  "701984",
 				DisplayName: "Babs Jensen",
-				Name: Name{
+				Name: &Name{
 					GivenName:       "Barbara",
 					FamilyName:      "Jensen",
 					Formatted:       "Ms. Barbara J Jensen, III",
@@ -446,13 +446,13 @@ func TestUser_Validate(t *testing.T) {
 				Locale:            "en-US",
 				Timezone:          "America/Los_Angeles",
 				Active:            true,
-				SchemaEnterpriseUser: SchemaEnterpriseUser{
+				SchemaEnterpriseUser: &SchemaEnterpriseUser{
 					EmployeeNumber: "701984",
 					CostCenter:     "4130",
 					Organization:   "Universal Studios",
 					Division:       "Theme Park",
 					Department:     "Tour Operations",
-					Manager: Manager{
+					Manager: &Manager{
 						Value: "9067729b3d-ee533c18-538a-4cd3-a572-63fb863ed734",
 						Ref:   "../Users/9067729b3d-ee533c18-538a-4cd3-a572-63fb863ed734",
 					},
@@ -467,7 +467,7 @@ func TestUser_Validate(t *testing.T) {
 				UserName:    "bjensen",
 				ExternalID:  "701984",
 				DisplayName: "Babs Jensen",
-				Name: Name{
+				Name: &Name{
 					GivenName:       "Barbara",
 					FamilyName:      "Jensen",
 					Formatted:       "Ms. Barbara J Jensen, III",
@@ -508,13 +508,13 @@ func TestUser_Validate(t *testing.T) {
 				Locale:            "en-US",
 				Timezone:          "America/Los_Angeles",
 				Active:            true,
-				SchemaEnterpriseUser: SchemaEnterpriseUser{
+				SchemaEnterpriseUser: &SchemaEnterpriseUser{
 					EmployeeNumber: "701984",
 					CostCenter:     "4130",
 					Organization:   "Universal Studios",
 					Division:       "Theme Park",
 					Department:     "Tour Operations",
-					Manager: Manager{
+					Manager: &Manager{
 						Value: "9067729b3d-ee533c18-538a-4cd3-a572-63fb863ed734",
 						Ref:   "../Users/9067729b3d-ee533c18-538a-4cd3-a572-63fb863ed734",
 					},
@@ -529,7 +529,7 @@ func TestUser_Validate(t *testing.T) {
 				UserName:    "bjensen",
 				ExternalID:  "701984",
 				DisplayName: "Babs Jensen",
-				Name: Name{
+				Name: &Name{
 					GivenName:       "Barbara",
 					FamilyName:      "Jensen",
 					Formatted:       "Ms. Barbara J Jensen, III",
@@ -580,13 +580,13 @@ func TestUser_Validate(t *testing.T) {
 				Locale:            "en-US",
 				Timezone:          "America/Los_Angeles",
 				Active:            true,
-				SchemaEnterpriseUser: SchemaEnterpriseUser{
+				SchemaEnterpriseUser: &SchemaEnterpriseUser{
 					EmployeeNumber: "701984",
 					CostCenter:     "4130",
 					Organization:   "Universal Studios",
 					Division:       "Theme Park",
 					Department:     "Tour Operations",
-					Manager: Manager{
+					Manager: &Manager{
 						Value: "9067729b3d-ee533c18-538a-4cd3-a572-63fb863ed734",
 						Ref:   "../Users/9067729b3d-ee533c18-538a-4cd3-a572-63fb863ed734",
 					},
@@ -601,7 +601,7 @@ func TestUser_Validate(t *testing.T) {
 				UserName:    "bjensen",
 				ExternalID:  "701984",
 				DisplayName: "Babs Jensen",
-				Name: Name{
+				Name: &Name{
 					GivenName:       "Barbara",
 					FamilyName:      "Jensen",
 					Formatted:       "Ms. Barbara J Jensen, III",
@@ -646,13 +646,13 @@ func TestUser_Validate(t *testing.T) {
 				Locale:            "en-US",
 				Timezone:          "America/Los_Angeles",
 				Active:            true,
-				SchemaEnterpriseUser: SchemaEnterpriseUser{
+				SchemaEnterpriseUser: &SchemaEnterpriseUser{
 					EmployeeNumber: "701984",
 					CostCenter:     "4130",
 					Organization:   "Universal Studios",
 					Division:       "Theme Park",
 					Department:     "Tour Operations",
-					Manager: Manager{
+					Manager: &Manager{
 						Value: "9067729b3d-ee533c18-538a-4cd3-a572-63fb863ed734",
 						Ref:   "../Users/9067729b3d-ee533c18-538a-4cd3-a572-63fb863ed734",
 					},

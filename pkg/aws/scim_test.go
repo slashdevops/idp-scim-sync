@@ -425,7 +425,7 @@ func TestCreateUser(t *testing.T) {
 			ID:         "1",
 			ExternalID: "1",
 			UserName:   "user.1@mail.com",
-			Name: Name{
+			Name: &Name{
 				FamilyName: "1",
 				GivenName:  "test",
 			},
@@ -480,7 +480,7 @@ func TestCreateUser(t *testing.T) {
 			ID:         "1",
 			ExternalID: "1",
 			UserName:   "",
-			Name: Name{
+			Name: &Name{
 				FamilyName: "1",
 				GivenName:  "test",
 			},
@@ -512,7 +512,7 @@ func TestCreateUser(t *testing.T) {
 			ID:         "1",
 			ExternalID: "1",
 			UserName:   "user.1",
-			Name: Name{
+			Name: &Name{
 				FamilyName: "1",
 				GivenName:  "test",
 			},
@@ -544,7 +544,7 @@ func TestCreateUser(t *testing.T) {
 			ID:         "1",
 			ExternalID: "1",
 			UserName:   "user.1",
-			Name: Name{
+			Name: &Name{
 				FamilyName: "1",
 				GivenName:  "",
 			},
@@ -576,7 +576,7 @@ func TestCreateUser(t *testing.T) {
 			ID:         "1",
 			ExternalID: "1",
 			UserName:   "user.1",
-			Name: Name{
+			Name: &Name{
 				FamilyName: "",
 				GivenName:  "user",
 			},
@@ -608,7 +608,7 @@ func TestCreateUser(t *testing.T) {
 			ID:         "1",
 			ExternalID: "1",
 			UserName:   "user.1",
-			Name: Name{
+			Name: &Name{
 				FamilyName: "1",
 				GivenName:  "user",
 			},
@@ -633,7 +633,7 @@ func TestCreateUser(t *testing.T) {
 			ID:         "1",
 			ExternalID: "1",
 			UserName:   "user.1",
-			Name: Name{
+			Name: &Name{
 				FamilyName: "1",
 				GivenName:  "user",
 			},
@@ -665,7 +665,7 @@ func TestCreateUser(t *testing.T) {
 			ID:         "1",
 			ExternalID: "1",
 			UserName:   "user.1",
-			Name: Name{
+			Name: &Name{
 				FamilyName: "1",
 				GivenName:  "user",
 			},
@@ -702,7 +702,7 @@ func TestCreateUser(t *testing.T) {
 			ID:         "1",
 			ExternalID: "1",
 			UserName:   "user.1",
-			Name: Name{
+			Name: &Name{
 				FamilyName: "1",
 				GivenName:  "user",
 			},
@@ -754,7 +754,7 @@ func TestCreateUser(t *testing.T) {
 			ID:         "1",
 			ExternalID: "1",
 			UserName:   "user.1",
-			Name: Name{
+			Name: &Name{
 				FamilyName: "1",
 				GivenName:  "user",
 			},
@@ -819,7 +819,7 @@ func TestCreateOrGetUser(t *testing.T) {
 			ID:         "1",
 			ExternalID: "1",
 			UserName:   "user.1@mail.com",
-			Name: Name{
+			Name: &Name{
 				FamilyName: "1",
 				GivenName:  "test",
 			},
@@ -911,7 +911,7 @@ func TestCreateOrGetUser(t *testing.T) {
 			ID:         "90677c608a-7afcdc23-0bd4-4fb7-b2ff-10ccffdff447",
 			ExternalID: "702135",
 			UserName:   "mjack",
-			Name: Name{
+			Name: &Name{
 				FamilyName: "Jackson",
 				GivenName:  "Mark",
 			},
@@ -1003,7 +1003,7 @@ func TestCreateOrGetUser(t *testing.T) {
 			ID:         "90677c608a-7afcdc23-0bd4-4fb7-b2ff-10ccffdff447",
 			ExternalID: "702135",
 			UserName:   "mjack",
-			Name: Name{
+			Name: &Name{
 				FamilyName: "Jackson",
 				GivenName:  "Mark",
 			},
@@ -1299,7 +1299,7 @@ func TestPutUser(t *testing.T) {
 			ID:         "90677c608a-7afcdc23-0bd4-4fb7-b2ff-10ccffdff447",
 			ExternalID: "702135",
 			UserName:   "mjack",
-			Name: Name{
+			Name: &Name{
 				FamilyName: "Jackson",
 				GivenName:  "Mark",
 			},
@@ -1349,7 +1349,7 @@ func TestPutUser(t *testing.T) {
 			ID:         "1",
 			ExternalID: "1",
 			UserName:   "user.1",
-			Name: Name{
+			Name: &Name{
 				FamilyName: "1",
 				GivenName:  "test",
 			},
@@ -1381,7 +1381,7 @@ func TestPutUser(t *testing.T) {
 			ID:         "1",
 			ExternalID: "1",
 			UserName:   "user.1",
-			Name: Name{
+			Name: &Name{
 				FamilyName: "1",
 				GivenName:  "",
 			},
@@ -1413,7 +1413,7 @@ func TestPutUser(t *testing.T) {
 			ID:         "1",
 			ExternalID: "1",
 			UserName:   "user.1",
-			Name: Name{
+			Name: &Name{
 				FamilyName: "",
 				GivenName:  "user",
 			},
@@ -1445,7 +1445,7 @@ func TestPutUser(t *testing.T) {
 			ID:         "1",
 			ExternalID: "1",
 			UserName:   "user.1",
-			Name: Name{
+			Name: &Name{
 				FamilyName: "1",
 				GivenName:  "user",
 			},

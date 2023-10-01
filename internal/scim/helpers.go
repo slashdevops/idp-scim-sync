@@ -23,7 +23,7 @@ func buildCreateUserRequest(user *model.User) *aws.CreateUserRequest {
 	}
 
 	if user.Name != nil {
-		userRequest.Name = aws.Name{
+		userRequest.Name = &aws.Name{
 			FamilyName:      user.Name.FamilyName,
 			GivenName:       user.Name.GivenName,
 			Formatted:       user.Name.Formatted,
@@ -74,7 +74,7 @@ func buildCreateUserRequest(user *model.User) *aws.CreateUserRequest {
 	}
 
 	if user.EnterpriseData != nil {
-		userRequest.SchemaEnterpriseUser = aws.SchemaEnterpriseUser{
+		userRequest.SchemaEnterpriseUser = &aws.SchemaEnterpriseUser{
 			EmployeeNumber: user.EnterpriseData.EmployeeNumber,
 			CostCenter:     user.EnterpriseData.CostCenter,
 			Organization:   user.EnterpriseData.Organization,
@@ -83,7 +83,7 @@ func buildCreateUserRequest(user *model.User) *aws.CreateUserRequest {
 		}
 
 		if user.EnterpriseData.Manager != nil {
-			userRequest.SchemaEnterpriseUser.Manager = aws.Manager{
+			userRequest.SchemaEnterpriseUser.Manager = &aws.Manager{
 				Value: user.EnterpriseData.Manager.Value,
 			}
 		}
@@ -110,7 +110,7 @@ func buildPutUserRequest(user *model.User) *aws.PutUserRequest {
 	}
 
 	if user.Name != nil {
-		userRequest.Name = aws.Name{
+		userRequest.Name = &aws.Name{
 			FamilyName:      user.Name.FamilyName,
 			GivenName:       user.Name.GivenName,
 			Formatted:       user.Name.Formatted,
@@ -161,7 +161,7 @@ func buildPutUserRequest(user *model.User) *aws.PutUserRequest {
 	}
 
 	if user.EnterpriseData != nil {
-		userRequest.SchemaEnterpriseUser = aws.SchemaEnterpriseUser{
+		userRequest.SchemaEnterpriseUser = &aws.SchemaEnterpriseUser{
 			EmployeeNumber: user.EnterpriseData.EmployeeNumber,
 			CostCenter:     user.EnterpriseData.CostCenter,
 			Organization:   user.EnterpriseData.Organization,
@@ -170,7 +170,7 @@ func buildPutUserRequest(user *model.User) *aws.PutUserRequest {
 		}
 
 		if user.EnterpriseData.Manager != nil {
-			userRequest.SchemaEnterpriseUser.Manager = aws.Manager{
+			userRequest.SchemaEnterpriseUser.Manager = &aws.Manager{
 				Value: user.EnterpriseData.Manager.Value,
 			}
 		}

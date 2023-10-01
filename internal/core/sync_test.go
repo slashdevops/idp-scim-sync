@@ -262,14 +262,14 @@ func TestSyncService_SyncGroupsAndTheirMembers(t *testing.T) {
 		createUser1Response := &aws.CreateUserResponse{
 			ID:         "user-1",
 			ExternalID: "user-1",
-			Meta: aws.Meta{
+			Meta: &aws.Meta{
 				ResourceType: "User",
 				Created:      "2020-01-01T00:00:00Z",
 				LastModified: "2020-01-01T00:00:00Z",
 			},
 			Schemas:  []string{"urn:ietf:params:scim:schemas:core:2.0:User"},
 			UserName: "user.1@mail.com",
-			Name: aws.Name{
+			Name: &aws.Name{
 				FamilyName: "1",
 				GivenName:  "user",
 			},
@@ -287,14 +287,14 @@ func TestSyncService_SyncGroupsAndTheirMembers(t *testing.T) {
 		createUser2Response := &aws.CreateUserResponse{
 			ID:         "user-2",
 			ExternalID: "user-2",
-			Meta: aws.Meta{
+			Meta: &aws.Meta{
 				ResourceType: "User",
 				Created:      "2020-01-01T00:00:00Z",
 				LastModified: "2020-01-01T00:00:00Z",
 			},
 			Schemas:  []string{"urn:ietf:params:scim:schemas:core:2.0:User"},
 			UserName: "user.2@mail.com",
-			Name: aws.Name{
+			Name: &aws.Name{
 				FamilyName: "2",
 				GivenName:  "user",
 			},

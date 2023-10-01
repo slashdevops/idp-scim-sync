@@ -332,7 +332,7 @@ func (s *SCIMService) CreateOrGetUser(ctx context.Context, cur *CreateUserReques
 					DisplayName: cur.DisplayName,
 					UserName:    cur.UserName,
 					ExternalID:  cur.ExternalID,
-					Name: Name{
+					Name: &Name{
 						FamilyName: cur.Name.FamilyName,
 						GivenName:  cur.Name.GivenName,
 					},

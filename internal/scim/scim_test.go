@@ -590,19 +590,19 @@ func TestGetUsers(t *testing.T) {
 				{
 					ID:          "1",
 					ExternalID:  "1",
-					Name:        aws.Name{FamilyName: "1", GivenName: "user"},
+					Name:        &aws.Name{FamilyName: "1", GivenName: "user"},
 					DisplayName: "group 1",
 					Schemas:     []string{"urn:ietf:params:scim:schemas:core:2.0:User"},
-					Meta:        aws.Meta{ResourceType: "User", Created: "2020-04-01T12:00:00Z", LastModified: "2020-04-01T12:00:00Z"},
+					Meta:        &aws.Meta{ResourceType: "User", Created: "2020-04-01T12:00:00Z", LastModified: "2020-04-01T12:00:00Z"},
 					Emails:      []aws.Email{{Value: "user.1@mail.com", Type: "work", Primary: true}},
 				},
 				{
 					ID:          "2",
 					ExternalID:  "2",
-					Name:        aws.Name{FamilyName: "2", GivenName: "user"},
+					Name:        &aws.Name{FamilyName: "2", GivenName: "user"},
 					DisplayName: "group 2",
 					Schemas:     []string{"urn:ietf:params:scim:schemas:core:2.0:User"},
-					Meta:        aws.Meta{ResourceType: "User", Created: "2020-04-02T12:00:00Z", LastModified: "2020-04-02T12:00:00Z"},
+					Meta:        &aws.Meta{ResourceType: "User", Created: "2020-04-02T12:00:00Z", LastModified: "2020-04-02T12:00:00Z"},
 					Emails:      []aws.Email{{Value: "user.2@mail.com", Type: "work", Primary: true}},
 				},
 			},
@@ -653,7 +653,7 @@ func TestCreateUsers(t *testing.T) {
 			UserName:    "user.1@mail.com",
 			DisplayName: "user 1",
 			ExternalID:  "1",
-			Name:        aws.Name{FamilyName: "1", GivenName: "user"},
+			Name:        &aws.Name{FamilyName: "1", GivenName: "user"},
 			Emails: []aws.Email{
 				{Value: "user.1@mail.com", Type: "work", Primary: true},
 			},
@@ -691,7 +691,7 @@ func TestCreateUsers(t *testing.T) {
 			UserName:    "user.1@mail.com",
 			DisplayName: "user 1",
 			ExternalID:  "1",
-			Name:        aws.Name{FamilyName: "1", GivenName: "user"},
+			Name:        &aws.Name{FamilyName: "1", GivenName: "user"},
 			Emails: []aws.Email{
 				{Value: "user.1@mail.com", Type: "work", Primary: true},
 			},
@@ -728,7 +728,7 @@ func TestCreateUsers(t *testing.T) {
 			UserName:    "user.1@mail.com",
 			DisplayName: "user 1",
 			ExternalID:  "1",
-			Name:        aws.Name{FamilyName: "1", GivenName: "user"},
+			Name:        &aws.Name{FamilyName: "1", GivenName: "user"},
 			Emails: []aws.Email{
 				{Value: "user.1@mail.com", Type: "work", Primary: true},
 			},
@@ -738,7 +738,7 @@ func TestCreateUsers(t *testing.T) {
 			UserName:    "user.2@mail.com",
 			DisplayName: "user 2",
 			ExternalID:  "2",
-			Name:        aws.Name{FamilyName: "2", GivenName: "user"},
+			Name:        &aws.Name{FamilyName: "2", GivenName: "user"},
 			Emails: []aws.Email{
 				{Value: "user.2@mail.com", Type: "work", Primary: true},
 			},
@@ -747,7 +747,7 @@ func TestCreateUsers(t *testing.T) {
 		resp1 := &aws.CreateUserResponse{
 			ID:         "11",
 			ExternalID: "1",
-			Name: aws.Name{
+			Name: &aws.Name{
 				FamilyName: "1",
 				GivenName:  "user",
 			},
@@ -759,7 +759,7 @@ func TestCreateUsers(t *testing.T) {
 		resp2 := &aws.CreateUserResponse{
 			ID:         "22",
 			ExternalID: "2",
-			Name: aws.Name{
+			Name: &aws.Name{
 				FamilyName: "2",
 				GivenName:  "user",
 			},
@@ -838,7 +838,7 @@ func TestUpdateUsers(t *testing.T) {
 			ExternalID:  "1",
 			UserName:    "user.1@mail.com",
 			DisplayName: "user 1",
-			Name:        aws.Name{FamilyName: "1", GivenName: "user"},
+			Name:        &aws.Name{FamilyName: "1", GivenName: "user"},
 			Emails: []aws.Email{
 				{Value: "user.1@mail.com", Type: "work", Primary: true},
 			},
@@ -847,7 +847,7 @@ func TestUpdateUsers(t *testing.T) {
 		resp := &aws.PutUserResponse{
 			ID:         "1",
 			ExternalID: "1",
-			Name: aws.Name{
+			Name: &aws.Name{
 				FamilyName: "1",
 				GivenName:  "user",
 				Formatted:  "user 1",
@@ -893,7 +893,7 @@ func TestUpdateUsers(t *testing.T) {
 			ExternalID:  "1",
 			UserName:    "user.1@mail.com",
 			DisplayName: "user 1",
-			Name:        aws.Name{FamilyName: "1", GivenName: "user"},
+			Name:        &aws.Name{FamilyName: "1", GivenName: "user"},
 			Emails: []aws.Email{
 				{Value: "user.1@mail.com", Type: "work", Primary: true},
 			},
@@ -902,7 +902,7 @@ func TestUpdateUsers(t *testing.T) {
 		resp := &aws.PutUserResponse{
 			ID:         "1",
 			ExternalID: "1",
-			Name: aws.Name{
+			Name: &aws.Name{
 				FamilyName: "1",
 				GivenName:  "user",
 			},
@@ -940,7 +940,7 @@ func TestUpdateUsers(t *testing.T) {
 			ExternalID:  "1",
 			UserName:    "user.1@mail.com",
 			DisplayName: "user 1",
-			Name:        aws.Name{FamilyName: "1", GivenName: "user"},
+			Name:        &aws.Name{FamilyName: "1", GivenName: "user"},
 			Emails: []aws.Email{
 				{Value: "user.1@mail.com", Type: "work", Primary: true},
 			},
@@ -950,7 +950,7 @@ func TestUpdateUsers(t *testing.T) {
 			ExternalID:  "2",
 			UserName:    "user.2@mail.com",
 			DisplayName: "user 2",
-			Name:        aws.Name{FamilyName: "2", GivenName: "user"},
+			Name:        &aws.Name{FamilyName: "2", GivenName: "user"},
 			Emails: []aws.Email{
 				{Value: "user.2@mail.com", Type: "work", Primary: true},
 			},
@@ -959,7 +959,7 @@ func TestUpdateUsers(t *testing.T) {
 		resp1 := &aws.PutUserResponse{
 			ID:         "11",
 			ExternalID: "1",
-			Name: aws.Name{
+			Name: &aws.Name{
 				FamilyName: "1",
 				GivenName:  "user",
 			},
@@ -971,7 +971,7 @@ func TestUpdateUsers(t *testing.T) {
 		resp2 := &aws.PutUserResponse{
 			ID:         "22",
 			ExternalID: "2",
-			Name: aws.Name{
+			Name: &aws.Name{
 				FamilyName: "2",
 				GivenName:  "user",
 			},
@@ -1156,7 +1156,7 @@ func TestCreateGroupsMembers(t *testing.T) {
 			ID:         "1",
 			ExternalID: "1",
 			UserName:   userName,
-			Name: aws.Name{
+			Name: &aws.Name{
 				FamilyName: "1",
 				GivenName:  "user",
 			},
@@ -1274,7 +1274,7 @@ func TestCreateGroupsMembers(t *testing.T) {
 			ID:         "1",
 			ExternalID: "1",
 			UserName:   userName,
-			Name: aws.Name{
+			Name: &aws.Name{
 				FamilyName: "1",
 				GivenName:  "user",
 			},
@@ -1345,7 +1345,7 @@ func TestCreateGroupsMembers(t *testing.T) {
 			ID:         "1",
 			ExternalID: "1",
 			UserName:   "",
-			Name: aws.Name{
+			Name: &aws.Name{
 				FamilyName: "1",
 				GivenName:  "user",
 			},

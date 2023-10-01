@@ -85,12 +85,12 @@ type Manager struct {
 }
 
 type SchemaEnterpriseUser struct {
-	EmployeeNumber string  `json:"employeeNumber,omitempty"`
-	CostCenter     string  `json:"costCenter,omitempty"`
-	Organization   string  `json:"organization,omitempty"`
-	Division       string  `json:"division,omitempty"`
-	Department     string  `json:"department,omitempty"`
-	Manager        Manager `json:"manager,omitempty"`
+	EmployeeNumber string   `json:"employeeNumber,omitempty"`
+	CostCenter     string   `json:"costCenter,omitempty"`
+	Organization   string   `json:"organization,omitempty"`
+	Division       string   `json:"division,omitempty"`
+	Department     string   `json:"department,omitempty"`
+	Manager        *Manager `json:"manager,omitempty"`
 }
 
 // Meta represent a meta entity
@@ -123,25 +123,25 @@ type ListResponse struct {
 
 // User represent a user entity
 type User struct {
-	ID                   string               `json:"id,omitempty"`
-	ExternalID           string               `json:"externalId,omitempty"`
-	UserName             string               `json:"userName,omitempty"`
-	DisplayName          string               `json:"displayName,omitempty"`
-	NickName             string               `json:"nickName,omitempty"`
-	ProfileURL           string               `json:"profileURL,omitempty"`
-	Title                string               `json:"title,omitempty"`
-	UserType             string               `json:"userType,omitempty"`
-	PreferredLanguage    string               `json:"preferredLanguage,omitempty"`
-	Locale               string               `json:"locale,omitempty"`
-	Timezone             string               `json:"timezone,omitempty"`
-	Active               bool                 `json:"active,omitempty"`
-	Name                 Name                 `json:"name,omitempty"`
-	Meta                 Meta                 `json:"meta,omitempty"`
-	SchemaEnterpriseUser SchemaEnterpriseUser `json:"urn:ietf:params:scim:schemas:extension:enterprise:2.0:User,omitempty"`
-	Schemas              []string             `json:"schemas,omitempty"`
-	Addresses            []Address            `json:"addresses,omitempty"`
-	Emails               []Email              `json:"emails,omitempty"`
-	PhoneNumbers         []PhoneNumber        `json:"phoneNumbers,omitempty"`
+	ID                   string                `json:"id,omitempty"`
+	ExternalID           string                `json:"externalId,omitempty"`
+	UserName             string                `json:"userName,omitempty"`
+	DisplayName          string                `json:"displayName,omitempty"`
+	NickName             string                `json:"nickName,omitempty"`
+	ProfileURL           string                `json:"profileURL,omitempty"`
+	Title                string                `json:"title,omitempty"`
+	UserType             string                `json:"userType,omitempty"`
+	PreferredLanguage    string                `json:"preferredLanguage,omitempty"`
+	Locale               string                `json:"locale,omitempty"`
+	Timezone             string                `json:"timezone,omitempty"`
+	Active               bool                  `json:"active,omitempty"`
+	Name                 *Name                 `json:"name,omitempty"`
+	Meta                 *Meta                 `json:"meta,omitempty"`
+	SchemaEnterpriseUser *SchemaEnterpriseUser `json:"urn:ietf:params:scim:schemas:extension:enterprise:2.0:User,omitempty"`
+	Schemas              []string              `json:"schemas,omitempty"`
+	Addresses            []Address             `json:"addresses,omitempty"`
+	Emails               []Email               `json:"emails,omitempty"`
+	PhoneNumbers         []PhoneNumber         `json:"phoneNumbers,omitempty"`
 }
 
 // Validate check if the user entity is valid according to the SCIM spec constraints

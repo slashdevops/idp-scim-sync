@@ -46,7 +46,7 @@ func Test_buildCreateUserRequest(t *testing.T) {
 				},
 			},
 			want: &aws.CreateUserRequest{
-				Name: aws.Name{
+				Name: &aws.Name{
 					FamilyName:      "familyName",
 					GivenName:       "givenName",
 					Formatted:       "formatted",
