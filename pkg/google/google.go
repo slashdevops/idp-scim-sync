@@ -16,8 +16,8 @@ const (
 	// https://cloud.google.com/storage/docs/json_api
 	groupsRequiredFields    googleapi.Field = "nextPageToken, groups(id,name,email,etag)"
 	membersRequiredFields   googleapi.Field = "nextPageToken, members(id,email,status,type,etag)"
-	listUsersRequiredFields googleapi.Field = "nextPageToken, users(id,name,primaryEmail,suspended,etag,addresses,languages,phones,organizations,emails)"
-	getUsersRequiredFields  googleapi.Field = "id,name,primaryEmail,suspended,etag,addresses,languages,phones,organizations,emails"
+	listUsersRequiredFields googleapi.Field = "nextPageToken, users(id,primaryEmail,name,suspended,kind,etag,emails,addresses,organizations,phones,languages,locations)"
+	getUsersRequiredFields  googleapi.Field = "id,primaryEmail,name,suspended,kind,etag,emails,addresses,organizations,phones,languages,locations"
 )
 
 var (

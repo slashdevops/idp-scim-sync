@@ -81,7 +81,7 @@ func Test_buildUser(t *testing.T) {
 				WithUserName("primaryEmail").
 				WithUserType("kind").
 				WithEnterpriseData(
-					*model.EnterpriseDataBuilder().
+					model.EnterpriseDataBuilder().
 						WithCostCenter("costCenter").
 						WithDepartment("department").
 						WithOrganization("name").

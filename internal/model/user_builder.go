@@ -95,6 +95,12 @@ func (b *UserBuilderChoice) WithEmails(emails []Email) *UserBuilderChoice {
 	return b
 }
 
+// WithAddresses sets the Address field of the User entity.
+func (b *UserBuilderChoice) WithAddresses(addresses []Address) *UserBuilderChoice {
+	b.u.Addresses = addresses
+	return b
+}
+
 // WithAddress sets the Address field of the User entity.
 // if the Addresses contains an address, it will be replaced by the new one.
 func (b *UserBuilderChoice) WithAddress(address Address) *UserBuilderChoice {
@@ -133,8 +139,8 @@ func (b *UserBuilderChoice) WithName(name *Name) *UserBuilderChoice {
 }
 
 // WithEnterpriseData sets the EnterpriseData field of the User entity.
-func (b *UserBuilderChoice) WithEnterpriseData(enterpriseData EnterpriseData) *UserBuilderChoice {
-	b.u.EnterpriseData = &enterpriseData
+func (b *UserBuilderChoice) WithEnterpriseData(enterpriseData *EnterpriseData) *UserBuilderChoice {
+	b.u.EnterpriseData = enterpriseData
 	return b
 }
 

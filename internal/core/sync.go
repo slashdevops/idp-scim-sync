@@ -88,6 +88,10 @@ func (ss *SyncService) SyncGroupsAndTheirMembers(ctx context.Context) error {
 			"groups_members": idpGroupsMembersResult.Items,
 		}).Info("groups members retrieved from the identity provider for syncing that match the filter")
 
+	log.WithFields(log.Fields{
+		"group_filter": ss.provGroupsFilter,
+	}).Info("getting groups members from the identity provider")
+
 	idpUsersResult, err := ss.prov.GetUsersByGroupsMembers(ctx, idpGroupsMembersResult)
 	if err != nil {
 		return fmt.Errorf("error getting users from the identity provider: %w", err)

@@ -92,6 +92,7 @@ func (s *State) SetHashCode() {
 	if s.Resources.Groups == nil {
 		s.Resources.Groups = &GroupsResult{}
 	}
+
 	groups := make([]*Group, 0)
 	for _, group := range s.Resources.Groups.Resources {
 		e := GroupBuilder().
@@ -108,20 +109,23 @@ func (s *State) SetHashCode() {
 	if s.Resources.Users == nil {
 		s.Resources.Users = &UsersResult{}
 	}
+
 	users := make([]*User, 0)
 	for _, user := range s.Resources.Users.Resources {
 		e := UserBuilder().
 			WithIPID(user.IPID).
-			WithName(user.Name).
+			WithSCIMID(user.SCIMID).
+			WithUserName(user.UserName).
 			WithDisplayName(user.DisplayName).
-			WithEmail(
-				EmailBuilder().
-					WithValue(user.GetPrimaryEmailAddress()).
-					WithType("work").
-					WithPrimary(true).
-					Build(),
-			).
+			WithTitle(user.Title).
+			WithUserType(user.UserType).
+			WithPreferredLanguage(user.PreferredLanguage).
 			WithActive(user.Active).
+			WithName(user.Name).
+			WithEnterpriseData(user.EnterpriseData).
+			WithEmails(user.Emails).
+			WithAddresses(user.Addresses).
+			WithPhoneNumbers(user.PhoneNumbers).
 			Build()
 
 		users = append(users, e)

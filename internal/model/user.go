@@ -288,6 +288,9 @@ func (ed EnterpriseData) MarshalBinary() ([]byte, error) {
 	if err := enc.Encode(ed.Department); err != nil {
 		return nil, err
 	}
+	if err := enc.Encode(ed.Title); err != nil {
+		return nil, err
+	}
 
 	if ed.Manager != nil {
 		if err := enc.Encode(ed.Manager); err != nil {
@@ -315,6 +318,9 @@ func (ed *EnterpriseData) UnmarshalBinary(data []byte) error {
 		return err
 	}
 	if err := dec.Decode(&ed.Department); err != nil {
+		return err
+	}
+	if err := dec.Decode(&ed.Title); err != nil {
 		return err
 	}
 

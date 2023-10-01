@@ -185,19 +185,15 @@ func buildUser(usr *admin.User) *model.User {
 		WithIPID(usr.Id).
 		WithUserName(usr.PrimaryEmail).
 		WithDisplayName(displayName).
+		WithTitle(title).
 		// WithNickName("Not Provided").
-		// WithTitle("Not Provided").
+		// WithLocale("Not Provided").
 		// WithTimezone("Not Provided").
 		// WithProfileURL("Not Provided").
 		WithUserType(usr.Kind).
-		WithActive(!usr.Suspended).
 		WithPreferredLanguage(preferredLanguage).
-		WithTitle(title).
+		WithActive(!usr.Suspended).
 		Build()
-
-	if emails != nil {
-		createdUser.Emails = emails
-	}
 
 	if usr.Name != nil {
 		createdUser.Name = model.NameBuilder().
@@ -207,12 +203,16 @@ func buildUser(usr *admin.User) *model.User {
 			Build()
 	}
 
-	if mainOrganization != (model.EnterpriseData{}) {
-		createdUser.EnterpriseData = &mainOrganization
+	if emails != nil {
+		createdUser.Emails = emails
 	}
 
 	if mainAddress != (model.Address{}) {
 		createdUser.Addresses = append(createdUser.Addresses, mainAddress)
+	}
+
+	if mainOrganization != (model.EnterpriseData{}) {
+		createdUser.EnterpriseData = &mainOrganization
 	}
 
 	if mainPhone != (model.PhoneNumber{}) {
