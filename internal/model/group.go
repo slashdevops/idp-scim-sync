@@ -69,7 +69,7 @@ type GroupsResult struct {
 	Resources []*Group `json:"resources"`
 }
 
-// MarshalBinary modifies the receiver so it must take a pointer receiver.
+// MarshalBinary implements the encoding.BinaryMarshaler interface for GroupsResult entity.
 func (gr GroupsResult) MarshalBinary() ([]byte, error) {
 	var buf bytes.Buffer
 	enc := gob.NewEncoder(&buf)
@@ -87,7 +87,7 @@ func (gr GroupsResult) MarshalBinary() ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-// UnmarshalBinary modifies the receiver so it must take a pointer receiver.
+// UnmarshalBinary implements the encoding.BinaryUnmarshaler interface for GroupsResult entity.
 func (gr *GroupsResult) UnmarshalBinary(data []byte) error {
 	dec := gob.NewDecoder(bytes.NewReader(data))
 

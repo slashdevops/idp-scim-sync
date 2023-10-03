@@ -160,7 +160,6 @@ func TestState_MarshalJSON(t *testing.T) {
     },
     "groupsMembers": {
       "items": 0,
-      "hashCode": "",
       "resources": []
     }
   }
@@ -244,7 +243,6 @@ func TestState_MarshalJSON(t *testing.T) {
     },
     "groupsMembers": {
       "items": 0,
-      "hashCode": "",
       "resources": []
     }
   }

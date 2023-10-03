@@ -185,7 +185,6 @@ func TestGroupsResult_GobEncode(t *testing.T) {
 			// SCIMID is not exported, so it will not be encoded
 			// HashCode is not exported, so it will not be encoded
 			var expectedGroups []*Group
-
 			for _, g := range tt.toTest.Resources {
 				expectedGroups = append(expectedGroups, &Group{
 					IPID:  g.IPID,
