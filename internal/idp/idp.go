@@ -194,8 +194,10 @@ func (i *IdentityProvider) GetUsersByGroupsMembers(ctx context.Context, gmr *mod
 
 			gu := buildUser(u)
 
-			if _, ok := uniqUsers[gu.GetPrimaryEmailAddress()]; !ok {
-				uniqUsers[gu.GetPrimaryEmailAddress()] = struct{}{}
+			// this is a hack to avoid the second, third, etc repetition of the same user email
+			primaryEmail := gu.GetPrimaryEmailAddress()
+			if _, ok := uniqUsers[primaryEmail]; !ok {
+				uniqUsers[primaryEmail] = struct{}{}
 				pUsers = append(pUsers, gu)
 			}
 		}

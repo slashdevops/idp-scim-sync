@@ -129,7 +129,7 @@ func stateSync(
 
 		totalGroupsResult = state.Resources.Groups
 	} else {
-		log.Info("provider groups and state groups are different")
+		log.Warn("provider groups and state groups are different")
 		// now here we have the google fresh data and the last sync data state
 		// we need to compare the data and decide what to do
 		// see differences between the two datasets
@@ -157,7 +157,7 @@ func stateSync(
 
 		totalUsersResult = state.Resources.Users
 	} else {
-		log.Info("provider users and state users are different")
+		log.Warn("provider users and state users are different")
 
 		log.WithFields(log.Fields{
 			"idp":   idpUsersResult.Items,
@@ -182,7 +182,7 @@ func stateSync(
 
 		totalGroupsMembersResult = state.Resources.GroupsMembers
 	} else {
-		log.Info("provider groups-members and state groups-members are different")
+		log.Warn("provider groups-members and state groups-members are different")
 
 		// if we create a group or user during the sync, we need the scimid of these new groups/users
 		// because to add members to a group the scim api needs that.

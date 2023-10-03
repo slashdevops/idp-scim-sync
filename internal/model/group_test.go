@@ -321,6 +321,7 @@ func TestGroupsResult_MarshalJSON(t *testing.T) {
 				t.Errorf("GroupsResult.MarshalJSON() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
+
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("GroupsResult.MarshalJSON() = %s, want %s", string(got), string(tt.want))
 			}

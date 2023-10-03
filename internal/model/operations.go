@@ -151,12 +151,14 @@ func UsersOperations(idp, scim *UsersResult) (create, update, equal, remove *Use
 
 	// new users and what equal to them
 	for _, usr := range idp.Resources {
-		if _, ok := scimUsers[usr.GetPrimaryEmailAddress()]; !ok {
+		primaryEmail := usr.GetPrimaryEmailAddress()
+
+		if _, ok := scimUsers[primaryEmail]; !ok {
 			toCreate = append(toCreate, usr)
 		} else {
-			usr.SCIMID = scimUsers[usr.GetPrimaryEmailAddress()].SCIMID
+			usr.SCIMID = scimUsers[primaryEmail].SCIMID
 
-			if usr.HashCode != scimUsers[usr.GetPrimaryEmailAddress()].HashCode {
+			if usr.HashCode != scimUsers[primaryEmail].HashCode {
 				toUpdate = append(toUpdate, usr)
 			} else {
 				toEqual = append(toEqual, usr)

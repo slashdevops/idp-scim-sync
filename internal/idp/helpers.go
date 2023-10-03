@@ -15,6 +15,8 @@ func buildUser(usr *admin.User) *model.User {
 		return nil
 	}
 
+	// these fields are required because the Constrains defined here:
+	// https://docs.aws.amazon.com/singlesignon/latest/developerguide/createuser.html
 	if usr.Name == nil {
 		log.Warn("idp: User name is nil")
 		return nil
@@ -185,23 +187,15 @@ func buildUser(usr *admin.User) *model.User {
 		WithIPID(usr.Id).
 		WithUserName(usr.PrimaryEmail).
 		WithDisplayName(displayName).
-		WithTitle(title).
 		// WithNickName("Not Provided").
-		// WithLocale("Not Provided").
-		// WithTimezone("Not Provided").
 		// WithProfileURL("Not Provided").
+		WithTitle(title).
 		WithUserType(usr.Kind).
 		WithPreferredLanguage(preferredLanguage).
+		// WithLocale("Not Provided").
+		// WithTimezone("Not Provided").
 		WithActive(!usr.Suspended).
 		Build()
-
-	if usr.Name != nil {
-		createdUser.Name = model.NameBuilder().
-			WithGivenName(usr.Name.GivenName).
-			WithFamilyName(usr.Name.FamilyName).
-			WithFormatted(usr.Name.FullName).
-			Build()
-	}
 
 	if emails != nil {
 		createdUser.Emails = emails
@@ -211,18 +205,26 @@ func buildUser(usr *admin.User) *model.User {
 		createdUser.Addresses = append(createdUser.Addresses, mainAddress)
 	}
 
-	if mainOrganization != (model.EnterpriseData{}) {
-		createdUser.EnterpriseData = &mainOrganization
-	}
-
 	if mainPhone != (model.PhoneNumber{}) {
 		createdUser.PhoneNumbers = append(createdUser.PhoneNumbers, mainPhone)
+	}
+
+	if usr.Name != nil {
+		createdUser.Name = model.NameBuilder().
+			WithGivenName(usr.Name.GivenName).
+			WithFamilyName(usr.Name.FamilyName).
+			WithFormatted(usr.Name.FullName).
+			Build()
+	}
+
+	if mainOrganization != (model.EnterpriseData{}) {
+		createdUser.EnterpriseData = &mainOrganization
 	}
 
 	// recalculate the hashcode because we have modified the user after building it
 	createdUser.SetHashCode()
 
-	log.Tracef("idp: buildUser() from: %s, --> to: %s", convert.ToJSONString(usr), convert.ToJSONString(createdUser))
+	log.Tracef("idp: buildUser() from: %+v, --> to: %+v", convert.ToJSONString(usr), convert.ToJSONString(createdUser))
 
 	return createdUser
 }

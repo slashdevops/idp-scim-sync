@@ -268,6 +268,7 @@ func TestEnterpriseData_GobEncode(t *testing.T) {
 				Manager:        &Manager{Value: "123456789", Ref: "https://idp.example.com/idp/user/123456789"},
 				Department:     "department",
 				Division:       "division",
+				Primary:        true,
 			},
 		},
 		{

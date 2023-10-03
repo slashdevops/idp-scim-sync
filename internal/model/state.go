@@ -204,22 +204,27 @@ func (s *State) SetHashCode() {
 	users := make([]*User, 0)
 	for _, user := range s.Resources.Users.Resources {
 		e := UserBuilder().
-			WithIPID(user.IPID).
 			WithSCIMID(user.SCIMID).
+			WithIPID(user.IPID).
 			WithUserName(user.UserName).
 			WithDisplayName(user.DisplayName).
+			// WithNickName("Not Provided").
+			// WithProfileURL("Not Provided").
 			WithTitle(user.Title).
 			WithUserType(user.UserType).
 			WithPreferredLanguage(user.PreferredLanguage).
+			// WithLocale("Not Provided").
+			// WithTimezone("Not Provided").
 			WithActive(user.Active).
-			WithName(user.Name).
-			WithEnterpriseData(user.EnterpriseData).
+			// arrays
 			WithEmails(user.Emails).
 			WithAddresses(user.Addresses).
 			WithPhoneNumbers(user.PhoneNumbers).
+			// Pointers
+			WithName(user.Name).
+			WithEnterpriseData(user.EnterpriseData).
 			Build()
 
-		e.SetHashCode()
 		users = append(users, e)
 	}
 	usersResult := UsersResultBuilder().WithResources(users).Build()
