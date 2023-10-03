@@ -78,6 +78,42 @@ type State struct {
 	Resources     *StateResources `json:"resources"`
 }
 
+// MarshalBinary implements the encoding.BinaryMarshaler interface for State entity.
+func (s State) MarshalBinary() ([]byte, error) {
+	var buf bytes.Buffer
+	enc := gob.NewEncoder(&buf)
+
+	if err := enc.Encode(s.SchemaVersion); err != nil {
+		return nil, err
+	}
+
+	if s.Resources != nil {
+		if err := enc.Encode(s.Resources); err != nil {
+			return nil, err
+		}
+	}
+
+	return buf.Bytes(), nil
+}
+
+// UnmarshalBinary implements the encoding.BinaryUnmarshaler interface for State entity.
+func (s *State) UnmarshalBinary(data []byte) error {
+	buf := bytes.NewBuffer(data)
+	dec := gob.NewDecoder(buf)
+
+	if err := dec.Decode(&s.SchemaVersion); err != nil {
+		return err
+	}
+
+	if err := dec.Decode(&s.Resources); err != nil {
+		if err.Error() != "EOF" {
+			return err
+		}
+	}
+
+	return nil
+}
+
 // MarshalJSON marshals the State to JSON.
 func (s *State) MarshalJSON() ([]byte, error) {
 	if s.Resources == nil {

@@ -129,6 +129,294 @@ func TestStateResources_GobEncode(t *testing.T) {
 	}
 }
 
+func TestState_GobEncode(t *testing.T) {
+	tests := []struct {
+		name   string
+		toTest *State
+	}{
+		{
+			name:   "empty",
+			toTest: &State{},
+		},
+		{
+			name: "filled with Group",
+			toTest: &State{
+				LastSync: "2020-01-01T00:00:00Z",
+				Resources: &StateResources{
+					Groups: &GroupsResult{
+						Items:    1,
+						HashCode: "hashCode",
+						Resources: []*Group{
+							{
+								IPID:     "ipid",
+								SCIMID:   "scimid",
+								Name:     "name",
+								Email:    "email",
+								HashCode: "hashCode",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "filled with Group and Users",
+			toTest: &State{
+				LastSync: "2020-01-01T00:00:00Z",
+				Resources: &StateResources{
+					Groups: &GroupsResult{
+						Items:    1,
+						HashCode: "hashCode",
+						Resources: []*Group{
+							{
+								IPID:     "ipid",
+								SCIMID:   "scimid",
+								Name:     "name",
+								Email:    "email",
+								HashCode: "hashCode",
+							},
+						},
+					},
+					Users: &UsersResult{
+						Items:    2,
+						HashCode: "hashCode",
+						Resources: []*User{
+							{
+								IPID:              "1",
+								SCIMID:            "1",
+								UserName:          "user.1",
+								DisplayName:       "user 1",
+								NickName:          "user 1",
+								ProfileURL:        "https://profile.url",
+								Title:             "title",
+								UserType:          "user",
+								Active:            true,
+								Name:              &Name{FamilyName: "user", GivenName: "1", Formatted: "user 1"},
+								Emails:            []Email{{Value: "user.1@mail.com", Type: "work", Primary: true}},
+								Addresses:         []Address{{Formatted: "address 1", StreetAddress: "street 1", Locality: "locality 1", Region: "region 1", PostalCode: "postalCode 1", Country: "country 1", Primary: true}},
+								PreferredLanguage: "en",
+								PhoneNumbers:      []PhoneNumber{{Value: "123456789", Type: "work"}},
+								EnterpriseData:    &EnterpriseData{EmployeeNumber: "123456789", CostCenter: "123456789", Organization: "123456789", Division: "123456789", Department: "123456789"},
+							},
+							{
+								IPID:              "2",
+								SCIMID:            "2",
+								UserName:          "user.2",
+								DisplayName:       "user 2",
+								NickName:          "user 2",
+								ProfileURL:        "https://profile.url",
+								Title:             "title",
+								UserType:          "user",
+								Active:            true,
+								Name:              &Name{FamilyName: "user", GivenName: "2", Formatted: "user 2"},
+								Emails:            []Email{{Value: "user.2@mail.com", Type: "work", Primary: true}},
+								Addresses:         []Address{{Formatted: "address 2", StreetAddress: "street 2", Locality: "locality 2", Region: "region 2", PostalCode: "postalCode 2", Country: "country 2", Primary: true}},
+								PreferredLanguage: "en",
+								PhoneNumbers:      []PhoneNumber{{Value: "123456789", Type: "work"}},
+								EnterpriseData:    &EnterpriseData{EmployeeNumber: "123456789", CostCenter: "123456789", Organization: "123456789", Division: "123456789", Department: "123456789"},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "filled with Group, Users and GroupsMembers",
+			toTest: &State{
+				LastSync: "2020-01-01T00:00:00Z",
+				Resources: &StateResources{
+					Groups: &GroupsResult{
+						Items:    1,
+						HashCode: "hashCode",
+						Resources: []*Group{
+							{
+								IPID:     "ipid",
+								SCIMID:   "scimid",
+								Name:     "name",
+								Email:    "email",
+								HashCode: "hashCode",
+							},
+						},
+					},
+					Users: &UsersResult{
+						Items:    2,
+						HashCode: "hashCode",
+						Resources: []*User{
+							{
+								IPID:        "1",
+								SCIMID:      "1",
+								UserName:    "user.1",
+								DisplayName: "user 1",
+
+								Active: true,
+								Name:   &Name{FamilyName: "user", GivenName: "1", Formatted: "user 1"},
+								Emails: []Email{{Value: "user.1@mail.com", Type: "work", Primary: true}},
+							},
+							{
+								IPID:              "2",
+								SCIMID:            "2",
+								UserName:          "user.2",
+								DisplayName:       "user 2",
+								ProfileURL:        "https://profile.url",
+								Title:             "title",
+								Active:            true,
+								Name:              &Name{FamilyName: "user", GivenName: "2", Formatted: "user 2"},
+								Emails:            []Email{{Value: "user.2@mail.com", Type: "work", Primary: true}},
+								PreferredLanguage: "en",
+							},
+						},
+					},
+					GroupsMembers: &GroupsMembersResult{
+						Items: 1,
+						Resources: []*GroupMembers{
+							{
+								Items: 2,
+								Group: &Group{
+									IPID:  "ipid",
+									Name:  "name",
+									Email: "email",
+								},
+								Resources: []*Member{
+									{
+										IPID:   "1",
+										Email:  "user.1@mail.com",
+										Status: "active",
+									},
+									{
+										IPID:   "2",
+										Email:  "user.2@mail.com",
+										Status: "active",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			buf := new(bytes.Buffer)
+			enc := gob.NewEncoder(buf)
+
+			if err := enc.Encode(tt.toTest); err != nil {
+				t.Errorf("User.GobEncode() error = %v", err)
+			}
+
+			dec := gob.NewDecoder(buf)
+			var got State
+			if err := dec.Decode(&got); err != nil {
+				t.Errorf("User.GobEncode() error = %v", err)
+			}
+
+			var expectedStateResources *StateResources
+			if tt.toTest.Resources != nil {
+
+				// fill GroupsResult
+				var expectedGroupsResources *GroupsResult
+				if tt.toTest.Resources.Groups != nil {
+
+					expectedGroupsResources = &GroupsResult{
+						Items:     tt.toTest.Resources.Groups.Items,
+						Resources: make([]*Group, 0),
+					}
+
+					if tt.toTest.Resources.Groups.Resources != nil {
+						for _, g := range tt.toTest.Resources.Groups.Resources {
+							expectedGroupsResources.Resources = append(expectedGroupsResources.Resources, &Group{
+								IPID:  g.IPID,
+								Name:  g.Name,
+								Email: g.Email,
+							})
+						}
+					}
+				}
+				// end fill GroupsResult
+
+				// fill UsersResult
+				var expectedUsersResources *UsersResult
+				if tt.toTest.Resources.Users != nil {
+					expectedUsersResources = &UsersResult{
+						Items:     tt.toTest.Resources.Users.Items,
+						Resources: make([]*User, 0),
+					}
+
+					if tt.toTest.Resources.Users.Resources != nil {
+						for _, u := range tt.toTest.Resources.Users.Resources {
+							expectedUsersResources.Resources = append(expectedUsersResources.Resources, &User{
+								IPID:              u.IPID,
+								UserName:          u.UserName,
+								DisplayName:       u.DisplayName,
+								NickName:          u.NickName,
+								ProfileURL:        u.ProfileURL,
+								Title:             u.Title,
+								UserType:          u.UserType,
+								PreferredLanguage: u.PreferredLanguage,
+								Locale:            u.Locale,
+								Timezone:          u.Timezone,
+								Active:            u.Active,
+								Emails:            u.Emails,
+								Addresses:         u.Addresses,
+								PhoneNumbers:      u.PhoneNumbers,
+								Name:              u.Name,
+								EnterpriseData:    u.EnterpriseData,
+							})
+						}
+					}
+				}
+				// end fill UsersResult
+
+				// fill GroupsMembersResult
+				var expectedGroupsMembersResources *GroupsMembersResult
+				if tt.toTest.Resources.GroupsMembers != nil {
+					expectedGroupsMembersResources = &GroupsMembersResult{
+						Items:     tt.toTest.Resources.GroupsMembers.Items,
+						Resources: make([]*GroupMembers, 0),
+					}
+
+					if tt.toTest.Resources.GroupsMembers.Resources != nil {
+						for _, gm := range tt.toTest.Resources.GroupsMembers.Resources {
+							expectedMembers := make([]*Member, 0)
+							for _, m := range gm.Resources {
+								expectedMembers = append(expectedMembers, &Member{
+									IPID:   m.IPID,
+									Email:  m.Email,
+									Status: m.Status,
+								})
+							}
+
+							expectedGroupsMembersResources.Resources = append(expectedGroupsMembersResources.Resources, &GroupMembers{
+								Items:     gm.Items,
+								Group:     gm.Group,
+								Resources: expectedMembers,
+							})
+						}
+					}
+				}
+				// end fill GroupsMembersResult
+
+				expectedStateResources = &StateResources{
+					Groups:        expectedGroupsResources,
+					Users:         expectedUsersResources,
+					GroupsMembers: expectedGroupsMembersResources,
+				}
+			}
+
+			expected := State{
+				SchemaVersion: tt.toTest.SchemaVersion,
+				Resources:     expectedStateResources,
+			}
+
+			sort := func(x, y string) bool { return x > y }
+			if diff := cmp.Diff(expected, got, cmpopts.SortSlices(sort)); diff != "" {
+				t.Errorf("mismatch (-expected +got):\n%s", diff)
+			}
+		})
+	}
+}
+
 func TestState_MarshalJSON(t *testing.T) {
 	type fields struct {
 		LastSync  string
