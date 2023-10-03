@@ -609,7 +609,6 @@ func TestUsersResult_MarshalJSON(t *testing.T) {
 			fields: fields{},
 			want: []byte(`{
   "items": 0,
-  "hashCode": "",
   "resources": []
 }`),
 			wantErr: false,
@@ -639,10 +638,10 @@ func TestUsersResult_MarshalJSON(t *testing.T) {
   "hashCode": "test",
   "resources": [
     {
+      "hashCode": "1111",
       "ipid": "1",
       "scimid": "1",
       "displayName": "user 1",
-      "hashCode": "1111",
       "emails": [
         {
           "value": "user.1@mail.com",

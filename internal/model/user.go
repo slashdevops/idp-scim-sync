@@ -335,6 +335,7 @@ func (ed *EnterpriseData) UnmarshalBinary(data []byte) error {
 
 // User represents a user entity.
 type User struct {
+	HashCode          string          `json:"hashCode,omitempty"`
 	IPID              string          `json:"ipid,omitempty"`
 	SCIMID            string          `json:"scimid,omitempty"`
 	UserName          string          `json:"userName,omitempty"`
@@ -346,7 +347,6 @@ type User struct {
 	PreferredLanguage string          `json:"preferredLanguage,omitempty"`
 	Locale            string          `json:"locale,omitempty"`
 	Timezone          string          `json:"timezone,omitempty"`
-	HashCode          string          `json:"hashCode,omitempty"`
 	Emails            []Email         `json:"emails,omitempty"`
 	Addresses         []Address       `json:"addresses,omitempty"`
 	PhoneNumbers      []PhoneNumber   `json:"phoneNumbers,omitempty"`
@@ -505,7 +505,7 @@ func (u *User) GetPrimaryEmailAddress() string {
 // UsersResult represents a user result list entity.
 type UsersResult struct {
 	Items     int     `json:"items"`
-	HashCode  string  `json:"hashCode"`
+	HashCode  string  `json:"hashCode,omitempty"`
 	Resources []*User `json:"resources"`
 }
 
@@ -518,8 +518,8 @@ func (ur UsersResult) MarshalBinary() ([]byte, error) {
 		return nil, err
 	}
 
-	if ur.Resources != nil {
-		if err := enc.Encode(ur.Resources); err != nil {
+	for _, u := range ur.Resources {
+		if err := enc.Encode(u); err != nil {
 			return nil, err
 		}
 	}
@@ -535,10 +535,12 @@ func (ur *UsersResult) UnmarshalBinary(data []byte) error {
 		return err
 	}
 
-	if err := dec.Decode(&ur.Resources); err != nil {
-		if err.Error() != "EOF" {
+	for i := 0; i < ur.Items; i++ {
+		var u User
+		if err := dec.Decode(&u); err != nil {
 			return err
 		}
+		ur.Resources = append(ur.Resources, &u)
 	}
 
 	return nil
