@@ -74,7 +74,7 @@ type State struct {
 	SchemaVersion string          `json:"schemaVersion"`
 	CodeVersion   string          `json:"codeVersion"`
 	LastSync      string          `json:"lastSync"`
-	HashCode      string          `json:"hashCode"`
+	HashCode      string          `json:"hashCode,omitempty"`
 	Resources     *StateResources `json:"resources"`
 }
 

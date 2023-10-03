@@ -435,7 +435,6 @@ func TestState_MarshalJSON(t *testing.T) {
   "schemaVersion": "",
   "codeVersion": "",
   "lastSync": "",
-  "hashCode": "",
   "resources": {
     "groups": {
       "items": 0,
@@ -443,7 +442,6 @@ func TestState_MarshalJSON(t *testing.T) {
     },
     "users": {
       "items": 0,
-      "hashCode": "",
       "resources": []
     },
     "groupsMembers": {
@@ -492,7 +490,6 @@ func TestState_MarshalJSON(t *testing.T) {
   "schemaVersion": "",
   "codeVersion": "",
   "lastSync": "2020-01-01T00:00:00Z",
-  "hashCode": "",
   "resources": {
     "groups": {
       "items": 1,
@@ -512,9 +509,9 @@ func TestState_MarshalJSON(t *testing.T) {
       "hashCode": "hashCode",
       "resources": [
         {
+          "hashCode": "hashCode",
           "ipid": "ipid",
           "scimid": "scimid",
-          "hashCode": "hashCode",
           "emails": [
             {
               "value": "email",
