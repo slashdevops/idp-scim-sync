@@ -85,12 +85,9 @@ func Test_buildUser(t *testing.T) {
 						WithCostCenter("costCenter").
 						WithDepartment("department").
 						WithOrganization("name").
-						WithPrimary(true).
-						WithTitle("title").
 						Build(),
 				).
 				WithPreferredLanguage("languageCode").
-				WithTitle("title").
 				WithTimezone("").
 				WithPhoneNumber(
 					model.PhoneNumberBuilder().
@@ -102,7 +99,6 @@ func Test_buildUser(t *testing.T) {
 					model.AddressBuilder().
 						WithFormatted("formatted work").
 						WithType("work").
-						WithPrimary(true).
 						Build(),
 				).
 				Build(),

@@ -722,7 +722,6 @@ func TestCreateUser(t *testing.T) {
 					PostalCode:    "postal code 1",
 					Country:       "country 1",
 					Type:          "work",
-					Primary:       true,
 				},
 				{
 					StreetAddress: "street 2",
@@ -731,7 +730,6 @@ func TestCreateUser(t *testing.T) {
 					PostalCode:    "postal code 2",
 					Country:       "country 2",
 					Type:          "home",
-					Primary:       false,
 				},
 			},
 			Active: true,

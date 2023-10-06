@@ -7,6 +7,117 @@ import (
 	"github.com/slashdevops/idp-scim-sync/pkg/aws"
 )
 
+// func buildUser creates a User model from a CreateUserRequest
+func buildUser(user *aws.User) *model.User {
+	if user == nil {
+		return nil
+	}
+
+	var emails []model.Email
+	if user.Emails != nil {
+		for _, email := range user.Emails {
+			if email.Primary {
+				emails = append(emails,
+					model.EmailBuilder().
+						WithPrimary(email.Primary).
+						WithType(email.Type).
+						WithValue(email.Value).
+						Build(),
+				)
+			}
+		}
+	}
+
+	var addresses []model.Address
+	if user.Addresses != nil {
+		if len(user.Addresses) > 0 {
+			addresses = append(addresses,
+				model.AddressBuilder().
+					WithType(user.Addresses[0].Type).
+					WithFormatted(user.Addresses[0].Formatted).
+					WithStreetAddress(user.Addresses[0].StreetAddress).
+					WithLocality(user.Addresses[0].Locality).
+					WithRegion(user.Addresses[0].Region).
+					WithPostalCode(user.Addresses[0].PostalCode).
+					WithCountry(user.Addresses[0].Country).
+					Build(),
+			)
+		}
+	}
+
+	var phoneNumbers []model.PhoneNumber
+	if user.PhoneNumbers != nil {
+		for _, phoneNumber := range user.PhoneNumbers {
+			phoneNumbers = append(phoneNumbers,
+				model.PhoneNumberBuilder().
+					WithType(phoneNumber.Type).
+					WithValue(phoneNumber.Value).
+					Build(),
+			)
+		}
+	}
+
+	var enterpriseData *model.EnterpriseData
+	if user.SchemaEnterpriseUser != nil {
+
+		var manager *model.Manager
+		if user.SchemaEnterpriseUser.Manager != nil {
+			manager = model.ManagerBuilder().
+				WithValue(user.SchemaEnterpriseUser.Manager.Value).
+				WithRef(user.SchemaEnterpriseUser.Manager.Ref).
+				Build()
+		}
+
+		enterpriseData = model.EnterpriseDataBuilder().
+			WithEmployeeNumber(user.SchemaEnterpriseUser.EmployeeNumber).
+			WithCostCenter(user.SchemaEnterpriseUser.CostCenter).
+			WithOrganization(user.SchemaEnterpriseUser.Organization).
+			WithDivision(user.SchemaEnterpriseUser.Division).
+			WithDepartment(user.SchemaEnterpriseUser.Department).
+			WithManager(manager).
+			Build()
+
+	}
+
+	var name *model.Name
+	if user.Name != nil {
+		name = model.NameBuilder().
+			WithFamilyName(user.Name.FamilyName).
+			WithGivenName(user.Name.GivenName).
+			WithFormatted(user.Name.Formatted).
+			WithMiddleName(user.Name.MiddleName).
+			WithHonorificPrefix(user.Name.HonorificPrefix).
+			WithHonorificSuffix(user.Name.HonorificSuffix).
+			Build()
+	}
+
+	userModel := model.UserBuilder().
+		WithIPID(user.ExternalID).
+		WithSCIMID(user.ID).
+		WithUserName(user.UserName).
+		WithDisplayName(user.DisplayName).
+		// WithNickName("Not Provided").
+		// WithProfileURL("Not Provided").
+		WithUserType(user.UserType).
+		WithTitle(user.Title).
+		WithPreferredLanguage(user.PreferredLanguage).
+		// WithLocale("Not Provided").
+		// WithTimezone("Not Provided").
+		WithActive(user.Active).
+		// arrays
+		WithEmails(emails).
+		WithAddresses(addresses).
+		WithPhoneNumbers(phoneNumbers).
+		// Pointers
+		WithName(name).
+		WithEnterpriseData(enterpriseData).
+		Build()
+
+	log.Tracef("scim: buildUser() from: %+v, --> to: %+v", convert.ToJSONString(user), convert.ToJSONString(userModel))
+
+	return userModel
+}
+
 // buildCreateUserRequest builds a CreateUserRequest from a User model
 func buildCreateUserRequest(user *model.User) *aws.CreateUserRequest {
 	if user == nil {
@@ -49,21 +160,16 @@ func buildCreateUserRequest(user *model.User) *aws.CreateUserRequest {
 	}
 
 	if user.Addresses != nil {
-		for _, address := range user.Addresses {
-			if address.Primary {
-				userRequest.Addresses = []aws.Address{
-					{
-						Formatted:     user.Addresses[0].Formatted,
-						Type:          user.Addresses[0].Type,
-						StreetAddress: user.Addresses[0].StreetAddress,
-						Locality:      user.Addresses[0].Locality,
-						Region:        user.Addresses[0].Region,
-						PostalCode:    user.Addresses[0].PostalCode,
-						Country:       user.Addresses[0].Country,
-						Primary:       user.Addresses[0].Primary,
-					},
-				}
-			}
+		userRequest.Addresses = []aws.Address{
+			{
+				Formatted:     user.Addresses[0].Formatted,
+				Type:          user.Addresses[0].Type,
+				StreetAddress: user.Addresses[0].StreetAddress,
+				Locality:      user.Addresses[0].Locality,
+				Region:        user.Addresses[0].Region,
+				PostalCode:    user.Addresses[0].PostalCode,
+				Country:       user.Addresses[0].Country,
+			},
 		}
 	}
 
@@ -140,21 +246,16 @@ func buildPutUserRequest(user *model.User) *aws.PutUserRequest {
 	}
 
 	if user.Addresses != nil {
-		for _, address := range user.Addresses {
-			if address.Primary {
-				userRequest.Addresses = []aws.Address{
-					{
-						Formatted:     user.Addresses[0].Formatted,
-						Type:          user.Addresses[0].Type,
-						StreetAddress: user.Addresses[0].StreetAddress,
-						Locality:      user.Addresses[0].Locality,
-						Region:        user.Addresses[0].Region,
-						PostalCode:    user.Addresses[0].PostalCode,
-						Country:       user.Addresses[0].Country,
-						Primary:       user.Addresses[0].Primary,
-					},
-				}
-			}
+		userRequest.Addresses = []aws.Address{
+			{
+				Formatted:     user.Addresses[0].Formatted,
+				Type:          user.Addresses[0].Type,
+				StreetAddress: user.Addresses[0].StreetAddress,
+				Locality:      user.Addresses[0].Locality,
+				Region:        user.Addresses[0].Region,
+				PostalCode:    user.Addresses[0].PostalCode,
+				Country:       user.Addresses[0].Country,
+			},
 		}
 	}
 

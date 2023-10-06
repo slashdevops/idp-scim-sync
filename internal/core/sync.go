@@ -90,7 +90,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers(ctx context.Context) error {
 
 	log.WithFields(log.Fields{
 		"group_filter": ss.provGroupsFilter,
-	}).Info("getting groups members from the identity provider")
+	}).Info("getting users (groups members) from the identity provider")
 
 	idpUsersResult, err := ss.prov.GetUsersByGroupsMembers(ctx, idpGroupsMembersResult)
 	if err != nil {
@@ -134,7 +134,8 @@ func (ss *SyncService) SyncGroupsAndTheirMembers(ctx context.Context) error {
 		// - Users emails are equals on both sides, update only the external id (coming from the identity provider)
 		log.Warn("syncing from scim service, first time syncing")
 		totalGroupsResult, totalUsersResult, totalGroupsMembersResult, err = scimSync(
-			ctx, ss.scim,
+			ctx,
+			ss.scim,
 			idpGroupsResult,
 			idpUsersResult,
 			idpGroupsMembersResult,

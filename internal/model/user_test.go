@@ -125,7 +125,6 @@ func TestAddress_GobEncode(t *testing.T) {
 				PostalCode:    "postalCode",
 				Country:       "country",
 				Type:          "type",
-				Primary:       true,
 			},
 		},
 		{
@@ -268,7 +267,6 @@ func TestEnterpriseData_GobEncode(t *testing.T) {
 				Manager:        &Manager{Value: "123456789", Ref: "https://idp.example.com/idp/user/123456789"},
 				Department:     "department",
 				Division:       "division",
-				Primary:        true,
 			},
 		},
 		{
@@ -333,7 +331,7 @@ func TestUser_GobEncode(t *testing.T) {
 				Locale:            "locale",
 				Timezone:          "timezone",
 				Emails:            []Email{{Value: "email value", Type: "email type", Primary: true}},
-				Addresses:         []Address{{Formatted: "formatted", StreetAddress: "street address", Locality: "locality", Region: "region", PostalCode: "postal code", Country: "country", Type: "type", Primary: true}},
+				Addresses:         []Address{{Formatted: "formatted", StreetAddress: "street address", Locality: "locality", Region: "region", PostalCode: "postal code", Country: "country", Type: "type"}},
 				PhoneNumbers:      []PhoneNumber{{Value: "phone value", Type: "phone type"}},
 				Name: &Name{
 					Formatted:       "formatted",
@@ -490,6 +488,164 @@ func TestUser_SetHashCode(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestUser_SetHashCode_consistency(t *testing.T) {
+	t.Run("struct", func(t *testing.T) {
+		user := User{
+			IPID:              "1",
+			SCIMID:            "1",
+			UserName:          "user1",
+			ProfileURL:        "https://idp.example.com/idp/user/1",
+			PreferredLanguage: "en-US",
+			PhoneNumbers:      []PhoneNumber{{Value: "value", Type: "type"}},
+			Addresses:         []Address{{Formatted: "formatted", StreetAddress: "street address", Locality: "locality", Region: "region", PostalCode: "postal code", Country: "country", Type: "type"}},
+			EnterpriseData: &EnterpriseData{
+				EmployeeNumber: "employeeNumber",
+				CostCenter:     "costCenter",
+				Organization:   "organization",
+				Manager:        &Manager{Value: "manager value", Ref: "manager ref"},
+				Department:     "department",
+				Division:       "division",
+			},
+			Name: &Name{
+				GivenName:  "user",
+				FamilyName: "1",
+			},
+			DisplayName: "user 1",
+			Active:      true,
+			Emails:      []Email{{Value: "email", Type: "work", Primary: true}},
+			HashCode:    "test",
+		}
+
+		user.SetHashCode()
+		got1 := user.HashCode
+
+		user.SetHashCode()
+		got2 := user.HashCode
+
+		user.SetHashCode()
+		got3 := user.HashCode
+
+		if got1 != got2 {
+			t.Errorf("User.SetHashCode() = %s, want %s", got1, got2)
+		}
+
+		if got2 != got3 {
+			t.Errorf("User.SetHashCode() = %s, want %s", got2, got3)
+		}
+
+		if got1 != got3 {
+			t.Errorf("User.SetHashCode() = %s, want %s", got1, got3)
+		}
+
+		ub := UserBuilder().
+			WithIPID(user.IPID).
+			WithSCIMID(user.SCIMID).
+			WithUserName(user.UserName).
+			WithDisplayName(user.DisplayName).
+			WithNickName(user.NickName).
+			WithProfileURL(user.ProfileURL).
+			WithTitle(user.Title).
+			WithUserType(user.UserType).
+			WithPreferredLanguage(user.PreferredLanguage).
+			WithLocale(user.Locale).
+			WithTimezone(user.Timezone).
+			WithActive(user.Active).
+			WithEmails(user.Emails).
+			WithAddresses(user.Addresses).
+			WithPhoneNumbers(user.PhoneNumbers).
+			WithName(user.Name).
+			WithEnterpriseData(user.EnterpriseData).
+			Build()
+
+		got4 := ub.HashCode
+
+		ub.SetHashCode()
+		got5 := ub.HashCode
+
+		if got4 != got5 {
+			t.Errorf("User.SetHashCode() = %s, want %s", got4, got5)
+		}
+	})
+
+	t.Run("pointer", func(t *testing.T) {
+		user := &User{
+			IPID:              "1",
+			SCIMID:            "1",
+			UserName:          "user1",
+			ProfileURL:        "https://idp.example.com/idp/user/1",
+			PreferredLanguage: "en-US",
+			PhoneNumbers:      []PhoneNumber{{Value: "value", Type: "type"}},
+			Addresses:         []Address{{Formatted: "formatted", StreetAddress: "street address", Locality: "locality", Region: "region", PostalCode: "postal code", Country: "country", Type: "type"}},
+			EnterpriseData: &EnterpriseData{
+				EmployeeNumber: "employeeNumber",
+				CostCenter:     "costCenter",
+				Organization:   "organization",
+				Manager:        &Manager{Value: "manager value", Ref: "manager ref"},
+				Department:     "department",
+				Division:       "division",
+			},
+			Name: &Name{
+				GivenName:  "user",
+				FamilyName: "1",
+			},
+			DisplayName: "user 1",
+			Active:      true,
+			Emails:      []Email{{Value: "email", Type: "work", Primary: true}},
+			HashCode:    "test",
+		}
+
+		user.SetHashCode()
+		got1 := user.HashCode
+
+		user.SetHashCode()
+		got2 := user.HashCode
+
+		user.SetHashCode()
+		got3 := user.HashCode
+
+		if got1 != got2 {
+			t.Errorf("User.SetHashCode() = %s, want %s", got1, got2)
+		}
+
+		if got2 != got3 {
+			t.Errorf("User.SetHashCode() = %s, want %s", got2, got3)
+		}
+
+		if got1 != got3 {
+			t.Errorf("User.SetHashCode() = %s, want %s", got1, got3)
+		}
+
+		ub := UserBuilder().
+			WithIPID(user.IPID).
+			WithSCIMID(user.SCIMID).
+			WithUserName(user.UserName).
+			WithDisplayName(user.DisplayName).
+			WithNickName(user.NickName).
+			WithProfileURL(user.ProfileURL).
+			WithTitle(user.Title).
+			WithUserType(user.UserType).
+			WithPreferredLanguage(user.PreferredLanguage).
+			WithLocale(user.Locale).
+			WithTimezone(user.Timezone).
+			WithActive(user.Active).
+			WithEmails(user.Emails).
+			WithAddresses(user.Addresses).
+			WithPhoneNumbers(user.PhoneNumbers).
+			WithName(user.Name).
+			WithEnterpriseData(user.EnterpriseData).
+			Build()
+
+		got4 := ub.HashCode
+
+		ub.SetHashCode()
+		got5 := ub.HashCode
+
+		if got4 != got5 {
+			t.Errorf("User.SetHashCode() = %s, want %s", got4, got5)
+		}
+	})
 }
 
 func TestUser_SetHashCode_pointer(t *testing.T) {
@@ -690,51 +846,116 @@ func TestUsersResult_SetHashCode(t *testing.T) {
 	u1 := &User{IPID: "1", SCIMID: "1", Name: &Name{GivenName: "User", FamilyName: "1"}, Emails: []Email{{Value: "user.1@mail.com", Type: "work", Primary: true}}}
 	u3 := &User{IPID: "3", SCIMID: "3", Name: &Name{GivenName: "User", FamilyName: "3"}, Emails: []Email{{Value: "user.3@mail.com", Type: "work", Primary: true}}}
 
-	u1.SetHashCode()
-	u2.SetHashCode()
-	u3.SetHashCode()
+	t.Run("call one time", func(t *testing.T) {
+		u1.SetHashCode()
+		u2.SetHashCode()
+		u3.SetHashCode()
 
-	ur1 := UsersResult{
-		Items:     3,
-		Resources: []*User{u1, u2, u3},
-	}
-	ur1.SetHashCode()
+		ur1 := UsersResult{
+			Items:     3,
+			Resources: []*User{u1, u2, u3},
+		}
+		ur1.SetHashCode()
 
-	ur2 := UsersResult{
-		Items:     3,
-		Resources: []*User{u2, u3, u1},
-	}
-	ur2.SetHashCode()
+		ur2 := UsersResult{
+			Items:     3,
+			Resources: []*User{u2, u3, u1},
+		}
+		ur2.SetHashCode()
 
-	ur3 := UsersResult{
-		Items:     3,
-		Resources: []*User{u3, u2, u1},
-	}
-	ur3.SetHashCode()
+		ur3 := UsersResult{
+			Items:     3,
+			Resources: []*User{u3, u2, u1},
+		}
+		ur3.SetHashCode()
 
-	ur4 := MergeUsersResult(&ur2, &ur1, &ur3)
-	ur4.SetHashCode()
+		ur4 := MergeUsersResult(&ur2, &ur1, &ur3)
+		ur4.SetHashCode()
 
-	ur5 := MergeUsersResult(&ur3, &ur2, &ur1)
-	ur5.SetHashCode()
+		ur5 := MergeUsersResult(&ur3, &ur2, &ur1)
+		ur5.SetHashCode()
 
-	t.Logf("ur4: %s\n", convert.ToJSONString(ur4, true))
-	t.Logf("ur5: %s\n", convert.ToJSONString(ur5, true))
+		t.Logf("ur4: %s\n", convert.ToJSONString(ur4, true))
+		t.Logf("ur5: %s\n", convert.ToJSONString(ur5, true))
 
-	t.Logf("ur4.HashCode: %s\n", ur4.HashCode)
-	t.Logf("ur5.HashCode: %s\n", ur5.HashCode)
+		t.Logf("ur4.HashCode: %s\n", ur4.HashCode)
+		t.Logf("ur5.HashCode: %s\n", ur5.HashCode)
 
-	if ur1.HashCode != ur2.HashCode {
-		t.Errorf("UsersResult.HashCode should be equal")
-	}
-	if ur1.HashCode != ur3.HashCode {
-		t.Errorf("UsersResult.HashCode should be equal")
-	}
-	if ur2.HashCode != ur3.HashCode {
-		t.Errorf("UsersResult.HashCode should be equal")
-	}
+		if ur1.HashCode != ur2.HashCode {
+			t.Errorf("UsersResult.HashCode should be equal")
+		}
+		if ur1.HashCode != ur3.HashCode {
+			t.Errorf("UsersResult.HashCode should be equal")
+		}
+		if ur2.HashCode != ur3.HashCode {
+			t.Errorf("UsersResult.HashCode should be equal")
+		}
 
-	if ur5.HashCode != ur4.HashCode {
-		t.Errorf("UsersResult.HashCode should be equal: ur5-> %s, ur4-> %s", ur5.HashCode, ur4.HashCode)
-	}
+		if ur5.HashCode != ur4.HashCode {
+			t.Errorf("UsersResult.HashCode should be equal: ur5-> %s, ur4-> %s", ur5.HashCode, ur4.HashCode)
+		}
+	})
 }
+
+// func TestUser_DeepCopy(t *testing.T) {
+// 	tests := []struct {
+// 		name   string
+// 		toTest User
+// 	}{
+// 		{
+// 			name:   "empty User",
+// 			toTest: User{},
+// 		},
+// 		{
+// 			name: "filled User",
+// 			toTest: User{
+// 				IPID:              "IPID",
+// 				SCIMID:            "this should not be encoded",
+// 				UserName:          "username",
+// 				DisplayName:       "displayname",
+// 				NickName:          "nickname",
+// 				ProfileURL:        "profileURL",
+// 				Title:             "title",
+// 				UserType:          "userType",
+// 				PreferredLanguage: "preferredLanguage",
+// 				Locale:            "locale",
+// 				Timezone:          "timezone",
+// 				Emails:            []Email{{Value: "email value", Type: "email type", Primary: true}},
+// 				Addresses:         []Address{{Formatted: "formatted", StreetAddress: "street address", Locality: "locality", Region: "region", PostalCode: "postal code", Country: "country", Type: "type", Primary: true}},
+// 				PhoneNumbers:      []PhoneNumber{{Value: "phone value", Type: "phone type"}},
+// 				Name: &Name{
+// 					Formatted:       "formatted",
+// 					FamilyName:      "familyName",
+// 					GivenName:       "givenName",
+// 					MiddleName:      "middleName",
+// 					HonorificPrefix: "honorificPrefix",
+// 					HonorificSuffix: "honorificSuffix",
+// 				},
+// 				EnterpriseData: &EnterpriseData{
+// 					EmployeeNumber: "employeeNumber",
+// 					CostCenter:     "costCenter",
+// 					Organization:   "organization",
+// 					Manager:        &Manager{Value: "manager value", Ref: "manager ref"},
+// 					Department:     "department",
+// 					Division:       "division",
+// 				},
+// 				Active:   true,
+// 				HashCode: "this should not be encoded",
+// 			},
+// 		},
+// 	}
+// 	for _, tt := range tests {
+// 		t.Run(tt.name, func(t *testing.T) {
+// 			got := tt.toTest.DeepCopy()
+
+// 			sort := func(x, y string) bool { return x > y }
+// 			if diff := cmp.Diff(tt.toTest, got, cmpopts.SortSlices(sort)); diff != "" {
+// 				t.Errorf("mismatch (-tt.toTest +got):\n%s", diff)
+// 			}
+
+// 			// if !reflect.DeepEqual(got, tt.toTest) {
+// 			// 	t.Errorf("User.DeepCopy() = %v, want %v", got, tt.toTest)
+// 			// }
+// 		})
+// 	}
+// }

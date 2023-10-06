@@ -5,6 +5,8 @@ import (
 	"encoding/gob"
 	"encoding/json"
 	"sort"
+
+	"github.com/slashdevops/idp-scim-sync/internal/deepcopy"
 )
 
 // Group represents a group entity.
@@ -119,19 +121,22 @@ func (gr *GroupsResult) MarshalJSON() ([]byte, error) {
 // this method discards fields that are not used in the hash calculation.
 // only fields coming from the Identity Provider are used.
 func (gr *GroupsResult) SetHashCode() {
-	copyResources := make([]*Group, len(gr.Resources))
-	copy(copyResources, gr.Resources)
+	// this copy is necessary to avoid changing the original data
+	// with the sort.Slice function and always be consistent
+	// when calculating the hash code
+	c := deepcopy.SliceOfPointers(gr.Resources)
 
 	// only these fields are used in the hash calculation
-	copyStruct := &GroupsResult{
+	copiedStruct := &GroupsResult{
 		Items:     gr.Items,
-		Resources: copyResources,
+		Resources: c,
 	}
 
 	// order the resources by their hash code to be consistency always
-	sort.Slice(copyStruct.Resources, func(i, j int) bool {
-		return copyStruct.Resources[i].HashCode < copyStruct.Resources[j].HashCode
+	// NOTE: review this, it may be a performance issue and may not be necessary
+	sort.Slice(copiedStruct.Resources, func(i, j int) bool {
+		return copiedStruct.Resources[i].HashCode < copiedStruct.Resources[j].HashCode
 	})
 
-	gr.HashCode = Hash(copyStruct)
+	gr.HashCode = Hash(copiedStruct)
 }

@@ -71,7 +71,6 @@ type Address struct {
 	Region        string `json:"region,omitempty"`
 	PostalCode    string `json:"postalCode,omitempty"`
 	Country       string `json:"country,omitempty"`
-	Primary       bool   `json:"primary,omitempty"`
 }
 
 type PhoneNumber struct {
@@ -129,12 +128,11 @@ type User struct {
 	DisplayName          string                `json:"displayName,omitempty"`
 	NickName             string                `json:"nickName,omitempty"`
 	ProfileURL           string                `json:"profileURL,omitempty"`
-	Title                string                `json:"title,omitempty"`
 	UserType             string                `json:"userType,omitempty"`
+	Title                string                `json:"title,omitempty"`
 	PreferredLanguage    string                `json:"preferredLanguage,omitempty"`
 	Locale               string                `json:"locale,omitempty"`
 	Timezone             string                `json:"timezone,omitempty"`
-	Active               bool                  `json:"active,omitempty"`
 	Name                 *Name                 `json:"name,omitempty"`
 	Meta                 *Meta                 `json:"meta,omitempty"`
 	SchemaEnterpriseUser *SchemaEnterpriseUser `json:"urn:ietf:params:scim:schemas:extension:enterprise:2.0:User,omitempty"`
@@ -142,6 +140,7 @@ type User struct {
 	Addresses            []Address             `json:"addresses,omitempty"`
 	Emails               []Email               `json:"emails,omitempty"`
 	PhoneNumbers         []PhoneNumber         `json:"phoneNumbers,omitempty"`
+	Active               bool                  `json:"active,omitempty"`
 }
 
 // Validate check if the user entity is valid according to the SCIM spec constraints
@@ -218,11 +217,10 @@ func (u *User) GetPrimaryEmailAddress() string {
 
 // GetPrimaryAddress returns the primary address of the user
 func (u *User) GetPrimaryAddress() *Address {
-	for _, address := range u.Addresses {
-		if address.Primary {
-			return &address
-		}
+	if len(u.Addresses) > 0 {
+		return &u.Addresses[0]
 	}
+
 	return nil
 }
 

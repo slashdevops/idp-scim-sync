@@ -5,6 +5,8 @@ import (
 	"encoding/gob"
 	"encoding/json"
 	"sort"
+
+	"github.com/slashdevops/idp-scim-sync/internal/deepcopy"
 )
 
 // Member represents a member entity.
@@ -118,16 +120,19 @@ func (mr *MembersResult) UnmarshalBinary(data []byte) error {
 // this method discards fields that are not used in the hash calculation.
 // only fields coming from the Identity Provider are used.
 func (mr *MembersResult) SetHashCode() {
-	copyResources := make([]*Member, len(mr.Resources))
-	copy(copyResources, mr.Resources)
+	// this copy is necessary to avoid changing the original data
+	// with the sort.Slice function and always be consistent
+	// when calculating the hash code
+	c := deepcopy.SliceOfPointers(mr.Resources)
 
 	// only these fields are used in the hash calculation
 	copyStruct := &MembersResult{
 		Items:     mr.Items,
-		Resources: copyResources,
+		Resources: c,
 	}
 
 	// order the resources by their hash code to be consistency always
+	// NOTE: review this, it may be a performance issue and may not be necessary
 	sort.Slice(copyStruct.Resources, func(i, j int) bool {
 		return copyStruct.Resources[i].IPID < copyStruct.Resources[j].IPID
 	})
@@ -197,23 +202,26 @@ func (gm *GroupMembers) UnmarshalBinary(data []byte) error {
 // this method discards fields that are not used in the hash calculation.
 // only fields coming from the Identity Provider are used.
 func (gm *GroupMembers) SetHashCode() {
-	copyResources := make([]*Member, len(gm.Resources))
-	copy(copyResources, gm.Resources)
+	// this copy is necessary to avoid changing the original data
+	// with the sort.Slice function and always be consistent
+	// when calculating the hash code
+	c := deepcopy.SliceOfPointers(gm.Resources)
 
 	// only these fields are used in the hash calculation
-	copyStruct := &GroupMembers{
+	copiedStruct := &GroupMembers{
 		Items:     gm.Items,
 		Group:     gm.Group,
-		Resources: copyResources,
+		Resources: c,
 	}
 
 	// to order the members of the group we used the email of the members
 	// because this never could be empty and it is unique
-	sort.Slice(copyStruct.Resources, func(i, j int) bool {
-		return copyStruct.Resources[i].Email < copyStruct.Resources[j].Email
+	// NOTE: review this, it may be a performance issue and may not be necessary
+	sort.Slice(copiedStruct.Resources, func(i, j int) bool {
+		return copiedStruct.Resources[i].Email < copiedStruct.Resources[j].Email
 	})
 
-	gm.HashCode = Hash(copyStruct)
+	gm.HashCode = Hash(copiedStruct)
 }
 
 // GroupsMembersResult represents a group members result list entity.
@@ -273,20 +281,23 @@ func (gmr *GroupsMembersResult) MarshalJSON() ([]byte, error) {
 // this method discards fields that are not used in the hash calculation.
 // only fields coming from the Identity Provider are used.
 func (gmr *GroupsMembersResult) SetHashCode() {
-	copyResources := make([]*GroupMembers, len(gmr.Resources))
-	copy(copyResources, gmr.Resources)
+	// this copy is necessary to avoid changing the original data
+	// with the sort.Slice function and always be consistent
+	// when calculating the hash code
+	c := deepcopy.SliceOfPointers(gmr.Resources)
 
 	// only these fields are used in the hash calculation
-	copyStruct := GroupsMembersResult{
+	copiedStruct := GroupsMembersResult{
 		Items:     gmr.Items,
-		Resources: copyResources,
+		Resources: c,
 	}
 
 	// to order the members of the group we used the email of the members
 	// because this never could be empty and it is unique
-	sort.Slice(copyStruct.Resources, func(i, j int) bool {
-		return copyStruct.Resources[i].HashCode < copyStruct.Resources[j].HashCode
+	// NOTE: review this, it may be a performance issue and may not be necessary
+	sort.Slice(copiedStruct.Resources, func(i, j int) bool {
+		return copiedStruct.Resources[i].HashCode < copiedStruct.Resources[j].HashCode
 	})
 
-	gmr.HashCode = Hash(copyStruct)
+	gmr.HashCode = Hash(copiedStruct)
 }

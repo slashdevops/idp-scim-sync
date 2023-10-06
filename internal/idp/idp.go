@@ -194,6 +194,8 @@ func (i *IdentityProvider) GetUsersByGroupsMembers(ctx context.Context, gmr *mod
 
 			gu := buildUser(u)
 
+			log.Tracef("idp: user: %+v", convert.ToJSONString(gu))
+
 			// this is a hack to avoid the second, third, etc repetition of the same user email
 			primaryEmail := gu.GetPrimaryEmailAddress()
 			if _, ok := uniqUsers[primaryEmail]; !ok {

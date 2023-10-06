@@ -231,83 +231,7 @@ func (s *Provider) GetUsers(ctx context.Context) (*model.UsersResult, error) {
 
 	users := make([]*model.User, 0)
 	for _, user := range usersResponse.Resources {
-
-		e := model.UserBuilder().
-			WithIPID(user.ExternalID).
-			WithSCIMID(user.ID).
-			WithUserName(user.UserName).
-			WithDisplayName(user.DisplayName).
-			WithNickName(user.NickName).
-			WithProfileURL(user.ProfileURL).
-			WithTitle(user.Title).
-			WithUserType(user.UserType).
-			WithPreferredLanguage(user.PreferredLanguage).
-			WithLocale(user.Locale).
-			WithTimezone(user.Timezone).
-			WithActive(user.Active).
-			Build()
-
-		if user.Name != nil {
-			e.Name = model.NameBuilder().
-				WithFormatted(user.Name.Formatted).
-				WithFamilyName(user.Name.FamilyName).
-				WithGivenName(user.Name.GivenName).
-				WithMiddleName(user.Name.MiddleName).
-				WithHonorificPrefix(user.Name.HonorificPrefix).
-				WithHonorificSuffix(user.Name.HonorificSuffix).
-				Build()
-		}
-
-		if user.SchemaEnterpriseUser != nil {
-			e.EnterpriseData = model.EnterpriseDataBuilder().
-				WithCostCenter(user.SchemaEnterpriseUser.CostCenter).
-				WithDepartment(user.SchemaEnterpriseUser.Department).
-				WithDivision(user.SchemaEnterpriseUser.Division).
-				WithEmployeeNumber(user.SchemaEnterpriseUser.EmployeeNumber).
-				WithOrganization(user.SchemaEnterpriseUser.Organization).
-				Build()
-
-			if user.SchemaEnterpriseUser.Manager != nil {
-				e.EnterpriseData.Manager = model.ManagerBuilder().
-					WithValue(user.SchemaEnterpriseUser.Manager.Value).
-					WithRef(user.SchemaEnterpriseUser.Manager.Ref).
-					Build()
-			}
-		}
-
-		if len(user.Addresses) != 0 {
-			address := model.AddressBuilder().
-				WithFormatted(user.Addresses[0].Formatted).
-				WithStreetAddress(user.Addresses[0].StreetAddress).
-				WithLocality(user.Addresses[0].Locality).
-				WithRegion(user.Addresses[0].Region).
-				WithPostalCode(user.Addresses[0].PostalCode).
-				WithCountry(user.Addresses[0].Country).
-				WithPrimary(user.Addresses[0].Primary).
-				Build()
-
-			e.Addresses = append(e.Addresses, address)
-		}
-
-		if len(user.Emails) != 0 {
-			email := model.EmailBuilder().
-				WithValue(user.Emails[0].Value).
-				WithType(user.Emails[0].Type).
-				WithPrimary(user.Emails[0].Primary).
-				Build()
-
-			e.Emails = append(e.Emails, email)
-		}
-
-		if len(user.PhoneNumbers) != 0 {
-			phone := model.PhoneNumberBuilder().
-				WithValue(user.PhoneNumbers[0].Value).
-				WithType(user.PhoneNumbers[0].Type).
-				Build()
-
-			e.PhoneNumbers = append(e.PhoneNumbers, phone)
-		}
-
+		e := buildUser(user)
 		users = append(users, e)
 	}
 
@@ -393,7 +317,6 @@ func (s *Provider) CreateUsers(ctx context.Context, ur *model.UsersResult) (*mod
 				WithRegion(user.Addresses[0].Region).
 				WithPostalCode(user.Addresses[0].PostalCode).
 				WithCountry(user.Addresses[0].Country).
-				WithPrimary(user.Addresses[0].Primary).
 				Build()
 
 			e.Addresses = append(e.Addresses, address)
@@ -507,7 +430,6 @@ func (s *Provider) UpdateUsers(ctx context.Context, ur *model.UsersResult) (*mod
 				WithRegion(user.Addresses[0].Region).
 				WithPostalCode(user.Addresses[0].PostalCode).
 				WithCountry(user.Addresses[0].Country).
-				WithPrimary(user.Addresses[0].Primary).
 				Build()
 
 			e.Addresses = append(e.Addresses, address)

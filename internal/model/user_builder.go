@@ -257,18 +257,6 @@ func (b *EnterpriseDataBuilderChoice) WithManager(manager *Manager) *EnterpriseD
 	return b
 }
 
-// WithPrimary sets the Primary field of the EnterpriseData entity.
-func (b *EnterpriseDataBuilderChoice) WithPrimary(primary bool) *EnterpriseDataBuilderChoice {
-	b.ed.Primary = primary
-	return b
-}
-
-// WithTitle sets the Title field of the EnterpriseData entity.
-func (b *EnterpriseDataBuilderChoice) WithTitle(title string) *EnterpriseDataBuilderChoice {
-	b.ed.Title = title
-	return b
-}
-
 // Build returns the EnterpriseData entity.
 func (b *EnterpriseDataBuilderChoice) Build() *EnterpriseData {
 	return b.ed
@@ -389,12 +377,6 @@ func (b *AddressBuilderChoice) WithPostalCode(postalCode string) *AddressBuilder
 // WithCountry sets the Country field of the Address entity.
 func (b *AddressBuilderChoice) WithCountry(country string) *AddressBuilderChoice {
 	b.a.Country = country
-	return b
-}
-
-// WithPrimary sets the Primary field of the Address entity.
-func (b *AddressBuilderChoice) WithPrimary(primary bool) *AddressBuilderChoice {
-	b.a.Primary = primary
 	return b
 }
 

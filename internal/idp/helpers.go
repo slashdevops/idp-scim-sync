@@ -53,9 +53,11 @@ func buildUser(usr *admin.User) *model.User {
 		for _, v := range m {
 			if v.(map[string]interface{})["primary"] != nil {
 				if v.(map[string]interface{})["primary"].(bool) {
-					emails = append(emails, model.EmailBuilder().
-						WithPrimary(v.(map[string]interface{})["primary"].(bool)).
-						Build())
+					emails = append(emails,
+						model.EmailBuilder().
+							WithPrimary(v.(map[string]interface{})["primary"].(bool)).
+							Build(),
+					)
 
 					if v.(map[string]interface{})["address"] != nil {
 						emails[0].Value = v.(map[string]interface{})["address"].(string)
@@ -90,14 +92,12 @@ func buildUser(usr *admin.User) *model.User {
 				mainAddress = model.AddressBuilder().
 					WithFormatted(v.(map[string]interface{})["formatted"].(string)).
 					WithType(v.(map[string]interface{})["type"].(string)).
-					WithPrimary(true).
 					Build()
 				break
 			} else if v.(map[string]interface{})["type"].(string) == "home" {
 				mainAddress = model.AddressBuilder().
 					WithFormatted(v.(map[string]interface{})["formatted"].(string)).
 					WithType(v.(map[string]interface{})["type"].(string)).
-					WithPrimary(true).
 					Build()
 				break
 			}
@@ -153,15 +153,6 @@ func buildUser(usr *admin.User) *model.User {
 					mainOrganization.Organization = v.(map[string]interface{})["name"].(string)
 				}
 
-				if v.(map[string]interface{})["primary"] != nil {
-					mainOrganization.Primary = v.(map[string]interface{})["primary"].(bool)
-				}
-
-				if v.(map[string]interface{})["title"] != nil {
-					title = v.(map[string]interface{})["title"].(string)
-					mainOrganization.Title = title
-				}
-
 				var manager *model.Manager
 				if v.(map[string]interface{})["manager"] != nil {
 					manager = model.ManagerBuilder().
@@ -183,7 +174,7 @@ func buildUser(usr *admin.User) *model.User {
 		displayName = fmt.Sprintf("%s %s", usr.Name.GivenName, usr.Name.FamilyName)
 	}
 
-	createdUser := model.UserBuilder().
+	userModel := model.UserBuilder().
 		WithIPID(usr.Id).
 		WithUserName(usr.PrimaryEmail).
 		WithDisplayName(displayName).
@@ -198,19 +189,19 @@ func buildUser(usr *admin.User) *model.User {
 		Build()
 
 	if emails != nil {
-		createdUser.Emails = emails
+		userModel.Emails = emails
 	}
 
 	if mainAddress != (model.Address{}) {
-		createdUser.Addresses = append(createdUser.Addresses, mainAddress)
+		userModel.Addresses = append(userModel.Addresses, mainAddress)
 	}
 
 	if mainPhone != (model.PhoneNumber{}) {
-		createdUser.PhoneNumbers = append(createdUser.PhoneNumbers, mainPhone)
+		userModel.PhoneNumbers = append(userModel.PhoneNumbers, mainPhone)
 	}
 
 	if usr.Name != nil {
-		createdUser.Name = model.NameBuilder().
+		userModel.Name = model.NameBuilder().
 			WithGivenName(usr.Name.GivenName).
 			WithFamilyName(usr.Name.FamilyName).
 			WithFormatted(usr.Name.FullName).
@@ -218,13 +209,13 @@ func buildUser(usr *admin.User) *model.User {
 	}
 
 	if mainOrganization != (model.EnterpriseData{}) {
-		createdUser.EnterpriseData = &mainOrganization
+		userModel.EnterpriseData = &mainOrganization
 	}
 
 	// recalculate the hashcode because we have modified the user after building it
-	createdUser.SetHashCode()
+	userModel.SetHashCode()
 
-	log.Tracef("idp: buildUser() from: %+v, --> to: %+v", convert.ToJSONString(usr), convert.ToJSONString(createdUser))
+	log.Tracef("idp: buildUser() from: %+v, --> to: %+v", convert.ToJSONString(usr), convert.ToJSONString(userModel))
 
-	return createdUser
+	return userModel
 }

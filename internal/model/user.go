@@ -5,6 +5,8 @@ import (
 	"encoding/gob"
 	"encoding/json"
 	"sort"
+
+	"github.com/slashdevops/idp-scim-sync/internal/deepcopy"
 )
 
 // Name represents a name entity and is used in other entities.
@@ -121,7 +123,6 @@ type Address struct {
 	Region        string `json:"region,omitempty"`
 	PostalCode    string `json:"postalCode,omitempty"`
 	Country       string `json:"country,omitempty"`
-	Primary       bool   `json:"primary,omitempty"`
 }
 
 // MarshalBinary implements the gob.GobEncoder interface for Address entity.
@@ -148,9 +149,6 @@ func (a Address) MarshalBinary() ([]byte, error) {
 		return nil, err
 	}
 	if err := enc.Encode(a.Country); err != nil {
-		return nil, err
-	}
-	if err := enc.Encode(a.Primary); err != nil {
 		return nil, err
 	}
 
@@ -180,9 +178,6 @@ func (a *Address) UnmarshalBinary(data []byte) error {
 		return err
 	}
 	if err := dec.Decode(&a.Country); err != nil {
-		return err
-	}
-	if err := dec.Decode(&a.Primary); err != nil {
 		return err
 	}
 
@@ -263,9 +258,7 @@ type EnterpriseData struct {
 	Organization   string   `json:"organization,omitempty"`
 	Division       string   `json:"division,omitempty"`
 	Department     string   `json:"department,omitempty"`
-	Title          string   `json:"title,omitempty"`
 	Manager        *Manager `json:"manager,omitempty"`
-	Primary        bool     `json:"primary,omitempty"`
 }
 
 // MarshalBinary implements the gob.GobEncoder interface for EnterpriseData entity.
@@ -286,12 +279,6 @@ func (ed EnterpriseData) MarshalBinary() ([]byte, error) {
 		return nil, err
 	}
 	if err := enc.Encode(ed.Department); err != nil {
-		return nil, err
-	}
-	if err := enc.Encode(ed.Title); err != nil {
-		return nil, err
-	}
-	if err := enc.Encode(ed.Primary); err != nil {
 		return nil, err
 	}
 
@@ -321,12 +308,6 @@ func (ed *EnterpriseData) UnmarshalBinary(data []byte) error {
 		return err
 	}
 	if err := dec.Decode(&ed.Department); err != nil {
-		return err
-	}
-	if err := dec.Decode(&ed.Title); err != nil {
-		return err
-	}
-	if err := dec.Decode(&ed.Primary); err != nil {
 		return err
 	}
 
@@ -491,10 +472,84 @@ func (u *User) UnmarshalBinary(data []byte) error {
 	return nil
 }
 
+// func (u *User) DeepCopy() User {
+// 	var copiedName *Name
+// 	if u.Name != nil {
+// 		copiedName = &Name{
+// 			Formatted:       u.Name.Formatted,
+// 			FamilyName:      u.Name.FamilyName,
+// 			GivenName:       u.Name.GivenName,
+// 			MiddleName:      u.Name.MiddleName,
+// 			HonorificPrefix: u.Name.HonorificPrefix,
+// 			HonorificSuffix: u.Name.HonorificSuffix,
+// 		}
+// 	}
+
+// 	var copiedEnterpriseData *EnterpriseData
+// 	if u.EnterpriseData != nil {
+// 		copiedEnterpriseData = &EnterpriseData{
+// 			EmployeeNumber: u.EnterpriseData.EmployeeNumber,
+// 			CostCenter:     u.EnterpriseData.CostCenter,
+// 			Organization:   u.EnterpriseData.Organization,
+// 			Division:       u.EnterpriseData.Division,
+// 			Department:     u.EnterpriseData.Department,
+// 			Title:          u.EnterpriseData.Title,
+// 			Primary:        u.EnterpriseData.Primary,
+// 		}
+
+// 		if u.EnterpriseData.Manager != nil {
+// 			copiedEnterpriseData.Manager = &Manager{
+// 				Value: u.EnterpriseData.Manager.Value,
+// 				Ref:   u.EnterpriseData.Manager.Ref,
+// 			}
+// 		}
+// 	}
+
+// 	copiedUser := User{
+// 		HashCode:          u.HashCode,
+// 		IPID:              u.IPID,
+// 		SCIMID:            u.SCIMID,
+// 		UserName:          u.UserName,
+// 		DisplayName:       u.DisplayName,
+// 		NickName:          u.NickName,
+// 		ProfileURL:        u.ProfileURL,
+// 		Title:             u.Title,
+// 		UserType:          u.UserType,
+// 		PreferredLanguage: u.PreferredLanguage,
+// 		Locale:            u.Locale,
+// 		Timezone:          u.Timezone,
+// 		Active:            u.Active,
+// 		// pointers
+// 		Name:           copiedName,
+// 		EnterpriseData: copiedEnterpriseData,
+// 	}
+
+// 	if len(u.Emails) != 0 {
+// 		copiedEmails := make([]Email, len(u.Emails))
+// 		copy(copiedEmails, u.Emails)
+// 		copiedUser.Emails = copiedEmails
+// 	}
+
+// 	if len(u.Addresses) != 0 {
+// 		copiedAddresses := make([]Address, len(u.Addresses))
+// 		copy(copiedAddresses, u.Addresses)
+// 		copiedUser.Addresses = copiedAddresses
+// 	}
+
+// 	if len(u.PhoneNumbers) != 0 {
+// 		copiedPhoneNumbers := make([]PhoneNumber, len(u.PhoneNumbers))
+// 		copy(copiedPhoneNumbers, u.PhoneNumbers)
+// 		copiedUser.PhoneNumbers = copiedPhoneNumbers
+// 	}
+
+// 	return copiedUser
+// }
+
 // SetHashCode is a helper function to avoid errors when calculating hash code.
 // this method discards fields that are not used in the hash calculation.
 // only fields coming from the Identity Provider are used.
 func (u *User) SetHashCode() {
+	// c := u.DeepCopy()
 	u.HashCode = Hash(u)
 }
 
@@ -568,19 +623,19 @@ func (ur *UsersResult) SetHashCode() {
 	// this copy is necessary to avoid changing the original data
 	// with the sort.Slice function and always be consistent
 	// when calculating the hash code
-	c := make([]*User, len(ur.Resources))
-	copy(c, ur.Resources)
+	c := deepcopy.SliceOfPointers(ur.Resources)
 
 	// only these fields are used in the hash calculation
-	copyStruct := &UsersResult{
+	copiedStruct := &UsersResult{
 		Items:     ur.Items,
 		Resources: c,
 	}
 
 	// order the resources by their hash code to be consistency always
-	sort.Slice(copyStruct.Resources, func(i, j int) bool {
-		return copyStruct.Resources[i].HashCode < copyStruct.Resources[j].HashCode
+	// NOTE: review this, it may be a performance issue and may not be necessary
+	sort.Slice(copiedStruct.Resources, func(i, j int) bool {
+		return copiedStruct.Resources[i].HashCode < copiedStruct.Resources[j].HashCode
 	})
 
-	ur.HashCode = Hash(copyStruct)
+	ur.HashCode = Hash(copiedStruct)
 }

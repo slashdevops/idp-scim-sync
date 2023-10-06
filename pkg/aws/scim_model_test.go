@@ -65,7 +65,6 @@ func TestUser_Validate(t *testing.T) {
 						PostalCode:    "91608",
 						Country:       "USA",
 						Formatted:     "100 Universal City Plaza Hollywood, CA 91608 USA",
-						Primary:       true,
 					},
 				},
 				PhoneNumbers: []PhoneNumber{
@@ -126,7 +125,6 @@ func TestUser_Validate(t *testing.T) {
 						PostalCode:    "91608",
 						Country:       "USA",
 						Formatted:     "100 Universal City Plaza Hollywood, CA 91608 USA",
-						Primary:       true,
 					},
 				},
 				PhoneNumbers: []PhoneNumber{
@@ -187,7 +185,6 @@ func TestUser_Validate(t *testing.T) {
 						PostalCode:    "91608",
 						Country:       "USA",
 						Formatted:     "100 Universal City Plaza Hollywood, CA 91608 USA",
-						Primary:       true,
 					},
 				},
 				PhoneNumbers: []PhoneNumber{
@@ -248,7 +245,6 @@ func TestUser_Validate(t *testing.T) {
 						PostalCode:    "91608",
 						Country:       "USA",
 						Formatted:     "100 Universal City Plaza Hollywood, CA 91608 USA",
-						Primary:       true,
 					},
 				},
 				PhoneNumbers: []PhoneNumber{
@@ -309,7 +305,6 @@ func TestUser_Validate(t *testing.T) {
 						PostalCode:    "91608",
 						Country:       "USA",
 						Formatted:     "100 Universal City Plaza Hollywood, CA 91608 USA",
-						Primary:       true,
 					},
 				},
 				PhoneNumbers: []PhoneNumber{
@@ -364,7 +359,6 @@ func TestUser_Validate(t *testing.T) {
 						PostalCode:    "91608",
 						Country:       "USA",
 						Formatted:     "100 Universal City Plaza Hollywood, CA 91608 USA",
-						Primary:       true,
 					},
 				},
 				PhoneNumbers: []PhoneNumber{
@@ -431,7 +425,6 @@ func TestUser_Validate(t *testing.T) {
 						PostalCode:    "91608",
 						Country:       "USA",
 						Formatted:     "100 Universal City Plaza Hollywood, CA 91608 USA",
-						Primary:       true,
 					},
 				},
 				PhoneNumbers: []PhoneNumber{
@@ -493,7 +486,6 @@ func TestUser_Validate(t *testing.T) {
 						PostalCode:    "91608",
 						Country:       "USA",
 						Formatted:     "100 Universal City Plaza Hollywood, CA 91608 USA",
-						Primary:       true,
 					},
 				},
 				PhoneNumbers: []PhoneNumber{
@@ -555,7 +547,6 @@ func TestUser_Validate(t *testing.T) {
 						PostalCode:    "91608",
 						Country:       "USA",
 						Formatted:     "100 Universal City Plaza Hollywood, CA 91608 USA",
-						Primary:       true,
 					},
 					{
 						Type:          "home",
@@ -565,7 +556,6 @@ func TestUser_Validate(t *testing.T) {
 						PostalCode:    "91608",
 						Country:       "USA",
 						Formatted:     "100 Universal City Plaza Hollywood, CA 91608 USA",
-						Primary:       false,
 					},
 				},
 				PhoneNumbers: []PhoneNumber{
@@ -627,7 +617,6 @@ func TestUser_Validate(t *testing.T) {
 						PostalCode:    "91608",
 						Country:       "USA",
 						Formatted:     "100 Universal City Plaza Hollywood, CA 91608 USA",
-						Primary:       true,
 					},
 				},
 				PhoneNumbers: []PhoneNumber{
