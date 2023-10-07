@@ -13,6 +13,31 @@ func buildUser(user *aws.User) *model.User {
 		return nil
 	}
 
+	if user.ID == "" {
+		log.Warn("scim: User ID is empty")
+		return nil
+	}
+
+	if user.Name == nil {
+		log.Warn("scim: User name is nil")
+		return nil
+	}
+
+	if user.Name.GivenName == "" {
+		log.Warn("scim: User given name is empty")
+		return nil
+	}
+
+	if user.Name.FamilyName == "" {
+		log.Warn("scim: User family name is empty")
+		return nil
+	}
+
+	if user.Emails == nil {
+		log.Warn("scim: User emails is nil, setting primary email as the only email")
+		return nil
+	}
+
 	var emails []model.Email
 	if user.Emails != nil {
 		for _, email := range user.Emails {
@@ -33,13 +58,13 @@ func buildUser(user *aws.User) *model.User {
 		if len(user.Addresses) > 0 {
 			addresses = append(addresses,
 				model.AddressBuilder().
-					WithType(user.Addresses[0].Type).
 					WithFormatted(user.Addresses[0].Formatted).
-					WithStreetAddress(user.Addresses[0].StreetAddress).
-					WithLocality(user.Addresses[0].Locality).
-					WithRegion(user.Addresses[0].Region).
-					WithPostalCode(user.Addresses[0].PostalCode).
-					WithCountry(user.Addresses[0].Country).
+					WithType(user.Addresses[0].Type).
+					// WithStreetAddress(user.Addresses[0].StreetAddress).
+					// WithLocality(user.Addresses[0].Locality).
+					// WithRegion(user.Addresses[0].Region).
+					// WithPostalCode(user.Addresses[0].PostalCode).
+					// WithCountry(user.Addresses[0].Country).
 					Build(),
 			)
 		}
@@ -47,14 +72,12 @@ func buildUser(user *aws.User) *model.User {
 
 	var phoneNumbers []model.PhoneNumber
 	if user.PhoneNumbers != nil {
-		for _, phoneNumber := range user.PhoneNumbers {
-			phoneNumbers = append(phoneNumbers,
-				model.PhoneNumberBuilder().
-					WithType(phoneNumber.Type).
-					WithValue(phoneNumber.Value).
-					Build(),
-			)
-		}
+		phoneNumbers = append(phoneNumbers,
+			model.PhoneNumberBuilder().
+				WithValue(user.PhoneNumbers[0].Value).
+				WithType(user.PhoneNumbers[0].Type).
+				Build(),
+		)
 	}
 
 	var enterpriseData *model.EnterpriseData
@@ -82,12 +105,12 @@ func buildUser(user *aws.User) *model.User {
 	var name *model.Name
 	if user.Name != nil {
 		name = model.NameBuilder().
-			WithFamilyName(user.Name.FamilyName).
 			WithGivenName(user.Name.GivenName).
+			WithFamilyName(user.Name.FamilyName).
 			WithFormatted(user.Name.Formatted).
-			WithMiddleName(user.Name.MiddleName).
-			WithHonorificPrefix(user.Name.HonorificPrefix).
-			WithHonorificSuffix(user.Name.HonorificSuffix).
+			// WithMiddleName(user.Name.MiddleName).
+			// WithHonorificPrefix(user.Name.HonorificPrefix).
+			// WithHonorificSuffix(user.Name.HonorificSuffix).
 			Build()
 	}
 
@@ -104,7 +127,7 @@ func buildUser(user *aws.User) *model.User {
 		// WithLocale("Not Provided").
 		// WithTimezone("Not Provided").
 		WithActive(user.Active).
-		// arrays
+		// Arrays
 		WithEmails(emails).
 		WithAddresses(addresses).
 		WithPhoneNumbers(phoneNumbers).

@@ -288,6 +288,15 @@ func TestGetUsers(t *testing.T) {
 						WithDisplayName("user 2").
 						WithUserName("user.2@mail.com").
 						WithActive(false).
+						WithEmails(
+							[]model.Email{
+								model.EmailBuilder().
+									WithValue("user.2@mail.com").
+									WithType("work").
+									WithPrimary(true).
+									Build(),
+							},
+						).
 						Build(),
 				},
 			},
