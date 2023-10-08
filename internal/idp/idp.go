@@ -187,40 +187,18 @@ func (i *IdentityProvider) GetUsersByGroupsMembers(ctx context.Context, gmr *mod
 	pUsers := make([]*model.User, 0, len(gmr.Resources))
 	for _, groupMembers := range gmr.Resources {
 		for _, member := range groupMembers.Resources {
+			if _, ok := uniqUsers[member.Email]; !ok {
+				uniqUsers[member.Email] = struct{}{}
 
-			// TODO: next proposed improvement, we don't need to walk over all the members of all the groups
-			// we can use the uniqUsers map to avoid the repetition of the same user email
-			// as soon the user appears in one of the groups, we can avoid the rest of the groups
-			// This will reduce the calls to the Identity Provider API with GetUser() method
-			// if uniqUsers[member.Email]; !ok {
-			// 	uniqUsers[member.Email] = struct{}{}
+				u, err := i.ps.GetUser(ctx, member.Email)
+				if err != nil {
+					return nil, fmt.Errorf("idp: error getting user: %+v, email: %s, error: %w", member.IPID, member.Email, err)
+				}
+				gu := buildUser(u)
 
-			// 	u, err := i.ps.GetUser(ctx, member.Email)
-			// 	if err != nil {
-			// 		return nil, fmt.Errorf("idp: error getting user: %+v, email: %s, error: %w", member.IPID, member.Email, err)
-			// 	}
-			// 	gu := buildUser(u)
-
-			// 	log.Tracef("idp: user: %+v", convert.ToJSONString(gu))
-			// 	pUsers = append(pUsers, gu)
-
-			// }
-
-			u, err := i.ps.GetUser(ctx, member.Email)
-			if err != nil {
-				return nil, fmt.Errorf("idp: error getting user: %+v, email: %s, error: %w", member.IPID, member.Email, err)
-			}
-			gu := buildUser(u)
-
-			log.Tracef("idp: user: %+v", convert.ToJSONString(gu))
-
-			// this is a hack to avoid the second, third, etc repetition of the same user email
-			primaryEmail := gu.GetPrimaryEmailAddress()
-			if _, ok := uniqUsers[primaryEmail]; !ok {
-				uniqUsers[primaryEmail] = struct{}{}
+				log.Tracef("idp: GetUsersByGroupsMembers, user: %+v", convert.ToJSONString(gu))
 				pUsers = append(pUsers, gu)
 			}
-
 		}
 	}
 
