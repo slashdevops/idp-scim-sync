@@ -338,12 +338,6 @@ func AddressBuilder() *AddressBuilderChoice {
 	}
 }
 
-// WithType sets the Type field of the Address entity.
-func (b *AddressBuilderChoice) WithType(addressType string) *AddressBuilderChoice {
-	b.a.Type = addressType
-	return b
-}
-
 // WithFormatted sets the Formatted field of the Address entity.
 func (b *AddressBuilderChoice) WithFormatted(formatted string) *AddressBuilderChoice {
 	b.a.Formatted = formatted

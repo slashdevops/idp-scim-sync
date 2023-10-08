@@ -1,6 +1,8 @@
 package scim
 
 import (
+	"strings"
+
 	log "github.com/sirupsen/logrus"
 	"github.com/slashdevops/idp-scim-sync/internal/convert"
 	"github.com/slashdevops/idp-scim-sync/internal/model"
@@ -45,8 +47,8 @@ func buildUser(user *aws.User) *model.User {
 				emails = append(emails,
 					model.EmailBuilder().
 						WithPrimary(email.Primary).
-						WithType(email.Type).
-						WithValue(email.Value).
+						WithType(strings.TrimSpace(email.Type)).
+						WithValue(strings.TrimSpace(email.Value)).
 						Build(),
 				)
 			}
@@ -58,13 +60,12 @@ func buildUser(user *aws.User) *model.User {
 		if len(user.Addresses) > 0 {
 			addresses = append(addresses,
 				model.AddressBuilder().
-					WithFormatted(user.Addresses[0].Formatted).
-					WithType(user.Addresses[0].Type).
-					// WithStreetAddress(user.Addresses[0].StreetAddress).
-					// WithLocality(user.Addresses[0].Locality).
-					// WithRegion(user.Addresses[0].Region).
-					// WithPostalCode(user.Addresses[0].PostalCode).
-					// WithCountry(user.Addresses[0].Country).
+					WithFormatted(strings.TrimSpace(user.Addresses[0].Formatted)).
+					WithStreetAddress(user.Addresses[0].StreetAddress).
+					WithLocality(user.Addresses[0].Locality).
+					WithRegion(user.Addresses[0].Region).
+					WithPostalCode(user.Addresses[0].PostalCode).
+					WithCountry(user.Addresses[0].Country).
 					Build(),
 			)
 		}
@@ -74,8 +75,8 @@ func buildUser(user *aws.User) *model.User {
 	if user.PhoneNumbers != nil {
 		phoneNumbers = append(phoneNumbers,
 			model.PhoneNumberBuilder().
-				WithValue(user.PhoneNumbers[0].Value).
-				WithType(user.PhoneNumbers[0].Type).
+				WithValue(strings.TrimSpace(user.PhoneNumbers[0].Value)).
+				WithType(strings.TrimSpace(user.PhoneNumbers[0].Type)).
 				Build(),
 		)
 	}
@@ -86,17 +87,17 @@ func buildUser(user *aws.User) *model.User {
 		var manager *model.Manager
 		if user.SchemaEnterpriseUser.Manager != nil {
 			manager = model.ManagerBuilder().
-				WithValue(user.SchemaEnterpriseUser.Manager.Value).
-				WithRef(user.SchemaEnterpriseUser.Manager.Ref).
+				WithValue(strings.TrimSpace(user.SchemaEnterpriseUser.Manager.Value)).
+				WithRef(strings.TrimSpace(user.SchemaEnterpriseUser.Manager.Ref)).
 				Build()
 		}
 
 		enterpriseData = model.EnterpriseDataBuilder().
-			WithEmployeeNumber(user.SchemaEnterpriseUser.EmployeeNumber).
-			WithCostCenter(user.SchemaEnterpriseUser.CostCenter).
-			WithOrganization(user.SchemaEnterpriseUser.Organization).
-			WithDivision(user.SchemaEnterpriseUser.Division).
-			WithDepartment(user.SchemaEnterpriseUser.Department).
+			WithEmployeeNumber(strings.TrimSpace(user.SchemaEnterpriseUser.EmployeeNumber)).
+			WithCostCenter(strings.TrimSpace(user.SchemaEnterpriseUser.CostCenter)).
+			WithOrganization(strings.TrimSpace(user.SchemaEnterpriseUser.Organization)).
+			WithDivision(strings.TrimSpace(user.SchemaEnterpriseUser.Division)).
+			WithDepartment(strings.TrimSpace(user.SchemaEnterpriseUser.Department)).
 			WithManager(manager).
 			Build()
 
@@ -105,25 +106,25 @@ func buildUser(user *aws.User) *model.User {
 	var name *model.Name
 	if user.Name != nil {
 		name = model.NameBuilder().
-			WithGivenName(user.Name.GivenName).
-			WithFamilyName(user.Name.FamilyName).
-			WithFormatted(user.Name.Formatted).
-			// WithMiddleName(user.Name.MiddleName).
-			// WithHonorificPrefix(user.Name.HonorificPrefix).
-			// WithHonorificSuffix(user.Name.HonorificSuffix).
+			WithGivenName(strings.TrimSpace(user.Name.GivenName)).
+			WithFamilyName(strings.TrimSpace(user.Name.FamilyName)).
+			WithFormatted(strings.TrimSpace(user.Name.Formatted)).
+			WithMiddleName(user.Name.MiddleName).
+			WithHonorificPrefix(user.Name.HonorificPrefix).
+			WithHonorificSuffix(user.Name.HonorificSuffix).
 			Build()
 	}
 
 	userModel := model.UserBuilder().
-		WithIPID(user.ExternalID).
-		WithSCIMID(user.ID).
-		WithUserName(user.UserName).
-		WithDisplayName(user.DisplayName).
+		WithIPID(strings.TrimSpace(user.ExternalID)).
+		WithSCIMID(strings.TrimSpace(user.ID)).
+		WithUserName(strings.TrimSpace(user.UserName)).
+		WithDisplayName(strings.TrimSpace(user.DisplayName)).
 		// WithNickName("Not Provided").
 		// WithProfileURL("Not Provided").
-		WithUserType(user.UserType).
-		WithTitle(user.Title).
-		WithPreferredLanguage(user.PreferredLanguage).
+		WithTitle(strings.TrimSpace(user.Title)).
+		WithUserType(strings.TrimSpace(user.UserType)).
+		WithPreferredLanguage(strings.TrimSpace(user.PreferredLanguage)).
 		// WithLocale("Not Provided").
 		// WithTimezone("Not Provided").
 		WithActive(user.Active).
@@ -136,7 +137,7 @@ func buildUser(user *aws.User) *model.User {
 		WithEnterpriseData(enterpriseData).
 		Build()
 
-	log.Tracef("scim: buildUser() from: %+v, --> to: %+v", convert.ToJSONString(user), convert.ToJSONString(userModel))
+	log.Tracef("scim: buildUser() from: \n%s, \n--> to:\n %s\n", convert.ToJSONString(user), convert.ToJSONString(userModel))
 
 	return userModel
 }
@@ -186,7 +187,6 @@ func buildCreateUserRequest(user *model.User) *aws.CreateUserRequest {
 		userRequest.Addresses = []aws.Address{
 			{
 				Formatted:     user.Addresses[0].Formatted,
-				Type:          user.Addresses[0].Type,
 				StreetAddress: user.Addresses[0].StreetAddress,
 				Locality:      user.Addresses[0].Locality,
 				Region:        user.Addresses[0].Region,
@@ -217,6 +217,7 @@ func buildCreateUserRequest(user *model.User) *aws.CreateUserRequest {
 		if user.EnterpriseData.Manager != nil {
 			userRequest.SchemaEnterpriseUser.Manager = &aws.Manager{
 				Value: user.EnterpriseData.Manager.Value,
+				Ref:   user.EnterpriseData.Manager.Ref,
 			}
 		}
 	}
@@ -272,7 +273,6 @@ func buildPutUserRequest(user *model.User) *aws.PutUserRequest {
 		userRequest.Addresses = []aws.Address{
 			{
 				Formatted:     user.Addresses[0].Formatted,
-				Type:          user.Addresses[0].Type,
 				StreetAddress: user.Addresses[0].StreetAddress,
 				Locality:      user.Addresses[0].Locality,
 				Region:        user.Addresses[0].Region,
@@ -303,6 +303,7 @@ func buildPutUserRequest(user *model.User) *aws.PutUserRequest {
 		if user.EnterpriseData.Manager != nil {
 			userRequest.SchemaEnterpriseUser.Manager = &aws.Manager{
 				Value: user.EnterpriseData.Manager.Value,
+				Ref:   user.EnterpriseData.Manager.Ref,
 			}
 		}
 	}

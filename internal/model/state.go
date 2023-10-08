@@ -204,8 +204,8 @@ func (s *State) SetHashCode() {
 	users := make([]*User, 0)
 	for _, user := range s.Resources.Users.Resources {
 		e := UserBuilder().
-			WithSCIMID(user.SCIMID).
 			WithIPID(user.IPID).
+			WithSCIMID(user.SCIMID).
 			WithUserName(user.UserName).
 			WithDisplayName(user.DisplayName).
 			// WithNickName("Not Provided").

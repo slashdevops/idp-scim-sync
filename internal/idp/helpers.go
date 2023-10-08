@@ -2,6 +2,7 @@ package idp
 
 import (
 	"fmt"
+	"strings"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/slashdevops/idp-scim-sync/internal/convert"
@@ -45,12 +46,12 @@ func buildUser(usr *admin.User) *model.User {
 
 					var emailValue string
 					if v.(map[string]interface{})["address"] != nil {
-						emailValue = v.(map[string]interface{})["address"].(string)
+						emailValue = strings.TrimSpace(v.(map[string]interface{})["address"].(string))
 					}
 
 					var emailType string
 					if v.(map[string]interface{})["type"] != nil {
-						emailType = v.(map[string]interface{})["type"].(string)
+						emailType = strings.TrimSpace(v.(map[string]interface{})["type"].(string))
 					}
 
 					emails = append(emails,
@@ -73,7 +74,7 @@ func buildUser(usr *admin.User) *model.User {
 			model.EmailBuilder().
 				WithPrimary(true).
 				WithType("work").
-				WithValue(usr.PrimaryEmail).
+				WithValue(strings.TrimSpace(usr.PrimaryEmail)).
 				Build(),
 		)
 	}
@@ -83,7 +84,7 @@ func buildUser(usr *admin.User) *model.User {
 	if m, ok := usr.Languages.([]interface{}); ok {
 		for _, v := range m {
 			if v.(map[string]interface{})["preference"].(string) == "preferred" {
-				preferredLanguage = v.(map[string]interface{})["languageCode"].(string)
+				preferredLanguage = strings.TrimSpace(v.(map[string]interface{})["languageCode"].(string))
 				break
 			}
 		}
@@ -96,15 +97,13 @@ func buildUser(usr *admin.User) *model.User {
 			if v.(map[string]interface{})["type"].(string) == "work" {
 				addresses = append(addresses,
 					model.AddressBuilder().
-						WithFormatted(v.(map[string]interface{})["formatted"].(string)).
-						WithType(v.(map[string]interface{})["type"].(string)).
+						WithFormatted(strings.TrimSpace(v.(map[string]interface{})["formatted"].(string))).
 						Build())
 				break
 			} else if v.(map[string]interface{})["type"].(string) == "home" {
 				addresses = append(addresses,
 					model.AddressBuilder().
-						WithFormatted(v.(map[string]interface{})["formatted"].(string)).
-						WithType(v.(map[string]interface{})["type"].(string)).
+						WithFormatted(strings.TrimSpace(v.(map[string]interface{})["formatted"].(string))).
 						Build())
 				break
 			}
@@ -118,15 +117,15 @@ func buildUser(usr *admin.User) *model.User {
 			if v.(map[string]interface{})["type"].(string) == "work" {
 				phoneNumbers = append(phoneNumbers,
 					model.PhoneNumberBuilder().
-						WithValue(v.(map[string]interface{})["value"].(string)).
-						WithType(v.(map[string]interface{})["type"].(string)).
+						WithValue(strings.TrimSpace(v.(map[string]interface{})["value"].(string))).
+						WithType(strings.TrimSpace(v.(map[string]interface{})["type"].(string))).
 						Build())
 				break
 			} else if v.(map[string]interface{})["type"].(string) == "home" {
 				phoneNumbers = append(phoneNumbers,
 					model.PhoneNumberBuilder().
-						WithValue(v.(map[string]interface{})["value"].(string)).
-						WithType(v.(map[string]interface{})["type"].(string)).
+						WithValue(strings.TrimSpace(v.(map[string]interface{})["value"].(string))).
+						WithType(strings.TrimSpace(v.(map[string]interface{})["type"].(string))).
 						Build())
 				break
 			}
@@ -139,8 +138,8 @@ func buildUser(usr *admin.User) *model.User {
 		for _, v := range m {
 			if v.(map[string]interface{})["type"].(string) == "manager" {
 				manager = model.ManagerBuilder().
-					WithValue(v.(map[string]interface{})["value"].(string)).
-					WithRef(v.(map[string]interface{})["customType"].(string)).
+					WithValue(strings.TrimSpace(v.(map[string]interface{})["value"].(string))).
+					WithRef(strings.TrimSpace(v.(map[string]interface{})["customType"].(string))).
 					Build()
 				break
 			}
@@ -156,27 +155,31 @@ func buildUser(usr *admin.User) *model.User {
 
 				var employeeNumber string
 				if v.(map[string]interface{})["employeeNumber"] != nil {
-					employeeNumber = v.(map[string]interface{})["employeeNumber"].(string)
+					employeeNumber = strings.TrimSpace(v.(map[string]interface{})["employeeNumber"].(string))
 				}
 
 				var costCenter string
 				if v.(map[string]interface{})["costCenter"] != nil {
-					costCenter = v.(map[string]interface{})["costCenter"].(string)
+					costCenter = strings.TrimSpace(v.(map[string]interface{})["costCenter"].(string))
 				}
 
 				var organization string
 				if v.(map[string]interface{})["name"] != nil {
-					organization = v.(map[string]interface{})["name"].(string)
+					organization = strings.TrimSpace(v.(map[string]interface{})["name"].(string))
 				}
 
 				var division string
 				if v.(map[string]interface{})["division"] != nil {
-					division = v.(map[string]interface{})["division"].(string)
+					division = strings.TrimSpace(v.(map[string]interface{})["division"].(string))
 				}
 
 				var department string
 				if v.(map[string]interface{})["department"] != nil {
-					department = v.(map[string]interface{})["department"].(string)
+					department = strings.TrimSpace(v.(map[string]interface{})["department"].(string))
+				}
+
+				if v.(map[string]interface{})["title"] != nil {
+					title = strings.TrimSpace(v.(map[string]interface{})["title"].(string))
 				}
 
 				mainOrganization = model.EnterpriseDataBuilder().
@@ -202,20 +205,20 @@ func buildUser(usr *admin.User) *model.User {
 	var name *model.Name
 	if usr.Name != nil {
 		name = model.NameBuilder().
-			WithGivenName(usr.Name.GivenName).
-			WithFamilyName(usr.Name.FamilyName).
-			WithFormatted(usr.Name.FullName).
+			WithGivenName(strings.TrimSpace(usr.Name.GivenName)).
+			WithFamilyName(strings.TrimSpace(usr.Name.FamilyName)).
+			WithFormatted(strings.TrimSpace(usr.Name.FullName)).
 			Build()
 	}
 
 	userModel := model.UserBuilder().
-		WithIPID(usr.Id).
-		WithUserName(usr.PrimaryEmail).
-		WithDisplayName(displayName).
+		WithIPID(strings.TrimSpace(usr.Id)).
+		WithUserName(strings.TrimSpace(usr.PrimaryEmail)).
+		WithDisplayName(strings.TrimSpace(displayName)).
 		// WithNickName("Not Provided").
 		// WithProfileURL("Not Provided").
 		WithTitle(title).
-		WithUserType(usr.Kind).
+		WithUserType(strings.TrimSpace(usr.Kind)).
 		WithPreferredLanguage(preferredLanguage).
 		// WithLocale("Not Provided").
 		// WithTimezone("Not Provided").
@@ -229,7 +232,7 @@ func buildUser(usr *admin.User) *model.User {
 		WithEnterpriseData(mainOrganization).
 		Build()
 
-	log.Tracef("idp: buildUser() from: %+v, --> to: %+v", convert.ToJSONString(usr), convert.ToJSONString(userModel))
+	log.Tracef("idp: buildUser() from: \n%s, \n--> to:\n %s\n", convert.ToJSONString(usr), convert.ToJSONString(userModel))
 
 	return userModel
 }

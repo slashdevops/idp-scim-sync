@@ -110,6 +110,7 @@ func Test_buildUser(t *testing.T) {
 				WithIPID("id").
 				WithUserName("user@mail.com").
 				WithUserType("kind").
+				WithTitle("title").
 				WithEnterpriseData(
 					model.EnterpriseDataBuilder().
 						WithCostCenter("costCenter").
@@ -128,7 +129,6 @@ func Test_buildUser(t *testing.T) {
 				WithAddress(
 					model.AddressBuilder().
 						WithFormatted("formatted work").
-						WithType("work").
 						Build(),
 				).
 				Build(),
@@ -173,6 +173,7 @@ func Test_buildUser(t *testing.T) {
 				WithIPID("id").
 				WithUserName("primaryEmail").
 				WithUserType("kind").
+				WithTitle("title").
 				WithEnterpriseData(
 					model.EnterpriseDataBuilder().
 						WithCostCenter("costCenter").
@@ -191,7 +192,6 @@ func Test_buildUser(t *testing.T) {
 				WithAddress(
 					model.AddressBuilder().
 						WithFormatted("formatted work").
-						WithType("work").
 						Build(),
 				).
 				Build(),

@@ -124,7 +124,6 @@ func TestAddress_GobEncode(t *testing.T) {
 				Region:        "region",
 				PostalCode:    "postalCode",
 				Country:       "country",
-				Type:          "type",
 			},
 		},
 		{
@@ -331,7 +330,7 @@ func TestUser_GobEncode(t *testing.T) {
 				Locale:            "locale",
 				Timezone:          "timezone",
 				Emails:            []Email{{Value: "email value", Type: "email type", Primary: true}},
-				Addresses:         []Address{{Formatted: "formatted", StreetAddress: "street address", Locality: "locality", Region: "region", PostalCode: "postal code", Country: "country", Type: "type"}},
+				Addresses:         []Address{{Formatted: "formatted", StreetAddress: "street address", Locality: "locality", Region: "region", PostalCode: "postal code", Country: "country"}},
 				PhoneNumbers:      []PhoneNumber{{Value: "phone value", Type: "phone type"}},
 				Name: &Name{
 					Formatted:       "formatted",
@@ -499,7 +498,7 @@ func TestUser_SetHashCode_consistency(t *testing.T) {
 			ProfileURL:        "https://idp.example.com/idp/user/1",
 			PreferredLanguage: "en-US",
 			PhoneNumbers:      []PhoneNumber{{Value: "value", Type: "type"}},
-			Addresses:         []Address{{Formatted: "formatted", StreetAddress: "street address", Locality: "locality", Region: "region", PostalCode: "postal code", Country: "country", Type: "type"}},
+			Addresses:         []Address{{Formatted: "formatted", StreetAddress: "street address", Locality: "locality", Region: "region", PostalCode: "postal code", Country: "country"}},
 			EnterpriseData: &EnterpriseData{
 				EmployeeNumber: "employeeNumber",
 				CostCenter:     "costCenter",
@@ -577,7 +576,7 @@ func TestUser_SetHashCode_consistency(t *testing.T) {
 			ProfileURL:        "https://idp.example.com/idp/user/1",
 			PreferredLanguage: "en-US",
 			PhoneNumbers:      []PhoneNumber{{Value: "value", Type: "type"}},
-			Addresses:         []Address{{Formatted: "formatted", StreetAddress: "street address", Locality: "locality", Region: "region", PostalCode: "postal code", Country: "country", Type: "type"}},
+			Addresses:         []Address{{Formatted: "formatted", StreetAddress: "street address", Locality: "locality", Region: "region", PostalCode: "postal code", Country: "country"}},
 			EnterpriseData: &EnterpriseData{
 				EmployeeNumber: "employeeNumber",
 				CostCenter:     "costCenter",

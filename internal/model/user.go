@@ -116,7 +116,6 @@ func (e *Email) UnmarshalBinary(data []byte) error {
 
 // Addresses represent an address entity
 type Address struct {
-	Type          string `json:"type,omitempty"`
 	Formatted     string `json:"formatted,omitempty"`
 	StreetAddress string `json:"streetAddress,omitempty"`
 	Locality      string `json:"locality,omitempty"`
@@ -130,9 +129,6 @@ func (a Address) MarshalBinary() ([]byte, error) {
 	buf := new(bytes.Buffer)
 	enc := gob.NewEncoder(buf)
 
-	if err := enc.Encode(a.Type); err != nil {
-		return nil, err
-	}
 	if err := enc.Encode(a.Formatted); err != nil {
 		return nil, err
 	}
@@ -159,9 +155,6 @@ func (a Address) MarshalBinary() ([]byte, error) {
 func (a *Address) UnmarshalBinary(data []byte) error {
 	dec := gob.NewDecoder(bytes.NewReader(data))
 
-	if err := dec.Decode(&a.Type); err != nil {
-		return err
-	}
 	if err := dec.Decode(&a.Formatted); err != nil {
 		return err
 	}

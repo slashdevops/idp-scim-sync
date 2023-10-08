@@ -64,7 +64,6 @@ type Email struct {
 
 // Addresses represent an address entity
 type Address struct {
-	Type          string `json:"type,omitempty"`
 	Formatted     string `json:"formatted,omitempty"`
 	StreetAddress string `json:"streetAddress,omitempty"`
 	Locality      string `json:"locality,omitempty"`

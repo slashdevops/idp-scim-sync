@@ -58,7 +58,6 @@ func TestUser_Validate(t *testing.T) {
 				},
 				Addresses: []Address{
 					{
-						Type:          "work",
 						StreetAddress: "100 Universal City Plaza",
 						Locality:      "Hollywood",
 						Region:        "CA",
@@ -118,7 +117,6 @@ func TestUser_Validate(t *testing.T) {
 				},
 				Addresses: []Address{
 					{
-						Type:          "work",
 						StreetAddress: "100 Universal City Plaza",
 						Locality:      "Hollywood",
 						Region:        "CA",
@@ -178,7 +176,6 @@ func TestUser_Validate(t *testing.T) {
 				},
 				Addresses: []Address{
 					{
-						Type:          "work",
 						StreetAddress: "100 Universal City Plaza",
 						Locality:      "Hollywood",
 						Region:        "CA",
@@ -238,7 +235,6 @@ func TestUser_Validate(t *testing.T) {
 				},
 				Addresses: []Address{
 					{
-						Type:          "work",
 						StreetAddress: "100 Universal City Plaza",
 						Locality:      "Hollywood",
 						Region:        "CA",
@@ -298,7 +294,6 @@ func TestUser_Validate(t *testing.T) {
 				},
 				Addresses: []Address{
 					{
-						Type:          "work",
 						StreetAddress: "100 Universal City Plaza",
 						Locality:      "Hollywood",
 						Region:        "CA",
@@ -352,7 +347,6 @@ func TestUser_Validate(t *testing.T) {
 				ProfileURL: "https://login.example.com/bjensen",
 				Addresses: []Address{
 					{
-						Type:          "work",
 						StreetAddress: "100 Universal City Plaza",
 						Locality:      "Hollywood",
 						Region:        "CA",
@@ -418,7 +412,6 @@ func TestUser_Validate(t *testing.T) {
 				},
 				Addresses: []Address{
 					{
-						Type:          "work",
 						StreetAddress: "100 Universal City Plaza",
 						Locality:      "Hollywood",
 						Region:        "CA",
@@ -479,7 +472,6 @@ func TestUser_Validate(t *testing.T) {
 				},
 				Addresses: []Address{
 					{
-						Type:          "work",
 						StreetAddress: "100 Universal City Plaza",
 						Locality:      "Hollywood",
 						Region:        "CA",
@@ -540,7 +532,6 @@ func TestUser_Validate(t *testing.T) {
 				},
 				Addresses: []Address{
 					{
-						Type:          "work",
 						StreetAddress: "100 Universal City Plaza",
 						Locality:      "Hollywood",
 						Region:        "CA",
@@ -549,7 +540,6 @@ func TestUser_Validate(t *testing.T) {
 						Formatted:     "100 Universal City Plaza Hollywood, CA 91608 USA",
 					},
 					{
-						Type:          "home",
 						StreetAddress: "100 Universal City Plaza",
 						Locality:      "Hollywood",
 						Region:        "CA",
@@ -610,7 +600,6 @@ func TestUser_Validate(t *testing.T) {
 				},
 				Addresses: []Address{
 					{
-						Type:          "work",
 						StreetAddress: "100 Universal City Plaza",
 						Locality:      "Hollywood",
 						Region:        "CA",

@@ -261,87 +261,15 @@ func (s *Provider) CreateUsers(ctx context.Context, ur *model.UsersResult) (*mod
 		}).Warn("creating user")
 
 		// TODO: r, err := s.scim.CreateUser(ctx, userRequest)
-		r, err := s.scim.CreateOrGetUser(ctx, userRequest)
+		cogu, err := s.scim.CreateOrGetUser(ctx, userRequest)
 		if err != nil {
 			return nil, fmt.Errorf("scim: error creating user: %w", err)
 		}
 
-		e := model.UserBuilder().
-			WithIPID(user.IPID).
-			WithSCIMID(r.ID).
-			WithUserName(user.UserName).
-			WithDisplayName(user.DisplayName).
-			WithNickName(user.NickName).
-			WithProfileURL(user.ProfileURL).
-			WithTitle(user.Title).
-			WithUserType(user.UserType).
-			WithPreferredLanguage(user.PreferredLanguage).
-			WithLocale(user.Locale).
-			WithTimezone(user.Timezone).
-			WithActive(user.Active).
-			Build()
+		user.SCIMID = cogu.ID
+		user.SetHashCode()
 
-		if user.Name != nil {
-			e.Name = model.NameBuilder().
-				WithFamilyName(user.Name.FamilyName).
-				WithGivenName(user.Name.GivenName).
-				WithFormatted(user.Name.Formatted).
-				WithMiddleName(user.Name.MiddleName).
-				WithHonorificPrefix(user.Name.HonorificPrefix).
-				WithHonorificSuffix(user.Name.HonorificSuffix).
-				Build()
-		}
-
-		if user.EnterpriseData != nil {
-			e.EnterpriseData = model.EnterpriseDataBuilder().
-				WithCostCenter(user.EnterpriseData.CostCenter).
-				WithDepartment(user.EnterpriseData.Department).
-				WithDivision(user.EnterpriseData.Division).
-				WithEmployeeNumber(user.EnterpriseData.EmployeeNumber).
-				WithOrganization(user.EnterpriseData.Organization).
-				Build()
-
-			if user.EnterpriseData.Manager != nil {
-				e.EnterpriseData.Manager = model.ManagerBuilder().
-					WithValue(user.EnterpriseData.Manager.Value).
-					WithRef(user.EnterpriseData.Manager.Ref).
-					Build()
-			}
-		}
-
-		if len(user.Addresses) != 0 {
-			address := model.AddressBuilder().
-				WithFormatted(user.Addresses[0].Formatted).
-				WithStreetAddress(user.Addresses[0].StreetAddress).
-				WithLocality(user.Addresses[0].Locality).
-				WithRegion(user.Addresses[0].Region).
-				WithPostalCode(user.Addresses[0].PostalCode).
-				WithCountry(user.Addresses[0].Country).
-				Build()
-
-			e.Addresses = append(e.Addresses, address)
-		}
-
-		if len(user.Emails) != 0 {
-			email := model.EmailBuilder().
-				WithValue(user.Emails[0].Value).
-				WithType(user.Emails[0].Type).
-				WithPrimary(user.Emails[0].Primary).
-				Build()
-
-			e.Emails = append(e.Emails, email)
-		}
-
-		if len(user.PhoneNumbers) != 0 {
-			phone := model.PhoneNumberBuilder().
-				WithValue(user.PhoneNumbers[0].Value).
-				WithType(user.PhoneNumbers[0].Type).
-				Build()
-
-			e.PhoneNumbers = append(e.PhoneNumbers, phone)
-		}
-
-		users = append(users, e)
+		users = append(users, user)
 	}
 
 	usersResult := model.UsersResultBuilder().WithResources(users).Build()
@@ -374,87 +302,16 @@ func (s *Provider) UpdateUsers(ctx context.Context, ur *model.UsersResult) (*mod
 			"email": user.GetPrimaryEmailAddress(),
 		}).Warn("updating user")
 
-		r, err := s.scim.PutUser(ctx, userRequest)
+		pur, err := s.scim.PutUser(ctx, userRequest)
 		if err != nil {
 			return nil, fmt.Errorf("scim: error updating user: %w", err)
 		}
 
-		e := model.UserBuilder().
-			WithIPID(user.IPID).
-			WithSCIMID(r.ID).
-			WithUserName(user.UserName).
-			WithDisplayName(user.DisplayName).
-			WithNickName(user.NickName).
-			WithProfileURL(user.ProfileURL).
-			WithTitle(user.Title).
-			WithUserType(user.UserType).
-			WithPreferredLanguage(user.PreferredLanguage).
-			WithLocale(user.Locale).
-			WithTimezone(user.Timezone).
-			WithActive(user.Active).
-			Build()
+		// update the user SCIM ID from the put user response
+		user.SCIMID = pur.ID
+		user.SetHashCode()
 
-		if user.Name != nil {
-			e.Name = model.NameBuilder().
-				WithFamilyName(user.Name.FamilyName).
-				WithGivenName(user.Name.GivenName).
-				WithFormatted(user.Name.Formatted).
-				WithMiddleName(user.Name.MiddleName).
-				WithHonorificPrefix(user.Name.HonorificPrefix).
-				WithHonorificSuffix(user.Name.HonorificSuffix).
-				Build()
-		}
-
-		if user.EnterpriseData != nil {
-			e.EnterpriseData = model.EnterpriseDataBuilder().
-				WithCostCenter(user.EnterpriseData.CostCenter).
-				WithDepartment(user.EnterpriseData.Department).
-				WithDivision(user.EnterpriseData.Division).
-				WithEmployeeNumber(user.EnterpriseData.EmployeeNumber).
-				WithOrganization(user.EnterpriseData.Organization).
-				Build()
-
-			if user.EnterpriseData.Manager != nil {
-				e.EnterpriseData.Manager = model.ManagerBuilder().
-					WithValue(user.EnterpriseData.Manager.Value).
-					WithRef(user.EnterpriseData.Manager.Ref).
-					Build()
-			}
-		}
-
-		if len(user.Addresses) != 0 {
-			address := model.AddressBuilder().
-				WithFormatted(user.Addresses[0].Formatted).
-				WithStreetAddress(user.Addresses[0].StreetAddress).
-				WithLocality(user.Addresses[0].Locality).
-				WithRegion(user.Addresses[0].Region).
-				WithPostalCode(user.Addresses[0].PostalCode).
-				WithCountry(user.Addresses[0].Country).
-				Build()
-
-			e.Addresses = append(e.Addresses, address)
-		}
-
-		if len(user.Emails) != 0 {
-			email := model.EmailBuilder().
-				WithValue(user.Emails[0].Value).
-				WithType(user.Emails[0].Type).
-				WithPrimary(user.Emails[0].Primary).
-				Build()
-
-			e.Emails = append(e.Emails, email)
-		}
-
-		if len(user.PhoneNumbers) != 0 {
-			phone := model.PhoneNumberBuilder().
-				WithValue(user.PhoneNumbers[0].Value).
-				WithType(user.PhoneNumbers[0].Type).
-				Build()
-
-			e.PhoneNumbers = append(e.PhoneNumbers, phone)
-		}
-
-		users = append(users, e)
+		users = append(users, user)
 	}
 
 	usersResult := model.UsersResultBuilder().WithResources(users).Build()
