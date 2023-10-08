@@ -90,7 +90,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers(ctx context.Context) error {
 
 	log.WithFields(log.Fields{
 		"group_filter": ss.provGroupsFilter,
-	}).Info("getting users (groups members) from the identity provider")
+	}).Info("getting users (using groups members) from the identity provider")
 
 	idpUsersResult, err := ss.prov.GetUsersByGroupsMembers(ctx, idpGroupsMembersResult)
 	if err != nil {

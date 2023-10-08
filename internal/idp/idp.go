@@ -190,6 +190,10 @@ func (i *IdentityProvider) GetUsersByGroupsMembers(ctx context.Context, gmr *mod
 			if _, ok := uniqUsers[member.Email]; !ok {
 				uniqUsers[member.Email] = struct{}{}
 
+				// TODO: instead of retrieve user by user, I can implement a users.list
+				// https://developers.google.com/admin-sdk/directory/reference/rest/v1/users/list
+				// using the query parameter to filter by emails and retrieve the maximum number of users
+				// per request
 				u, err := i.ps.GetUser(ctx, member.Email)
 				if err != nil {
 					return nil, fmt.Errorf("idp: error getting user: %+v, email: %s, error: %w", member.IPID, member.Email, err)
