@@ -94,19 +94,19 @@ func init() {
 
 	gwsGroupsListCmd.Flags().StringSliceVarP(
 		&cfg.GWSGroupsFilter, "gws-groups-filter", "q", []string{""},
-		"GWS Groups query parameter, example: --gws-groups-filter 'name:Admin* email:admin*' --gws-groups-filter 'name:Power* email:power*'",
+		"GWS Groups query parameter, example: --gws-groups-filter 'name=Admin* email=admin*' --gws-groups-filter 'name=Power* email=power*'",
 	)
 
 	gwsGroupsMembersListCmd.Flags().StringSliceVarP(
 		&cfg.GWSGroupsFilter, "gws-groups-filter", "q", []string{""},
-		"GWS Groups query parameter, example: --gws-groups-filter 'name:Admin* email:admin*' --gws-groups-filter 'name:Power* email:power*'",
+		"GWS Groups query parameter, example: --gws-groups-filter 'name=Admin* email=admin*' --gws-groups-filter 'name=Power* email=power*'",
 	)
 
 	// users command
 	gwsUsersCmd.AddCommand(gwsUsersListCmd)
 	gwsUsersListCmd.Flags().StringSliceVarP(
 		&cfg.GWSUsersFilter, "gws-users-filter", "r", []string{""},
-		"GWS Users query parameter, example: --gws-users-filter 'name:Admin* email:admin*' --gws-users-filter 'name:Power* email:power*'",
+		"GWS Users query parameter, example: --gws-users-filter 'name=Admin* email=admin*' --gws-users-filter 'name=Power* email=power*'",
 	)
 }
 

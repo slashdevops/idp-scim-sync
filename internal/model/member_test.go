@@ -3,49 +3,68 @@ package model
 import (
 	"bytes"
 	"encoding/gob"
-	"reflect"
 	"testing"
 
-	"github.com/slashdevops/idp-scim-sync/internal/utils"
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
+	"github.com/slashdevops/idp-scim-sync/internal/convert"
 )
 
 func TestMember_GobEncode(t *testing.T) {
 	tests := []struct {
-		name    string
-		m       Member
-		wantErr bool
+		name   string
+		toTest Member
 	}{
 		{
-			name: "Test Member GobEncode",
-			m: Member{
+			name:   "empty",
+			toTest: Member{},
+		},
+		{
+			name: "filled",
+			toTest: Member{
 				IPID:     "1",
 				SCIMID:   "1",
-				Email:    "member.1@mail.com",
+				Email:    "user.1@mail.com",
+				Status:   "ACTIVE",
 				HashCode: "",
 			},
-			wantErr: false,
+		},
+		{
+			name: "partial filled",
+			toTest: Member{
+				IPID:     "1",
+				Email:    "user.1@mail.com",
+				HashCode: "",
+			},
 		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := tt.m.GobEncode()
-			if (err != nil) != tt.wantErr {
-				t.Errorf("Member.GobEncode() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-
 			b := new(bytes.Buffer)
 			enc := gob.NewEncoder(b)
-			if err := enc.Encode(tt.m.IPID); err != nil {
-				t.Fatal(err)
+
+			if err := enc.Encode(tt.toTest); err != nil {
+				t.Errorf("Member.MarshalBinary() error = %v", err)
 			}
 
-			if err := enc.Encode(tt.m.Email); err != nil {
-				t.Fatal(err)
+			dec := gob.NewDecoder(b)
+			var got Member
+			if err := dec.Decode(&got); err != nil {
+				t.Errorf("Member.UnmarshalBinary() error = %v", err)
 			}
 
-			if !bytes.Equal(got, b.Bytes()) {
-				t.Errorf("Group.GobEncode() = %v\n, want %v\n", got, b.Bytes())
+			// SCIMID is not exported, so it will not be encoded
+			// HashCode is not exported, so it will not be encoded
+			expected := Member{
+				IPID:   tt.toTest.IPID,
+				Email:  tt.toTest.Email,
+				Status: tt.toTest.Status,
+			}
+
+			sort := func(x, y string) bool { return x > y }
+			if diff := cmp.Diff(expected, got, cmpopts.SortSlices(sort)); diff != "" {
+				t.Errorf("UsersResult.GobEncode() mismatch (-expected +got):\n%s", diff)
 			}
 		})
 	}
@@ -67,8 +86,9 @@ func TestMember_SetHashCode(t *testing.T) {
 				HashCode: "test",
 			},
 			want: Member{
-				IPID:  "1",
-				Email: "user.1@mail.com",
+				IPID:   "1",
+				Email:  "user.1@mail.com",
+				Status: "ACTIVE",
 			},
 		},
 	}
@@ -78,8 +98,77 @@ func TestMember_SetHashCode(t *testing.T) {
 			tt.want.SetHashCode()
 
 			got := tt.member.HashCode
+
 			if got != tt.want.HashCode {
 				t.Errorf("Member.SetHashCode() = %s, want %s", got, tt.want.HashCode)
+			}
+		})
+	}
+}
+
+func TestMembersResult_GobEncode(t *testing.T) {
+	tests := []struct {
+		name   string
+		toTest MembersResult
+	}{
+		{
+			name:   "empty",
+			toTest: MembersResult{},
+		},
+		{
+			name: "filled",
+			toTest: MembersResult{
+				Items:    2,
+				HashCode: "test",
+				Resources: []*Member{
+					{IPID: "1", SCIMID: "1", Email: "user.1@mail.com", Status: "ACTIVE"},
+					{IPID: "2", SCIMID: "2", Email: "user.2@mail.com", Status: "ACTIVE"},
+				},
+			},
+		},
+		{
+			name: "partial filled",
+			toTest: MembersResult{
+				Items:     1,
+				HashCode:  "test",
+				Resources: []*Member{{IPID: "1", Email: "user.1@mail.com"}},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			b := new(bytes.Buffer)
+			enc := gob.NewEncoder(b)
+
+			if err := enc.Encode(tt.toTest); err != nil {
+				t.Errorf("MembersResult.MarshalBinary() error = %v", err)
+			}
+
+			dec := gob.NewDecoder(b)
+			var got MembersResult
+			if err := dec.Decode(&got); err != nil {
+				t.Errorf("MembersResult.UnmarshalBinary() error = %v", err)
+			}
+
+			var expectedMembers []*Member
+			for _, m := range tt.toTest.Resources {
+				expectedMembers = append(expectedMembers, &Member{
+					IPID:   m.IPID,
+					Email:  m.Email,
+					Status: m.Status,
+				})
+			}
+
+			// HashCode is not exported, so it will not be encoded
+			expected := MembersResult{
+				Items:     tt.toTest.Items,
+				Resources: expectedMembers,
+			}
+
+			sort := func(x, y string) bool { return x > y }
+			if diff := cmp.Diff(expected, got, cmpopts.SortSlices(sort)); diff != "" {
+				t.Errorf("MembersResult.GobEncode() mismatch (-expected +got):\n%s", diff)
 			}
 		})
 	}
@@ -112,9 +201,9 @@ func TestMembersResult_SetHashCode(t *testing.T) {
 	}
 	mr3.SetHashCode()
 
-	t.Logf("mr1: %s\n", utils.ToJSON(mr1))
-	t.Logf("mr2: %s\n", utils.ToJSON(mr2))
-	t.Logf("mr3: %s\n", utils.ToJSON(mr3))
+	t.Logf("mr1: %s\n", convert.ToJSONString(mr1, true))
+	t.Logf("mr2: %s\n", convert.ToJSONString(mr2, true))
+	t.Logf("mr3: %s\n", convert.ToJSONString(mr3, true))
 
 	t.Logf("mr1.HashCode: %s\n", mr1.HashCode)
 	t.Logf("mr2.HashCode: %s\n", mr2.HashCode)
@@ -128,6 +217,123 @@ func TestMembersResult_SetHashCode(t *testing.T) {
 	}
 	if mr2.HashCode != mr3.HashCode {
 		t.Errorf("GroupsMembersResult.HashCode should be equal")
+	}
+}
+
+func TestGroupsMembersResult_GobEncode(t *testing.T) {
+	tests := []struct {
+		name   string
+		toTest GroupsMembersResult
+	}{
+		{
+			name:   "empty",
+			toTest: GroupsMembersResult{},
+		},
+		{
+			name: "filled",
+			toTest: GroupsMembersResult{
+				Items:    2,
+				HashCode: "test",
+				Resources: []*GroupMembers{
+					{
+						Items: 2,
+						Group: &Group{
+							IPID:   "1",
+							SCIMID: "1",
+							Name:   "group 1",
+							Email:  "user.1@mail.com",
+						},
+						Resources: []*Member{
+							{IPID: "1", SCIMID: "1", Email: "user.1@mail.com", Status: "ACTIVE"},
+							{IPID: "2", SCIMID: "2", Email: "user.2@mail.com", Status: "ACTIVE"},
+						},
+					},
+					{
+						Items: 3,
+						Group: &Group{
+							IPID:   "2",
+							SCIMID: "2",
+							Name:   "group 2",
+							Email:  "user.2@mail.com",
+						},
+						Resources: []*Member{
+							{IPID: "3", SCIMID: "3", Email: "user.3@mail.com", Status: "ACTIVE"},
+							{IPID: "4", SCIMID: "4", Email: "user.4@mail.com", Status: "ACTIVE"},
+							{IPID: "5", SCIMID: "5", Email: "user.5@mail.com", Status: "ACTIVE"},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "partial filled",
+			toTest: GroupsMembersResult{
+				Items:    1,
+				HashCode: "test",
+				Resources: []*GroupMembers{
+					{
+						Items: 1,
+						Group: &Group{
+							IPID:  "1",
+							Email: "user.1@mail.com",
+						},
+						Resources: []*Member{
+							{IPID: "1", SCIMID: "1", Email: "user.1@mail.com", Status: "ACTIVE"},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			b := new(bytes.Buffer)
+			enc := gob.NewEncoder(b)
+
+			if err := enc.Encode(tt.toTest); err != nil {
+				t.Errorf("GroupsMembersResult.MarshalBinary() error = %v", err)
+			}
+
+			dec := gob.NewDecoder(b)
+			var got GroupsMembersResult
+			if err := dec.Decode(&got); err != nil {
+				t.Errorf("GroupsMembersResult.UnmarshalBinary() error = %v", err)
+			}
+
+			var expectedGroups []*GroupMembers
+			for _, m := range tt.toTest.Resources {
+				var expectedMembers []*Member
+				for _, member := range m.Resources {
+					expectedMembers = append(expectedMembers, &Member{
+						IPID:   member.IPID,
+						Email:  member.Email,
+						Status: member.Status,
+					})
+				}
+
+				expectedGroups = append(expectedGroups, &GroupMembers{
+					Items: m.Items,
+					Group: &Group{
+						IPID:  m.Group.IPID,
+						Name:  m.Group.Name,
+						Email: m.Group.Email,
+					},
+					Resources: expectedMembers,
+				})
+			}
+
+			// HashCode is not exported, so it will not be encoded
+			expected := GroupsMembersResult{
+				Items:     tt.toTest.Items,
+				Resources: expectedGroups,
+			}
+
+			sort := func(x, y string) bool { return x > y }
+			if diff := cmp.Diff(expected, got, cmpopts.SortSlices(sort)); diff != "" {
+				t.Errorf("GroupsMembersResult.GobEncode() mismatch (-expected +got):\n%s", diff)
+			}
+		})
 	}
 }
 
@@ -171,8 +377,8 @@ func TestGroupsMembersResult_SetHashCode(t *testing.T) {
 	gmr5 := MergeGroupsMembersResult(&gmr3, &gmr2, &gmr1)
 	gmr5.SetHashCode()
 
-	t.Logf("gmr4: %s\n", utils.ToJSON(gmr4))
-	t.Logf("gmr5: %s\n", utils.ToJSON(gmr5))
+	t.Logf("gmr4: %s\n", convert.ToJSONString(gmr4, true))
+	t.Logf("gmr5: %s\n", convert.ToJSONString(gmr5, true))
 
 	t.Logf("gmr4.HashCode: %s\n", gmr4.HashCode)
 	t.Logf("gmr5.HashCode: %s\n", gmr5.HashCode)
@@ -189,6 +395,97 @@ func TestGroupsMembersResult_SetHashCode(t *testing.T) {
 
 	if gmr5.HashCode != gmr4.HashCode {
 		t.Errorf("GroupsMembersResult.HashCode should be equal: gmr5-> %s, gmr4-> %s", gmr5.HashCode, gmr4.HashCode)
+	}
+}
+
+func TestGroupMembers_GobEncode(t *testing.T) {
+	tests := []struct {
+		name   string
+		toTest GroupMembers
+	}{
+		{
+			name:   "empty",
+			toTest: GroupMembers{},
+		},
+		{
+			name: "filled",
+			toTest: GroupMembers{
+				Items:    2,
+				HashCode: "test",
+				Group: &Group{
+					IPID:   "1",
+					SCIMID: "1",
+					Name:   "group 1",
+					Email:  "user.1@mail.com",
+				},
+				Resources: []*Member{
+					{IPID: "1", SCIMID: "1", Email: "user.1@mail.com", Status: "ACTIVE"},
+					{IPID: "2", SCIMID: "2", Email: "user.2@mail.com", Status: "ACTIVE"},
+				},
+			},
+		},
+		{
+			name: "partial filled",
+			toTest: GroupMembers{
+				Items:    1,
+				HashCode: "test",
+				Group: &Group{
+					IPID:  "1",
+					Name:  "group 1",
+					Email: "user.1@mail.com",
+				},
+				Resources: []*Member{
+					{IPID: "1", Email: "user.1@mail.com"},
+				},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			b := new(bytes.Buffer)
+			enc := gob.NewEncoder(b)
+
+			if err := enc.Encode(tt.toTest); err != nil {
+				t.Errorf("GroupMembers.MarshalBinary() error = %v", err)
+			}
+
+			dec := gob.NewDecoder(b)
+			var got GroupMembers
+			if err := dec.Decode(&got); err != nil {
+				t.Errorf("GroupMembers.UnmarshalBinary() error = %v", err)
+			}
+
+			var expectedGroup *Group
+			if tt.toTest.Group != nil {
+				expectedGroup = &Group{
+					IPID:  tt.toTest.Group.IPID,
+					Name:  tt.toTest.Group.Name,
+					Email: tt.toTest.Group.Email,
+				}
+			}
+
+			var expectedMembers []*Member
+			for _, m := range tt.toTest.Resources {
+				expectedMembers = append(expectedMembers, &Member{
+					IPID:   m.IPID,
+					Email:  m.Email,
+					Status: m.Status,
+				})
+			}
+
+			// HashCode is not exported, so it will not be encoded
+			expected := GroupMembers{
+				Items:     tt.toTest.Items,
+				Group:     expectedGroup,
+				Resources: expectedMembers,
+			}
+
+			sort := func(x, y string) bool { return x > y }
+			if diff := cmp.Diff(expected, got, cmpopts.SortSlices(sort)); diff != "" {
+				t.Errorf("GroupMembers.GobEncode() mismatch (-expected +got):\n%s", diff)
+			}
+		})
 	}
 }
 
@@ -253,7 +550,6 @@ func TestGroupsMembersResult_MarshalJSON(t *testing.T) {
 			fields: fields{},
 			want: []byte(`{
   "items": 0,
-  "hashCode": "",
   "resources": []
 }`),
 			wantErr: false,
@@ -285,8 +581,7 @@ func TestGroupsMembersResult_MarshalJSON(t *testing.T) {
         "ipid": "1",
         "scimid": "1",
         "name": "group 1",
-        "email": "group.1@mai.com",
-        "hashCode": ""
+        "email": "group.1@mai.com"
       },
       "resources": null
     }
@@ -307,8 +602,10 @@ func TestGroupsMembersResult_MarshalJSON(t *testing.T) {
 				t.Errorf("UsersResult.MarshalJSON() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("UsersResult.MarshalJSON() = %s, want %s", string(got), string(tt.want))
+
+			sort := func(x, y string) bool { return x > y }
+			if diff := cmp.Diff(tt.want, got, cmpopts.SortSlices(sort)); diff != "" {
+				t.Errorf("MarshalJSON() (-want +got):\n%s", diff)
 			}
 		})
 	}

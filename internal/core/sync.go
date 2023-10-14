@@ -88,6 +88,10 @@ func (ss *SyncService) SyncGroupsAndTheirMembers(ctx context.Context) error {
 			"groups_members": idpGroupsMembersResult.Items,
 		}).Info("groups members retrieved from the identity provider for syncing that match the filter")
 
+	log.WithFields(log.Fields{
+		"group_filter": ss.provGroupsFilter,
+	}).Info("getting users (using groups members) from the identity provider")
+
 	idpUsersResult, err := ss.prov.GetUsersByGroupsMembers(ctx, idpGroupsMembersResult)
 	if err != nil {
 		return fmt.Errorf("error getting users from the identity provider: %w", err)
@@ -128,9 +132,10 @@ func (ss *SyncService) SyncGroupsAndTheirMembers(ctx context.Context) error {
 		// of the users and groups in the SCIM side, just no recreation, keep the existing ones when:
 		// - Groups names are equals on both sides, update only the external id (coming from the identity provider)
 		// - Users emails are equals on both sides, update only the external id (coming from the identity provider)
-		log.Warn("syncing from scim service, first time syncing")
+		log.Info("syncing from scim service, first time syncing")
 		totalGroupsResult, totalUsersResult, totalGroupsMembersResult, err = scimSync(
-			ctx, ss.scim,
+			ctx,
+			ss.scim,
 			idpGroupsResult,
 			idpUsersResult,
 			idpGroupsMembersResult,
@@ -139,7 +144,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers(ctx context.Context) error {
 			return fmt.Errorf("error doing the first sync: %w", err)
 		}
 	} else {
-		log.Warn("syncing from state, it's not the first time syncing")
+		log.Info("syncing from state, it's not the first time syncing")
 		totalGroupsResult, totalUsersResult, totalGroupsMembersResult, err = stateSync(
 			ctx,
 			state,

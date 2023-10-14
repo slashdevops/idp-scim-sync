@@ -34,6 +34,18 @@ Flags:
 Use "idpscimcli [command] --help" for more information about a command.
 ```
 
+## Example of usage
+
+```bash
+./idpscimcli gws groups list \
+  --gws-service-account-file credentials.json \
+  --gws-user-email my-service-account-user@my-company-email.com \
+  --gws-groups-filter "name='My Team - Support'" \
+  --gws-groups-filter "name='My Tool' email=my-tool@my-company-email.com" \
+  --gws-groups-filter 'email=other-group' \
+  --gws-groups-filter 'email="this is other group name"'
+```
+
 ## Building the project
 
 To build the project in local, you will need to have installed and configured at least the following:

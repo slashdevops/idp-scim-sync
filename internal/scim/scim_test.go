@@ -590,20 +590,20 @@ func TestGetUsers(t *testing.T) {
 				{
 					ID:          "1",
 					ExternalID:  "1",
-					Name:        aws.Name{FamilyName: "1", GivenName: "user"},
+					Name:        &aws.Name{FamilyName: "1", GivenName: "user"},
 					DisplayName: "group 1",
 					Schemas:     []string{"urn:ietf:params:scim:schemas:core:2.0:User"},
-					Meta:        aws.Meta{ResourceType: "User", Created: "2020-04-01T12:00:00Z", LastModified: "2020-04-01T12:00:00Z"},
-					Emails:      []*aws.Email{{Value: "user.1@mail.com", Type: "work", Primary: true}},
+					Meta:        &aws.Meta{ResourceType: "User", Created: "2020-04-01T12:00:00Z", LastModified: "2020-04-01T12:00:00Z"},
+					Emails:      []aws.Email{{Value: "user.1@mail.com", Type: "work", Primary: true}},
 				},
 				{
 					ID:          "2",
 					ExternalID:  "2",
-					Name:        aws.Name{FamilyName: "2", GivenName: "user"},
+					Name:        &aws.Name{FamilyName: "2", GivenName: "user"},
 					DisplayName: "group 2",
 					Schemas:     []string{"urn:ietf:params:scim:schemas:core:2.0:User"},
-					Meta:        aws.Meta{ResourceType: "User", Created: "2020-04-02T12:00:00Z", LastModified: "2020-04-02T12:00:00Z"},
-					Emails:      []*aws.Email{{Value: "user.2@mail.com", Type: "work", Primary: true}},
+					Meta:        &aws.Meta{ResourceType: "User", Created: "2020-04-02T12:00:00Z", LastModified: "2020-04-02T12:00:00Z"},
+					Emails:      []aws.Email{{Value: "user.2@mail.com", Type: "work", Primary: true}},
 				},
 			},
 		}
@@ -627,8 +627,8 @@ func TestGetUsers(t *testing.T) {
 		assert.Equal(t, "2", gr.Resources[1].Name.FamilyName)
 		assert.Equal(t, "user", gr.Resources[1].Name.GivenName)
 
-		assert.Equal(t, "user.1@mail.com", gr.Resources[0].Email)
-		assert.Equal(t, "user.2@mail.com", gr.Resources[1].Email)
+		assert.Equal(t, "user.1@mail.com", gr.Resources[0].Emails[0].Value)
+		assert.Equal(t, "user.2@mail.com", gr.Resources[1].Emails[0].Value)
 	})
 }
 
@@ -653,9 +653,9 @@ func TestCreateUsers(t *testing.T) {
 			UserName:    "user.1@mail.com",
 			DisplayName: "user 1",
 			ExternalID:  "1",
-			Name:        aws.Name{FamilyName: "1", GivenName: "user"},
-			Emails: []*aws.Email{
-				{Value: "user.1@mail.com", Type: "work"},
+			Name:        &aws.Name{FamilyName: "1", GivenName: "user"},
+			Emails: []aws.Email{
+				{Value: "user.1@mail.com", Type: "work", Primary: true},
 			},
 			Active: true,
 		}
@@ -669,10 +669,11 @@ func TestCreateUsers(t *testing.T) {
 			Resources: []*model.User{
 				{
 					IPID:        "1",
-					Name:        model.Name{FamilyName: "1", GivenName: "user"},
+					Name:        &model.Name{FamilyName: "1", GivenName: "user"},
 					DisplayName: "user 1",
-					Email:       "user.1@mail.com",
+					Emails:      []model.Email{{Value: "user.1@mail.com", Type: "work", Primary: true}},
 					Active:      true,
+					UserName:    "user.1@mail.com",
 				},
 			},
 		}
@@ -690,9 +691,9 @@ func TestCreateUsers(t *testing.T) {
 			UserName:    "user.1@mail.com",
 			DisplayName: "user 1",
 			ExternalID:  "1",
-			Name:        aws.Name{FamilyName: "1", GivenName: "user"},
-			Emails: []*aws.Email{
-				{Value: "user.1@mail.com", Type: "work"},
+			Name:        &aws.Name{FamilyName: "1", GivenName: "user"},
+			Emails: []aws.Email{
+				{Value: "user.1@mail.com", Type: "work", Primary: true},
 			},
 			Active: false,
 		}
@@ -706,9 +707,10 @@ func TestCreateUsers(t *testing.T) {
 			Resources: []*model.User{
 				{
 					IPID:        "1",
-					Name:        model.Name{FamilyName: "1", GivenName: "user"},
+					Name:        &model.Name{FamilyName: "1", GivenName: "user"},
 					DisplayName: "user 1",
-					Email:       "user.1@mail.com",
+					Emails:      []model.Email{{Value: "user.1@mail.com", Type: "work", Primary: true}},
+					UserName:    "user.1@mail.com",
 				},
 			},
 		}
@@ -726,9 +728,9 @@ func TestCreateUsers(t *testing.T) {
 			UserName:    "user.1@mail.com",
 			DisplayName: "user 1",
 			ExternalID:  "1",
-			Name:        aws.Name{FamilyName: "1", GivenName: "user"},
-			Emails: []*aws.Email{
-				{Value: "user.1@mail.com", Type: "work"},
+			Name:        &aws.Name{FamilyName: "1", GivenName: "user"},
+			Emails: []aws.Email{
+				{Value: "user.1@mail.com", Type: "work", Primary: true},
 			},
 			Active: true,
 		}
@@ -736,33 +738,35 @@ func TestCreateUsers(t *testing.T) {
 			UserName:    "user.2@mail.com",
 			DisplayName: "user 2",
 			ExternalID:  "2",
-			Name:        aws.Name{FamilyName: "2", GivenName: "user"},
-			Emails: []*aws.Email{
-				{Value: "user.2@mail.com", Type: "work"},
+			Name:        &aws.Name{FamilyName: "2", GivenName: "user"},
+			Emails: []aws.Email{
+				{Value: "user.2@mail.com", Type: "work", Primary: true},
 			},
 			Active: true,
 		}
 		resp1 := &aws.CreateUserResponse{
 			ID:         "11",
 			ExternalID: "1",
-			Name: aws.Name{
+			Name: &aws.Name{
 				FamilyName: "1",
 				GivenName:  "user",
 			},
 			DisplayName: "user 1",
 			Active:      true,
-			Emails:      []*aws.Email{{Value: "user.1@mail.com", Type: "work"}},
+			Emails:      []aws.Email{{Value: "user.1@mail.com", Type: "work", Primary: true}},
+			UserName:    "user.1@mail.com",
 		}
 		resp2 := &aws.CreateUserResponse{
 			ID:         "22",
 			ExternalID: "2",
-			Name: aws.Name{
+			Name: &aws.Name{
 				FamilyName: "2",
 				GivenName:  "user",
 			},
 			DisplayName: "user 2",
 			Active:      true,
-			Emails:      []*aws.Email{{Value: "user.2@mail.com", Type: "work"}},
+			Emails:      []aws.Email{{Value: "user.2@mail.com", Type: "work", Primary: true}},
+			UserName:    "user.2@mail.com",
 		}
 		ctx := context.TODO()
 
@@ -776,17 +780,19 @@ func TestCreateUsers(t *testing.T) {
 			Resources: []*model.User{
 				{
 					IPID:        "1",
-					Name:        model.Name{FamilyName: "1", GivenName: "user"},
+					Name:        &model.Name{FamilyName: "1", GivenName: "user"},
 					DisplayName: "user 1",
-					Email:       "user.1@mail.com",
+					Emails:      []model.Email{{Value: "user.1@mail.com", Type: "work", Primary: true}},
 					Active:      true,
+					UserName:    "user.1@mail.com",
 				},
 				{
 					IPID:        "2",
-					Name:        model.Name{FamilyName: "2", GivenName: "user"},
+					Name:        &model.Name{FamilyName: "2", GivenName: "user"},
 					DisplayName: "user 2",
-					Email:       "user.2@mail.com",
+					Emails:      []model.Email{{Value: "user.2@mail.com", Type: "work", Primary: true}},
 					Active:      true,
+					UserName:    "user.2@mail.com",
 				},
 			},
 		}
@@ -830,11 +836,11 @@ func TestUpdateUsers(t *testing.T) {
 		mockSCIM := mocks.NewMockAWSSCIMProvider(mockCtrl)
 		pur := &aws.PutUserRequest{
 			ID:          "1",
+			ExternalID:  "1",
 			UserName:    "user.1@mail.com",
 			DisplayName: "user 1",
-			ExternalID:  "1",
-			Name:        aws.Name{FamilyName: "1", GivenName: "user"},
-			Emails: []*aws.Email{
+			Name:        &aws.Name{FamilyName: "1", GivenName: "user"},
+			Emails: []aws.Email{
 				{Value: "user.1@mail.com", Type: "work", Primary: true},
 			},
 			Active: true,
@@ -842,12 +848,14 @@ func TestUpdateUsers(t *testing.T) {
 		resp := &aws.PutUserResponse{
 			ID:         "1",
 			ExternalID: "1",
-			Name: aws.Name{
+			Name: &aws.Name{
 				FamilyName: "1",
 				GivenName:  "user",
+				Formatted:  "user 1",
 			},
 			DisplayName: "user 1",
 			Active:      true,
+			UserName:    "user.1@mail.com",
 		}
 		ctx := context.TODO()
 
@@ -859,10 +867,11 @@ func TestUpdateUsers(t *testing.T) {
 				{
 					IPID:        "1",
 					SCIMID:      "1",
-					Name:        model.Name{FamilyName: "1", GivenName: "user"},
+					Name:        &model.Name{FamilyName: "1", GivenName: "user"},
 					DisplayName: "user 1",
-					Email:       "user.1@mail.com",
+					Emails:      []model.Email{{Value: "user.1@mail.com", Type: "work", Primary: true}},
 					Active:      true,
+					UserName:    "user.1@mail.com",
 				},
 			},
 		}
@@ -883,11 +892,11 @@ func TestUpdateUsers(t *testing.T) {
 		mockSCIM := mocks.NewMockAWSSCIMProvider(mockCtrl)
 		pur := &aws.PutUserRequest{
 			ID:          "1",
+			ExternalID:  "1",
 			UserName:    "user.1@mail.com",
 			DisplayName: "user 1",
-			ExternalID:  "1",
-			Name:        aws.Name{FamilyName: "1", GivenName: "user"},
-			Emails: []*aws.Email{
+			Name:        &aws.Name{FamilyName: "1", GivenName: "user"},
+			Emails: []aws.Email{
 				{Value: "user.1@mail.com", Type: "work", Primary: true},
 			},
 			Active: false,
@@ -895,12 +904,13 @@ func TestUpdateUsers(t *testing.T) {
 		resp := &aws.PutUserResponse{
 			ID:         "1",
 			ExternalID: "1",
-			Name: aws.Name{
+			Name: &aws.Name{
 				FamilyName: "1",
 				GivenName:  "user",
 			},
 			DisplayName: "user 1",
 			Active:      true,
+			UserName:    "user.1@mail.com",
 		}
 		ctx := context.TODO()
 
@@ -912,9 +922,10 @@ func TestUpdateUsers(t *testing.T) {
 				{
 					IPID:        "1",
 					SCIMID:      "1",
-					Name:        model.Name{FamilyName: "1", GivenName: "user"},
+					Name:        &model.Name{FamilyName: "1", GivenName: "user"},
 					DisplayName: "user 1",
-					Email:       "user.1@mail.com",
+					Emails:      []model.Email{{Value: "user.1@mail.com", Type: "work", Primary: true}},
+					UserName:    "user.1@mail.com",
 				},
 			},
 		}
@@ -929,22 +940,22 @@ func TestUpdateUsers(t *testing.T) {
 		mockSCIM := mocks.NewMockAWSSCIMProvider(mockCtrl)
 		pur1 := &aws.PutUserRequest{
 			ID:          "1",
+			ExternalID:  "1",
 			UserName:    "user.1@mail.com",
 			DisplayName: "user 1",
-			ExternalID:  "1",
-			Name:        aws.Name{FamilyName: "1", GivenName: "user"},
-			Emails: []*aws.Email{
+			Name:        &aws.Name{FamilyName: "1", GivenName: "user"},
+			Emails: []aws.Email{
 				{Value: "user.1@mail.com", Type: "work", Primary: true},
 			},
 			Active: true,
 		}
 		pur2 := &aws.PutUserRequest{
 			ID:          "2",
+			ExternalID:  "2",
 			UserName:    "user.2@mail.com",
 			DisplayName: "user 2",
-			ExternalID:  "2",
-			Name:        aws.Name{FamilyName: "2", GivenName: "user"},
-			Emails: []*aws.Email{
+			Name:        &aws.Name{FamilyName: "2", GivenName: "user"},
+			Emails: []aws.Email{
 				{Value: "user.2@mail.com", Type: "work", Primary: true},
 			},
 			Active: true,
@@ -952,24 +963,26 @@ func TestUpdateUsers(t *testing.T) {
 		resp1 := &aws.PutUserResponse{
 			ID:         "11",
 			ExternalID: "1",
-			Name: aws.Name{
+			Name: &aws.Name{
 				FamilyName: "1",
 				GivenName:  "user",
 			},
 			DisplayName: "user 1",
 			Active:      true,
-			Emails:      []*aws.Email{{Value: "user.1@mail.com", Type: "work"}},
+			Emails:      []aws.Email{{Value: "user.1@mail.com", Type: "work", Primary: true}},
+			UserName:    "user.1@mail.com",
 		}
 		resp2 := &aws.PutUserResponse{
 			ID:         "22",
 			ExternalID: "2",
-			Name: aws.Name{
+			Name: &aws.Name{
 				FamilyName: "2",
 				GivenName:  "user",
 			},
 			DisplayName: "user 2",
 			Active:      true,
-			Emails:      []*aws.Email{{Value: "user.2@mail.com", Type: "work"}},
+			Emails:      []aws.Email{{Value: "user.2@mail.com", Type: "work", Primary: true}},
+			UserName:    "user.2@mail.com",
 		}
 		ctx := context.TODO()
 
@@ -984,18 +997,20 @@ func TestUpdateUsers(t *testing.T) {
 				{
 					IPID:        "1",
 					SCIMID:      "1",
-					Name:        model.Name{FamilyName: "1", GivenName: "user"},
+					Name:        &model.Name{FamilyName: "1", GivenName: "user"},
 					DisplayName: "user 1",
-					Email:       "user.1@mail.com",
+					Emails:      []model.Email{{Value: "user.1@mail.com", Type: "work", Primary: true}},
 					Active:      true,
+					UserName:    "user.1@mail.com",
 				},
 				{
 					IPID:        "2",
 					SCIMID:      "2",
-					Name:        model.Name{FamilyName: "2", GivenName: "user"},
+					Name:        &model.Name{FamilyName: "2", GivenName: "user"},
 					DisplayName: "user 2",
-					Email:       "user.2@mail.com",
+					Emails:      []model.Email{{Value: "user.2@mail.com", Type: "work", Primary: true}},
 					Active:      true,
+					UserName:    "user.2@mail.com",
 				},
 			},
 		}
@@ -1045,9 +1060,9 @@ func TestDeleteUsers(t *testing.T) {
 				{
 					IPID:        "1",
 					SCIMID:      "1",
-					Name:        model.Name{FamilyName: "1", GivenName: "user"},
+					Name:        &model.Name{FamilyName: "1", GivenName: "user"},
 					DisplayName: "user 1",
-					Email:       "user.1@mail.com",
+					Emails:      []model.Email{{Value: "user.1@mail.com", Type: "work", Primary: true}},
 					Active:      true,
 				},
 			},
@@ -1070,9 +1085,9 @@ func TestDeleteUsers(t *testing.T) {
 				{
 					IPID:        "1",
 					SCIMID:      "1",
-					Name:        model.Name{FamilyName: "1", GivenName: "user"},
+					Name:        &model.Name{FamilyName: "1", GivenName: "user"},
 					DisplayName: "user 1",
-					Email:       "user.1@mail.com",
+					Emails:      []model.Email{{Value: "user.1@mail.com", Type: "work", Primary: true}},
 				},
 			},
 		}
@@ -1097,17 +1112,17 @@ func TestDeleteUsers(t *testing.T) {
 				{
 					IPID:        "1",
 					SCIMID:      "1",
-					Name:        model.Name{FamilyName: "1", GivenName: "user"},
+					Name:        &model.Name{FamilyName: "1", GivenName: "user"},
 					DisplayName: "user 1",
-					Email:       "user.1@mail.com",
+					Emails:      []model.Email{{Value: "user.1@mail.com", Type: "work", Primary: true}},
 					Active:      true,
 				},
 				{
 					IPID:        "2",
 					SCIMID:      "2",
-					Name:        model.Name{FamilyName: "2", GivenName: "user"},
+					Name:        &model.Name{FamilyName: "2", GivenName: "user"},
 					DisplayName: "user 2",
-					Email:       "user.2@mail.com",
+					Emails:      []model.Email{{Value: "user.2@mail.com", Type: "work", Primary: true}},
 					Active:      true,
 				},
 			},
@@ -1145,12 +1160,12 @@ func TestCreateGroupsMembers(t *testing.T) {
 			ID:         "1",
 			ExternalID: "1",
 			UserName:   userName,
-			Name: aws.Name{
+			Name: &aws.Name{
 				FamilyName: "1",
 				GivenName:  "user",
 			},
 			DisplayName: "user 1",
-			Emails: []*aws.Email{
+			Emails: []aws.Email{
 				{
 					Value:   "user.1@mailcom",
 					Type:    "work",
@@ -1263,12 +1278,12 @@ func TestCreateGroupsMembers(t *testing.T) {
 			ID:         "1",
 			ExternalID: "1",
 			UserName:   userName,
-			Name: aws.Name{
+			Name: &aws.Name{
 				FamilyName: "1",
 				GivenName:  "user",
 			},
 			DisplayName: "user 1",
-			Emails: []*aws.Email{
+			Emails: []aws.Email{
 				{
 					Value:   "user.1@mailcom",
 					Type:    "work",
@@ -1334,12 +1349,12 @@ func TestCreateGroupsMembers(t *testing.T) {
 			ID:         "1",
 			ExternalID: "1",
 			UserName:   "",
-			Name: aws.Name{
+			Name: &aws.Name{
 				FamilyName: "1",
 				GivenName:  "user",
 			},
 			DisplayName: "user 1",
-			Emails: []*aws.Email{
+			Emails: []aws.Email{
 				{
 					Value:   "user.1@mailcom",
 					Type:    "work",
@@ -1571,7 +1586,7 @@ func TestGetGroupsMembers(t *testing.T) {
 			},
 		}
 		gur := &aws.GetUserResponse{
-			Emails: []*aws.Email{
+			Emails: []aws.Email{
 				{
 					Value: "user.1@mail.com",
 				},
@@ -1715,26 +1730,20 @@ func TestGetGroupsMembersBruteForce(t *testing.T) {
 			Items: 2,
 			Resources: []*model.User{
 				{
-					IPID:   "1",
-					SCIMID: "1",
-					Name: model.Name{
-						FamilyName: "1",
-						GivenName:  "user",
-					},
+					IPID:        "1",
+					SCIMID:      "1",
+					Name:        &model.Name{FamilyName: "1", GivenName: "user"},
 					DisplayName: "user 1",
 					Active:      true,
-					Email:       "user.1@mail.com",
+					Emails:      []model.Email{{Value: "user.1@mail.com", Type: "work", Primary: true}},
 				},
 				{
-					IPID:   "2",
-					SCIMID: "2",
-					Name: model.Name{
-						FamilyName: "2",
-						GivenName:  "user",
-					},
+					IPID:        "2",
+					SCIMID:      "2",
+					Name:        &model.Name{FamilyName: "2", GivenName: "user"},
 					DisplayName: "user 2",
 					Active:      true,
-					Email:       "user.2@mail.com",
+					Emails:      []model.Email{{Value: "user.2@mail.com", Type: "work", Primary: true}},
 				},
 			},
 		}
@@ -1837,15 +1846,12 @@ func TestGetGroupsMembersBruteForce(t *testing.T) {
 			Items: 1,
 			Resources: []*model.User{
 				{
-					IPID:   "1",
-					SCIMID: "1",
-					Name: model.Name{
-						FamilyName: "1",
-						GivenName:  "user",
-					},
+					IPID:        "1",
+					SCIMID:      "1",
+					Name:        &model.Name{FamilyName: "1", GivenName: "user"},
 					DisplayName: "user 1",
 					Active:      true,
-					Email:       "group.1@mail.com",
+					Emails:      []model.Email{{Value: "user.1@mail.com", Type: "work", Primary: true}},
 				},
 			},
 		}
@@ -1869,15 +1875,12 @@ func TestGetGroupsMembersBruteForce(t *testing.T) {
 			Items: 1,
 			Resources: []*model.User{
 				{
-					IPID:   "1",
-					SCIMID: "1",
-					Name: model.Name{
-						FamilyName: "1",
-						GivenName:  "user",
-					},
+					IPID:        "1",
+					SCIMID:      "1",
+					Name:        &model.Name{FamilyName: "1", GivenName: "user"},
 					DisplayName: "user 1",
 					Active:      true,
-					Email:       "user.1@mail.com",
+					Emails:      []model.Email{{Value: "user.1@mail.com", Type: "work", Primary: true}},
 				},
 			},
 		}
@@ -1905,15 +1908,12 @@ func TestGetGroupsMembersBruteForce(t *testing.T) {
 			Items: 1,
 			Resources: []*model.User{
 				{
-					IPID:   "1",
-					SCIMID: "1",
-					Name: model.Name{
-						FamilyName: "1",
-						GivenName:  "user",
-					},
+					IPID:        "1",
+					SCIMID:      "1",
+					Name:        &model.Name{FamilyName: "1", GivenName: "user"},
 					DisplayName: "user 1",
 					Active:      true,
-					Email:       "group.1@mail.com",
+					Emails:      []model.Email{{Value: "user.1@mail.com", Type: "work", Primary: true}},
 				},
 			},
 		}
@@ -1949,15 +1949,12 @@ func TestGetGroupsMembersBruteForce(t *testing.T) {
 			Items: 1,
 			Resources: []*model.User{
 				{
-					IPID:   "1",
-					SCIMID: "1",
-					Name: model.Name{
-						FamilyName: "1",
-						GivenName:  "user",
-					},
+					IPID:        "1",
+					SCIMID:      "1",
+					Name:        &model.Name{FamilyName: "1", GivenName: "user"},
 					DisplayName: "user 1",
 					Active:      true,
-					Email:       "user.1@mail.com",
+					Emails:      []model.Email{{Value: "user.1@mail.com", Type: "work", Primary: true}},
 				},
 			},
 		}

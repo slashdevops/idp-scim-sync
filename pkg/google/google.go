@@ -16,8 +16,8 @@ const (
 	// https://cloud.google.com/storage/docs/json_api
 	groupsRequiredFields    googleapi.Field = "nextPageToken, groups(id,name,email,etag)"
 	membersRequiredFields   googleapi.Field = "nextPageToken, members(id,email,status,type,etag)"
-	listUsersRequiredFields googleapi.Field = "nextPageToken, users(id,name,primaryEmail,suspended,etag,emails)"
-	getUsersRequiredFields  googleapi.Field = "id,name,primaryEmail,suspended,etag"
+	listUsersRequiredFields googleapi.Field = "nextPageToken, users(id,primaryEmail,name,suspended,kind,etag,emails,addresses,organizations,phones,languages,locations)"
+	getUsersRequiredFields  googleapi.Field = "id,primaryEmail,name,suspended,kind,etag,emails,addresses,organizations,phones,languages,locations"
 )
 
 var (
@@ -105,6 +105,9 @@ func (ds *DirectoryService) ListUsers(ctx context.Context, query []string) ([]*a
 			return nil, err
 		}
 	}
+
+	log.Tracef("google: ListUsers(): %v", toJSONString(u))
+
 	return u, nil
 }
 
@@ -143,6 +146,9 @@ func (ds *DirectoryService) ListGroups(ctx context.Context, query []string) ([]*
 			return nil, err
 		}
 	}
+
+	log.Tracef("google: ListGroups(): %v", toJSONString(g))
+
 	return g, nil
 }
 
@@ -192,6 +198,8 @@ func (ds *DirectoryService) ListGroupMembers(ctx context.Context, groupID string
 		return nil, err
 	}
 
+	log.Tracef("google: ListGroupMembers(): %v", toJSONString(m))
+
 	return m, nil
 }
 
@@ -220,6 +228,8 @@ func (ds *DirectoryService) GetGroup(ctx context.Context, groupID string) (*admi
 	if err != nil {
 		return nil, fmt.Errorf("google: error getting group %s: %v", groupID, err)
 	}
+
+	log.Tracef("google: GetGroup(): %v", toJSONString(g))
 
 	return g, nil
 }

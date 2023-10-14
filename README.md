@@ -32,12 +32,12 @@ The best way to to deploy and use this is through the [AWS Serverless public rep
 
 AWS recently announced `AWS Lambda Deprecates Go Runtime 1.x` and posted this article [Migrating AWS Lambda functions from the Go1.x runtime to the custom runtime on Amazon Linux 2](https://aws.amazon.com/blogs/compute/migrating-aws-lambda-functions-from-the-go1-x-runtime-to-the-custom-runtime-on-amazon-linux-2/) to help customers with the migration.
 
-This project is already migrated since version `v0.0.19` to the `provided.al2` runtime, so you can use it without any problem.
+This project is already migrated since version `v0.0.19` to the `provided.al2` runtime and `arm64` architecture, so you can use it without any problem.
 
-| idp-scim-sync version | AWS Lambda Runtime | Architecture       | AWS Lambda Deprecates Go Runtime |
-|-----------------------|--------------------|--------------------|----------------------------------|
-| v0.0.18               | Go 1.x             | amd64 (Intel)      | 2023-12-31                       |
-| v0.0.19               | provided.al2       | arm64 (Graviton 2) | ----------                       |
+|   version   | AWS Lambda Runtime | Architecture       | Deprecation Date |
+|-------------|--------------------|--------------------|------------------|
+| <= v0.0.18  | Go 1.x             | amd64 (Intel)      | 2023-12-31       |
+| >= v0.0.19  | provided.al2       | arm64 (Graviton 2) | ----------       |
 
 ## Features
 
@@ -56,7 +56,10 @@ The documentation is a __WIP__ and you can contribute!
   This application will need [Google Workspace Directory API](https://developers.google.com/admin-sdk/directory/v1/guides) to retrieve `Users`, `Groups` and `Members` data.  Configure this is a little `bit tricky`, but it is well [documented by Google](https://developers.google.com/workspace/guides/create-credentials).
   The Authorization/Authorization needed is [OAuth 2.0 for Server to Server Applications](https://developers.google.com/identity/protocols/oauth2/service-account) and this require to:
    1. [Create a Service Account](https://developers.google.com/identity/protocols/oauth2/service-account#creatinganaccount) on Google Cloud Platform
-   2. [Delegate domain-wide authority to the service account](https://developers.google.com/identity/protocols/oauth2/service-account#delegatingauthority), the scope needed are: `https://www.googleapis.com/auth/admin.directory.group.readonly`, `https://www.googleapis.com/auth/admin.directory.user.readonly` and `https://www.googleapis.com/auth/admin.directory.group.member.readonly`
+   2. [Delegate domain-wide authority to the service account](https://developers.google.com/identity/protocols/oauth2/service-account#delegatingauthority), the scope needed are:
+      1. `https://www.googleapis.com/auth/admin.directory.group.readonly`
+      2. `https://www.googleapis.com/auth/admin.directory.user.readonly`
+      3. `https://www.googleapis.com/auth/admin.directory.group.member.readonly`
 * __AWS SSO SCIM API credentials__
   This credentials is configured in the [AWS IAM Identity Center (Successor to AWS Single Sign-On)](https://aws.amazon.com/iam/identity-center/) service following the [Automatic provisioning](https://docs.aws.amazon.com/singlesignon/latest/userguide/provision-automatically.html) guide.
 

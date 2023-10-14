@@ -3,12 +3,13 @@ package idp
 import (
 	"context"
 	"errors"
-	"reflect"
 	"testing"
 
 	gomock "github.com/golang/mock/gomock"
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/slashdevops/idp-scim-sync/internal/model"
-	"github.com/slashdevops/idp-scim-sync/internal/utils"
+
 	mocks "github.com/slashdevops/idp-scim-sync/mocks/idp"
 	"github.com/stretchr/testify/assert"
 	admin "google.golang.org/api/admin/directory/v1"
@@ -145,8 +146,10 @@ func TestGetGroups(t *testing.T) {
 				t.Errorf("GoogleProvider.GetGroups() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("GoogleProvider.GetGroups() = %s, want %s", utils.ToJSON(got), utils.ToJSON(tt.want))
+
+			sort := func(x, y string) bool { return x > y }
+			if diff := cmp.Diff(tt.want, got, cmpopts.SortSlices(sort)); diff != "" {
+				t.Errorf("GetGroups() (-want +got):\n%s", diff)
 			}
 		})
 	}
@@ -186,11 +189,6 @@ func BenchmarkGetGroups(b *testing.B) {
 }
 
 func TestGetUsers(t *testing.T) {
-	u1 := &model.User{IPID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, DisplayName: "user 1", Active: true, Email: "user.1@mail.com"}
-	u1.SetHashCode()
-	u2 := &model.User{IPID: "2", Name: model.Name{GivenName: "user", FamilyName: "2"}, DisplayName: "user 2", Active: false, Email: "user.2@mail.com"}
-	u2.SetHashCode()
-
 	type fields struct {
 		ds *mocks.MockGoogleProviderService
 	}
@@ -207,6 +205,16 @@ func TestGetUsers(t *testing.T) {
 		want    *model.UsersResult
 		wantErr bool
 	}{
+		{
+			name: "Should return error",
+			prepare: func(f *fields) {
+				ctx := context.Background()
+				f.ds.EXPECT().ListUsers(ctx, gomock.Eq([]string{""})).Return(nil, errors.New("test error")).Times(1)
+			},
+			args:    args{ctx: context.Background(), filter: []string{""}},
+			want:    nil,
+			wantErr: true,
+		},
 		{
 			name: "Should return empty UsersResult and no error",
 			prepare: func(f *fields) {
@@ -228,27 +236,71 @@ func TestGetUsers(t *testing.T) {
 			prepare: func(f *fields) {
 				ctx := context.Background()
 				googleUsers := make([]*admin.User, 0)
-				googleUsers = append(googleUsers, &admin.User{PrimaryEmail: "user.1@mail.com", Id: "1", Name: &admin.UserName{GivenName: "user", FamilyName: "1"}, Suspended: false})
-				googleUsers = append(googleUsers, &admin.User{PrimaryEmail: "user.2@mail.com", Id: "2", Name: &admin.UserName{GivenName: "user", FamilyName: "2"}, Suspended: true})
+				googleUsers = append(googleUsers,
+					&admin.User{
+						Id:           "1",
+						PrimaryEmail: "user.1@mail.com",
+						Name:         &admin.UserName{GivenName: "user", FamilyName: "1"},
+						Suspended:    false,
+					},
+				)
+				googleUsers = append(googleUsers,
+					&admin.User{
+						Id:           "2",
+						PrimaryEmail: "user.2@mail.com",
+						Name:         &admin.UserName{GivenName: "user", FamilyName: "2"},
+						Suspended:    true,
+						Emails: []admin.UserEmail{
+							{
+								Address: "user.2@mailcom",
+								Type:    "work",
+								Primary: true,
+							},
+						},
+					},
+				)
 
 				f.ds.EXPECT().ListUsers(ctx, gomock.Eq([]string{""})).Return(googleUsers, nil).Times(1)
 			},
 			args: args{ctx: context.Background(), filter: []string{""}},
 			want: &model.UsersResult{
-				Items:     2,
-				Resources: []*model.User{u1, u2},
+				Items: 2,
+				Resources: []*model.User{
+					model.UserBuilder().
+						WithIPID("1").
+						WithName(&model.Name{GivenName: "user", FamilyName: "1"}).
+						WithDisplayName("user 1").
+						WithUserName("user.1@mail.com").
+						WithActive(true).
+						WithEmails(
+							[]model.Email{
+								model.EmailBuilder().
+									WithValue("user.1@mail.com").
+									WithType("work").
+									WithPrimary(true).
+									Build(),
+							},
+						).
+						Build(),
+					model.UserBuilder().
+						WithIPID("2").
+						WithName(&model.Name{GivenName: "user", FamilyName: "2"}).
+						WithDisplayName("user 2").
+						WithUserName("user.2@mail.com").
+						WithActive(false).
+						WithEmails(
+							[]model.Email{
+								model.EmailBuilder().
+									WithValue("user.2@mail.com").
+									WithType("work").
+									WithPrimary(true).
+									Build(),
+							},
+						).
+						Build(),
+				},
 			},
 			wantErr: false,
-		},
-		{
-			name: "Should return error",
-			prepare: func(f *fields) {
-				ctx := context.Background()
-				f.ds.EXPECT().ListUsers(ctx, gomock.Eq([]string{""})).Return(nil, errors.New("test error")).Times(1)
-			},
-			args:    args{ctx: context.Background(), filter: []string{""}},
-			want:    nil,
-			wantErr: true,
 		},
 	}
 
@@ -274,11 +326,13 @@ func TestGetUsers(t *testing.T) {
 
 			got, err := g.GetUsers(tt.args.ctx, tt.args.filter)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("GoogleProvider.GetUsers() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("GoogleProvider.GetUsers() got error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("GoogleProvider.GetUsers() = %s, want %s", utils.ToJSON(got), utils.ToJSON(tt.want))
+
+			sort := func(x, y string) bool { return x > y }
+			if diff := cmp.Diff(tt.want, got, cmpopts.SortSlices(sort)); diff != "" {
+				t.Errorf("GetUsers() (-want +got):\n%s", diff)
 			}
 		})
 	}
@@ -412,8 +466,10 @@ func TestGetGroupMembers(t *testing.T) {
 				t.Errorf("GoogleProvider.GetGroupMembers() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("GoogleProvider.GetGroupMembers() = %s, want %s", utils.ToJSON(got), utils.ToJSON(tt.want))
+
+			sort := func(x, y string) bool { return x > y }
+			if diff := cmp.Diff(tt.want, got, cmpopts.SortSlices(sort)); diff != "" {
+				t.Errorf("GetGroupMembers() (-want +got):\n%s", diff)
 			}
 		})
 	}
@@ -451,13 +507,84 @@ func TestGetUsersByGroupsMembers(t *testing.T) {
 			wantErr: false,
 		},
 		{
+			name: "Should return error",
+			prepare: func(f *fields) {
+				ctx := context.Background()
+				f.ds.EXPECT().GetUser(ctx, gomock.Eq("user.1@mail.com")).Return(nil, errors.New("test error")).Times(1)
+			},
+			args: args{
+				ctx: context.Background(),
+				gmr: &model.GroupsMembersResult{
+					Resources: []*model.GroupMembers{
+						{
+							Items: 2,
+							Group: &model.Group{IPID: "1", Name: "group 1", Email: "group1@mail.com"},
+							Resources: []*model.Member{
+								{IPID: "1", Email: "user.1@mail.com", Status: "ACTIVE"},
+							},
+						},
+					},
+				},
+			},
+			want:    nil,
+			wantErr: true,
+		},
+		{
 			name: "Should return UsersResult and no error",
 			prepare: func(f *fields) {
 				ctx := context.Background()
-				googleUser1 := &admin.User{PrimaryEmail: "user.1@mail.com", Id: "1", Name: &admin.UserName{GivenName: "user", FamilyName: "1"}, Suspended: false}
-				googleUser2 := &admin.User{PrimaryEmail: "user.2@mail.com", Id: "2", Name: &admin.UserName{GivenName: "user", FamilyName: "2"}, Suspended: true}
-				googleUser3 := &admin.User{PrimaryEmail: "user.3@mail.com", Id: "3", Name: &admin.UserName{GivenName: "user", FamilyName: "3"}, Suspended: true}
-				googleUser4 := &admin.User{PrimaryEmail: "user.4@mail.com", Id: "4", Name: &admin.UserName{GivenName: "user", FamilyName: "4"}, Suspended: true}
+				googleUser1 := &admin.User{
+					Id:           "1",
+					PrimaryEmail: "user.1@mail.com",
+					Name:         &admin.UserName{GivenName: "user", FamilyName: "1"},
+					Suspended:    false,
+					// Emails: []admin.UserEmail{
+					// 	{
+					// 		Address: "user.1@mail.com",
+					// 		Type:    "work",
+					// 		Primary: true,
+					// 	},
+					// },
+				}
+				googleUser2 := &admin.User{
+					Id:           "2",
+					PrimaryEmail: "user.2@mail.com",
+					Name:         &admin.UserName{GivenName: "user", FamilyName: "2"},
+					Suspended:    true,
+					// Emails: []admin.UserEmail{
+					// 	{
+					// 		Address: "user.2@mail.com",
+					// 		Type:    "work",
+					// 		Primary: true,
+					// 	},
+					// },
+				}
+				googleUser3 := &admin.User{
+					Id:           "3",
+					PrimaryEmail: "user.3@mail.com",
+					Name:         &admin.UserName{GivenName: "user", FamilyName: "3"},
+					Suspended:    true,
+					// Emails: []admin.UserEmail{
+					// 	{
+					// 		Address: "user.3@mail.com",
+					// 		Type:    "work",
+					// 		Primary: true,
+					// 	},
+					// },
+				}
+				googleUser4 := &admin.User{
+					Id:           "4",
+					PrimaryEmail: "user.4@mail.com",
+					Name:         &admin.UserName{GivenName: "user", FamilyName: "4"},
+					Suspended:    true,
+					// Emails: []admin.UserEmail{
+					// 	{
+					// 		Address: "user.4@mail.com",
+					// 		Type:    "work",
+					// 		Primary: true,
+					// 	},
+					// },
+				}
 
 				gomock.InOrder(
 					f.ds.EXPECT().GetUser(ctx, gomock.Eq("user.1@mail.com")).Return(googleUser1, nil).Times(1),
@@ -493,36 +620,73 @@ func TestGetUsersByGroupsMembers(t *testing.T) {
 			want: &model.UsersResult{
 				Items: 4,
 				Resources: []*model.User{
-					{IPID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com", DisplayName: "user 1", Active: true, HashCode: model.Hash(&model.User{IPID: "1", Name: model.Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@mail.com", DisplayName: "user 1", Active: true})},
-					{IPID: "2", Name: model.Name{GivenName: "user", FamilyName: "2"}, Email: "user.2@mail.com", DisplayName: "user 2", Active: false, HashCode: model.Hash(&model.User{IPID: "2", Name: model.Name{GivenName: "user", FamilyName: "2"}, Email: "user.2@mail.com", DisplayName: "user 2", Active: false})},
-					{IPID: "3", Name: model.Name{GivenName: "user", FamilyName: "3"}, Email: "user.3@mail.com", DisplayName: "user 3", Active: false, HashCode: model.Hash(&model.User{IPID: "3", Name: model.Name{GivenName: "user", FamilyName: "3"}, Email: "user.3@mail.com", DisplayName: "user 3", Active: false})},
-					{IPID: "4", Name: model.Name{GivenName: "user", FamilyName: "4"}, Email: "user.4@mail.com", DisplayName: "user 4", Active: false, HashCode: model.Hash(&model.User{IPID: "4", Name: model.Name{GivenName: "user", FamilyName: "4"}, Email: "user.4@mail.com", DisplayName: "user 4", Active: false})},
+					model.UserBuilder().
+						WithIPID("1").
+						WithName(&model.Name{GivenName: "user", FamilyName: "1"}).
+						WithDisplayName("user 1").
+						WithActive(true).
+						WithUserName("user.1@mail.com").
+						WithEmails(
+							[]model.Email{
+								model.EmailBuilder().
+									WithValue("user.1@mail.com").
+									WithType("work").
+									WithPrimary(true).
+									Build(),
+							},
+						).
+						Build(),
+					model.UserBuilder().
+						WithIPID("2").
+						WithName(&model.Name{GivenName: "user", FamilyName: "2"}).
+						WithDisplayName("user 2").
+						WithActive(false).
+						WithUserName("user.2@mail.com").
+						WithEmails(
+							[]model.Email{
+								model.EmailBuilder().
+									WithValue("user.2@mail.com").
+									WithType("work").
+									WithPrimary(true).
+									Build(),
+							},
+						).
+						Build(),
+					model.UserBuilder().
+						WithIPID("3").
+						WithName(&model.Name{GivenName: "user", FamilyName: "3"}).
+						WithDisplayName("user 3").
+						WithActive(false).
+						WithUserName("user.3@mail.com").
+						WithEmails(
+							[]model.Email{
+								model.EmailBuilder().
+									WithValue("user.3@mail.com").
+									WithType("work").
+									WithPrimary(true).
+									Build(),
+							},
+						).
+						Build(),
+					model.UserBuilder().
+						WithIPID("4").
+						WithName(&model.Name{GivenName: "user", FamilyName: "4"}).
+						WithDisplayName("user 4").
+						WithActive(false).
+						WithUserName("user.4@mail.com").
+						WithEmails(
+							[]model.Email{
+								model.EmailBuilder().
+									WithValue("user.4@mail.com").
+									WithType("work").
+									WithPrimary(true).
+									Build(),
+							},
+						).
+						Build(),
 				},
 			},
 			wantErr: false,
-		},
-		{
-			name: "Should return error",
-			prepare: func(f *fields) {
-				ctx := context.Background()
-				f.ds.EXPECT().GetUser(ctx, gomock.Eq("user.1@mail.com")).Return(nil, errors.New("test error")).Times(1)
-			},
-			args: args{
-				ctx: context.Background(),
-				gmr: &model.GroupsMembersResult{
-					Resources: []*model.GroupMembers{
-						{
-							Items: 2,
-							Group: &model.Group{IPID: "1", Name: "group 1", Email: "group1@mail.com"},
-							Resources: []*model.Member{
-								{IPID: "1", Email: "user.1@mail.com", Status: "ACTIVE"},
-							},
-						},
-					},
-				},
-			},
-			want:    nil,
-			wantErr: true,
 		},
 	}
 
@@ -547,11 +711,13 @@ func TestGetUsersByGroupsMembers(t *testing.T) {
 
 			got, err := g.GetUsersByGroupsMembers(tt.args.ctx, tt.args.gmr)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("GoogleProvider.GetUsersFromGroupMembers() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("GoogleProvider.GetUsersFromGroupMembers() got error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("GoogleProvider.GetUsersFromGroupMembers() = %s, want %s", utils.ToJSON(got), utils.ToJSON(tt.want))
+
+			sort := func(x, y string) bool { return x > y }
+			if diff := cmp.Diff(tt.want, got, cmpopts.SortSlices(sort)); diff != "" {
+				t.Errorf("GetUsersByGroupsMembers() (-want +got):\n%s", diff)
 			}
 		})
 	}
@@ -717,8 +883,9 @@ func TestGetGroupsMembers(t *testing.T) {
 				return
 			}
 
-			if !tt.wantErr && !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("GoogleProvider.GetGroupsMembers() = %s, want %s", utils.ToJSON(got), utils.ToJSON(tt.want))
+			sort := func(x, y string) bool { return x > y }
+			if diff := cmp.Diff(tt.want, got, cmpopts.SortSlices(sort)); diff != "" {
+				t.Errorf("GetGroupsMembers() (-want +got):\n%s", diff)
 			}
 		})
 	}

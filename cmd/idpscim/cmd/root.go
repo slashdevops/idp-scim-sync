@@ -14,11 +14,11 @@ import (
 	"github.com/hashicorp/go-retryablehttp"
 	"github.com/pkg/errors"
 	"github.com/slashdevops/idp-scim-sync/internal/config"
+	"github.com/slashdevops/idp-scim-sync/internal/convert"
 	"github.com/slashdevops/idp-scim-sync/internal/core"
 	"github.com/slashdevops/idp-scim-sync/internal/idp"
 	"github.com/slashdevops/idp-scim-sync/internal/repository"
 	"github.com/slashdevops/idp-scim-sync/internal/scim"
-	"github.com/slashdevops/idp-scim-sync/internal/utils"
 	"github.com/slashdevops/idp-scim-sync/internal/version"
 	"github.com/slashdevops/idp-scim-sync/pkg/aws"
 	"github.com/slashdevops/idp-scim-sync/pkg/google"
@@ -253,7 +253,7 @@ func getSecrets() {
 }
 
 func sync() error {
-	log.Tracef("viper config: %s", utils.ToJSON(viper.AllSettings()))
+	log.Tracef("viper config: %s", convert.ToJSONString(viper.AllSettings(), true))
 
 	if cfg.SyncMethod == "groups" {
 		return syncGroups()
@@ -345,7 +345,7 @@ func syncGroups() error {
 		return errors.Wrap(err, "cannot create sync service")
 	}
 
-	log.Tracef("app config: %s", utils.ToJSON(cfg))
+	log.Tracef("app config: %s", convert.ToJSONString(cfg, true))
 
 	if err := ss.SyncGroupsAndTheirMembers(ctx); err != nil {
 		return errors.Wrap(err, "cannot sync groups and their members")

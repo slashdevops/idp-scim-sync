@@ -1,12 +1,12 @@
 package scim
 
 import (
-	"reflect"
 	"strconv"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/slashdevops/idp-scim-sync/internal/model"
-	"github.com/slashdevops/idp-scim-sync/internal/utils"
 	"github.com/slashdevops/idp-scim-sync/pkg/aws"
 )
 
@@ -125,8 +125,11 @@ func Test_patchGroupOperations(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := patchGroupOperations(tt.args.op, tt.args.path, tt.args.pvs, tt.args.gms); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("patchGroupOperations() = %s, want %s", utils.ToJSON(got), utils.ToJSON(tt.want))
+			got := patchGroupOperations(tt.args.op, tt.args.path, tt.args.pvs, tt.args.gms)
+
+			sort := func(x, y string) bool { return x > y }
+			if diff := cmp.Diff(tt.want, got, cmpopts.SortSlices(sort)); diff != "" {
+				t.Errorf("patchGroupOperations() (-want +got):\n%s", diff)
 			}
 		})
 	}

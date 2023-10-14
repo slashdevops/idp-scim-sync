@@ -1,10 +1,10 @@
 package model
 
 import (
-	"reflect"
 	"testing"
 
-	"github.com/slashdevops/idp-scim-sync/internal/utils"
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -230,17 +230,23 @@ func TestGroupsOperations(t *testing.T) {
 				t.Errorf("GroupsOperations() error = %v", err)
 				return
 			}
-			if !reflect.DeepEqual(gotCreate, tt.wantCreate) {
-				t.Errorf("GroupsOperations() gotCreate = %s, want %s", utils.ToJSON(gotCreate), utils.ToJSON(tt.wantCreate))
+
+			sort := func(x, y string) bool { return x > y }
+
+			if diff := cmp.Diff(tt.wantCreate, gotCreate, cmpopts.SortSlices(sort)); diff != "" {
+				t.Errorf("GroupsOperations() gotCreate (-tt.wantCreate +gotCreate):\n%s", diff)
 			}
-			if !reflect.DeepEqual(gotUpdate, tt.wantUpdate) {
-				t.Errorf("GroupsOperations() gotUpdate = %s, want %s", utils.ToJSON(gotUpdate), utils.ToJSON(tt.wantUpdate))
+
+			if diff := cmp.Diff(tt.wantUpdate, gotUpdate, cmpopts.SortSlices(sort)); diff != "" {
+				t.Errorf("GroupsOperations() gotUpdate (-tt.wantUpdate +gotUpdate):\n%s", diff)
 			}
-			if !reflect.DeepEqual(gotEqual, tt.wantEqual) {
-				t.Errorf("GroupsOperations() gotEqual = %s, want %s", utils.ToJSON(gotEqual), utils.ToJSON(tt.wantEqual))
+
+			if diff := cmp.Diff(tt.wantEqual, gotEqual, cmpopts.SortSlices(sort)); diff != "" {
+				t.Errorf("GroupsOperations() gotEqual (-tt.wantEqual +gotEqual):\n%s", diff)
 			}
-			if !reflect.DeepEqual(gotDelete, tt.wantDelete) {
-				t.Errorf("GroupsOperations() gotDelete = %s, want %s", utils.ToJSON(gotDelete), utils.ToJSON(tt.wantDelete))
+
+			if diff := cmp.Diff(tt.wantDelete, gotDelete, cmpopts.SortSlices(sort)); diff != "" {
+				t.Errorf("GroupsOperations() gotDelete (-tt.wantDelete +gotDelete):\n%s", diff)
 			}
 		})
 	}
@@ -299,27 +305,76 @@ func TestUsersOperations(t *testing.T) {
 		{
 			name: "2 equals",
 			args: args{
-				idp: UsersResultBuilder().WithResources(
-					[]*User{
-						UserBuilder().WithIPID("1").WithEmail("user.1@mail.com").WithFamilyName("1").WithGivenName("user").WithDisplayName("user 1").WithActive(true).Build(),
-						UserBuilder().WithIPID("2").WithEmail("user.2@mail.com").WithFamilyName("2").WithGivenName("user").WithDisplayName("user 2").WithActive(true).Build(),
-					},
-				).Build(),
+				idp: UsersResultBuilder().
+					WithResources(
+						[]*User{
+							UserBuilder().
+								WithIPID("1").
+								WithEmail(
+									EmailBuilder().WithValue("user.1@mail.com").WithType("Work").WithPrimary(true).Build(),
+								).
+								WithName(&Name{FamilyName: "1", GivenName: "user"}).
+								WithDisplayName("user 1").
+								WithActive(true).
+								Build(),
+							UserBuilder().
+								WithIPID("2").
+								WithEmail(
+									EmailBuilder().WithValue("user.2@mail.com").WithType("Work").WithPrimary(true).Build(),
+								).
+								WithName(&Name{FamilyName: "2", GivenName: "user"}).
+								WithDisplayName("user 2").
+								WithActive(true).
+								Build(),
+						},
+					).Build(),
 				state: UsersResultBuilder().WithResources(
 					[]*User{
-						UserBuilder().WithIPID("1").WithEmail("user.1@mail.com").WithFamilyName("1").WithGivenName("user").WithDisplayName("user 1").WithActive(true).Build(),
-						UserBuilder().WithIPID("2").WithEmail("user.2@mail.com").WithFamilyName("2").WithGivenName("user").WithDisplayName("user 2").WithActive(true).Build(),
+						UserBuilder().
+							WithIPID("1").
+							WithEmail(
+								EmailBuilder().WithValue("user.1@mail.com").WithType("Work").WithPrimary(true).Build(),
+							).
+							WithName(&Name{FamilyName: "1", GivenName: "user"}).
+							WithDisplayName("user 1").
+							WithActive(true).
+							Build(),
+						UserBuilder().WithIPID("2").
+							WithEmail(
+								EmailBuilder().WithValue("user.2@mail.com").WithType("Work").WithPrimary(true).Build(),
+							).
+							WithName(&Name{FamilyName: "2", GivenName: "user"}).
+							WithDisplayName("user 2").
+							WithActive(true).
+							Build(),
 					},
 				).Build(),
 			},
 			wantCreate: UsersResultBuilder().Build(),
 			wantUpdate: UsersResultBuilder().Build(),
-			wantEqual: UsersResultBuilder().WithResources(
-				[]*User{
-					UserBuilder().WithIPID("1").WithEmail("user.1@mail.com").WithFamilyName("1").WithGivenName("user").WithDisplayName("user 1").WithActive(true).Build(),
-					UserBuilder().WithIPID("2").WithEmail("user.2@mail.com").WithFamilyName("2").WithGivenName("user").WithDisplayName("user 2").WithActive(true).Build(),
-				},
-			).Build(),
+			wantEqual: UsersResultBuilder().
+				WithResources(
+					[]*User{
+						UserBuilder().
+							WithIPID("1").
+							WithEmail(
+								EmailBuilder().WithValue("user.1@mail.com").WithType("Work").WithPrimary(true).Build(),
+							).
+							WithName(&Name{FamilyName: "1", GivenName: "user"}).
+							WithDisplayName("user 1").
+							WithActive(true).
+							Build(),
+						UserBuilder().
+							WithIPID("2").
+							WithEmail(
+								EmailBuilder().WithValue("user.2@mail.com").WithType("Work").WithPrimary(true).Build(),
+							).
+							WithName(&Name{FamilyName: "2", GivenName: "user"}).
+							WithDisplayName("user 2").
+							WithActive(true).
+							Build(),
+					},
+				).Build(),
 			wantDelete: UsersResultBuilder().Build(),
 		},
 		{
@@ -327,32 +382,80 @@ func TestUsersOperations(t *testing.T) {
 			args: args{
 				idp: UsersResultBuilder().WithResources(
 					[]*User{
-						UserBuilder().WithIPID("1").WithEmail("user.1@mail.com").WithFamilyName("1").WithGivenName("user").WithDisplayName("user 1").WithActive(true).Build(),
-						UserBuilder().WithIPID("2").WithEmail("user.2@mail.com").WithFamilyName("different").WithGivenName("user").WithDisplayName("user 2").WithActive(true).Build(),
+						UserBuilder().
+							WithIPID("1").
+							WithEmail(EmailBuilder().WithValue("user.1@mail.com").WithType("Work").WithPrimary(true).Build()).
+							WithName(&Name{FamilyName: "1", GivenName: "user"}).
+							WithDisplayName("user 1").
+							WithActive(true).
+							Build(),
+						UserBuilder().
+							WithIPID("2").
+							WithEmail(EmailBuilder().WithValue("user.2@mail.com").WithType("Work").WithPrimary(true).Build()).
+							WithName(&Name{FamilyName: "different", GivenName: "user"}).
+							WithDisplayName("user 2").
+							WithActive(true).
+							Build(),
 					},
 				).Build(),
 				state: UsersResultBuilder().WithResources(
 					[]*User{
-						UserBuilder().WithIPID("1").WithEmail("user.1@mail.com").WithFamilyName("1").WithGivenName("user").WithDisplayName("user 1").WithActive(true).Build(),
-						UserBuilder().WithIPID("2").WithEmail("user.2@mail.com").WithFamilyName("2").WithGivenName("user").WithDisplayName("user 2").WithActive(true).Build(),
-						UserBuilder().WithIPID("3").WithEmail("user.3@mail.com").WithFamilyName("3").WithGivenName("user").WithDisplayName("user 3").WithActive(true).Build(),
+						UserBuilder().
+							WithIPID("1").
+							WithEmail(EmailBuilder().WithValue("user.1@mail.com").WithType("Work").WithPrimary(true).Build()).
+							WithName(&Name{FamilyName: "1", GivenName: "user"}).
+							WithDisplayName("user 1").
+							WithActive(true).
+							Build(),
+						UserBuilder().
+							WithIPID("2").
+							WithEmail(EmailBuilder().WithValue("user.2@mail.com").WithType("Work").WithPrimary(true).Build()).
+							WithName(&Name{FamilyName: "2", GivenName: "user"}).
+							WithDisplayName("user 2").
+							WithActive(true).
+							Build(),
+						UserBuilder().
+							WithIPID("3").
+							WithEmail(EmailBuilder().WithValue("user.3@mail.com").WithType("Work").WithPrimary(true).Build()).
+							WithName(&Name{FamilyName: "3", GivenName: "user"}).
+							WithDisplayName("user 3").
+							WithActive(true).
+							Build(),
 					},
 				).Build(),
 			},
 			wantCreate: UsersResultBuilder().Build(),
 			wantUpdate: UsersResultBuilder().WithResources(
 				[]*User{
-					UserBuilder().WithIPID("2").WithEmail("user.2@mail.com").WithFamilyName("different").WithGivenName("user").WithDisplayName("user 2").WithActive(true).Build(),
+					UserBuilder().
+						WithIPID("2").
+						WithEmail(EmailBuilder().WithValue("user.2@mail.com").WithType("Work").WithPrimary(true).Build()).
+						WithName(&Name{FamilyName: "different", GivenName: "user"}).
+						WithDisplayName("user 2").
+						WithActive(true).
+						Build(),
 				},
 			).Build(),
 			wantEqual: UsersResultBuilder().WithResources(
 				[]*User{
-					UserBuilder().WithIPID("1").WithEmail("user.1@mail.com").WithFamilyName("1").WithGivenName("user").WithDisplayName("user 1").WithActive(true).Build(),
+					UserBuilder().
+						WithIPID("1").
+						WithEmail(EmailBuilder().WithValue("user.1@mail.com").WithType("Work").WithPrimary(true).Build()).
+						WithName(&Name{FamilyName: "1", GivenName: "user"}).
+						WithDisplayName("user 1").
+						WithActive(true).
+						Build(),
 				},
 			).Build(),
 			wantDelete: UsersResultBuilder().WithResources(
 				[]*User{
-					UserBuilder().WithIPID("3").WithEmail("user.3@mail.com").WithFamilyName("3").WithGivenName("user").WithDisplayName("user 3").WithActive(true).Build(),
+					UserBuilder().
+						WithIPID("3").
+						WithEmail(EmailBuilder().WithValue("user.3@mail.com").WithType("Work").WithPrimary(true).Build()).
+						WithName(&Name{FamilyName: "3", GivenName: "user"}).
+						WithDisplayName("user 3").
+						WithActive(true).
+						Build(),
 				},
 			).Build(),
 		},
@@ -361,26 +464,62 @@ func TestUsersOperations(t *testing.T) {
 			args: args{
 				idp: UsersResultBuilder().WithResources(
 					[]*User{
-						UserBuilder().WithIPID("1").WithEmail("user.1@mail.com").WithFamilyName("1").WithGivenName("user").WithDisplayName("user 1").WithActive(true).Build(),
-						UserBuilder().WithIPID("2").WithEmail("user.2@mail.com").WithFamilyName("different").WithGivenName("user").WithDisplayName("user 2").WithActive(true).Build(),
+						UserBuilder().
+							WithIPID("1").
+							WithEmail(EmailBuilder().WithValue("user.1@mail.com").WithType("Work").WithPrimary(true).Build()).
+							WithName(&Name{FamilyName: "1", GivenName: "user"}).
+							WithDisplayName("user 1").
+							WithActive(true).
+							Build(),
+						UserBuilder().
+							WithIPID("2").
+							WithEmail(EmailBuilder().WithValue("user.2@mail.com").WithType("Work").WithPrimary(true).Build()).
+							WithName(&Name{FamilyName: "different", GivenName: "user"}).
+							WithDisplayName("user 2").
+							WithActive(true).
+							Build(),
 					},
 				).Build(),
 				state: UsersResultBuilder().WithResources(
 					[]*User{
-						UserBuilder().WithIPID("1").WithEmail("user.1@mail.com").WithFamilyName("1").WithGivenName("user").WithDisplayName("user 1").WithActive(true).Build(),
-						UserBuilder().WithIPID("2").WithEmail("user.2@mail.com").WithFamilyName("2").WithGivenName("user").WithDisplayName("user 2").WithActive(true).Build(),
+						UserBuilder().
+							WithIPID("1").
+							WithEmail(EmailBuilder().WithValue("user.1@mail.com").WithType("Work").WithPrimary(true).Build()).
+							WithName(&Name{FamilyName: "1", GivenName: "user"}).
+							WithDisplayName("user 1").
+							WithActive(true).
+							Build(),
+						UserBuilder().
+							WithIPID("2").
+							WithEmail(EmailBuilder().WithValue("user.2@mail.com").WithType("Work").WithPrimary(true).Build()).
+							WithName(&Name{FamilyName: "2", GivenName: "user"}).
+							WithDisplayName("user 2").
+							WithActive(true).
+							Build(),
 					},
 				).Build(),
 			},
 			wantCreate: UsersResultBuilder().Build(),
 			wantUpdate: UsersResultBuilder().WithResources(
 				[]*User{
-					UserBuilder().WithIPID("2").WithEmail("user.2@mail.com").WithFamilyName("different").WithGivenName("user").WithDisplayName("user 2").WithActive(true).Build(),
+					UserBuilder().
+						WithIPID("2").
+						WithEmail(EmailBuilder().WithValue("user.2@mail.com").WithType("Work").WithPrimary(true).Build()).
+						WithName(&Name{FamilyName: "different", GivenName: "user"}).
+						WithDisplayName("user 2").
+						WithActive(true).
+						Build(),
 				},
 			).Build(),
 			wantEqual: UsersResultBuilder().WithResources(
 				[]*User{
-					UserBuilder().WithIPID("1").WithEmail("user.1@mail.com").WithFamilyName("1").WithGivenName("user").WithDisplayName("user 1").WithActive(true).Build(),
+					UserBuilder().
+						WithIPID("1").
+						WithEmail(EmailBuilder().WithValue("user.1@mail.com").WithType("Work").WithPrimary(true).Build()).
+						WithName(&Name{FamilyName: "1", GivenName: "user"}).
+						WithDisplayName("user 1").
+						WithActive(true).
+						Build(),
 				},
 			).Build(),
 			wantDelete: UsersResultBuilder().Build(),
@@ -390,36 +529,90 @@ func TestUsersOperations(t *testing.T) {
 			args: args{
 				idp: UsersResultBuilder().WithResources(
 					[]*User{
-						UserBuilder().WithIPID("1").WithEmail("user.1@mail.com").WithFamilyName("1").WithGivenName("user").WithDisplayName("user 1").WithActive(true).Build(),
-						UserBuilder().WithIPID("2").WithEmail("user.2@mail.com").WithFamilyName("different").WithGivenName("user").WithDisplayName("user 2").WithActive(true).Build(),
-						UserBuilder().WithIPID("4").WithEmail("user.4@mail.com").WithFamilyName("4").WithGivenName("user").WithDisplayName("user 4").WithActive(true).Build(),
+						UserBuilder().
+							WithIPID("1").WithEmail(EmailBuilder().WithValue("user.1@mail.com").WithType("Work").WithPrimary(true).Build()).
+							WithName(&Name{FamilyName: "1", GivenName: "user"}).
+							WithDisplayName("user 1").
+							WithActive(true).
+							Build(),
+						UserBuilder().
+							WithIPID("2").WithEmail(EmailBuilder().WithValue("user.2@mail.com").WithType("Work").WithPrimary(true).Build()).
+							WithName(&Name{FamilyName: "different", GivenName: "user"}).
+							WithDisplayName("user 2").
+							WithActive(true).
+							Build(),
+						UserBuilder().
+							WithIPID("4").WithEmail(EmailBuilder().WithValue("user.4@mail.com").WithType("Work").WithPrimary(true).Build()).
+							WithName(&Name{FamilyName: "4", GivenName: "user"}).
+							WithDisplayName("user 4").
+							WithActive(true).
+							Build(),
 					},
 				).Build(),
 				state: UsersResultBuilder().WithResources([]*User{
-					UserBuilder().WithIPID("1").WithEmail("user.1@mail.com").WithFamilyName("1").WithGivenName("user").WithDisplayName("user 1").WithActive(true).Build(),
-					UserBuilder().WithIPID("2").WithEmail("user.2@mail.com").WithFamilyName("2").WithGivenName("user").WithDisplayName("user 2").WithActive(true).Build(),
-					UserBuilder().WithIPID("3").WithEmail("user.3@mail.com").WithFamilyName("3").WithGivenName("user").WithDisplayName("user 3").WithActive(true).Build(),
+					UserBuilder().
+						WithIPID("1").WithEmail(EmailBuilder().WithValue("user.1@mail.com").WithType("Work").WithPrimary(true).Build()).
+						WithName(&Name{FamilyName: "1", GivenName: "user"}).
+						WithDisplayName("user 1").
+						WithActive(true).
+						Build(),
+					UserBuilder().
+						WithIPID("2").WithEmail(EmailBuilder().WithValue("user.2@mail.com").WithType("Work").WithPrimary(true).Build()).
+						WithName(&Name{FamilyName: "2", GivenName: "user"}).
+						WithDisplayName("user 2").
+						WithActive(true).
+						Build(),
+					UserBuilder().
+						WithIPID("3").WithEmail(EmailBuilder().WithValue("user.3@mail.com").WithType("Work").WithPrimary(true).Build()).
+						WithName(&Name{FamilyName: "3", GivenName: "user"}).
+						WithDisplayName("user 3").
+						WithActive(true).
+						Build(),
 				},
 				).Build(),
 			},
 			wantCreate: UsersResultBuilder().WithResources(
 				[]*User{
-					UserBuilder().WithIPID("4").WithEmail("user.4@mail.com").WithFamilyName("4").WithGivenName("user").WithDisplayName("user 4").WithActive(true).Build(),
+					UserBuilder().
+						WithIPID("4").
+						WithEmail(EmailBuilder().WithValue("user.4@mail.com").WithType("Work").WithPrimary(true).Build()).
+						WithName(&Name{FamilyName: "4", GivenName: "user"}).
+						WithDisplayName("user 4").
+						WithActive(true).
+						Build(),
 				},
 			).Build(),
 			wantUpdate: UsersResultBuilder().WithResources(
 				[]*User{
-					UserBuilder().WithIPID("2").WithEmail("user.2@mail.com").WithFamilyName("different").WithGivenName("user").WithDisplayName("user 2").WithActive(true).Build(),
+					UserBuilder().
+						WithIPID("2").
+						WithEmail(EmailBuilder().WithValue("user.2@mail.com").WithType("Work").WithPrimary(true).Build()).
+						WithName(&Name{FamilyName: "different", GivenName: "user"}).
+						WithDisplayName("user 2").
+						WithActive(true).
+						Build(),
 				},
 			).Build(),
 			wantEqual: UsersResultBuilder().WithResources(
 				[]*User{
-					UserBuilder().WithIPID("1").WithEmail("user.1@mail.com").WithFamilyName("1").WithGivenName("user").WithDisplayName("user 1").WithActive(true).Build(),
+					UserBuilder().
+						WithIPID("1").
+						WithEmail(EmailBuilder().WithValue("user.1@mail.com").WithType("Work").WithPrimary(true).Build()).
+						WithName(&Name{FamilyName: "1", GivenName: "user"}).
+						WithDisplayName("user 1").
+						WithActive(true).
+						Build(),
 				},
 			).Build(),
 			wantDelete: UsersResultBuilder().WithResources(
 				[]*User{
-					UserBuilder().WithIPID("3").WithEmail("user.3@mail.com").WithFamilyName("3").WithGivenName("user").WithDisplayName("user 3").WithActive(true).Build(),
+					UserBuilder().
+						WithIPID("3").
+						WithEmail(EmailBuilder().WithValue("user.3@mail.com").WithType("Work").WithPrimary(true).Build()).
+						WithName(&Name{FamilyName: "3", GivenName: "user"}).
+						WithDisplayName("user 3").
+						WithActive(true).
+						Build(),
 				},
 			).Build(),
 		},
@@ -438,17 +631,23 @@ func TestUsersOperations(t *testing.T) {
 				t.Errorf("GroupsOperations() error = %v", err)
 				return
 			}
-			if !reflect.DeepEqual(gotCreate, tt.wantCreate) {
-				t.Errorf("UsersOperations() gotCreate = %s, want %s", utils.ToJSON(gotCreate), utils.ToJSON(tt.wantCreate))
+
+			sort := func(x, y string) bool { return x > y }
+
+			if diff := cmp.Diff(tt.wantCreate, gotCreate, cmpopts.SortSlices(sort)); diff != "" {
+				t.Errorf("GroupsOperations() gotCreate (-tt.wantCreate +gotCreate):\n%s", diff)
 			}
-			if !reflect.DeepEqual(gotUpdate, tt.wantUpdate) {
-				t.Errorf("UsersOperations() gotUpdate = %s, want %s", utils.ToJSON(gotUpdate), utils.ToJSON(tt.wantUpdate))
+
+			if diff := cmp.Diff(tt.wantUpdate, gotUpdate, cmpopts.SortSlices(sort)); diff != "" {
+				t.Errorf("GroupsOperations() gotUpdate (-tt.wantUpdate +gotUpdate):\n%s", diff)
 			}
-			if !reflect.DeepEqual(gotEqual, tt.wantEqual) {
-				t.Errorf("UsersOperations() gotEqual = %s, want %s", utils.ToJSON(gotEqual), utils.ToJSON(tt.wantEqual))
+
+			if diff := cmp.Diff(tt.wantEqual, gotEqual, cmpopts.SortSlices(sort)); diff != "" {
+				t.Errorf("GroupsOperations() gotEqual (-tt.wantEqual +gotEqual):\n%s", diff)
 			}
-			if !reflect.DeepEqual(gotDelete, tt.wantDelete) {
-				t.Errorf("UsersOperations() gotDelete = %s, want %s", utils.ToJSON(gotDelete), utils.ToJSON(tt.wantDelete))
+
+			if diff := cmp.Diff(tt.wantDelete, gotDelete, cmpopts.SortSlices(sort)); diff != "" {
+				t.Errorf("GroupsOperations() gotDelete (-tt.wantDelete +gotDelete):\n%s", diff)
 			}
 		})
 	}
@@ -791,14 +990,19 @@ func TestMembersOperations(t *testing.T) {
 				t.Errorf("MembersOperations() error = %v", err)
 				return
 			}
-			if !reflect.DeepEqual(gotCreate, tt.wantCreate) {
-				t.Errorf("MembersOperations() gotCreate = %s, want %s", utils.ToJSON(gotCreate), utils.ToJSON(tt.wantCreate))
+
+			sort := func(x, y string) bool { return x > y }
+
+			if diff := cmp.Diff(tt.wantCreate, gotCreate, cmpopts.SortSlices(sort)); diff != "" {
+				t.Errorf("GroupsOperations() gotCreate (-tt.wantCreate +gotCreate):\n%s", diff)
 			}
-			if !reflect.DeepEqual(gotEqual, tt.wantEqual) {
-				t.Errorf("MembersOperations() gotEqual = %s, want %s", utils.ToJSON(gotEqual), utils.ToJSON(tt.wantEqual))
+
+			if diff := cmp.Diff(tt.wantEqual, gotEqual, cmpopts.SortSlices(sort)); diff != "" {
+				t.Errorf("GroupsOperations() gotEqual (-tt.wantEqual +gotEqual):\n%s", diff)
 			}
-			if !reflect.DeepEqual(gotDelete, tt.wantDelete) {
-				t.Errorf("MembersOperations() gotDelete = %s, want %s", utils.ToJSON(gotDelete), utils.ToJSON(tt.wantDelete))
+
+			if diff := cmp.Diff(tt.wantDelete, gotDelete, cmpopts.SortSlices(sort)); diff != "" {
+				t.Errorf("GroupsOperations() gotDelete (-tt.wantDelete +gotDelete):\n%s", diff)
 			}
 		})
 	}
@@ -870,8 +1074,12 @@ func TestMergeGroupsResult(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.wantMerged.SetHashCode()
 
-			if gotMerged := MergeGroupsResult(tt.args.grs...); !reflect.DeepEqual(gotMerged, tt.wantMerged) {
-				t.Errorf("MergeGroupsResult() = %s, want %s", utils.ToJSON(gotMerged), utils.ToJSON(tt.wantMerged))
+			got := MergeGroupsResult(tt.args.grs...)
+
+			sort := func(x, y string) bool { return x > y }
+
+			if diff := cmp.Diff(tt.wantMerged, got, cmpopts.SortSlices(sort)); diff != "" {
+				t.Errorf("MergeGroupsResult() got (-tt.wantMerged +got):\n%s", diff)
 			}
 		})
 	}
@@ -915,15 +1123,15 @@ func TestMergeUsersResult(t *testing.T) {
 					{
 						Items: 1,
 						Resources: []*User{
-							{IPID: "1", SCIMID: "1", Name: Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@gmail.com", HashCode: "1234567890"},
+							{IPID: "1", SCIMID: "1", Name: &Name{GivenName: "user", FamilyName: "1"}, Emails: []Email{{Value: "user.1@mail.com", Type: "work", Primary: true}}, HashCode: "1234567890"},
 						},
 						HashCode: "1234",
 					},
 					{
 						Items: 2,
 						Resources: []*User{
-							{IPID: "2", SCIMID: "2", Name: Name{GivenName: "user", FamilyName: "2"}, Email: "user.2@gmail.com", HashCode: "0987654321"},
-							{IPID: "3", SCIMID: "3", Name: Name{GivenName: "user", FamilyName: "3"}, Email: "user.3@gmail.com", HashCode: "1234509876"},
+							{IPID: "2", SCIMID: "2", Name: &Name{GivenName: "user", FamilyName: "2"}, Emails: []Email{{Value: "user.2@mail.com", Type: "work", Primary: true}}, HashCode: "0987654321"},
+							{IPID: "3", SCIMID: "3", Name: &Name{GivenName: "user", FamilyName: "3"}, Emails: []Email{{Value: "user.3@mail.com", Type: "work", Primary: true}}, HashCode: "1234509876"},
 						},
 						HashCode: "1234",
 					},
@@ -932,9 +1140,9 @@ func TestMergeUsersResult(t *testing.T) {
 			wantMerged: &UsersResult{
 				Items: 3,
 				Resources: []*User{
-					{IPID: "1", SCIMID: "1", Name: Name{GivenName: "user", FamilyName: "1"}, Email: "user.1@gmail.com", HashCode: "1234567890"},
-					{IPID: "2", SCIMID: "2", Name: Name{GivenName: "user", FamilyName: "2"}, Email: "user.2@gmail.com", HashCode: "0987654321"},
-					{IPID: "3", SCIMID: "3", Name: Name{GivenName: "user", FamilyName: "3"}, Email: "user.3@gmail.com", HashCode: "1234509876"},
+					{IPID: "1", SCIMID: "1", Name: &Name{GivenName: "user", FamilyName: "1"}, Emails: []Email{{Value: "user.1@mail.com", Type: "work", Primary: true}}, HashCode: "1234567890"},
+					{IPID: "2", SCIMID: "2", Name: &Name{GivenName: "user", FamilyName: "2"}, Emails: []Email{{Value: "user.2@mail.com", Type: "work", Primary: true}}, HashCode: "0987654321"},
+					{IPID: "3", SCIMID: "3", Name: &Name{GivenName: "user", FamilyName: "3"}, Emails: []Email{{Value: "user.3@mail.com", Type: "work", Primary: true}}, HashCode: "1234509876"},
 				},
 			},
 		},
@@ -943,8 +1151,12 @@ func TestMergeUsersResult(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.wantMerged.SetHashCode()
 
-			if gotMerged := MergeUsersResult(tt.args.urs...); !reflect.DeepEqual(gotMerged, tt.wantMerged) {
-				t.Errorf("MergeUsersResult() = %s, want %s", utils.ToJSON(gotMerged), utils.ToJSON(tt.wantMerged))
+			got := MergeUsersResult(tt.args.urs...)
+
+			sort := func(x, y string) bool { return x > y }
+
+			if diff := cmp.Diff(tt.wantMerged, got, cmpopts.SortSlices(sort)); diff != "" {
+				t.Errorf("MergeUsersResult() got (-tt.wantMerged +got):\n%s", diff)
 			}
 		})
 	}
@@ -1114,8 +1326,12 @@ func TestMergeGroupsMembersResult(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.wantMerged.SetHashCode()
 
-			if gotMerged := MergeGroupsMembersResult(tt.args.gms...); !reflect.DeepEqual(gotMerged, tt.wantMerged) {
-				t.Errorf("MergeGroupsMembersResult() = %s, want %s", utils.ToJSON(gotMerged), utils.ToJSON(tt.wantMerged))
+			got := MergeGroupsMembersResult(tt.args.gms...)
+
+			sort := func(x, y string) bool { return x > y }
+
+			if diff := cmp.Diff(tt.wantMerged, got, cmpopts.SortSlices(sort)); diff != "" {
+				t.Errorf("MergeGroupsMembersResult() got (-tt.wantMerged +got):\n%s", diff)
 			}
 		})
 	}
@@ -1441,14 +1657,18 @@ func TestMembersDataSets(t *testing.T) {
 
 			gotCreate, gotEqual, gotDelete := membersDataSets(tt.args.idp, tt.args.scim)
 
-			if !reflect.DeepEqual(gotCreate, tt.wantCreate) {
-				t.Errorf("membersDataSets() gotCreate = %s, want %s", utils.ToJSON(gotCreate), utils.ToJSON(tt.wantCreate))
+			sort := func(x, y string) bool { return x > y }
+
+			if diff := cmp.Diff(tt.wantCreate, gotCreate, cmpopts.SortSlices(sort)); diff != "" {
+				t.Errorf("membersDataSets() gotCreate (-tt.wantCreate +gotCreate):\n%s", diff)
 			}
-			if !reflect.DeepEqual(gotEqual, tt.wantEqual) {
-				t.Errorf("membersDataSets() gotEqual = %s, want %s", utils.ToJSON(gotEqual), utils.ToJSON(tt.wantEqual))
+
+			if diff := cmp.Diff(tt.wantEqual, gotEqual, cmpopts.SortSlices(sort)); diff != "" {
+				t.Errorf("membersDataSets() gotEqual (-tt.wantEqual +gotEqual):\n%s", diff)
 			}
-			if !reflect.DeepEqual(gotDelete, tt.wantDelete) {
-				t.Errorf("membersDataSets() gotDelete = %s, want %s", utils.ToJSON(gotDelete), utils.ToJSON(tt.wantDelete))
+
+			if diff := cmp.Diff(tt.wantDelete, gotDelete, cmpopts.SortSlices(sort)); diff != "" {
+				t.Errorf("membersDataSets() gotDelete (-tt.wantDelete +gotDelete):\n%s", diff)
 			}
 		})
 	}
@@ -1498,11 +1718,11 @@ func TestUpdateGroupsMembersSCIMID(t *testing.T) {
 		scimUser := &UsersResult{
 			Items: 5,
 			Resources: []*User{
-				{SCIMID: "1", Name: Name{GivenName: "user", FamilyName: "1"}, DisplayName: "user 1", Active: true, Email: "user.1@mail.com"},
-				{SCIMID: "2", Name: Name{GivenName: "user", FamilyName: "2"}, DisplayName: "user 2", Active: true, Email: "user.2@mail.com"},
-				{SCIMID: "3", Name: Name{GivenName: "user", FamilyName: "3"}, DisplayName: "user 3", Active: true, Email: "user.3@mail.com"},
-				{SCIMID: "4", Name: Name{GivenName: "user", FamilyName: "4"}, DisplayName: "user 4", Active: true, Email: "user.4@mail.com"},
-				{SCIMID: "5", Name: Name{GivenName: "user", FamilyName: "5"}, DisplayName: "user 5", Active: true, Email: "user.5@mail.com"},
+				{SCIMID: "1", Name: &Name{GivenName: "user", FamilyName: "1"}, DisplayName: "user 1", Active: true, Emails: []Email{{Value: "user.1@mail.com", Type: "work", Primary: true}}},
+				{SCIMID: "2", Name: &Name{GivenName: "user", FamilyName: "2"}, DisplayName: "user 2", Active: true, Emails: []Email{{Value: "user.2@mail.com", Type: "work", Primary: true}}},
+				{SCIMID: "3", Name: &Name{GivenName: "user", FamilyName: "3"}, DisplayName: "user 3", Active: true, Emails: []Email{{Value: "user.3@mail.com", Type: "work", Primary: true}}},
+				{SCIMID: "4", Name: &Name{GivenName: "user", FamilyName: "4"}, DisplayName: "user 4", Active: true, Emails: []Email{{Value: "user.4@mail.com", Type: "work", Primary: true}}},
+				{SCIMID: "5", Name: &Name{GivenName: "user", FamilyName: "5"}, DisplayName: "user 5", Active: true, Emails: []Email{{Value: "user.5@mail.com", Type: "work", Primary: true}}},
 			},
 		}
 

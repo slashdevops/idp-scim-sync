@@ -2,6 +2,10 @@ package model
 
 import (
 	"errors"
+
+	"github.com/slashdevops/idp-scim-sync/internal/convert"
+
+	log "github.com/sirupsen/logrus"
 )
 
 var (
@@ -133,6 +137,9 @@ func UsersOperations(idp, scim *UsersResult) (create, update, equal, remove *Use
 		return
 	}
 
+	log.Trace("idp UsersResult: ", convert.ToJSONString(idp))
+	log.Trace("scim UsersResult: ", convert.ToJSONString(scim))
+
 	idpUsers := make(map[string]struct{})
 	scimUsers := make(map[string]User)
 
@@ -142,21 +149,23 @@ func UsersOperations(idp, scim *UsersResult) (create, update, equal, remove *Use
 	toRemove := make([]*User, 0)
 
 	for _, usr := range idp.Resources {
-		idpUsers[usr.Email] = struct{}{}
+		idpUsers[usr.GetPrimaryEmailAddress()] = struct{}{}
 	}
 
 	for _, usr := range scim.Resources {
-		scimUsers[usr.Email] = *usr
+		scimUsers[usr.GetPrimaryEmailAddress()] = *usr
 	}
 
 	// new users and what equal to them
 	for _, usr := range idp.Resources {
-		if _, ok := scimUsers[usr.Email]; !ok {
+		primaryEmail := usr.GetPrimaryEmailAddress()
+
+		if _, ok := scimUsers[primaryEmail]; !ok {
 			toCreate = append(toCreate, usr)
 		} else {
-			usr.SCIMID = scimUsers[usr.Email].SCIMID
+			usr.SCIMID = scimUsers[primaryEmail].SCIMID
 
-			if usr.HashCode != scimUsers[usr.Email].HashCode {
+			if usr.HashCode != scimUsers[primaryEmail].HashCode {
 				toUpdate = append(toUpdate, usr)
 			} else {
 				toEqual = append(toEqual, usr)
@@ -165,7 +174,7 @@ func UsersOperations(idp, scim *UsersResult) (create, update, equal, remove *Use
 	}
 
 	for _, usr := range scim.Resources {
-		if _, ok := idpUsers[usr.Email]; !ok {
+		if _, ok := idpUsers[usr.GetPrimaryEmailAddress()]; !ok {
 			toRemove = append(toRemove, usr)
 		}
 	}
@@ -235,7 +244,7 @@ func UpdateGroupsMembersSCIMID(idp *GroupsMembersResult, scimGroups *GroupsResul
 	}
 
 	for _, user := range scimUsers.Resources {
-		users[user.Email] = *user
+		users[user.GetPrimaryEmailAddress()] = *user
 	}
 
 	gms := make([]*GroupMembers, 0)

@@ -1,6 +1,10 @@
 package model
 
-import "encoding/json"
+import (
+	"bytes"
+	"encoding/gob"
+	"encoding/json"
+)
 
 const (
 	// StateSchemaVersion is the current schema version for the state file.
@@ -14,13 +18,100 @@ type StateResources struct {
 	GroupsMembers *GroupsMembersResult `json:"groupsMembers"`
 }
 
+// MarshalBinary marshals the StateResources to binary.
+func (s *StateResources) MarshalBinary() ([]byte, error) {
+	buf := new(bytes.Buffer)
+	enc := gob.NewEncoder(buf)
+
+	if s.Groups != nil {
+		if err := enc.Encode(s.Groups); err != nil {
+			return nil, err
+		}
+	}
+
+	if s.Users != nil {
+		if err := enc.Encode(s.Users); err != nil {
+			return nil, err
+		}
+	}
+
+	if s.GroupsMembers != nil {
+		if err := enc.Encode(s.GroupsMembers); err != nil {
+			return nil, err
+		}
+	}
+
+	return buf.Bytes(), nil
+}
+
+// UnmarshalBinary unmarshal the StateResources from binary.
+func (s *StateResources) UnmarshalBinary(data []byte) error {
+	dec := gob.NewDecoder(bytes.NewReader(data))
+
+	if err := dec.Decode(&s.Groups); err != nil {
+		if err.Error() != "EOF" {
+			return err
+		}
+	}
+
+	if err := dec.Decode(&s.Users); err != nil {
+		if err.Error() != "EOF" {
+			return err
+		}
+	}
+
+	if err := dec.Decode(&s.GroupsMembers); err != nil {
+		if err.Error() != "EOF" {
+			return err
+		}
+	}
+
+	return nil
+}
+
 // State is the state of the system.
 type State struct {
 	SchemaVersion string          `json:"schemaVersion"`
 	CodeVersion   string          `json:"codeVersion"`
 	LastSync      string          `json:"lastSync"`
-	HashCode      string          `json:"hashCode"`
+	HashCode      string          `json:"hashCode,omitempty"`
 	Resources     *StateResources `json:"resources"`
+}
+
+// MarshalBinary implements the encoding.BinaryMarshaler interface for State entity.
+func (s State) MarshalBinary() ([]byte, error) {
+	var buf bytes.Buffer
+	enc := gob.NewEncoder(&buf)
+
+	if err := enc.Encode(s.SchemaVersion); err != nil {
+		return nil, err
+	}
+
+	if s.Resources != nil {
+		if err := enc.Encode(s.Resources); err != nil {
+			return nil, err
+		}
+	}
+
+	return buf.Bytes(), nil
+}
+
+// UnmarshalBinary implements the encoding.BinaryUnmarshaler interface for State entity.
+func (s *State) UnmarshalBinary(data []byte) error {
+	buf := bytes.NewBuffer(data)
+	dec := gob.NewDecoder(buf)
+
+	if err := dec.Decode(&s.SchemaVersion); err != nil {
+		return err
+	}
+
+	if err := dec.Decode(&s.Resources); err != nil {
+		if err.Error() != "EOF" {
+			return err
+		}
+	}
+
+	return nil
 }
 
 // MarshalJSON marshals the State to JSON.
@@ -92,6 +183,7 @@ func (s *State) SetHashCode() {
 	if s.Resources.Groups == nil {
 		s.Resources.Groups = &GroupsResult{}
 	}
+
 	groups := make([]*Group, 0)
 	for _, group := range s.Resources.Groups.Resources {
 		e := GroupBuilder().
@@ -108,18 +200,33 @@ func (s *State) SetHashCode() {
 	if s.Resources.Users == nil {
 		s.Resources.Users = &UsersResult{}
 	}
+
 	users := make([]*User, 0)
 	for _, user := range s.Resources.Users.Resources {
 		e := UserBuilder().
 			WithIPID(user.IPID).
-			WithGivenName(user.Name.GivenName).
-			WithFamilyName(user.Name.FamilyName).
+			WithSCIMID(user.SCIMID).
+			WithUserName(user.UserName).
 			WithDisplayName(user.DisplayName).
-			WithEmail(user.Email).
+			// WithNickName("Not Provided").
+			// WithProfileURL("Not Provided").
+			WithTitle(user.Title).
+			WithUserType(user.UserType).
+			WithPreferredLanguage(user.PreferredLanguage).
+			// WithLocale("Not Provided").
+			// WithTimezone("Not Provided").
 			WithActive(user.Active).
+			// arrays
+			WithEmails(user.Emails).
+			WithAddresses(user.Addresses).
+			WithPhoneNumbers(user.PhoneNumbers).
+			// Pointers
+			WithName(user.Name).
+			WithEnterpriseData(user.EnterpriseData).
 			Build()
 
 		users = append(users, e)
+
 	}
 	usersResult := UsersResultBuilder().WithResources(users).Build()
 

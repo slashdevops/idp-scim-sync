@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	log "github.com/sirupsen/logrus"
+	"github.com/slashdevops/idp-scim-sync/internal/convert"
 	"github.com/slashdevops/idp-scim-sync/internal/model"
 	"github.com/slashdevops/idp-scim-sync/pkg/google"
 	admin "google.golang.org/api/admin/directory/v1"
@@ -75,13 +76,13 @@ func (i *IdentityProvider) GetGroups(ctx context.Context, filter []string) (*mod
 		if _, ok := uniqueGroups[grp.Name]; !ok {
 			uniqueGroups[grp.Name] = struct{}{}
 
-			e := model.GroupBuilder().
+			gg := model.GroupBuilder().
 				WithIPID(grp.Id).
 				WithName(grp.Name).
 				WithEmail(grp.Email).
 				Build()
 
-			syncGroups = append(syncGroups, e)
+			syncGroups = append(syncGroups, gg)
 		} else {
 			log.WithFields(log.Fields{
 				"id":    grp.Id,
@@ -92,6 +93,8 @@ func (i *IdentityProvider) GetGroups(ctx context.Context, filter []string) (*mod
 	}
 
 	syncResult := model.GroupsResultBuilder().WithResources(syncGroups).Build()
+
+	log.Tracef("idp: GetGroups(): %+v", convert.ToJSONString(syncResult))
 
 	return syncResult, nil
 }
@@ -114,18 +117,12 @@ func (i *IdentityProvider) GetUsers(ctx context.Context, filter []string) (*mode
 
 	syncUsers := make([]*model.User, len(pUsers))
 	for i, usr := range pUsers {
-		e := model.UserBuilder().
-			WithIPID(usr.Id).
-			WithGivenName(usr.Name.GivenName).
-			WithFamilyName(usr.Name.FamilyName).
-			WithDisplayName(fmt.Sprintf("%s %s", usr.Name.GivenName, usr.Name.FamilyName)).
-			WithEmail(usr.PrimaryEmail).
-			WithActive(!usr.Suspended).
-			Build()
-
-		syncUsers[i] = e
+		gu := buildUser(usr)
+		syncUsers[i] = gu
 	}
 	uResult := model.UsersResultBuilder().WithResources(syncUsers).Build()
+
+	log.Tracef("idp: GetUsers(): %+v", convert.ToJSONString(uResult))
 
 	return uResult, nil
 }
@@ -158,16 +155,18 @@ func (i *IdentityProvider) GetGroupMembers(ctx context.Context, groupID string) 
 			continue
 		}
 
-		e := model.MemberBuilder().
+		gm := model.MemberBuilder().
 			WithIPID(member.Id).
 			WithEmail(member.Email).
 			WithStatus(member.Status).
 			Build()
 
-		syncMembers = append(syncMembers, e)
+		syncMembers = append(syncMembers, gm)
 	}
 
 	syncMembersResult := model.MembersResultBuilder().WithResources(syncMembers).Build()
+
+	log.Tracef("idp: GetGroupMembers(): %+v", convert.ToJSONString(syncMembersResult))
 
 	return syncMembersResult, nil
 }
@@ -188,28 +187,28 @@ func (i *IdentityProvider) GetUsersByGroupsMembers(ctx context.Context, gmr *mod
 	pUsers := make([]*model.User, 0, len(gmr.Resources))
 	for _, groupMembers := range gmr.Resources {
 		for _, member := range groupMembers.Resources {
-			u, err := i.ps.GetUser(ctx, member.Email)
-			if err != nil {
-				return nil, fmt.Errorf("idp: error getting user: %+v, email: %s, error: %w", member.IPID, member.Email, err)
-			}
+			if _, ok := uniqUsers[member.Email]; !ok {
+				uniqUsers[member.Email] = struct{}{}
 
-			e := model.UserBuilder().
-				WithIPID(u.Id).
-				WithGivenName(u.Name.GivenName).
-				WithFamilyName(u.Name.FamilyName).
-				WithDisplayName(fmt.Sprintf("%s %s", u.Name.GivenName, u.Name.FamilyName)).
-				WithEmail(u.PrimaryEmail).
-				WithActive(!u.Suspended).
-				Build()
+				// TODO: instead of retrieve user by user, I can implement a users.list
+				// https://developers.google.com/admin-sdk/directory/reference/rest/v1/users/list
+				// using the query parameter to filter by emails and retrieve the maximum number of users
+				// per request
+				u, err := i.ps.GetUser(ctx, member.Email)
+				if err != nil {
+					return nil, fmt.Errorf("idp: error getting user: %+v, email: %s, error: %w", member.IPID, member.Email, err)
+				}
+				gu := buildUser(u)
 
-			if _, ok := uniqUsers[e.Email]; !ok {
-				uniqUsers[e.Email] = struct{}{}
-				pUsers = append(pUsers, e)
+				log.Tracef("idp: GetUsersByGroupsMembers, user: %+v", convert.ToJSONString(gu))
+				pUsers = append(pUsers, gu)
 			}
 		}
 	}
 
 	pUsersResult := model.UsersResultBuilder().WithResources(pUsers).Build()
+
+	log.Tracef("idp: GetUsersByGroupsMembers(): %+v", convert.ToJSONString(pUsersResult))
 
 	return pUsersResult, nil
 }
@@ -238,13 +237,17 @@ func (i *IdentityProvider) GetGroupsMembers(ctx context.Context, gr *model.Group
 			return nil, fmt.Errorf("idp: error getting group members: %w", err)
 		}
 
-		e := model.GroupBuilder().
+		ggm := model.GroupBuilder().
 			WithIPID(group.IPID).
 			WithName(group.Name).
 			WithEmail(group.Email).
 			Build()
 
-		groupMember := model.GroupMembersBuilder().WithGroup(e).WithResources(members.Resources).Build()
+		groupMember := model.GroupMembersBuilder().
+			WithGroup(ggm).
+			WithResources(members.Resources).
+			Build()
+
 		groupMembers[j] = groupMember
 	}
 
@@ -253,6 +256,8 @@ func (i *IdentityProvider) GetGroupsMembers(ctx context.Context, gr *model.Group
 		Resources: groupMembers,
 	}
 	groupsMembersResult.SetHashCode()
+
+	log.Tracef("idp: GetGroupsMembers(): %+v", convert.ToJSONString(groupsMembersResult))
 
 	return groupsMembersResult, nil
 }

@@ -63,7 +63,6 @@ func (b *StateBuilderChoice) WithGroupsMembers(groupsMembers *GroupsMembersResul
 
 // Build returns the State entity.
 func (b *StateBuilderChoice) Build() *State {
-	s := b.s
-	s.SetHashCode()
-	return s
+	b.s.SetHashCode()
+	return b.s
 }
