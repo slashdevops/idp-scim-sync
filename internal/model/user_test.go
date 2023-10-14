@@ -896,65 +896,82 @@ func TestUsersResult_SetHashCode(t *testing.T) {
 	})
 }
 
-// func TestUser_DeepCopy(t *testing.T) {
-// 	tests := []struct {
-// 		name   string
-// 		toTest User
-// 	}{
-// 		{
-// 			name:   "empty User",
-// 			toTest: User{},
-// 		},
-// 		{
-// 			name: "filled User",
-// 			toTest: User{
-// 				IPID:              "IPID",
-// 				SCIMID:            "this should not be encoded",
-// 				UserName:          "username",
-// 				DisplayName:       "displayname",
-// 				NickName:          "nickname",
-// 				ProfileURL:        "profileURL",
-// 				Title:             "title",
-// 				UserType:          "userType",
-// 				PreferredLanguage: "preferredLanguage",
-// 				Locale:            "locale",
-// 				Timezone:          "timezone",
-// 				Emails:            []Email{{Value: "email value", Type: "email type", Primary: true}},
-// 				Addresses:         []Address{{Formatted: "formatted", StreetAddress: "street address", Locality: "locality", Region: "region", PostalCode: "postal code", Country: "country", Type: "type", Primary: true}},
-// 				PhoneNumbers:      []PhoneNumber{{Value: "phone value", Type: "phone type"}},
-// 				Name: &Name{
-// 					Formatted:       "formatted",
-// 					FamilyName:      "familyName",
-// 					GivenName:       "givenName",
-// 					MiddleName:      "middleName",
-// 					HonorificPrefix: "honorificPrefix",
-// 					HonorificSuffix: "honorificSuffix",
-// 				},
-// 				EnterpriseData: &EnterpriseData{
-// 					EmployeeNumber: "employeeNumber",
-// 					CostCenter:     "costCenter",
-// 					Organization:   "organization",
-// 					Manager:        &Manager{Value: "manager value", Ref: "manager ref"},
-// 					Department:     "department",
-// 					Division:       "division",
-// 				},
-// 				Active:   true,
-// 				HashCode: "this should not be encoded",
-// 			},
-// 		},
-// 	}
-// 	for _, tt := range tests {
-// 		t.Run(tt.name, func(t *testing.T) {
-// 			got := tt.toTest.DeepCopy()
+func TestUser_GetPrimaryEmailAddress(t *testing.T) {
+	tests := []struct {
+		name   string
+		toTest *User
+		want   string
+	}{
+		{
+			name:   "empty User",
+			toTest: &User{},
+			want:   "",
+		},
+		{
+			name:   "null emails",
+			toTest: &User{Emails: nil},
+			want:   "",
+		},
+		{
+			name:   "empty emails",
+			toTest: &User{Emails: []Email{}},
+			want:   "",
+		},
+		{
+			name:   "no primary email",
+			toTest: &User{Emails: []Email{{Value: "user.1@mail.com", Type: "work", Primary: false}}},
+			want:   "",
+		},
+		{
+			name:   "primary email",
+			toTest: &User{Emails: []Email{{Value: "user.1@mail.com", Type: "work", Primary: true}}},
+			want:   "user.1@mail.com",
+		},
+		{
+			name: "tow primary emails, return first sorted by value",
+			toTest: &User{
+				Emails: []Email{
+					{Value: "user.1@mail.com", Type: "work", Primary: true},
+					{Value: "user.2@mail.com", Type: "work", Primary: true},
+				},
+			},
+			want: "user.1@mail.com",
+		},
+		{
+			name: "Email empty, Emails filled",
+			toTest: &User{
+				Email: "",
+				Emails: []Email{
+					{Value: "user.1@mail.com", Type: "work", Primary: true},
+				},
+			},
+			want: "user.1@mail.com",
+		},
+		{
+			name: "Email filled, Emails filled, return Emails primary",
+			toTest: &User{
+				Email: "user.email@mail.com",
+				Emails: []Email{
+					{Value: "user.1@mail.com", Type: "work", Primary: true},
+				},
+			},
+			want: "user.1@mail.com",
+		},
+		{
+			name: "Email filled, Emails filled, return Emails primary",
+			toTest: &User{
+				Email:  "user.email@mail.com",
+				Emails: nil,
+			},
+			want: "user.email@mail.com",
+		},
+	}
 
-// 			sort := func(x, y string) bool { return x > y }
-// 			if diff := cmp.Diff(tt.toTest, got, cmpopts.SortSlices(sort)); diff != "" {
-// 				t.Errorf("mismatch (-tt.toTest +got):\n%s", diff)
-// 			}
-
-// 			// if !reflect.DeepEqual(got, tt.toTest) {
-// 			// 	t.Errorf("User.DeepCopy() = %v, want %v", got, tt.toTest)
-// 			// }
-// 		})
-// 	}
-// }
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.toTest.GetPrimaryEmailAddress(); got != tt.want {
+				t.Errorf("User.GetPrimaryEmailAddress() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

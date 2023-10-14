@@ -132,7 +132,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers(ctx context.Context) error {
 		// of the users and groups in the SCIM side, just no recreation, keep the existing ones when:
 		// - Groups names are equals on both sides, update only the external id (coming from the identity provider)
 		// - Users emails are equals on both sides, update only the external id (coming from the identity provider)
-		log.Warn("syncing from scim service, first time syncing")
+		log.Info("syncing from scim service, first time syncing")
 		totalGroupsResult, totalUsersResult, totalGroupsMembersResult, err = scimSync(
 			ctx,
 			ss.scim,
@@ -144,7 +144,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers(ctx context.Context) error {
 			return fmt.Errorf("error doing the first sync: %w", err)
 		}
 	} else {
-		log.Warn("syncing from state, it's not the first time syncing")
+		log.Info("syncing from state, it's not the first time syncing")
 		totalGroupsResult, totalUsersResult, totalGroupsMembersResult, err = stateSync(
 			ctx,
 			state,

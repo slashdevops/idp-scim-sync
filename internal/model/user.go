@@ -315,24 +315,32 @@ func (ed *EnterpriseData) UnmarshalBinary(data []byte) error {
 
 // User represents a user entity.
 type User struct {
-	HashCode          string          `json:"hashCode,omitempty"`
-	IPID              string          `json:"ipid,omitempty"`
-	SCIMID            string          `json:"scimid,omitempty"`
-	UserName          string          `json:"userName,omitempty"`
-	DisplayName       string          `json:"displayName,omitempty"`
-	NickName          string          `json:"nickName,omitempty"`
-	ProfileURL        string          `json:"profileURL,omitempty"`
-	Title             string          `json:"title,omitempty"`
-	UserType          string          `json:"userType,omitempty"`
-	PreferredLanguage string          `json:"preferredLanguage,omitempty"`
-	Locale            string          `json:"locale,omitempty"`
-	Timezone          string          `json:"timezone,omitempty"`
-	Emails            []Email         `json:"emails,omitempty"`
-	Addresses         []Address       `json:"addresses,omitempty"`
-	PhoneNumbers      []PhoneNumber   `json:"phoneNumbers,omitempty"`
-	Name              *Name           `json:"name,omitempty"`
-	EnterpriseData    *EnterpriseData `json:"enterpriseData,omitempty"`
-	Active            bool            `json:"active,omitempty"`
+	HashCode          string `json:"hashCode,omitempty"`
+	IPID              string `json:"ipid,omitempty"`
+	SCIMID            string `json:"scimid,omitempty"`
+	UserName          string `json:"userName,omitempty"`
+	DisplayName       string `json:"displayName,omitempty"`
+	NickName          string `json:"nickName,omitempty"`
+	ProfileURL        string `json:"profileURL,omitempty"`
+	Title             string `json:"title,omitempty"`
+	UserType          string `json:"userType,omitempty"`
+	PreferredLanguage string `json:"preferredLanguage,omitempty"`
+	Locale            string `json:"locale,omitempty"`
+	Timezone          string `json:"timezone,omitempty"`
+
+	// this field is to have compatibility with the old version of the application <= v0.0.19
+	// and will be removed in the future maybe after >= v0.1.1
+	// Deprecated: will be removed in the future
+	Email string `json:"email,omitempty"`
+
+	// this is implemented in the new version of the application > v0.0.19
+	Emails []Email `json:"emails,omitempty"`
+
+	Addresses      []Address       `json:"addresses,omitempty"`
+	PhoneNumbers   []PhoneNumber   `json:"phoneNumbers,omitempty"`
+	Name           *Name           `json:"name,omitempty"`
+	EnterpriseData *EnterpriseData `json:"enterpriseData,omitempty"`
+	Active         bool            `json:"active,omitempty"`
 }
 
 // MarshalBinary implements the gob.GobEncoder interface for User entity.
@@ -465,79 +473,6 @@ func (u *User) UnmarshalBinary(data []byte) error {
 	return nil
 }
 
-// func (u *User) DeepCopy() User {
-// 	var copiedName *Name
-// 	if u.Name != nil {
-// 		copiedName = &Name{
-// 			Formatted:       u.Name.Formatted,
-// 			FamilyName:      u.Name.FamilyName,
-// 			GivenName:       u.Name.GivenName,
-// 			MiddleName:      u.Name.MiddleName,
-// 			HonorificPrefix: u.Name.HonorificPrefix,
-// 			HonorificSuffix: u.Name.HonorificSuffix,
-// 		}
-// 	}
-
-// 	var copiedEnterpriseData *EnterpriseData
-// 	if u.EnterpriseData != nil {
-// 		copiedEnterpriseData = &EnterpriseData{
-// 			EmployeeNumber: u.EnterpriseData.EmployeeNumber,
-// 			CostCenter:     u.EnterpriseData.CostCenter,
-// 			Organization:   u.EnterpriseData.Organization,
-// 			Division:       u.EnterpriseData.Division,
-// 			Department:     u.EnterpriseData.Department,
-// 			Title:          u.EnterpriseData.Title,
-// 			Primary:        u.EnterpriseData.Primary,
-// 		}
-
-// 		if u.EnterpriseData.Manager != nil {
-// 			copiedEnterpriseData.Manager = &Manager{
-// 				Value: u.EnterpriseData.Manager.Value,
-// 				Ref:   u.EnterpriseData.Manager.Ref,
-// 			}
-// 		}
-// 	}
-
-// 	copiedUser := User{
-// 		HashCode:          u.HashCode,
-// 		IPID:              u.IPID,
-// 		SCIMID:            u.SCIMID,
-// 		UserName:          u.UserName,
-// 		DisplayName:       u.DisplayName,
-// 		NickName:          u.NickName,
-// 		ProfileURL:        u.ProfileURL,
-// 		Title:             u.Title,
-// 		UserType:          u.UserType,
-// 		PreferredLanguage: u.PreferredLanguage,
-// 		Locale:            u.Locale,
-// 		Timezone:          u.Timezone,
-// 		Active:            u.Active,
-// 		// pointers
-// 		Name:           copiedName,
-// 		EnterpriseData: copiedEnterpriseData,
-// 	}
-
-// 	if len(u.Emails) != 0 {
-// 		copiedEmails := make([]Email, len(u.Emails))
-// 		copy(copiedEmails, u.Emails)
-// 		copiedUser.Emails = copiedEmails
-// 	}
-
-// 	if len(u.Addresses) != 0 {
-// 		copiedAddresses := make([]Address, len(u.Addresses))
-// 		copy(copiedAddresses, u.Addresses)
-// 		copiedUser.Addresses = copiedAddresses
-// 	}
-
-// 	if len(u.PhoneNumbers) != 0 {
-// 		copiedPhoneNumbers := make([]PhoneNumber, len(u.PhoneNumbers))
-// 		copy(copiedPhoneNumbers, u.PhoneNumbers)
-// 		copiedUser.PhoneNumbers = copiedPhoneNumbers
-// 	}
-
-// 	return copiedUser
-// }
-
 // SetHashCode is a helper function to avoid errors when calculating hash code.
 // this method discards fields that are not used in the hash calculation.
 // only fields coming from the Identity Provider are used.
@@ -548,11 +483,27 @@ func (u *User) SetHashCode() {
 
 // GetPrimaryEmailAddress returns the primary email address of the user.
 func (u *User) GetPrimaryEmailAddress() string {
+	if u.Emails == nil {
+		// this is because previous versions of the application <= v0.0.19
+		// the State file contain the email of the user in the schema as Email,
+		// []Emails is the new schema for version >= v0.0.20
+		// Deprecated: will be removed in the future
+		if u.Email != "" {
+			return u.Email
+		}
+		return ""
+	}
+
+	sort.Slice(u.Emails, func(i, j int) bool {
+		return u.Emails[i].Value < u.Emails[j].Value
+	})
+
 	for _, email := range u.Emails {
 		if email.Primary {
 			return email.Value
 		}
 	}
+
 	return ""
 }
 
