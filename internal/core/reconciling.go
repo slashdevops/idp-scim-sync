@@ -37,7 +37,11 @@ var (
 // reconcilingGroups creates, update and removes from groups in SCIM service
 // returns the lists of groups created and updated in the SCIM provider
 // with the ids of these groups.
-func reconcilingGroups(ctx context.Context, scim SCIMService, create, update, remove *model.GroupsResult) (created, updated *model.GroupsResult, e error) {
+func reconcilingGroups(
+	ctx context.Context,
+	scim SCIMService,
+	create, update, remove *model.GroupsResult,
+) (created, updated *model.GroupsResult, e error) {
 	if scim == nil {
 		return nil, nil, ErrSCIMServiceNil
 	}
@@ -90,7 +94,12 @@ func reconcilingGroups(ctx context.Context, scim SCIMService, create, update, re
 // reconcilingUsers creates, updates and removes users in SCIM provider
 // returns the lists of users created and updated in the SCIM provider
 // with the ids of these users.
-func reconcilingUsers(ctx context.Context, scim SCIMService, create, update, remove *model.UsersResult) (created, updated *model.UsersResult, e error) {
+func reconcilingUsers(
+	ctx context.Context,
+	scim SCIMService,
+	create, update,
+	remove *model.UsersResult,
+) (created, updated *model.UsersResult, e error) {
 	if scim == nil {
 		return nil, nil, ErrSCIMServiceNil
 	}
@@ -143,7 +152,11 @@ func reconcilingUsers(ctx context.Context, scim SCIMService, create, update, rem
 // reconcilingGroupsMembers creates and removes the members of the groups in SCIM provider
 // returns the lists of groups members created in the SCIM provider
 // with the ids of these groups members.
-func reconcilingGroupsMembers(ctx context.Context, scim SCIMService, create, remove *model.GroupsMembersResult) (created *model.GroupsMembersResult, e error) {
+func reconcilingGroupsMembers(
+	ctx context.Context,
+	scim SCIMService, create,
+	remove *model.GroupsMembersResult,
+) (created *model.GroupsMembersResult, e error) {
 	if scim == nil {
 		return nil, ErrSCIMServiceNil
 	}
