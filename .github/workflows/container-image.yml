@@ -73,7 +73,7 @@ jobs:
           GIT_VERSION=${{ github.ref_name }} make container-publish-github
 
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@master
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_OIDC_ROLE_TO_ASSUME }}
           role-session-name: publish-ecr-public-images
