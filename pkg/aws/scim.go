@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/url"
 	"path"
+	"reflect"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -286,23 +287,27 @@ func (s *SCIMService) CreateOrGetUser(ctx context.Context, cur *CreateUserReques
 			}
 
 			curesp := &CreateUserResponse{
-				ID:          response.ID,
-				ExternalID:  response.ExternalID,
-				Meta:        response.Meta,
-				Schemas:     response.Schemas,
-				UserName:    response.UserName,
-				Name:        response.Name,
-				DisplayName: response.DisplayName,
-				Active:      response.Active,
-				Emails:      response.Emails,
+				ID:                   response.ID,
+				ExternalID:           response.ExternalID,
+				Meta:                 response.Meta,
+				Schemas:              response.Schemas,
+				UserName:             response.UserName,
+				DisplayName:          response.DisplayName,
+				Title:                response.Title,
+				UserType:             response.UserType,
+				PreferredLanguage:    response.PreferredLanguage,
+				Active:               response.Active,
+				Emails:               response.Emails,
+				Addresses:            response.Addresses,
+				PhoneNumbers:         response.PhoneNumbers,
+				Name:                 response.Name,
+				SchemaEnterpriseUser: response.SchemaEnterpriseUser,
 			}
 
 			// check if the user attributes are the same
 			// maybe the user in the SCIM side was changed, so we need to update the user in the SCIM Side
 			// according to the create user request
-			if cur.Name.FamilyName != response.Name.FamilyName || cur.Name.GivenName != response.Name.GivenName ||
-				cur.Active != response.Active || cur.ExternalID != response.ExternalID || cur.DisplayName != response.DisplayName ||
-				cur.Emails[0].Value != response.Emails[0].Value {
+			if !reflect.DeepEqual(cur, response) {
 				log.Warn("aws CreateOrGetUser: user already exists, but attributes are different, updating the user")
 
 				log.WithFields(log.Fields{
@@ -324,16 +329,19 @@ func (s *SCIMService) CreateOrGetUser(ctx context.Context, cur *CreateUserReques
 				}).Warn("aws CreateOrGetUser: attributes after update")
 
 				pur := &PutUserRequest{
-					ID:          response.ID,
-					DisplayName: cur.DisplayName,
-					UserName:    cur.UserName,
-					ExternalID:  cur.ExternalID,
-					Name: &Name{
-						FamilyName: cur.Name.FamilyName,
-						GivenName:  cur.Name.GivenName,
-					},
-					Emails: cur.Emails,
-					Active: cur.Active,
+					ID:                   response.ID,
+					ExternalID:           cur.ExternalID,
+					UserName:             cur.UserName,
+					DisplayName:          cur.DisplayName,
+					Title:                cur.Title,
+					UserType:             cur.UserType,
+					PreferredLanguage:    cur.PreferredLanguage,
+					Active:               cur.Active,
+					Emails:               cur.Emails,
+					Addresses:            cur.Addresses,
+					PhoneNumbers:         cur.PhoneNumbers,
+					Name:                 cur.Name,
+					SchemaEnterpriseUser: cur.SchemaEnterpriseUser,
 				}
 
 				resp, err := s.PutUser(ctx, pur)
@@ -347,10 +355,16 @@ func (s *SCIMService) CreateOrGetUser(ctx context.Context, cur *CreateUserReques
 				curesp.Meta = resp.Meta
 				curesp.Schemas = resp.Schemas
 				curesp.UserName = resp.UserName
-				curesp.Name = resp.Name
 				curesp.DisplayName = resp.DisplayName
+				curesp.Title = resp.Title
+				curesp.UserType = resp.UserType
+				curesp.PreferredLanguage = resp.PreferredLanguage
 				curesp.Active = resp.Active
 				curesp.Emails = resp.Emails
+				curesp.Addresses = resp.Addresses
+				curesp.PhoneNumbers = resp.PhoneNumbers
+				curesp.Name = resp.Name
+				curesp.SchemaEnterpriseUser = resp.SchemaEnterpriseUser
 			}
 
 			return curesp, nil
