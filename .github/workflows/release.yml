@@ -12,7 +12,7 @@ env:
 permissions:
   id-token: write
   security-events: write
-  actions: read
+  actions: write
   contents: write
   pull-requests: read
 
@@ -107,24 +107,21 @@ jobs:
 
       - name: Create Release
         id: create-github-release
-        uses: softprops/action-gh-release@v1
+        uses: shogo82148/actions-create-release@v1
         with:
           tag_name: ${{ github.ref_name }}
-          name: ${{ github.ref_name }}
-          # body: |
-          #   See the file: CHANGELOG.md
+          release_name: ${{ github.ref_name }}
           draft: false
           prerelease: false
-          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload Release Assets
         id: upload-release-assets
-        uses: dwenegar/upload-release-assets@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: shogo82148/actions-upload-release-asset@v1
         with:
-          release_id: ${{ steps.create-github-release.outputs.id }}
-          assets_path: dist/assets
+          upload_url: ${{ steps.create-github-release.outputs.upload_url }}
+          asset_path: dist/assets/**
+          overwrite: true
+          github_token: ${{ secrets.GITHUB_TOKEN }}
 
   container_image:
     name: Create and Publish Container Image

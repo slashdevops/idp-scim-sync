@@ -237,7 +237,7 @@ container-build: build-dist ## Build the container image
 
 ##@ container-publish-docker
 .PHONY: container-publish-docker
-container-publish-docker: container-build ## Publish the container image to docker hub
+container-publish-docker: ## Publish the container image to docker hub
 	@printf "👉 Publishing container image to docker hub...\n"
 	$(foreach OS, $(CONTAINER_OS), \
 		$(foreach ARCH, $(CONTAINER_ARCH), \
@@ -273,7 +273,7 @@ container-publish-docker: container-build ## Publish the container image to dock
 
 ##@ container-publish-github
 .PHONY: container-publish-github
-container-publish-github: container-build ## Publish the container image to github container registry
+container-publish-github: ## Publish the container image to github container registry
 	@printf "👉 Publishing container image to github container registry...\n"
 	$(foreach OS, $(CONTAINER_OS), \
 		$(foreach ARCH, $(CONTAINER_ARCH), \
@@ -309,7 +309,7 @@ container-publish-github: container-build ## Publish the container image to gith
 
 ##@ container-publish-aws-ecr
 .PHONY: container-publish-aws-ecr
-container-publish-aws-ecr: container-build ## Publish the container image to AWS ECR
+container-publish-aws-ecr: ## Publish the container image to AWS ECR
 	@printf "👉 Publishing container image to AWS ECR...\n"
 	$(foreach OS, $(CONTAINER_OS), \
 		$(foreach ARCH, $(CONTAINER_ARCH), \
