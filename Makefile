@@ -186,7 +186,7 @@ build-dist: ## Build the application for all platforms defined in GO_OS and GO_A
 
 ##@ build-dist-zip
 .PHONY: build-dist-zip
-build-dist-zip: build-dist ## Build the application for all platforms defined in GO_OS and GO_ARCH in this Makefile and create a zip file for each binary
+build-dist-zip: ## Build the application for all platforms defined in GO_OS and GO_ARCH in this Makefile and create a zip file for each binary
 	@printf "👉 Creating zip files for distribution...\n"
 	$(call exec_cmd, mkdir -p $(DIST_ASSEST_DIR))
 	$(foreach GOOS, $(GO_OS), \
