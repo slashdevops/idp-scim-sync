@@ -19,108 +19,89 @@ and the `most important feature here` is the `hashCode` field, this is a `SHA256
 ```json
 {
   "schemaVersion": "1.0.0",
-  "codeVersion": "v0.0.1",
-  "lastSync": "2022-01-15T17:55:36+01:00",
-  "hashCode": "1be3807fa0a69ea22251f4ed71aee4c4c1bf0aa9a163a5c24f8ac4425e6f0d69",
+  "codeVersion": "v0.1.0",
+  "lastSync": "2023-10-21T18:48:49+02:00",
+  "hashCode": "e72d58ac523af315fa6f3ed3329b8a174f2938c9e67a573ed45217f4a1a7b4e2",
   "resources": {
     "groups": {
-      "items": 3,
-      "hashCode": "251033ebdbcecb157b6d989c2847f1912c3460eab7a56eb4081f4d912e5145b1",
+      "items": 1,
+      "hashCode": "15cf5de941f6eb2d96e037675ac6f85401911889e12651f58990573c9f1f84ba",
       "resources": [
         {
-          "ipid": "00nmf14n0mfn3n3",
-          "scimid": "90675b464e-5251235c-1f8c-4607-906e-015d9efc29a2",
-          "name": "Administrators",
-          "email": "administrators@<your domain here>",
-          "hashCode": "f87938591c76e34cce90f79d86e14f9280a8bb2052c92d577f3705c3b681aefa"
-        },
-        {
-          "ipid": "00ihv63633k64om",
-          "scimid": "90675b464e-0880a5e4-6601-4138-91a8-b599aedf7a83",
-          "name": "AWS Administrators",
-          "email": "aws-administrators@<your domain here>",
-          "hashCode": "eb3e4b4061c3781aac2ba3228b3c0d9a763909c326aeb7106460d72eb062657c"
-        },
-        {
-          "ipid": "019c6y180i470k3",
-          "scimid": "90675b464e-79914545-790b-4171-9142-36a55acf5a39",
-          "name": "AWS DevOps",
-          "email": "aws-devops@<your domain here>",
-          "hashCode": "ca1462c1188f8e583fa0e79ae9f4a06651f188c4e3a6809387a29bbe243ab38f"
+          "ipid": "00xvir7l2tu59gn",
+          "scimid": "b295b414-e091-70f6-3981-df556957e68a",
+          "name": "AWS-SSO-Administrators",
+          "email": "aws-sso-administrators@slashdevops.com",
+          "hashCode": "bcc54ec742946488860ec5f11eac4c958a178393a837abc878749fc0c40fefea"
         }
       ]
     },
     "users": {
       "items": 1,
-      "hashCode": "82da67ab6b9c0576b727fe4053c4d7c3ba0c3a7f0e88115920f76706411901f8",
+      "hashCode": "bbbcf7f0ba3e94c811c03962ff986dcceffd97b1c95b0f6a50304df4d182380c",
       "resources": [
         {
+          "hashCode": "4945a50f8b93337f5632dca20b49870f4507f0da28ee5d6d66add1f4b6df9045",
           "ipid": "100439965050892133351",
-          "scimid": "90675b464e-11025ca4-0a49-480e-afd5-5eda1ae3fc3c",
+          "scimid": "2275b4a4-d031-70b1-1bb0-e5049d0a0689",
+          "userName": "christian.gonzalez@slashdevops.com",
+          "displayName": "Christian González Di Antonio",
+          "title": "Chief Technology Officer",
+          "userType": "admin#directory#user",
+          "preferredLanguage": "en-GB",
+          "emails": [
+            {
+              "value": "christian.gonzalez@slashdevops.com",
+              "primary": true
+            }
+          ],
+          "addresses": [
+            {
+              "formatted": "private address here",
+            }
+          ],
+          "phoneNumbers": [
+            {
+              "value": "+55 555 555 555",
+              "type": "work"
+            }
+          ],
           "name": {
+            "formatted": "Christian González Di Antonio",
             "familyName": "González Di Antonio",
             "givenName": "Christian"
           },
-          "displayName": "Christian González Di Antonio",
-          "active": true,
-          "email": "christian@<your domain here>",
-          "hashCode": "7a0c55f4941d4512b9cdb8880e5e61130d089b96e7547d6df9ad2e38c2932f49"
+          "enterpriseData": {
+            "costCenter": "123654",
+            "department": "IT"
+          },
+          "active": true
         }
       ]
     },
     "groupsMembers": {
-      "items": 3,
-      "hashCode": "c7ed0e0b713310d4fb503e6cc8d4bde397766a9dab486e18df3a47d3881c237e",
+      "items": 1,
+      "hashCode": "72b7104a684c9cc04b04835c6f6e31deee272418440b3fd47c40a303c1fa3a02",
       "resources": [
         {
           "items": 1,
-          "hashCode": "8f2632a7e5c1fba4360066bdf69729f213f12037b825d25be29f682844751644",
+          "hashCode": "2b691179255bef46299eb3359433b5d019c6623904b90bf6fd032f4856ff7ded",
           "group": {
-            "ipid": "00nmf14n0mfn3n3",
-            "scimid": "90675b464e-5251235c-1f8c-4607-906e-015d9efc29a2",
-            "name": "Administrators",
-            "email": "administrators@<your domain here>",
-            "hashCode": "f87938591c76e34cce90f79d86e14f9280a8bb2052c92d577f3705c3b681aefa"
+            "ipid": "00xvir7l2tu59gn",
+            "scimid": "b295b414-e091-70f6-3981-df556957e68a",
+            "name": "AWS-SSO-Administrators",
+            "email": "aws-sso-administrators@slashdevops.com",
+            "hashCode": "bcc54ec742946488860ec5f11eac4c958a178393a837abc878749fc0c40fefea"
           },
           "resources": [
             {
               "ipid": "100439965050892133351",
-              "scimid": "90675b464e-11025ca4-0a49-480e-afd5-5eda1ae3fc3c",
-              "email": "christian@<your domain here>",
-              "hashCode": "0563204b5acd6ce1f481e86b29ea4b4b5feab0cf84799f143c191bfe912ec571"
+              "scimid": "2275b4a4-d031-70b1-1bb0-e5049d0a0689",
+              "email": "christian.gonzalez@slashdevops.com",
+              "status": "ACTIVE",
+              "hashCode": "f78efeb7e034db070cf78c804174f8de32a6a823d80674bae4d012f0fbecaf1f"
             }
           ]
-        },
-        {
-          "items": 1,
-          "hashCode": "80902e649cd990205eeed09e3e2d3714ea273c28f2ccd7af976f04606f2153c8",
-          "group": {
-            "ipid": "00ihv63633k64om",
-            "scimid": "90675b464e-0880a5e4-6601-4138-91a8-b599aedf7a83",
-            "name": "AWS Administrators",
-            "email": "aws-administrators@<your domain here>",
-            "hashCode": "eb3e4b4061c3781aac2ba3228b3c0d9a763909c326aeb7106460d72eb062657c"
-          },
-          "resources": [
-            {
-              "ipid": "100439965050892133351",
-              "scimid": "90675b464e-11025ca4-0a49-480e-afd5-5eda1ae3fc3c",
-              "email": "christian@<your domain here>",
-              "hashCode": "0563204b5acd6ce1f481e86b29ea4b4b5feab0cf84799f143c191bfe912ec571"
-            }
-          ]
-        },
-        {
-          "items": 0,
-          "hashCode": "9e27fbd3e3ae6ba1a115fe95e01ae2009bdc0a9d953ba83139911903cc5e34d9",
-          "group": {
-            "ipid": "019c6y180i470k3",
-            "scimid": "90675b464e-79914545-790b-4171-9142-36a55acf5a39",
-            "name": "AWS DevOps",
-            "email": "aws-devops@<your domain here>",
-            "hashCode": "ca1462c1188f8e583fa0e79ae9f4a06651f188c4e3a6809387a29bbe243ab38f"
-          },
-          "resources": []
         }
       ]
     }
