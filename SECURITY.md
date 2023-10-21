@@ -7,6 +7,7 @@ This project is using [Github CodeQL](https://codeql.github.com/) tool to scan t
 
 | Version | Supported          |
 | ------- | ------------------ |
+| 0.1.x   | :white_check_mark: |
 | 0.0.x   | :white_check_mark: |
 
 ## Reporting a Vulnerability
