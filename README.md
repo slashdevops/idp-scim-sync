@@ -41,9 +41,10 @@ This project is already migrated since version `v0.0.19` to the `provided.al2` r
 
 ## Features
 
+* Support extended AWS SSO SCIM API fields described here [attributes](https://docs.aws.amazon.com/singlesignon/latest/developerguide/limitations.html) and the relation between [Google Workspace API fields](https://developers.google.com/admin-sdk/directory/v1/reference/users#resource) occurred here [User Entity](https://github.com/slashdevops/idp-scim-sync/blob/318c693ccb5466554148be95b75eb36628a6e7b6/internal/idp/helpers.go#L214)
 * Efficient data retrieval from Google Workspace API using [Partial response](https://cloud.google.com/storage/docs/json_api#partial-response)
 * Supported nested groups in Google Workspace thanks to [includeDerivedMembership](https://developers.google.com/admin-sdk/directory/reference/rest/v1/members/list#query-parameters) API Query Parameter
-* Could be used or deployed via `AWS Serverless repository (Public)`, `Container Image` or `CLI`. See [Repositories](#Repositories)
+* Could be used or deployed via `AWS Serverless repository (Public)`, `Container Image` or `CLI`. See [Repositories](#repositories)
 * Incremental changes, drastically reduced the number of requests to the [AWS SSO SCIM API](https://docs.aws.amazon.com/singlesignon/latest/developerguide/what-is-scim.html) thanks to the implementation of [State file](docs/State-File-example.md)
 
 ## Important
@@ -199,8 +200,6 @@ then the binaries are in `dist/` folder.
 #### Using the pre-built binaries
 
 This is the easy way, just download the binaries you need from the [github repository releases](https://github.com/slashdevops/idp-scim-sync/releases)
-
-and see [Execute](#executing) the binaries.
 
 #### Using the pre-built binaries in local
 
