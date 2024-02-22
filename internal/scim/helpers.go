@@ -120,7 +120,7 @@ func buildUser(user *aws.User) *model.User {
 		WithSCIMID(strings.TrimSpace(user.ID)).
 		WithUserName(strings.TrimSpace(user.UserName)).
 		WithDisplayName(strings.TrimSpace(user.DisplayName)).
-		// WithNickName("Not Provided").
+		WithNickName(user.Name.GivenName, user.Name.FamilyName).
 		// WithProfileURL("Not Provided").
 		WithTitle(strings.TrimSpace(user.Title)).
 		WithUserType(strings.TrimSpace(user.UserType)).
@@ -152,6 +152,7 @@ func buildCreateUserRequest(user *model.User) *aws.CreateUserRequest {
 		ExternalID:        user.IPID,
 		UserName:          user.UserName,
 		DisplayName:       user.DisplayName,
+		NickName:          user.NickName,
 		UserType:          user.UserType,
 		Title:             user.Title,
 		PreferredLanguage: user.PreferredLanguage,
@@ -238,6 +239,7 @@ func buildPutUserRequest(user *model.User) *aws.PutUserRequest {
 		ExternalID:        user.IPID,
 		UserName:          user.UserName,
 		DisplayName:       user.DisplayName,
+		NickName:          user.NickName,
 		UserType:          user.UserType,
 		Title:             user.Title,
 		PreferredLanguage: user.PreferredLanguage,

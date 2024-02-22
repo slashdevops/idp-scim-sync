@@ -1,5 +1,10 @@
 package model
 
+import (
+	"fmt"
+	"strings"
+)
+
 // UserBuilderChoice is the builder of User entity.
 type UserBuilderChoice struct {
 	u *User
@@ -37,8 +42,8 @@ func (b *UserBuilderChoice) WithDisplayName(displayName string) *UserBuilderChoi
 }
 
 // WithNickName sets the NickName field of the User entity.
-func (b *UserBuilderChoice) WithNickName(nickName string) *UserBuilderChoice {
-	b.u.NickName = nickName
+func (b *UserBuilderChoice) WithNickName(givenName string, familyName string) *UserBuilderChoice {
+	b.u.NickName = constructNickName(givenName, familyName)
 	return b
 }
 
@@ -439,4 +444,33 @@ func (b *UsersResultBuilderChoice) Build() *UsersResult {
 	b.ur.Items = len(b.ur.Resources)
 	b.ur.SetHashCode()
 	return b.ur
+}
+
+// Construct NickName, replace whitepaces with underscores, normalize Swedish characters
+func constructNickName(s1, s2 string) string {
+	// Create a mapping of Swedish characters to their normalized versions
+	replaceMap := map[rune]rune{
+		'å': 'a',
+		'ä': 'a',
+		'ö': 'o',
+	}
+
+	// Create a function to replace Swedish characters
+	replaceFunc := func(r rune) rune {
+		if val, ok := replaceMap[r]; ok {
+			return val
+		}
+		return r
+	}
+
+	// Convert the strings to lowercase, apply the replacement function, and replace whitespaces with underscores
+	normalizedStr1 := strings.Map(replaceFunc, strings.ToLower(s1))
+	normalizedStr2 := strings.Map(replaceFunc, strings.ToLower(s2))
+
+	// Replace whitespaces and dashes with underscores
+	normalizedStr1 = strings.NewReplacer(" ", "_", "-", "_").Replace(normalizedStr1)
+	normalizedStr2 = strings.NewReplacer(" ", "_", "-", "_").Replace(normalizedStr2)
+
+	// Format the result as "stringA_stringB"
+	return fmt.Sprintf("%s_%s", normalizedStr1, normalizedStr2)
 }

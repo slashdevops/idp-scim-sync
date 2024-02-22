@@ -543,7 +543,7 @@ func TestUser_SetHashCode_consistency(t *testing.T) {
 			WithSCIMID(user.SCIMID).
 			WithUserName(user.UserName).
 			WithDisplayName(user.DisplayName).
-			WithNickName(user.NickName).
+			WithNickName(user.Name.GivenName, user.Name.FamilyName).
 			WithProfileURL(user.ProfileURL).
 			WithTitle(user.Title).
 			WithUserType(user.UserType).
@@ -621,7 +621,7 @@ func TestUser_SetHashCode_consistency(t *testing.T) {
 			WithSCIMID(user.SCIMID).
 			WithUserName(user.UserName).
 			WithDisplayName(user.DisplayName).
-			WithNickName(user.NickName).
+			WithNickName(user.Name.GivenName, user.Name.FamilyName).
 			WithProfileURL(user.ProfileURL).
 			WithTitle(user.Title).
 			WithUserType(user.UserType).
