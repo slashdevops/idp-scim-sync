@@ -468,8 +468,8 @@ func constructNickName(s1, s2 string) string {
 	normalizedStr2 := strings.Map(replaceFunc, strings.ToLower(s2))
 
 	// Replace whitespaces and dashes with underscores
-	normalizedStr1 = strings.NewReplacer(" ", "_", "-", "_").Replace(normalizedStr1)
-	normalizedStr2 = strings.NewReplacer(" ", "_", "-", "_").Replace(normalizedStr2)
+	normalizedStr1 = strings.NewReplacer(" ", "", "-", "").Replace(normalizedStr1)
+	normalizedStr2 = strings.NewReplacer(" ", "", "-", "").Replace(normalizedStr2)
 
 	// Format the result as "stringA_stringB"
 	return fmt.Sprintf("%s_%s", normalizedStr1, normalizedStr2)
