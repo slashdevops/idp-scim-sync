@@ -1,7 +1,6 @@
 # idp-scim-sync
 
 [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/5348/badge)](https://bestpractices.coreinfrastructure.org/projects/5348)
-[![CodeQL](https://github.com/slashdevops/idp-scim-sync/actions/workflows/codeql.yml/badge.svg?branch=main)](https://github.com/slashdevops/idp-scim-sync/actions/workflows/codeql.yml)
 [![Gosec](https://github.com/slashdevops/idp-scim-sync/actions/workflows/gosec.yml/badge.svg?branch=main)](https://github.com/slashdevops/idp-scim-sync/actions/workflows/gosec.yml)
 [![Build](https://github.com/slashdevops/idp-scim-sync/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/slashdevops/idp-scim-sync/actions/workflows/build.yml)
 ![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/slashdevops/idp-scim-sync?style=plastic)
