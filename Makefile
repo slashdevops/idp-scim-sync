@@ -77,36 +77,34 @@ $(if $(filter $(MAKE_DEBUG),true),\
 
 endef # don't remove the whiteline before endef
 
-######## Targets ########
-##@ all
+###############################################################################
+######## Targets ##############################################################
+##@ Default command
 .PHONY: all
-all: clean test build
+all: clean test build ## Clean, test and build the application.  Execute by default when make is called without arguments
 
-##@ go-fmt
+###############################################################################
+##@ Golang commands
 .PHONY: go-fmt
 go-fmt: ## Format go code
 	@printf "👉 Formatting go code...\n"
 	$(call exec_cmd, go fmt ./... )
 
-##@ go-vet
 .PHONY: go-vet
 go-vet: ## Vet go code
 	@printf "👉 Vet go code...\n"
 	$(call exec_cmd, go vet ./... )
 
-##@ go-genereate
 .PHONY: go-generate
 go-generate: ## Generate go code
 	@printf "👉 Generating go code...\n"
 	$(call exec_cmd, go generate ./... )
 
-##@ go-mod-tidy
 .PHONY: go-mod-tidy
 go-mod-tidy: ## Clean go.mod and go.sum
 	@printf "👉 Cleaning go.mod and go.sum...\n"
 	$(call exec_cmd, go mod tidy)
 
-##@ go-mod-update
 .PHONY: go-mod-update
 go-mod-update: go-mod-tidy ## Update go.mod and go.sum
 	@printf "👉 Updating go.mod and go.sum...\n"
@@ -114,25 +112,21 @@ go-mod-update: go-mod-tidy ## Update go.mod and go.sum
 		$(call exec_cmd, go get -u $(DEP)) \
 	)
 
-##@ go-mod-vendor
 .PHONY: go-mod-vendor
 go-mod-vendor: ## Create mod vendor
 	@printf "👉 Creating mod vendor...\n"
 	$(call exec_cmd, go mod vendor)
 
-##@ go-mod-verify
 .PHONY: go-mod-verify
 go-mod-verify: ## Verify go.mod and go.sum
 	@printf "👉 Verifying go.mod and go.sum...\n"
 	$(call exec_cmd, go mod verify)
 
-##@ go-mod-download
 .PHONY: go-mod-download
 go-mod-download: ## Download go dependencies
 	@printf "👉 Downloading go dependencies...\n"
 	$(call exec_cmd, go mod download)
 
-##@ go-mod-graph
 .PHONY: go-mod-graph
 go-mod-graph: ## Create a file with the go dependencies graph in build dir
 	@printf "👉 Printing go dependencies graph...\n"
@@ -144,7 +138,13 @@ $(PROJECT_COVERAGE_FILE):
 	$(call exec_cmd, mkdir -p $(BUILD_DIR) )
 	$(call exec_cmd, touch $(PROJECT_COVERAGE_FILE) )
 
-##@ test
+.PHONY: go-test-coverage
+go-test-coverage: test ## Shows in you browser the test coverage report per package
+	@printf "👉 Running got tool coverage...\n"
+	$(call exec_cmd, go tool cover -html=$(PROJECT_COVERAGE_FILE))
+
+###############################################################################
+##@ Test commands
 .PHONY: test
 test: $(PROJECT_COVERAGE_FILE) go-mod-tidy go-fmt go-vet go-generate ## Run tests
 	@printf "👉 Running tests...\n"
@@ -156,13 +156,8 @@ test: $(PROJECT_COVERAGE_FILE) go-mod-tidy go-fmt go-vet go-generate ## Run test
 		./... \
 	)
 
-##@ go-test-coverage
-.PHONY: go-test-coverage
-go-test-coverage: test ## Shows in you browser the test coverage report per package
-	@printf "👉 Running got tool coverage...\n"
-	$(call exec_cmd, go tool cover -html=$(PROJECT_COVERAGE_FILE))
-
-##@ build
+###############################################################################
+##@ Build commands
 .PHONY: build
 build: go-generate go-fmt go-vet test ## Build the application
 	@printf "👉 Building applications...\n"
@@ -171,7 +166,6 @@ build: go-generate go-fmt go-vet test ## Build the application
 		$(call exec_cmd, chmod +x $(BUILD_DIR)/$(proj_mod) ) \
 	)
 
-##@ build-dist
 .PHONY: build-dist
 build-dist: ## Build the application for all platforms defined in GO_OS and GO_ARCH in this Makefile
 	@printf "👉 Building application for different platforms...\n"
@@ -184,7 +178,6 @@ build-dist: ## Build the application for all platforms defined in GO_OS and GO_A
 		)\
 	)
 
-##@ build-dist-zip
 .PHONY: build-dist-zip
 build-dist-zip: ## Build the application for all platforms defined in GO_OS and GO_ARCH in this Makefile and create a zip file for each binary
 	@printf "👉 Creating zip files for distribution...\n"
@@ -198,6 +191,7 @@ build-dist-zip: ## Build the application for all platforms defined in GO_OS and 
 		) \
 	)
 
+###############################################################################
 # This target is used by AWS SAM build command
 # and was added to build the binary using custom flags
 # Ref:
@@ -205,14 +199,15 @@ build-dist-zip: ## Build the application for all platforms defined in GO_OS and 
 # + https://jiangsc.me/2021/01/24/Lessons-Learnt-On-Deploying-GO-Lambda-Application-on-AWS/
 # NOTES:
 # + The ARTIFACTS_DIR environment variable is injected by AWS SAM build command
-##@ build-LambdaFunction
+##@ AWS Lambda commands
 .PHONY: build-LambdaFunction
 build-LambdaFunction: ## Build the application for AWS Lambda, this target is used by AWS SAM build command
 	@printf "👉 Called from sam build command ...\n"
 	@printf "  👉 ARTIFACTS_DIR injected from sam build command: %s\n" $(ARTIFACTS_DIR)
 	$(call exec_cmd, GOOS=$(AWS_SAM_OS) GOARCH=$(AWS_SAM_ARCH) CGO_ENABLED=$(GO_CGO_ENABLED) go build $(GO_LDFLAGS) $(GO_OPTS) -tags lambda.norpc -o $(ARTIFACTS_DIR)/$(AWS_SAM_LAMBDA_BINARY_NAME) ./cmd/$(AWS_SAM_PROJECT_APP_NAME)/ )
 
-##@ container-build
+###############################################################################
+##@ Container commands
 .PHONY: container-build
 container-build: build-dist ## Build the container image
 	@printf "👉 Building container image...\n"
@@ -235,7 +230,6 @@ container-build: build-dist ## Build the container image
 		) \
 	)
 
-##@ container-publish-docker
 .PHONY: container-publish-docker
 container-publish-docker: ## Publish the container image to docker hub
 	@printf "👉 Publishing container image to docker hub...\n"
@@ -271,7 +265,6 @@ container-publish-docker: ## Publish the container image to docker hub
 		) \
 	)
 
-##@ container-publish-github
 .PHONY: container-publish-github
 container-publish-github: ## Publish the container image to github container registry
 	@printf "👉 Publishing container image to github container registry...\n"
@@ -307,7 +300,6 @@ container-publish-github: ## Publish the container image to github container reg
 		) \
 	)
 
-##@ container-publish-aws-ecr
 .PHONY: container-publish-aws-ecr
 container-publish-aws-ecr: ## Publish the container image to AWS ECR
 	@printf "👉 Publishing container image to AWS ECR...\n"
@@ -343,14 +335,14 @@ container-publish-aws-ecr: ## Publish the container image to AWS ECR
 		) \
 	)
 
-##@ clean
+###############################################################################
+##@ Support Commands
 .PHONY: clean
 clean: ## Clean the environment
 	@printf "👉 Cleaning environment...\n"
 	$(call exec_cmd, go clean -n -x -i)
 	$(call exec_cmd, rm -rf $(BUILD_DIR) $(DIST_DIR) .aws-sam ./build.toml ./packaged.yaml )
 
-##@ help
 .PHONY: help
 help: ## Display this help
 	@awk 'BEGIN {FS = ":.*##";                                             \
