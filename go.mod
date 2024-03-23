@@ -8,7 +8,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/config v1.27.7
 	github.com/aws/aws-sdk-go-v2/credentials v1.17.8
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.53.0
-	github.com/aws/aws-sdk-go-v2/service/secretsmanager v1.28.2
+	github.com/aws/aws-sdk-go-v2/service/secretsmanager v1.28.4
 	github.com/golang/mock v1.6.0
 	github.com/google/go-cmp v0.6.0
 	github.com/hashicorp/go-retryablehttp v0.7.5
