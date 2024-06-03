@@ -11,7 +11,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/secretsmanager v1.28.6
 	github.com/golang/mock v1.6.0
 	github.com/google/go-cmp v0.6.0
-	github.com/hashicorp/go-retryablehttp v0.7.5
+	github.com/hashicorp/go-retryablehttp v0.7.7
 	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.8.0
@@ -74,7 +74,7 @@ require (
 	golang.org/x/crypto v0.22.0 // indirect
 	golang.org/x/exp v0.0.0-20240416160154-fe59bbe5cc7f // indirect
 	golang.org/x/net v0.24.0 // indirect
-	golang.org/x/sys v0.19.0 // indirect
+	golang.org/x/sys v0.20.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240415180920-8c6c420018be // indirect
 	google.golang.org/grpc v1.63.2 // indirect
