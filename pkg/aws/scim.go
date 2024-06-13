@@ -293,6 +293,7 @@ func (s *SCIMService) CreateOrGetUser(ctx context.Context, cur *CreateUserReques
 				Schemas:              response.Schemas,
 				UserName:             response.UserName,
 				DisplayName:          response.DisplayName,
+				NickName:             response.NickName,
 				Title:                response.Title,
 				UserType:             response.UserType,
 				PreferredLanguage:    response.PreferredLanguage,
@@ -316,6 +317,7 @@ func (s *SCIMService) CreateOrGetUser(ctx context.Context, cur *CreateUserReques
 					"externalId":  response.ExternalID,
 					"active":      response.Active,
 					"displayName": response.DisplayName,
+					"nickName":    response.NickName,
 					"email":       response.Emails[0].Value,
 				}).Warn("aws CreateOrGetUser: attributes before update")
 
@@ -325,6 +327,7 @@ func (s *SCIMService) CreateOrGetUser(ctx context.Context, cur *CreateUserReques
 					"externalId":  cur.ExternalID,
 					"active":      cur.Active,
 					"displayName": cur.DisplayName,
+					"nickName":    cur.NickName,
 					"email":       cur.Emails[0].Value,
 				}).Warn("aws CreateOrGetUser: attributes after update")
 
@@ -333,6 +336,7 @@ func (s *SCIMService) CreateOrGetUser(ctx context.Context, cur *CreateUserReques
 					ExternalID:           cur.ExternalID,
 					UserName:             cur.UserName,
 					DisplayName:          cur.DisplayName,
+					NickName:             cur.NickName,
 					Title:                cur.Title,
 					UserType:             cur.UserType,
 					PreferredLanguage:    cur.PreferredLanguage,
@@ -356,6 +360,7 @@ func (s *SCIMService) CreateOrGetUser(ctx context.Context, cur *CreateUserReques
 				curesp.Schemas = resp.Schemas
 				curesp.UserName = resp.UserName
 				curesp.DisplayName = resp.DisplayName
+				curesp.NickName = resp.NickName
 				curesp.Title = resp.Title
 				curesp.UserType = resp.UserType
 				curesp.PreferredLanguage = resp.PreferredLanguage

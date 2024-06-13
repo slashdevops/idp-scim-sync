@@ -208,7 +208,7 @@ func (s *State) SetHashCode() {
 			WithSCIMID(user.SCIMID).
 			WithUserName(user.UserName).
 			WithDisplayName(user.DisplayName).
-			// WithNickName("Not Provided").
+			WithNickName(user.Name.GivenName, user.Name.FamilyName).
 			// WithProfileURL("Not Provided").
 			WithTitle(user.Title).
 			WithUserType(user.UserType).

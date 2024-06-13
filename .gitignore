@@ -33,4 +33,4 @@ dist/
 
 *.log
 
-credentials.json
+dist/credentials.json

@@ -215,7 +215,7 @@ func buildUser(usr *admin.User) *model.User {
 		WithIPID(strings.TrimSpace(usr.Id)).
 		WithUserName(strings.TrimSpace(usr.PrimaryEmail)).
 		WithDisplayName(strings.TrimSpace(displayName)).
-		// WithNickName("Not Provided").
+		WithNickName(usr.Name.GivenName, usr.Name.FamilyName).
 		// WithProfileURL("Not Provided").
 		WithTitle(title).
 		WithUserType(strings.TrimSpace(usr.Kind)).

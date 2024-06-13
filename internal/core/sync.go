@@ -153,6 +153,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers(ctx context.Context) error {
 			idpUsersResult,
 			idpGroupsMembersResult,
 		)
+
 		if err != nil {
 			return fmt.Errorf("error syncing state: %w", err)
 		}
