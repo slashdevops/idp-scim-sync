@@ -255,13 +255,18 @@ Parameters:
     Description: Suffix to apply to IAM to avoid conflicts when multiple stacks are running in the same account
     Default: ""
 
+  LambdaFunctionName:
+    Type: String
+    Description: Name of the created Lambda function
+    Default: "idp-scim-sync"
+
 Resources:
   LambdaFunction:
     Type: AWS::Serverless::Function
     DependsOn:
       - LambdaFunctionLogGroup
     Properties:
-      FunctionName: idp-scim-sync
+      FunctionName: !Ref LambdaFunctionName
       Description: |
         This Lambda function will sync the AWS SSO groups and users with the Google Workspace directory and it will be triggered by an EventBridge rule.
         Project: https://github.com/slashdevops/idp-scim-sync
