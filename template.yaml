@@ -23,6 +23,7 @@ Metadata:
           - Timeout
           - LogGroupName
           - LogGroupRetentionDays
+          - RoleNameSuffix
       - Label:
           default: "State File - Configuration"
         Parameters:
@@ -249,6 +250,11 @@ Parameters:
       Reference: https://docs.aws.amazon.com/lambda/latest/dg/configuration-console.html
     Default: bootstrap
 
+  RoleNameSuffix:
+    Type: String
+    Description: Suffix to apply to IAM to avoid conflicts when multiple stacks are running in the same account
+    Default: ""
+
 Resources:
   LambdaFunction:
     Type: AWS::Serverless::Function
@@ -294,7 +300,7 @@ Resources:
     Type: AWS::IAM::Role
     Properties:
       Description: !Sub "This role is used by the Lambda function ${AWS::StackName}"
-      RoleName: !Sub "serverless-idp-scim-sync-${AWS::AccountId}-${AWS::Region}"
+      RoleName: !Sub "serverless-idp-scim-sync-${AWS::AccountId}-${AWS::Region}${RoleNameSuffix}"
       Path: /
       AssumeRolePolicyDocument:
         Statement:
@@ -437,7 +443,7 @@ Resources:
           - Sid: AllowAWSLambdaFunction
             Principal:
               AWS:
-                - !Sub "arn:aws:iam::${AWS::AccountId}:role/serverless-idp-scim-sync-${AWS::AccountId}-${AWS::Region}"
+                - !Sub "arn:aws:iam::${AWS::AccountId}:role/serverless-idp-scim-sync-${AWS::AccountId}-${AWS::Region}${RoleNameSuffix}"
             Effect: Allow
             Action:
               - s3:GetObject
