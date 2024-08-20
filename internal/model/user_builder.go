@@ -450,12 +450,13 @@ func (b *UsersResultBuilderChoice) Build() *UsersResult {
 func constructNickName(s1, s2 string) string {
 	// Create a mapping of Swedish characters to their normalized versions
 	replaceMap := map[rune]rune{
-		'é': 'e',
-		'ï': 'i',
-		'å': 'a',
-		'ä': 'a',
-		'ö': 'o',
 		'ü': 'u',
+		'ø': 'o',
+		'ö': 'o',
+		'ï': 'i',
+		'é': 'e',
+		'ä': 'a',
+		'å': 'a',
 	}
 
 	// Create a function to replace Swedish characters
