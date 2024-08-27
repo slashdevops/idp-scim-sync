@@ -1,6 +1,6 @@
 .DELETE_ON_ERROR: clean
 
-EXECUTABLES = go zip shasum docker
+EXECUTABLES = go zip shasum
 K := $(foreach exec,$(EXECUTABLES),\
   $(if $(shell which $(exec)),some string,$(error "No $(exec) in PATH)))
 
