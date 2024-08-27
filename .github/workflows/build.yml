@@ -27,7 +27,7 @@ jobs:
 
       - name: Set up Go 1.x
         id: go
-        uses: actions/setup-go@v4
+        uses: actions/setup-go@v5
         with:
           go-version-file: ./go.mod
 
@@ -39,7 +39,7 @@ jobs:
         run: make test
 
       - name: codecov coverage report
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v4
         with:
           token: ${{ secrets.CODECOV_TOKEN }} # not required for public repos
           files: ./coverage.out

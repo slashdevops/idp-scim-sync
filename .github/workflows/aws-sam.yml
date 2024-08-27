@@ -47,7 +47,7 @@ jobs:
 
       - name: Set up Go 1.x
         id: go
-        uses: actions/setup-go@v4
+        uses: actions/setup-go@v5
         with:
           go-version-file: ./go.mod
 
@@ -60,13 +60,13 @@ jobs:
           echo ${{ github.ref_name }}
 
       - name: Set up Python 3.x
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
 
       - name: Set up AWS SAM
         uses: aws-actions/setup-sam@v2
 
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v3
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_OIDC_ROLE_TO_ASSUME }}
           role-session-name: publish-sam-app
