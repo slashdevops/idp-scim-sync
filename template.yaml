@@ -21,7 +21,9 @@ Metadata:
           - ScheduleExpression
           - MemorySize
           - Timeout
+          - LogGroupName
           - LogGroupRetentionDays
+          - RoleNameSuffix
       - Label:
           default: "State File - Configuration"
         Parameters:
@@ -192,6 +194,11 @@ Parameters:
     MaxValue: 900
     MinValue: 3
 
+  LogGroupName:
+    Type: String
+    Description: The name of the CloudWatch log group
+    Default: "/aws/lambda/idp-scim-sync"
+
   LogGroupRetentionDays:
     Type: Number
     Description: The number of days you want to keep logs for the created lambda function
@@ -243,13 +250,23 @@ Parameters:
       Reference: https://docs.aws.amazon.com/lambda/latest/dg/configuration-console.html
     Default: bootstrap
 
+  RoleNameSuffix:
+    Type: String
+    Description: Suffix to apply to IAM to avoid conflicts when multiple stacks are running in the same account
+    Default: ""
+
+  LambdaFunctionName:
+    Type: String
+    Description: Name of the created Lambda function
+    Default: "idp-scim-sync"
+
 Resources:
   LambdaFunction:
     Type: AWS::Serverless::Function
     DependsOn:
       - LambdaFunctionLogGroup
     Properties:
-      FunctionName: idp-scim-sync
+      FunctionName: !Ref LambdaFunctionName
       Description: |
         This Lambda function will sync the AWS SSO groups and users with the Google Workspace directory and it will be triggered by an EventBridge rule.
         Project: https://github.com/slashdevops/idp-scim-sync
@@ -288,7 +305,7 @@ Resources:
     Type: AWS::IAM::Role
     Properties:
       Description: !Sub "This role is used by the Lambda function ${AWS::StackName}"
-      RoleName: !Sub "serverless-idp-scim-sync-${AWS::AccountId}-${AWS::Region}"
+      RoleName: !Sub "serverless-idp-scim-sync-${AWS::AccountId}-${AWS::Region}${RoleNameSuffix}"
       Path: /
       AssumeRolePolicyDocument:
         Statement:
@@ -431,7 +448,7 @@ Resources:
           - Sid: AllowAWSLambdaFunction
             Principal:
               AWS:
-                - !Sub "arn:aws:iam::${AWS::AccountId}:role/serverless-idp-scim-sync-${AWS::AccountId}-${AWS::Region}"
+                - !Sub "arn:aws:iam::${AWS::AccountId}:role/serverless-idp-scim-sync-${AWS::AccountId}-${AWS::Region}${RoleNameSuffix}"
             Effect: Allow
             Action:
               - s3:GetObject
@@ -477,7 +494,7 @@ Resources:
   LambdaFunctionLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: "/aws/lambda/idp-scim-sync"
+      LogGroupName: !Ref LogGroupName
       RetentionInDays: !Ref LogGroupRetentionDays
 
 Outputs:
