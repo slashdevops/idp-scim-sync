@@ -96,7 +96,7 @@ jobs:
           echo ${{ github.ref_name }}
 
       - name: Download Distribution files
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4.1.7
         with:
           name: dist
           path: ./dist/
