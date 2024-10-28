@@ -2,7 +2,8 @@ package google
 
 import (
 	"encoding/json"
-	"log"
+	"log/slog"
+	"os"
 )
 
 // toJSON converts any type to JSON []byte
@@ -19,12 +20,14 @@ func toJSON(stc interface{}, ident ...bool) []byte {
 	if len(ident) > 0 && ident[0] {
 		JSON, err = json.MarshalIndent(stc, "", "  ")
 		if err != nil {
-			log.Panic(err.Error())
+			slog.Error(err.Error())
+			os.Exit(1)
 		}
 	} else {
 		JSON, err = json.Marshal(stc)
 		if err != nil {
-			log.Panic(err.Error())
+			slog.Error(err.Error())
+			os.Exit(1)
 		}
 	}
 	return JSON

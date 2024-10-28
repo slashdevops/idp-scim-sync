@@ -3,8 +3,8 @@ package core
 import (
 	"context"
 	"fmt"
+	"log/slog"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/slashdevops/idp-scim-sync/internal/model"
 )
 
@@ -58,10 +58,10 @@ func reconcilingGroups(
 	var err error
 
 	if create.Items == 0 {
-		log.Info("no groups to be create")
+		slog.Info("no groups to be create")
 		created = model.GroupsResultBuilder().Build()
 	} else {
-		log.WithField("groups", create.Items).Warn("creating groups")
+		slog.Warn("creating groups", "groups", create.Items)
 		created, err = scim.CreateGroups(ctx, create)
 		if err != nil {
 			return nil, nil, fmt.Errorf("error creating groups from SCIM provider: %w", err)
@@ -69,10 +69,10 @@ func reconcilingGroups(
 	}
 
 	if update.Items == 0 {
-		log.Info("no groups to be updated")
+		slog.Info("no groups to be updated")
 		updated = model.GroupsResultBuilder().Build()
 	} else {
-		log.WithField("groups", update.Items).Warn("updating groups")
+		slog.Warn("updating groups", "groups", update.Items)
 		updated, err = scim.UpdateGroups(ctx, update)
 		if err != nil {
 			return nil, nil, fmt.Errorf("error updating groups from SCIM provider: %w", err)
@@ -80,9 +80,9 @@ func reconcilingGroups(
 	}
 
 	if remove.Items == 0 {
-		log.Info("no groups to be deleted")
+		slog.Info("no groups to be deleted")
 	} else {
-		log.WithField("groups", remove.Items).Warn("deleting groups")
+		slog.Warn("deleting groups", "groups", remove.Items)
 		if err := scim.DeleteGroups(ctx, remove); err != nil {
 			return nil, nil, fmt.Errorf("error deleting groups from SCIM provider: %w", err)
 		}
@@ -116,10 +116,10 @@ func reconcilingUsers(
 	var err error
 
 	if create.Items == 0 {
-		log.Info("no users to be created")
+		slog.Info("no users to be created")
 		created = model.UsersResultBuilder().Build()
 	} else {
-		log.WithField("users", create.Items).Warn("creating users")
+		slog.Warn("creating users", "users", create.Items)
 		created, err = scim.CreateUsers(ctx, create)
 		if err != nil {
 			return nil, nil, fmt.Errorf("error creating users from SCIM provider: %w", err)
@@ -127,10 +127,10 @@ func reconcilingUsers(
 	}
 
 	if update.Items == 0 {
-		log.Info("no users to be updated")
+		slog.Info("no users to be updated")
 		updated = model.UsersResultBuilder().Build()
 	} else {
-		log.WithField("users", update.Items).Warn("updating users")
+		slog.Warn("updating users", "users", update.Items)
 		updated, err = scim.UpdateUsers(ctx, update)
 		if err != nil {
 			return nil, nil, fmt.Errorf("error updating users from SCIM provider: %w", err)
@@ -138,9 +138,9 @@ func reconcilingUsers(
 	}
 
 	if remove.Items == 0 {
-		log.Info("no users to be removed")
+		slog.Info("no users to be removed")
 	} else {
-		log.WithField("users", remove.Items).Warn("deleting users")
+		slog.Warn("deleting users", "users", remove.Items)
 		if err := scim.DeleteUsers(ctx, remove); err != nil {
 			return nil, nil, fmt.Errorf("error deleting users from SCIM provider: %w", err)
 		}
@@ -170,10 +170,10 @@ func reconcilingGroupsMembers(
 	var err error
 
 	if create.Items == 0 {
-		log.Info("no users to be joined to groups")
+		slog.Info("no users to be joined to groups")
 		created = model.GroupsMembersResultBuilder().Build()
 	} else {
-		log.WithField("groups", create.Items).Warn("joining users to groups")
+		slog.Warn("joining users to groups", "groups", create.Items)
 		created, err = scim.CreateGroupsMembers(ctx, create)
 		if err != nil {
 			return nil, fmt.Errorf("error creating groups members in SCIM provider: %w", err)
@@ -181,9 +181,9 @@ func reconcilingGroupsMembers(
 	}
 
 	if remove.Items == 0 {
-		log.Info("no users to be removed from groups")
+		slog.Info("no users to be removed from groups")
 	} else {
-		log.WithField("groups", remove.Items).Warn("removing users from groups")
+		slog.Warn("removing users from groups", "groups", remove.Items)
 		if err := scim.DeleteGroupsMembers(ctx, remove); err != nil {
 			return nil, fmt.Errorf("error removing groups members from SCIM provider: %w", err)
 		}

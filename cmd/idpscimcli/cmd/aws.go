@@ -2,9 +2,9 @@ package cmd
 
 import (
 	"context"
+	"log/slog"
 	"net/http"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/slashdevops/idp-scim-sync/internal/version"
 	"github.com/slashdevops/idp-scim-sync/pkg/aws"
 	"github.com/spf13/cobra"
@@ -102,14 +102,14 @@ func runAWSServiceConfig(_ *cobra.Command, _ []string) error {
 
 	awsSCIMService, err := aws.NewSCIMService(httpClient, cfg.AWSSCIMEndpoint, cfg.AWSSCIMAccessToken)
 	if err != nil {
-		log.Errorf("error creating SCIM service: %s", err.Error())
+		slog.Error("error creating SCIM service", "error", err.Error())
 		return err
 	}
 	awsSCIMService.UserAgent = "idp-scim-sync/" + version.Version
 
 	awsServiceConfig, err := awsSCIMService.ServiceProviderConfig(ctx)
 	if err != nil {
-		log.Errorf("error getting service provider config, error: %s", err.Error())
+		slog.Error("error getting service provider config", "error", err.Error())
 		return err
 	}
 
@@ -134,17 +134,17 @@ func runAWSGroupsList(_ *cobra.Command, _ []string) error {
 
 	awsSCIMService, err := aws.NewSCIMService(httpClient, cfg.AWSSCIMEndpoint, cfg.AWSSCIMAccessToken)
 	if err != nil {
-		log.Errorf("error creating SCIM service: %s", err.Error())
+		slog.Error("error creating SCIM service", "error", err.Error())
 		return err
 	}
 	awsSCIMService.UserAgent = "idp-scim-sync/" + version.Version
 
 	awsGroupsResponse, err := awsSCIMService.ListGroups(ctx, filter)
 	if err != nil {
-		log.Errorf("error listing groups, error: %s", err.Error())
+		slog.Error("error listing groups", "error", err.Error())
 		return err
 	}
-	log.Infof("%d groups found", awsGroupsResponse.TotalResults)
+	slog.Info("groups found", "groups", awsGroupsResponse.TotalResults)
 
 	show(outFormat, awsGroupsResponse)
 
@@ -167,17 +167,17 @@ func runAWSUsersList(_ *cobra.Command, _ []string) error {
 
 	awsSCIMService, err := aws.NewSCIMService(httpClient, cfg.AWSSCIMEndpoint, cfg.AWSSCIMAccessToken)
 	if err != nil {
-		log.Errorf("error creating SCIM service: %s", err.Error())
+		slog.Error("error creating SCIM service", "error", err.Error())
 		return err
 	}
 	awsSCIMService.UserAgent = "idp-scim-sync/" + version.Version
 
 	awsUsersResponse, err := awsSCIMService.ListUsers(ctx, filter)
 	if err != nil {
-		log.Errorf("error listing groups, error: %s", err.Error())
+		slog.Error("error listing users", "error", err.Error())
 		return err
 	}
-	log.Infof("%d users found", awsUsersResponse.TotalResults)
+	slog.Info("users found", "users", awsUsersResponse.TotalResults)
 
 	show(outFormat, awsUsersResponse)
 

@@ -4,10 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
-	log "github.com/sirupsen/logrus"
 	"github.com/slashdevops/idp-scim-sync/internal/model"
 	"github.com/slashdevops/idp-scim-sync/internal/repository"
 	"github.com/slashdevops/idp-scim-sync/internal/version"
@@ -62,55 +62,50 @@ func NewSyncService(prov IdentityProviderService, scim SCIMService, repo StateRe
 
 // SyncGroupsAndTheirMembers the default sync method tha syncs groups and their members
 func (ss *SyncService) SyncGroupsAndTheirMembers(ctx context.Context) error {
-	log.WithFields(log.Fields{
-		"group_filter": ss.provGroupsFilter,
-	}).Info("getting identity provider data")
+	slog.Info("getting identity provider data", "group_filter", ss.provGroupsFilter)
 
 	idpGroupsResult, err := ss.prov.GetGroups(ctx, ss.provGroupsFilter)
 	if err != nil {
 		return fmt.Errorf("error getting groups from the identity provider: %w", err)
 	}
 
-	log.WithFields(
-		log.Fields{
-			"group_filter": ss.provGroupsFilter,
-			"groups":       idpGroupsResult.Items,
-		}).Info("groups retrieved from the identity provider for syncing that match the filter")
+	slog.Info("groups retrieved from the identity provider for syncing that match the filter",
+		"group_filter", ss.provGroupsFilter,
+		"groups", idpGroupsResult.Items,
+	)
 
 	idpGroupsMembersResult, err := ss.prov.GetGroupsMembers(ctx, idpGroupsResult)
 	if err != nil {
 		return fmt.Errorf("error getting groups members: %w", err)
 	}
 
-	log.WithFields(
-		log.Fields{
-			"group_filter":   ss.provGroupsFilter,
-			"groups_members": idpGroupsMembersResult.Items,
-		}).Info("groups members retrieved from the identity provider for syncing that match the filter")
+	slog.Info("groups members retrieved from the identity provider for syncing that match the filter",
+		"group_filter", ss.provGroupsFilter,
+		"groups_members", idpGroupsMembersResult.Items,
+	)
 
-	log.WithFields(log.Fields{
-		"group_filter": ss.provGroupsFilter,
-	}).Info("getting users (using groups members) from the identity provider")
+	slog.Info("getting users (using groups members) from the identity provider",
+		"group_filter", ss.provGroupsFilter,
+	)
 
 	idpUsersResult, err := ss.prov.GetUsersByGroupsMembers(ctx, idpGroupsMembersResult)
 	if err != nil {
 		return fmt.Errorf("error getting users from the identity provider: %w", err)
 	}
 
-	log.WithFields(
-		log.Fields{
-			"group_filter": ss.provGroupsFilter,
-			"users":        idpUsersResult.Items,
-		}).Info("users retrieved from the identity provider for syncing that match the filter")
+	slog.Info("users retrieved from the identity provider for syncing that match the filter",
+		"group_filter", ss.provGroupsFilter,
+		"users", idpUsersResult.Items,
+	)
 
-	log.Info("getting state data")
+	slog.Info("getting state data")
 	state, err := ss.repo.GetState(ctx)
 	if err != nil {
 		var nsk *types.NoSuchKey
 		var StateFileEmpty *repository.ErrStateFileEmpty
 
 		if errors.As(err, &nsk) || errors.As(err, &StateFileEmpty) {
-			log.Warn("no state file found in the state repository, creating a new one")
+			slog.Warn("no state file found in the state repository, creating a new one")
 			state = model.StateBuilder().Build()
 		} else {
 			return fmt.Errorf("error getting state data from the repository: %w", err)
@@ -132,7 +127,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers(ctx context.Context) error {
 		// of the users and groups in the SCIM side, just no recreation, keep the existing ones when:
 		// - Groups names are equals on both sides, update only the external id (coming from the identity provider)
 		// - Users emails are equals on both sides, update only the external id (coming from the identity provider)
-		log.Info("syncing from scim service, first time syncing")
+		slog.Info("syncing from scim service, first time syncing")
 		totalGroupsResult, totalUsersResult, totalGroupsMembersResult, err = scimSync(
 			ctx,
 			ss.scim,
@@ -144,7 +139,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers(ctx context.Context) error {
 			return fmt.Errorf("error doing the first sync: %w", err)
 		}
 	} else {
-		log.Info("syncing from state, it's not the first time syncing")
+		slog.Info("syncing from state, it's not the first time syncing")
 		totalGroupsResult, totalUsersResult, totalGroupsMembersResult, err = stateSync(
 			ctx,
 			state,
@@ -168,18 +163,18 @@ func (ss *SyncService) SyncGroupsAndTheirMembers(ctx context.Context) error {
 		WithGroupsMembers(totalGroupsMembersResult).
 		Build()
 
-	log.WithFields(log.Fields{
-		"lastSync": newState.LastSync,
-		"groups":   totalGroupsResult.Items,
-		"users":    totalUsersResult.Items,
-	}).Info("storing the new state")
+	slog.Info("storing the new state",
+		"lastSync", newState.LastSync,
+		"groups", totalGroupsResult.Items,
+		"users", totalUsersResult.Items,
+	)
 
 	if err := ss.repo.SetState(ctx, newState); err != nil {
 		return fmt.Errorf("error storing the state: %w", err)
 	}
 
-	log.WithFields(log.Fields{
-		"date": time.Now().Format(time.RFC3339),
-	}).Info("sync completed")
+	slog.Info("sync completed",
+		"date", time.Now().Format(time.RFC3339),
+	)
 	return nil
 }

@@ -2,7 +2,8 @@ package aws
 
 import (
 	"encoding/json"
-	"log"
+	"log/slog"
+	"os"
 
 	"github.com/pkg/errors"
 )
@@ -189,7 +190,8 @@ func (u *User) Validate() error {
 func (u *User) String() string {
 	JSON, err := json.Marshal(u)
 	if err != nil {
-		log.Fatalf(err.Error())
+		slog.Error("Error in marshalling user", "error", err)
+		os.Exit(1)
 	}
 	return string(JSON)
 }
@@ -298,7 +300,8 @@ func (g *Group) Validate() error {
 func (g *Group) String() string {
 	JSON, err := json.Marshal(g)
 	if err != nil {
-		log.Fatalf(err.Error())
+		slog.Error("Error in marshalling group", "error", err)
+		os.Exit(1)
 	}
 	return string(JSON)
 }

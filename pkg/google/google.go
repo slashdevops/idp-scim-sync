@@ -3,13 +3,12 @@ package google
 import (
 	"context"
 	"fmt"
+	"log/slog"
 
 	"golang.org/x/oauth2/google"
 	admin "google.golang.org/api/admin/directory/v1"
 	"google.golang.org/api/googleapi"
 	"google.golang.org/api/option"
-
-	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -106,7 +105,7 @@ func (ds *DirectoryService) ListUsers(ctx context.Context, query []string) ([]*a
 		}
 	}
 
-	log.Tracef("google: ListUsers(): %v", toJSONString(u))
+	slog.Debug("google: ListUsers()", "users", toJSONString(u))
 
 	return u, nil
 }
@@ -147,7 +146,7 @@ func (ds *DirectoryService) ListGroups(ctx context.Context, query []string) ([]*
 		}
 	}
 
-	log.Tracef("google: ListGroups(): %v", toJSONString(g))
+	slog.Debug("google: ListGroups()", "groups", toJSONString(g))
 
 	return g, nil
 }
@@ -189,7 +188,7 @@ func (ds *DirectoryService) ListGroupMembers(ctx context.Context, groupID string
 			if member.Status == "ACTIVE" {
 				m = append(m, member)
 			} else {
-				log.Warnf("google: not including %s to group %s members due to incorrect status %s (not ACTIVE)", member.Email, groupID, member.Status)
+				slog.Warn("google: member not included in group because status is not ACTIVE", "email", member.Email, "status", member.Status, "groupID", groupID)
 			}
 		}
 		return nil
@@ -198,7 +197,7 @@ func (ds *DirectoryService) ListGroupMembers(ctx context.Context, groupID string
 		return nil, err
 	}
 
-	log.Tracef("google: ListGroupMembers(): %v", toJSONString(m))
+	slog.Debug("google: ListGroupMembers()", "members", toJSONString(m))
 
 	return m, nil
 }
@@ -229,7 +228,7 @@ func (ds *DirectoryService) GetGroup(ctx context.Context, groupID string) (*admi
 		return nil, fmt.Errorf("google: error getting group %s: %v", groupID, err)
 	}
 
-	log.Tracef("google: GetGroup(): %v", toJSONString(g))
+	slog.Debug("google: GetGroup()", "group", toJSONString(g))
 
 	return g, nil
 }

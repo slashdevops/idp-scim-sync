@@ -64,7 +64,7 @@ jobs:
           GIT_VERSION=${{ github.ref_name }} make build-dist
 
       - name: Upload Distribution files
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: dist
           path: ./dist/
@@ -96,7 +96,7 @@ jobs:
           echo ${{ github.ref_name }}
 
       - name: Download Distribution files
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: dist
           path: ./dist/

@@ -2,7 +2,8 @@ package convert
 
 import (
 	"encoding/json"
-	"log"
+	"log/slog"
+	"os"
 
 	"gopkg.in/yaml.v3"
 )
@@ -21,12 +22,14 @@ func ToJSON(stc interface{}, ident ...bool) []byte {
 	if len(ident) > 0 && ident[0] {
 		JSON, err = json.MarshalIndent(stc, "", "  ")
 		if err != nil {
-			log.Panic(err.Error())
+			slog.Error("error marshalling to JSON", "error", err)
+			os.Exit(1)
 		}
 	} else {
 		JSON, err = json.Marshal(stc)
 		if err != nil {
-			log.Panic(err.Error())
+			slog.Error("error marshalling to JSON", "error", err)
+			os.Exit(1)
 		}
 	}
 	return JSON
@@ -48,7 +51,8 @@ func ToYAML(stc interface{}) []byte {
 
 	YAML, err := yaml.Marshal(stc)
 	if err != nil {
-		log.Panic(err.Error())
+		slog.Error("error marshalling to YAML", "error", err)
+		os.Exit(1)
 	}
 	return YAML
 }

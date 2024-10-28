@@ -2,14 +2,13 @@ package cmd
 
 import (
 	"context"
+	"log/slog"
 	"os"
 
 	"github.com/slashdevops/idp-scim-sync/internal/config"
 	"github.com/slashdevops/idp-scim-sync/pkg/google"
 	"github.com/spf13/cobra"
 	admin "google.golang.org/api/admin/directory/v1"
-
-	log "github.com/sirupsen/logrus"
 )
 
 // command gws
@@ -113,7 +112,8 @@ func init() {
 func getGWSDirectoryService(ctx context.Context) *google.DirectoryService {
 	gCreds, err := os.ReadFile(cfg.GWSServiceAccountFile)
 	if err != nil {
-		log.Fatalf("error reading the credentials: %s", err)
+		slog.Error("error reading the credentials", "error", err)
+		os.Exit(1)
 	}
 
 	gScopes := []string{
@@ -124,12 +124,14 @@ func getGWSDirectoryService(ctx context.Context) *google.DirectoryService {
 
 	gService, err := google.NewService(ctx, cfg.GWSUserEmail, gCreds, gScopes...)
 	if err != nil {
-		log.Fatalf("error creating service: %s", err)
+		slog.Error("error creating service", "error", err)
+		os.Exit(1)
 	}
 
 	gDirService, err := google.NewDirectoryService(gService)
 	if err != nil {
-		log.Fatalf("error creating directory service: %s", err)
+		slog.Error("error creating directory service", "error", err)
+		os.Exit(1)
 	}
 
 	return gDirService
@@ -143,10 +145,10 @@ func execGWSGroupsList(_ *cobra.Command, _ []string) error {
 
 	gGroups, err := gDirService.ListGroups(ctx, cfg.GWSGroupsFilter)
 	if err != nil {
-		log.Errorf("error listing groups: %s", err)
+		slog.Error("error listing groups", "error", err)
 		return err
 	}
-	log.Infof("%d groups found", len(gGroups))
+	slog.Info("groups found", "groups", len(gGroups))
 
 	show(outFormat, gGroups)
 
@@ -161,10 +163,10 @@ func execGWSUsersList(_ *cobra.Command, _ []string) error {
 
 	gUsers, err := gDirService.ListUsers(ctx, cfg.GWSUsersFilter)
 	if err != nil {
-		log.Errorf("error listing users: %s", err)
+		slog.Error("error listing users", "error", err)
 		return err
 	}
-	log.Infof("%d users found", len(gUsers))
+	slog.Info("users found", "users", len(gUsers))
 
 	show(outFormat, gUsers)
 
@@ -184,18 +186,17 @@ func execGWSGroupsMembersList(_ *cobra.Command, _ []string) error {
 
 	gGroups, err := gDirService.ListGroups(ctx, cfg.GWSGroupsFilter)
 	if err != nil {
-		log.Errorf("error listing groups: %s", err)
+		slog.Error("error listing groups", "error", err)
 		return err
 	}
-
-	log.Infof("%d groups found", len(gGroups))
+	slog.Info("groups found", "groups", len(gGroups))
 
 	gMembers := make([]gwsGroupMembers, 0)
 
 	for _, group := range gGroups {
 		members, err := gDirService.ListGroupMembers(ctx, group.Id)
 		if err != nil {
-			log.Errorf("error listing group members: %s", err)
+			slog.Error("error listing group members", "error", err)
 			return err
 		}
 		e := gwsGroupMembers{

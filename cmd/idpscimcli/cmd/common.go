@@ -1,7 +1,8 @@
 package cmd
 
 import (
-	log "github.com/sirupsen/logrus"
+	"fmt"
+
 	"github.com/slashdevops/idp-scim-sync/internal/convert"
 )
 
@@ -9,10 +10,10 @@ import (
 func show(outFormat string, resource interface{}) {
 	switch outFormat {
 	case "json":
-		log.Infof("%s", convert.ToJSONString(resource, true))
+		fmt.Print(convert.ToJSONString(resource, true))
 	case "yaml":
-		log.Infof("%s", convert.ToYAML(resource))
+		fmt.Print(convert.ToYAML(resource))
 	default:
-		log.Infof("%s", convert.ToJSONString(resource, true))
+		fmt.Print(convert.ToJSONString(resource, true))
 	}
 }
