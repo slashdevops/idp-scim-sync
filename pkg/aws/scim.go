@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"net/url"
 	"path"
@@ -13,7 +14,6 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
 )
 
 // Consume http methods
@@ -121,12 +121,7 @@ func (s *SCIMService) newRequest(ctx context.Context, method string, u *url.URL,
 		req.Header.Set("User-Agent", s.UserAgent)
 	}
 
-	log.WithFields(log.Fields{
-		"method": method,
-		"url":    u.String(),
-		"query":  u.RawQuery,
-		"path":   u.Path,
-	}).Tracef("aws: newRequest(), body: %s", toJSONString(body))
+	slog.Debug("aws: newRequest()", "method", method, "url", u.String(), "query", u.RawQuery, "path", u.Path)
 
 	return req, nil
 }
@@ -154,10 +149,7 @@ func (s *SCIMService) checkHTTPResponse(resp *http.Response) error {
 			return fmt.Errorf("aws checkHTTPResponse: error reading response body: %w", err)
 		}
 
-		log.WithFields(log.Fields{
-			"statusCode": resp.StatusCode,
-			"status":     resp.Status,
-		}).Tracef("aws checkHTTPResponse: body: %s\n", string(body))
+		slog.Debug("aws checkHTTPResponse()", "statusCode", resp.StatusCode, "status", resp.Status, "body", string(body))
 
 		return &HTTPResponseError{resp.StatusCode, resp.Status, string(body)}
 	}
@@ -203,7 +195,7 @@ func (s *SCIMService) CreateUser(ctx context.Context, cur *CreateUserRequest) (*
 		return nil, fmt.Errorf("aws CreateUser: user: %s, error decoding response body: %w", cur.UserName, err)
 	}
 
-	log.Tracef("aws CreateUser: user created response: %s", toJSONString(response))
+	slog.Debug("aws CreateUser()", "response", toJSONString(response))
 
 	return &response, nil
 }
@@ -249,39 +241,41 @@ func (s *SCIMService) CreateOrGetUser(ctx context.Context, cur *CreateUserReques
 
 		// http.StatusConflict is 409
 		if errors.As(e, &httpErr) && httpErr.StatusCode == http.StatusConflict {
-			log.WithFields(log.Fields{
-				"user": cur.UserName,
-				"name": cur.DisplayName,
-				"id":   cur.ID,
-			}).Warn("aws CreateOrGetUser: user already exists with same name or externalId, trying to get the user information")
+			slog.Warn(
+				"aws CreateOrGetUser: user already exists with same name or externalId, trying to get the user information",
+				"user", cur.UserName,
+				"name", cur.DisplayName,
+				"id", cur.ID,
+			)
 
 			response, err := s.GetUserByUserName(ctx, cur.UserName)
 			if err != nil {
 				return nil, fmt.Errorf("aws CreateOrGetUser: error getting user information: %w", err)
 			}
 
-			log.WithFields(log.Fields{
-				"user":        cur.UserName,
-				"id":          response.ID,
-				"externalId":  response.ExternalID,
-				"active":      response.Active,
-				"displayName": response.DisplayName,
-			}).Trace("aws CreateOrGetUser: obtained user information")
+			slog.Debug("aws CreateOrGetUser: obtained user information",
+				"user", cur.UserName,
+				"id", response.ID,
+				"externalId", response.ExternalID,
+				"active", response.Active,
+				"displayName", response.DisplayName,
+			)
 
 			// Check if the user already exists, same externalId but different email, email change in the identity provider
 			// when response.ID is empty, the user does not exists, so this is the case when the new user is a existing user
 			// with a different email same externalId.
 			if response.ID == "" {
-				log.WithFields(log.Fields{
-					"userName": cur.UserName,
-					"name":     cur.DisplayName,
-				}).Warn("aws CreateOrGetUser: group already exists, but with a different name, same id")
+				slog.Warn("aws CreateOrGetUser: group already exists, but with a different name, same id",
+					"user", cur.UserName,
+					"name", cur.DisplayName,
+				)
 
 				// remove the ExternalID from the user request, and call itself again to create the new user
-				log.WithFields(log.Fields{
-					"userName": cur.UserName,
-					"name":     cur.DisplayName,
-				}).Warn("aws CreateOrGetUser: removing ExternalID from the group request, calling itself again to create the new group name")
+				slog.Warn("aws CreateOrGetUser: removing ExternalID from the group request, calling itself again to create the new group name",
+					"user", cur.UserName,
+					"name", cur.DisplayName,
+				)
+
 				cur.ExternalID = ""
 				return s.CreateOrGetUser(ctx, cur)
 			}
@@ -308,25 +302,14 @@ func (s *SCIMService) CreateOrGetUser(ctx context.Context, cur *CreateUserReques
 			// maybe the user in the SCIM side was changed, so we need to update the user in the SCIM Side
 			// according to the create user request
 			if !reflect.DeepEqual(cur, response) {
-				log.Warn("aws CreateOrGetUser: user already exists, but attributes are different, updating the user")
-
-				log.WithFields(log.Fields{
-					"user":        response.UserName,
-					"id":          response.ID,
-					"externalId":  response.ExternalID,
-					"active":      response.Active,
-					"displayName": response.DisplayName,
-					"email":       response.Emails[0].Value,
-				}).Warn("aws CreateOrGetUser: attributes before update")
-
-				log.WithFields(log.Fields{
-					"user":        cur.UserName,
-					"id":          cur.ID,
-					"externalId":  cur.ExternalID,
-					"active":      cur.Active,
-					"displayName": cur.DisplayName,
-					"email":       cur.Emails[0].Value,
-				}).Warn("aws CreateOrGetUser: attributes after update")
+				slog.Warn("aws CreateOrGetUser: user already exists, but attributes are different, updating the user",
+					"user", response.UserName,
+					"id", response.ID,
+					"externalId", response.ExternalID,
+					"active", response.Active,
+					"displayName", response.DisplayName,
+					"email", response.Emails[0].Value,
+				)
 
 				pur := &PutUserRequest{
 					ID:                   response.ID,
@@ -410,9 +393,7 @@ func (s *SCIMService) DeleteUser(ctx context.Context, id string) error {
 		// http.StatusNotFound is 404
 		// in this case, the user was already deleted manually, so we can ignore the error
 		if errors.As(e, &httpErr) && httpErr.StatusCode == http.StatusNotFound {
-			log.WithFields(log.Fields{
-				"id": id,
-			}).Warnf("aws DeleteUser: user id does not exist, maybe it was already deleted because the username changed")
+			slog.Warn("aws DeleteUser: user id does not exist, maybe it was already deleted because the username changed", "id", id)
 
 			return nil
 		}
@@ -453,16 +434,6 @@ func (s *SCIMService) GetUserByUserName(ctx context.Context, userName string) (*
 
 	if e := s.checkHTTPResponse(resp); e != nil {
 		return nil, e
-	}
-
-	if resp.StatusCode == http.StatusOK && log.GetLevel() == log.TraceLevel {
-		bodyBytes, er := io.ReadAll(resp.Body)
-		resp.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
-		if er != nil {
-			log.Error(er)
-		}
-
-		log.Tracef("aws GetUserByUserName(), response raw body data: %s", string(bodyBytes))
 	}
 
 	var lur ListUsersResponse
@@ -815,9 +786,7 @@ func (s *SCIMService) CreateOrGetGroup(ctx context.Context, cgr *CreateGroupRequ
 
 		// http.StatusConflict is 409
 		if errors.As(e, &httpErr) && httpErr.StatusCode == http.StatusConflict {
-			log.WithFields(log.Fields{
-				"name": cgr.DisplayName,
-			}).Warn("aws CreateOrGetGroup: groups already exists with same name or externalId, trying to get the group information")
+			slog.Warn("aws CreateOrGetGroup: groups already exists with same name or externalId, trying to get the group information", "name", cgr.DisplayName)
 
 			// This is because the group already exists, but exists with the same name
 			response, err := s.GetGroupByDisplayName(ctx, cgr.DisplayName)
@@ -825,23 +794,17 @@ func (s *SCIMService) CreateOrGetGroup(ctx context.Context, cgr *CreateGroupRequ
 				return nil, fmt.Errorf("aws CreateOrGetGroup: error getting group information: %w", err)
 			}
 
-			log.WithFields(log.Fields{
-				"group": cgr.DisplayName,
-				"id":    response.ID,
-			}).Warn("aws CreateOrGetGroup: obtained group information")
+			slog.Warn("aws CreateOrGetGroup: obtained group information", "group", cgr.DisplayName, "id", response.ID)
 
 			// Check if the group already exists, same externalId but different name, name change in the identity provider
 			// when response.ID is empty, the group does not exists, so this is the case when the new group is a existing group
 			// with a different name same externalId.
 			if response.ID == "" {
-				log.WithFields(log.Fields{
-					"group": cgr.DisplayName,
-				}).Warn("aws CreateOrGetGroup: group already exists, but with a different name, same id")
+				slog.Warn("aws CreateOrGetGroup: group already exists, but with a different name, same id", "group", cgr.DisplayName)
 
 				// remove the ExternalID from the group request, and call itself again to create the new group name
-				log.WithFields(log.Fields{
-					"group": cgr.DisplayName,
-				}).Warn("aws CreateOrGetGroup: removing ExternalID from the group request, calling itself again to create the new group name")
+				slog.Warn("aws CreateOrGetGroup: removing ExternalID from the group request, calling itself again to create the new group name", "group", cgr.DisplayName)
+
 				cgr.ExternalID = ""
 				return s.CreateOrGetGroup(ctx, cgr)
 			}
@@ -898,9 +861,7 @@ func (s *SCIMService) DeleteGroup(ctx context.Context, id string) error {
 
 		// http.StatusNotFound is 404
 		if errors.As(e, &httpErr) && httpErr.StatusCode == http.StatusNotFound {
-			log.WithFields(log.Fields{
-				"id": id,
-			}).Warn("aws DeleteGroup: group id does not exists, maybe it was already deleted because the name changed")
+			slog.Warn("aws DeleteGroup: group id does not exists, maybe it was already deleted because the name changed", "id", id)
 			return nil
 		}
 		return e

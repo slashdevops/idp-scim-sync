@@ -4,9 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 
-	log "github.com/sirupsen/logrus"
-	"github.com/slashdevops/idp-scim-sync/internal/convert"
 	"github.com/slashdevops/idp-scim-sync/internal/model"
 	"github.com/slashdevops/idp-scim-sync/pkg/google"
 	admin "google.golang.org/api/admin/directory/v1"
@@ -84,17 +83,16 @@ func (i *IdentityProvider) GetGroups(ctx context.Context, filter []string) (*mod
 
 			syncGroups = append(syncGroups, gg)
 		} else {
-			log.WithFields(log.Fields{
-				"id":    grp.Id,
-				"name":  grp.Name,
-				"email": grp.Email,
-			}).Warning("idp: group already exists with the same name, this group will be avoided, please make your groups uniques by name!")
+			slog.Warn("idp: group already exists with the same name, this group will be avoided, please make your groups uniques by name!",
+				"id", grp.Id,
+				"name", grp.Name,
+				"email", grp.Email,
+			)
 		}
 	}
 
 	syncResult := model.GroupsResultBuilder().WithResources(syncGroups).Build()
-
-	log.Tracef("idp: GetGroups(): %+v", convert.ToJSONString(syncResult))
+	slog.Debug("idp: GetGroups()", "groups", len(syncGroups))
 
 	return syncResult, nil
 }
@@ -121,8 +119,7 @@ func (i *IdentityProvider) GetUsers(ctx context.Context, filter []string) (*mode
 		syncUsers[i] = gu
 	}
 	uResult := model.UsersResultBuilder().WithResources(syncUsers).Build()
-
-	log.Tracef("idp: GetUsers(): %+v", convert.ToJSONString(uResult))
+	slog.Debug("idp: GetUsers()", "users", len(syncUsers))
 
 	return uResult, nil
 }
@@ -148,10 +145,10 @@ func (i *IdentityProvider) GetGroupMembers(ctx context.Context, groupID string) 
 	for _, member := range pMembers {
 		// avoid nested groups, but members are included thanks to the google.WithIncludeDerivedMembership option above
 		if member.Type == "GROUP" {
-			log.WithFields(log.Fields{
-				"id":    member.Id,
-				"email": member.Email,
-			}).Warn("skipping member because is a group, but group members will be included")
+			slog.Warn("skipping member because is a group, but group members will be included",
+				"id", member.Id,
+				"email", member.Email,
+			)
 			continue
 		}
 
@@ -166,7 +163,7 @@ func (i *IdentityProvider) GetGroupMembers(ctx context.Context, groupID string) 
 
 	syncMembersResult := model.MembersResultBuilder().WithResources(syncMembers).Build()
 
-	log.Tracef("idp: GetGroupMembers(): %+v", convert.ToJSONString(syncMembersResult))
+	slog.Debug("idp: GetGroupMembers()", "members", len(syncMembers))
 
 	return syncMembersResult, nil
 }
@@ -200,7 +197,7 @@ func (i *IdentityProvider) GetUsersByGroupsMembers(ctx context.Context, gmr *mod
 				}
 				gu := buildUser(u)
 
-				log.Tracef("idp: GetUsersByGroupsMembers, user: %+v", convert.ToJSONString(gu))
+				slog.Debug("idp: GetUsersByGroupsMembers()", "user", gu.Email)
 				pUsers = append(pUsers, gu)
 			}
 		}
@@ -208,7 +205,7 @@ func (i *IdentityProvider) GetUsersByGroupsMembers(ctx context.Context, gmr *mod
 
 	pUsersResult := model.UsersResultBuilder().WithResources(pUsers).Build()
 
-	log.Tracef("idp: GetUsersByGroupsMembers(): %+v", convert.ToJSONString(pUsersResult))
+	slog.Debug("idp: GetUsersByGroupsMembers()", "users", len(pUsers))
 
 	return pUsersResult, nil
 }
@@ -257,7 +254,7 @@ func (i *IdentityProvider) GetGroupsMembers(ctx context.Context, gr *model.Group
 	}
 	groupsMembersResult.SetHashCode()
 
-	log.Tracef("idp: GetGroupsMembers(): %+v", convert.ToJSONString(groupsMembersResult))
+	slog.Debug("idp: GetGroupsMembers()", "groups", len(groupMembers))
 
 	return groupsMembersResult, nil
 }

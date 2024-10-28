@@ -28,14 +28,6 @@ var (
 	ErrStateNil = errors.New("s3: state is nil")
 )
 
-//go:generate go run github.com/golang/mock/mockgen@v1.6.0 -package=mocks -destination=../../../mocks/repository/s3_mocks.go -source=s3.go S3ClientAPI
-
-// S3ClientAPI is an interface to consume S3 client methods
-type S3ClientAPI interface {
-	GetObject(ctx context.Context, params *s3.GetObjectInput, optFns ...func(*s3.Options)) (*s3.GetObjectOutput, error)
-	PutObject(ctx context.Context, params *s3.PutObjectInput, optFns ...func(*s3.Options)) (*s3.PutObjectOutput, error)
-}
-
 // S3Repository represent a repository that stores state in S3 and implements model.Repository interface
 type S3Repository struct {
 	bucket string

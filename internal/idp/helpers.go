@@ -2,9 +2,9 @@ package idp
 
 import (
 	"fmt"
+	"log/slog"
 	"strings"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/slashdevops/idp-scim-sync/internal/convert"
 	"github.com/slashdevops/idp-scim-sync/internal/model"
 	admin "google.golang.org/api/admin/directory/v1"
@@ -19,22 +19,22 @@ func buildUser(usr *admin.User) *model.User {
 	// these fields are required because the Constrains defined here:
 	// https://docs.aws.amazon.com/singlesignon/latest/developerguide/createuser.html
 	if usr.Name == nil {
-		log.Warn("idp: User name is nil")
+		slog.Warn("idp: User name is nil")
 		return nil
 	}
 
 	if usr.Name.GivenName == "" {
-		log.Warn("idp: User given name is empty")
+		slog.Warn("idp: User given name is empty")
 		return nil
 	}
 
 	if usr.Name.FamilyName == "" {
-		log.Warn("idp: User family name is empty")
+		slog.Warn("idp: User family name is empty")
 		return nil
 	}
 
 	if usr.PrimaryEmail == "" {
-		log.Warn("idp: User primary email is empty")
+		slog.Warn("idp: User primary email is empty")
 		return nil
 	}
 
@@ -69,7 +69,7 @@ func buildUser(usr *admin.User) *model.User {
 	}
 
 	if len(emails) == 0 {
-		log.Warn("idp: User emails is empty, setting primary email as the only email")
+		slog.Warn("idp: User emails is empty, setting primary email as the only email")
 		emails = append(emails,
 			model.EmailBuilder().
 				WithPrimary(true).
@@ -232,7 +232,7 @@ func buildUser(usr *admin.User) *model.User {
 		WithEnterpriseData(mainOrganization).
 		Build()
 
-	log.Tracef("idp: buildUser() from: \n%s, \n--> to:\n %s\n", convert.ToJSONString(usr), convert.ToJSONString(userModel))
+	slog.Debug("idp: buildUser() converted user", "from", convert.ToJSONString(usr), "to", convert.ToJSONString(userModel))
 
 	return userModel
 }

@@ -1,18 +1,16 @@
 package cmd
 
 import (
+	"log/slog"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/slashdevops/idp-scim-sync/internal/config"
 	"github.com/slashdevops/idp-scim-sync/internal/version"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-
-	log "github.com/sirupsen/logrus"
 )
 
 var (
@@ -20,6 +18,10 @@ var (
 	reqTimeout time.Duration
 	maxTimeout time.Duration
 	outFormat  string
+
+	logHandler        slog.Handler
+	logHandlerOptions *slog.HandlerOptions
+	logger            *slog.Logger
 )
 
 // commands root
@@ -69,7 +71,8 @@ func initConfig() {
 	}
 	for _, e := range envVars {
 		if err := viper.BindEnv(e); err != nil {
-			log.Fatalf(errors.Wrap(err, "cannot bind environment variable").Error())
+			slog.Error("cannot bind environment variable", "error", err)
+			os.Exit(1)
 		}
 	}
 
@@ -93,32 +96,41 @@ func initConfig() {
 	fileName := fileNameExt[0 : len(fileNameExt)-len(fileExtension)]
 	viper.SetConfigName(fileName)
 
-	log.Debugf("configuration file: dir: %s, name: %s, ext: %s", fileDir, fileName, fileExtension)
+	slog.Debug("configuration file", "dir", fileDir, "name", fileName, "ext", fileExtension)
 
 	if err := viper.ReadInConfig(); err == nil {
-		log.Infof("using config file: %s", viper.ConfigFileUsed())
+		slog.Info("using config file", "file", viper.ConfigFileUsed())
 	}
 
 	if err := viper.Unmarshal(&cfg); err != nil {
-		log.Fatalf(errors.Wrap(err, "cannot unmarshal config").Error())
+		slog.Error("cannot unmarshal config", "error", err)
+		os.Exit(1)
 	}
 
 	switch strings.ToLower(cfg.LogFormat) {
 	case "json":
-		log.SetFormatter(&log.JSONFormatter{})
+		logHandler = slog.NewJSONHandler(os.Stdout, logHandlerOptions)
 	case "text":
-		log.SetFormatter(&log.TextFormatter{})
+		logHandler = slog.NewTextHandler(os.Stdout, logHandlerOptions)
 	default:
-		log.Warnf("unknown log format: %s, using text", cfg.LogFormat)
-		log.SetFormatter(&log.TextFormatter{})
+		slog.Warn("unknown log format, using text", "format", cfg.LogFormat)
+		logHandler = slog.NewTextHandler(os.Stdout, logHandlerOptions)
+	}
+
+	switch strings.ToLower(cfg.LogLevel) {
+	case "debug":
+		logHandlerOptions = &slog.HandlerOptions{Level: slog.LevelDebug, AddSource: true}
+	case "info":
+		logHandlerOptions = &slog.HandlerOptions{Level: slog.LevelInfo}
+	case "warn":
+		logHandlerOptions = &slog.HandlerOptions{Level: slog.LevelWarn}
+	case "error":
+		logHandlerOptions = &slog.HandlerOptions{Level: slog.LevelError, AddSource: true}
+	default:
+		slog.Warn("unknown log level, setting it to info", "level", cfg.LogLevel)
 	}
 
 	if cfg.Debug {
 		cfg.LogLevel = "debug"
-	}
-
-	// set the configured log level
-	if level, err := log.ParseLevel(strings.ToLower(cfg.LogLevel)); err == nil {
-		log.SetLevel(level)
 	}
 }

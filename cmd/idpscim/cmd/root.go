@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"strings"
@@ -14,7 +15,6 @@ import (
 	"github.com/hashicorp/go-retryablehttp"
 	"github.com/pkg/errors"
 	"github.com/slashdevops/idp-scim-sync/internal/config"
-	"github.com/slashdevops/idp-scim-sync/internal/convert"
 	"github.com/slashdevops/idp-scim-sync/internal/core"
 	"github.com/slashdevops/idp-scim-sync/internal/idp"
 	"github.com/slashdevops/idp-scim-sync/internal/repository"
@@ -24,11 +24,14 @@ import (
 	"github.com/slashdevops/idp-scim-sync/pkg/google"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-
-	log "github.com/sirupsen/logrus"
 )
 
-var cfg config.Config
+var (
+	cfg               config.Config
+	logHandler        slog.Handler
+	logHandlerOptions *slog.HandlerOptions
+	logger            *slog.Logger
+)
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
@@ -129,7 +132,8 @@ func initConfig() {
 	}
 	for _, e := range envVars {
 		if err := viper.BindEnv(e); err != nil {
-			log.Fatalf(errors.Wrap(err, "cannot bind environment variable").Error())
+			slog.Error("cannot bind environment variable", "error", err)
+			os.Exit(1)
 		}
 	}
 
@@ -156,34 +160,42 @@ func initConfig() {
 		fileName := fileNameExt[0 : len(fileNameExt)-len(fileExtension)]
 		viper.SetConfigName(fileName)
 
-		log.Debugf("configuration file: dir: %s, name: %s, ext: %s", fileDir, fileName, fileExtension)
+		slog.Debug("configuration file", "dir", fileDir, "name", fileName, "extension", fileExtension)
 
 		if err := viper.ReadInConfig(); err == nil {
-			log.Infof("using config file: %s", viper.ConfigFileUsed())
+			slog.Info("using config file", "file", viper.ConfigFileUsed())
 		}
 	}
 
 	if err := viper.Unmarshal(&cfg); err != nil {
-		log.Fatalf(errors.Wrap(err, "cannot unmarshal config").Error())
+		slog.Error("cannot unmarshal config", "error", err)
 	}
 
 	switch strings.ToLower(cfg.LogFormat) {
 	case "json":
-		log.SetFormatter(&log.JSONFormatter{})
+		logHandler = slog.NewJSONHandler(os.Stdout, logHandlerOptions)
 	case "text":
-		log.SetFormatter(&log.TextFormatter{})
+		logHandler = slog.NewTextHandler(os.Stdout, logHandlerOptions)
 	default:
-		log.Warnf("unknown log format: %s, using text", cfg.LogFormat)
-		log.SetFormatter(&log.TextFormatter{})
+		slog.Warn("unknown log format, using text", "format", cfg.LogFormat)
+		logHandler = slog.NewTextHandler(os.Stdout, logHandlerOptions)
+	}
+
+	switch strings.ToLower(cfg.LogLevel) {
+	case "debug":
+		logHandlerOptions = &slog.HandlerOptions{Level: slog.LevelDebug, AddSource: true}
+	case "info":
+		logHandlerOptions = &slog.HandlerOptions{Level: slog.LevelInfo}
+	case "warn":
+		logHandlerOptions = &slog.HandlerOptions{Level: slog.LevelWarn}
+	case "error":
+		logHandlerOptions = &slog.HandlerOptions{Level: slog.LevelError, AddSource: true}
+	default:
+		slog.Warn("unknown log level, setting it to info", "level", cfg.LogLevel)
 	}
 
 	if cfg.Debug {
 		cfg.LogLevel = "debug"
-	}
-
-	// set the configured log level
-	if level, err := log.ParseLevel(strings.ToLower(cfg.LogLevel)); err == nil {
-		log.SetLevel(level)
 	}
 
 	if cfg.IsLambda || cfg.UseSecretsManager {
@@ -192,79 +204,74 @@ func initConfig() {
 
 	// not implemented yet block
 	if cfg.SyncMethod != "groups" {
-		log.Fatal("only 'sync-method=groups' are implemented")
+		slog.Error("only 'sync-method=groups' are implemented")
+		os.Exit(1)
 	}
 }
 
 func getSecrets() {
-	log.Info("reading secrets from AWS Secrets Manager")
+	slog.Info("reading secrets from AWS Secrets Manager")
 
 	awsConf, err := aws.NewDefaultConf(context.Background())
 	if err != nil {
-		log.Fatalf(errors.Wrap(err, "cannot load aws config").Error())
+		slog.Error("cannot load aws config", "error", err)
+		os.Exit(1)
 	}
 
 	svc := secretsmanager.NewFromConfig(awsConf)
 
 	secrets, err := aws.NewSecretsManagerService(svc)
 	if err != nil {
-		log.Fatalf(errors.Wrap(err, "cannot create aws secrets manager service").Error())
+		slog.Error("cannot create aws secrets manager service", "error", err)
+		os.Exit(1)
 	}
 
-	log.WithField("name", cfg.GWSUserEmailSecretName).Debug("reading secret")
+	slog.Debug("reading secret", "name", cfg.GWSUserEmailSecretName)
 	unwrap, err := secrets.GetSecretValue(context.Background(), cfg.GWSUserEmailSecretName)
 	if err != nil {
-		log.Fatalf(errors.Wrap(err, "cannot get secretmanager value").Error())
+		slog.Error("cannot get secretmanager value", "error", err)
+		os.Exit(1)
 	}
 	cfg.GWSUserEmail = unwrap
-	log.WithFields(
-		log.Fields{"secretARN": cfg.GWSUserEmailSecretName},
-	).Debug("read secret")
 
-	log.WithField("name", cfg.GWSServiceAccountFileSecretName).Debug("reading secret")
+	slog.Debug("reading secret", "name", cfg.GWSServiceAccountFileSecretName)
 	unwrap, err = secrets.GetSecretValue(context.Background(), cfg.GWSServiceAccountFileSecretName)
 	if err != nil {
-		log.Fatalf(errors.Wrap(err, "cannot get secretmanager value").Error())
+		slog.Error("cannot get secretmanager value", "error", err)
+		os.Exit(1)
 	}
 	cfg.GWSServiceAccountFile = unwrap
-	log.WithFields(
-		log.Fields{"secretARN": cfg.GWSServiceAccountFileSecretName},
-	).Debug("read secret")
 
-	log.WithField("name", cfg.AWSSCIMAccessTokenSecretName).Debug("reading secret")
+	slog.Debug("reading secret", "name", cfg.AWSSCIMAccessTokenSecretName)
 	unwrap, err = secrets.GetSecretValue(context.Background(), cfg.AWSSCIMAccessTokenSecretName)
 	if err != nil {
-		log.Fatalf(errors.Wrap(err, "cannot get secretmanager value").Error())
+		slog.Error("cannot get secretmanager value", "error", err)
+		os.Exit(1)
 	}
 	cfg.AWSSCIMAccessToken = unwrap
-	log.WithFields(
-		log.Fields{"secretARN": cfg.AWSSCIMAccessTokenSecretName},
-	).Debug("read secret")
 
-	log.WithField("name", cfg.AWSSCIMEndpointSecretName).Debug("reading secret")
+	slog.Debug("reading secret", "name", cfg.AWSSCIMEndpointSecretName)
 	unwrap, err = secrets.GetSecretValue(context.Background(), cfg.AWSSCIMEndpointSecretName)
 	if err != nil {
-		log.Fatalf(errors.Wrap(err, "cannot get secretmanager value").Error())
+		slog.Error("cannot get secretmanager value", "error", err)
+		os.Exit(1)
 	}
 	cfg.AWSSCIMEndpoint = unwrap
-	log.WithFields(
-		log.Fields{"secretARN": cfg.AWSSCIMEndpointSecretName},
-	).Debug("read secret")
 }
 
 func sync() error {
-	log.Tracef("viper config: %s", convert.ToJSONString(viper.AllSettings(), true))
+	slog.Debug("viper config", "config", viper.AllSettings())
 
-	if cfg.SyncMethod == "groups" {
-		return syncGroups()
+	if cfg.SyncMethod != "groups" {
+		slog.Error("only 'sync-method=groups' are implemented")
+		return fmt.Errorf("unknown sync method: %s", cfg.SyncMethod)
 	}
-	return fmt.Errorf("unknown sync method: %s", cfg.SyncMethod)
+
+	return syncGroups()
 }
 
 func syncGroups() error {
-	log.WithFields(
-		log.Fields{"codeVersion": version.Version},
-	).Info("starting sync groups")
+	slog.Info("starting sync groups", "codeVersion", version.Version)
 	timeStart := time.Now()
 
 	// cfg.GWSServiceAccountFile could be a file path or a content of the file
@@ -273,7 +280,7 @@ func syncGroups() error {
 	if !cfg.IsLambda {
 		gwsServiceAccount, err := os.ReadFile(cfg.GWSServiceAccountFile)
 		if err != nil {
-			log.Fatalf(errors.Wrap(err, "cannot read service account file").Error())
+			slog.Error("cannot read service account file", "error", err)
 		}
 		gwsServiceAccountContent = gwsServiceAccount
 	}
@@ -309,8 +316,9 @@ func syncGroups() error {
 	retryClient.RetryMax = 10
 	retryClient.RetryWaitMin = time.Millisecond * 100
 
+	// set the logger only in debug mode
 	if cfg.Debug {
-		retryClient.Logger = log.StandardLogger()
+		retryClient.Logger = logger
 	} else {
 		retryClient.Logger = nil
 	}
@@ -331,13 +339,15 @@ func syncGroups() error {
 
 	awsConf, err := aws.NewDefaultConf(context.Background())
 	if err != nil {
-		log.Fatalf(errors.Wrap(err, "cannot load aws config").Error())
+		slog.Error("cannot load aws config", "error", err)
+		os.Exit(1)
 	}
 
 	s3Client := s3.NewFromConfig(awsConf)
 	repo, err := repository.NewS3Repository(s3Client, repository.WithBucket(cfg.AWSS3BucketName), repository.WithKey(cfg.AWSS3BucketKey))
 	if err != nil {
-		log.Fatalf(errors.Wrap(err, "cannot create s3 repository").Error())
+		slog.Error("cannot create s3 repository", "error", err)
+		os.Exit(1)
 	}
 
 	ss, err := core.NewSyncService(idpService, scimService, repo, core.WithIdentityProviderGroupsFilter(cfg.GWSGroupsFilter))
@@ -345,15 +355,13 @@ func syncGroups() error {
 		return errors.Wrap(err, "cannot create sync service")
 	}
 
-	log.Tracef("app config: %s", convert.ToJSONString(cfg, true))
+	slog.Debug("app config", "config", cfg)
 
 	if err := ss.SyncGroupsAndTheirMembers(ctx); err != nil {
 		return errors.Wrap(err, "cannot sync groups and their members")
 	}
 
-	log.WithFields(log.Fields{
-		"duration": time.Since(timeStart).String(),
-	}).Info("sync groups completed")
+	slog.Info("sync groups completed", "duration", time.Since(timeStart).String())
 
 	return nil
 }

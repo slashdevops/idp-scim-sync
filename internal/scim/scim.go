@@ -3,12 +3,10 @@ package scim
 import (
 	"context"
 	"fmt"
+	"log/slog"
 
-	"github.com/slashdevops/idp-scim-sync/internal/convert"
 	"github.com/slashdevops/idp-scim-sync/internal/model"
 	"github.com/slashdevops/idp-scim-sync/pkg/aws"
-
-	log "github.com/sirupsen/logrus"
 )
 
 // This implement core.SCIMService interface
@@ -94,7 +92,7 @@ func (s *Provider) GetGroups(ctx context.Context) (*model.GroupsResult, error) {
 
 	groupsResult := model.GroupsResultBuilder().WithResources(groups).Build()
 
-	log.Tracef("scim: GetGroups(): %s", convert.ToJSONString(groupsResult))
+	slog.Debug("scim: GetGroups()", "groups", len(groups))
 
 	return groupsResult, nil
 }
@@ -109,15 +107,7 @@ func (s *Provider) CreateGroups(ctx context.Context, gr *model.GroupsResult) (*m
 			ExternalID:  group.IPID,
 		}
 
-		log.WithFields(log.Fields{
-			"group": group.Name,
-			"idpid": group.IPID,
-			"email": group.Email,
-		}).Trace("creating group (details)")
-
-		log.WithFields(log.Fields{
-			"group": group.Name,
-		}).Warn("creating group")
+		slog.Warn("creating group", "group", group.Name)
 
 		// TODO: r, err := s.scim.CreateGroup(ctx, groupRequest)
 		r, err := s.scim.CreateOrGetGroup(ctx, groupRequest)
@@ -137,7 +127,7 @@ func (s *Provider) CreateGroups(ctx context.Context, gr *model.GroupsResult) (*m
 
 	groupsResult := model.GroupsResultBuilder().WithResources(groups).Build()
 
-	log.Tracef("scim: CreateGroups(): %s", convert.ToJSONString(groupsResult))
+	slog.Debug("scim: CreateGroups()", "groups", len(groups))
 
 	return groupsResult, nil
 }
@@ -166,17 +156,7 @@ func (s *Provider) UpdateGroups(ctx context.Context, gr *model.GroupsResult) (*m
 			},
 		}
 
-		log.WithFields(log.Fields{
-			"group":  group.Name,
-			"idpid":  group.IPID,
-			"scimid": group.SCIMID,
-			"email":  group.Email,
-		}).Trace("updating group (details)")
-
-		log.WithFields(log.Fields{
-			"group": group.Name,
-			"email": group.Email,
-		}).Warn("updating group")
+		slog.Warn("updating group", "group", group.Name, "email", group.Email)
 
 		if err := s.scim.PatchGroup(ctx, groupRequest); err != nil {
 			return nil, fmt.Errorf("scim: error updating groups: %w", err)
@@ -195,7 +175,7 @@ func (s *Provider) UpdateGroups(ctx context.Context, gr *model.GroupsResult) (*m
 
 	groupsResult := model.GroupsResultBuilder().WithResources(groups).Build()
 
-	log.Tracef("scim: UpdateGroups(): %s", convert.ToJSONString(groupsResult))
+	slog.Debug("scim: UpdateGroups()", "groups", len(groups))
 
 	return groupsResult, nil
 }
@@ -203,17 +183,7 @@ func (s *Provider) UpdateGroups(ctx context.Context, gr *model.GroupsResult) (*m
 // DeleteGroups deletes groups in SCIM Provider
 func (s *Provider) DeleteGroups(ctx context.Context, gr *model.GroupsResult) error {
 	for _, group := range gr.Resources {
-		log.WithFields(log.Fields{
-			"group":  group.Name,
-			"idpid":  group.IPID,
-			"scimid": group.SCIMID,
-			"email":  group.Email,
-		}).Tracef("deleting group, details: %s", convert.ToJSONString(group))
-
-		log.WithFields(log.Fields{
-			"group": group.Name,
-			"email": group.Email,
-		}).Trace("deleting group")
+		slog.Warn("deleting group", "group", group.Name, "email", group.Email)
 
 		if err := s.scim.DeleteGroup(ctx, group.SCIMID); err != nil {
 			return fmt.Errorf("scim: error deleting group: %s, %w", group.SCIMID, err)
@@ -237,7 +207,7 @@ func (s *Provider) GetUsers(ctx context.Context) (*model.UsersResult, error) {
 
 	usersResult := model.UsersResultBuilder().WithResources(users).Build()
 
-	log.Tracef("scim: GetUsers(): %s", convert.ToJSONString(usersResult))
+	slog.Debug("scim: GetUsers()", "users", len(users))
 
 	return usersResult, nil
 }
@@ -249,16 +219,7 @@ func (s *Provider) CreateUsers(ctx context.Context, ur *model.UsersResult) (*mod
 	for _, user := range ur.Resources {
 		userRequest := buildCreateUserRequest(user)
 
-		log.WithFields(log.Fields{
-			"name":  user.DisplayName,
-			"email": user.GetPrimaryEmailAddress(),
-			"ipdid": user.IPID,
-		}).Tracef("creating user, details: %s", convert.ToJSONString(userRequest))
-
-		log.WithFields(log.Fields{
-			"name":  user.DisplayName,
-			"email": user.GetPrimaryEmailAddress(),
-		}).Warn("creating user")
+		slog.Warn("creating user", "user", user.DisplayName, "email", user.GetPrimaryEmailAddress())
 
 		// TODO: r, err := s.scim.CreateUser(ctx, userRequest)
 		cogu, err := s.scim.CreateOrGetUser(ctx, userRequest)
@@ -274,7 +235,7 @@ func (s *Provider) CreateUsers(ctx context.Context, ur *model.UsersResult) (*mod
 
 	usersResult := model.UsersResultBuilder().WithResources(users).Build()
 
-	log.Tracef("scim: CreateUsers(): %s", convert.ToJSONString(usersResult))
+	slog.Debug("scim: CreateUsers()", "users", len(users))
 
 	return usersResult, nil
 }
@@ -290,17 +251,7 @@ func (s *Provider) UpdateUsers(ctx context.Context, ur *model.UsersResult) (*mod
 
 		userRequest := buildPutUserRequest(user)
 
-		log.WithFields(log.Fields{
-			"name":   user.DisplayName,
-			"email":  user.GetPrimaryEmailAddress(),
-			"ipdid":  user.IPID,
-			"scimid": user.SCIMID,
-		}).Tracef("updating user, details: %s", convert.ToJSONString(userRequest))
-
-		log.WithFields(log.Fields{
-			"name":  user.DisplayName,
-			"email": user.GetPrimaryEmailAddress(),
-		}).Warn("updating user")
+		slog.Warn("updating user", "user", user.DisplayName, "email", user.GetPrimaryEmailAddress())
 
 		pur, err := s.scim.PutUser(ctx, userRequest)
 		if err != nil {
@@ -316,7 +267,7 @@ func (s *Provider) UpdateUsers(ctx context.Context, ur *model.UsersResult) (*mod
 
 	usersResult := model.UsersResultBuilder().WithResources(users).Build()
 
-	log.Tracef("scim: UpdateUsers(): %s", convert.ToJSONString(usersResult))
+	slog.Debug("scim: UpdateUsers()", "users", len(users))
 
 	return usersResult, nil
 }
@@ -324,17 +275,7 @@ func (s *Provider) UpdateUsers(ctx context.Context, ur *model.UsersResult) (*mod
 // DeleteUsers deletes users in SCIM Provider given a list of users
 func (s *Provider) DeleteUsers(ctx context.Context, ur *model.UsersResult) error {
 	for _, user := range ur.Resources {
-		log.WithFields(log.Fields{
-			"name":   user.DisplayName,
-			"email":  user.GetPrimaryEmailAddress(),
-			"scimid": user.SCIMID,
-			"idpid":  user.IPID,
-		}).Tracef("deleting user, details: %s", convert.ToJSONString(user))
-
-		log.WithFields(log.Fields{
-			"name":  user.DisplayName,
-			"email": user.GetPrimaryEmailAddress(),
-		}).Warn("deleting user")
+		slog.Warn("deleting user", "user", user.DisplayName, "email", user.GetPrimaryEmailAddress())
 
 		if err := s.scim.DeleteUser(ctx, user.SCIMID); err != nil {
 			return fmt.Errorf("scim: error deleting user: %s, %w", user.SCIMID, err)
@@ -378,18 +319,7 @@ func (s *Provider) CreateGroupsMembers(ctx context.Context, gmr *model.GroupsMem
 
 			members = append(members, e)
 
-			log.WithFields(log.Fields{
-				"group":  groupMembers.Group.Name,
-				"idpid":  member.IPID,
-				"scimid": member.SCIMID,
-				"email":  member.Email,
-				"status": member.Status,
-			}).Trace("adding member to group (details)")
-
-			log.WithFields(log.Fields{
-				"group": groupMembers.Group.Name,
-				"email": member.Email,
-			}).Warn("adding member to group")
+			slog.Warn("adding member to group", "group", groupMembers.Group.Name, "email", member.Email)
 		}
 
 		e := model.GroupMembersBuilder().
@@ -402,11 +332,12 @@ func (s *Provider) CreateGroupsMembers(ctx context.Context, gmr *model.GroupsMem
 		patchOperations := patchGroupOperations("add", "members", membersIDValue, groupMembers)
 
 		if len(patchOperations) > 1 {
-			log.WithFields(log.Fields{
-				"group":    groupMembers.Group.Name,
-				"members":  len(membersIDValue),
-				"requests": len(patchOperations),
-			}).Warnf("group with more than %d members, sending multiple requests", MaxPatchGroupMembersPerRequest)
+			slog.Warn("group with more than 'max_members_per_request' members, sending multiple requests",
+				"max_members_per_request", MaxPatchGroupMembersPerRequest,
+				"group", groupMembers.Group.Name,
+				"members", len(membersIDValue),
+				"requests", len(patchOperations),
+			)
 		}
 
 		for _, patchGroupRequest := range patchOperations {
@@ -417,8 +348,7 @@ func (s *Provider) CreateGroupsMembers(ctx context.Context, gmr *model.GroupsMem
 	}
 
 	groupsMembersResult := model.GroupsMembersResultBuilder().WithResources(groupsMembers).Build()
-
-	log.Tracef("scim: CreateGroupsMembers(): %s", convert.ToJSONString(groupsMembersResult))
+	slog.Debug("scim: CreateGroupsMembers()", "groups_members", len(groupsMembers))
 
 	return groupsMembersResult, nil
 }
@@ -432,29 +362,18 @@ func (s *Provider) DeleteGroupsMembers(ctx context.Context, gmr *model.GroupsMem
 			membersIDValue = append(membersIDValue, patchValue{
 				Value: member.SCIMID,
 			})
-
-			log.WithFields(log.Fields{
-				"group":  groupMembers.Group.Name,
-				"idpid":  member.IPID,
-				"scimid": member.SCIMID,
-				"email":  member.Email,
-				"status": member.Status,
-			}).Tracef("removing member from group, details: %s", convert.ToJSONString(member))
-
-			log.WithFields(log.Fields{
-				"group": groupMembers.Group.Name,
-				"email": member.Email,
-			}).Warn("removing member from group")
+			slog.Warn("removing member from group", "group", groupMembers.Group.Name, "email", member.Email)
 		}
 
 		patchOperations := patchGroupOperations("remove", "members", membersIDValue, groupMembers)
 
 		if len(patchOperations) > 1 {
-			log.WithFields(log.Fields{
-				"group":    groupMembers.Group.Name,
-				"members":  len(membersIDValue),
-				"requests": len(patchOperations),
-			}).Warnf("group with more than %d members, sending multiple requests", MaxPatchGroupMembersPerRequest)
+			slog.Warn("group with more than 'max_members_per_request' members, sending multiple requests",
+				"max_members_per_request", MaxPatchGroupMembersPerRequest,
+				"group", groupMembers.Group.Name,
+				"members", len(membersIDValue),
+				"requests", len(patchOperations),
+			)
 		}
 
 		for _, patchGroupRequest := range patchOperations {
@@ -510,7 +429,7 @@ func (s *Provider) GetGroupsMembers(ctx context.Context, gr *model.GroupsResult)
 
 	groupsMembersResult := model.GroupsMembersResultBuilder().WithResources(groupMembers).Build()
 
-	log.Tracef("scim: GetGroupsMembers(): %s", convert.ToJSONString(groupsMembersResult))
+	slog.Debug("scim: GetGroupsMembers()", "groups_members", len(groupMembers))
 
 	return groupsMembersResult, nil
 }
@@ -525,12 +444,6 @@ func (s *Provider) GetGroupsMembersBruteForce(ctx context.Context, gr *model.Gro
 		members := make([]*model.Member, 0)
 
 		for _, user := range ur.Resources {
-			log.WithFields(log.Fields{
-				"group":  group.Name,
-				"user":   user.GetPrimaryEmailAddress(),
-				"SCIMID": user.SCIMID,
-				"IPID":   user.IPID,
-			}).Trace("scim GetGroupsMembersBruteForce: checking if user is member of group")
 
 			// https://docs.aws.amazon.com/singlesignon/latest/developerguide/listgroups.html
 			f := fmt.Sprintf("id eq %q and members eq %q", group.SCIMID, user.SCIMID)
@@ -562,7 +475,7 @@ func (s *Provider) GetGroupsMembersBruteForce(ctx context.Context, gr *model.Gro
 
 	groupsMembersResult := model.GroupsMembersResultBuilder().WithResources(groupMembers).Build()
 
-	log.Tracef("scim: GetGroupsMembersBruteForce(): %s", convert.ToJSONString(groupsMembersResult))
+	slog.Debug("scim: GetGroupsMembersBruteForce()", "groups_members", len(groupMembers))
 
 	return groupsMembersResult, nil
 }
