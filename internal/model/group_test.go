@@ -237,12 +237,6 @@ func TestGroupsResult_SetHashCode(t *testing.T) {
 	gr5 := MergeGroupsResult(&gr3, &gr2, &gr1)
 	gr5.SetHashCode()
 
-	t.Logf("gr4: %s\n", gr4)
-	t.Logf("gr5: %s\n", gr5)
-
-	t.Logf("gr4.HashCode: %s\n", gr4.HashCode)
-	t.Logf("gr5.HashCode: %s\n", gr5.HashCode)
-
 	if gr1.HashCode != gr2.HashCode {
 		t.Errorf("GroupsResult.HashCode should be equal")
 	}

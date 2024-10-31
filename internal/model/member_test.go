@@ -200,14 +200,6 @@ func TestMembersResult_SetHashCode(t *testing.T) {
 	}
 	mr3.SetHashCode()
 
-	t.Logf("mr1: %s\n", mr1)
-	t.Logf("mr2: %s\n", mr2)
-	t.Logf("mr3: %s\n", mr3)
-
-	t.Logf("mr1.HashCode: %s\n", mr1.HashCode)
-	t.Logf("mr2.HashCode: %s\n", mr2.HashCode)
-	t.Logf("mr3.HashCode: %s\n", mr3.HashCode)
-
 	if mr1.HashCode != mr2.HashCode {
 		t.Errorf("GroupsMembersResult.HashCode should be equal")
 	}
