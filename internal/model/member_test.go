@@ -7,7 +7,6 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	"github.com/slashdevops/idp-scim-sync/internal/convert"
 )
 
 func TestMember_GobEncode(t *testing.T) {
@@ -201,14 +200,6 @@ func TestMembersResult_SetHashCode(t *testing.T) {
 	}
 	mr3.SetHashCode()
 
-	t.Logf("mr1: %s\n", convert.ToJSONString(mr1, true))
-	t.Logf("mr2: %s\n", convert.ToJSONString(mr2, true))
-	t.Logf("mr3: %s\n", convert.ToJSONString(mr3, true))
-
-	t.Logf("mr1.HashCode: %s\n", mr1.HashCode)
-	t.Logf("mr2.HashCode: %s\n", mr2.HashCode)
-	t.Logf("mr3.HashCode: %s\n", mr3.HashCode)
-
 	if mr1.HashCode != mr2.HashCode {
 		t.Errorf("GroupsMembersResult.HashCode should be equal")
 	}
@@ -376,9 +367,6 @@ func TestGroupsMembersResult_SetHashCode(t *testing.T) {
 	gmr4.SetHashCode()
 	gmr5 := MergeGroupsMembersResult(&gmr3, &gmr2, &gmr1)
 	gmr5.SetHashCode()
-
-	t.Logf("gmr4: %s\n", convert.ToJSONString(gmr4, true))
-	t.Logf("gmr5: %s\n", convert.ToJSONString(gmr5, true))
 
 	t.Logf("gmr4.HashCode: %s\n", gmr4.HashCode)
 	t.Logf("gmr5.HashCode: %s\n", gmr5.HashCode)

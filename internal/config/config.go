@@ -1,7 +1,7 @@
 package config
 
 const (
-	// DefaultIsLambda is the progam execute as a lambda function?
+	// DefaultIsLambda is the program execute as a lambda function?
 	DefaultIsLambda = false
 
 	// DefaultLogLevel is the default logging level.

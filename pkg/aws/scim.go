@@ -195,7 +195,7 @@ func (s *SCIMService) CreateUser(ctx context.Context, cur *CreateUserRequest) (*
 		return nil, fmt.Errorf("aws CreateUser: user: %s, error decoding response body: %w", cur.UserName, err)
 	}
 
-	slog.Debug("aws CreateUser()", "response", toJSONString(response))
+	slog.Debug("aws CreateUser()", "response", response)
 
 	return &response, nil
 }

@@ -1,19 +1,23 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
 
-	"github.com/slashdevops/idp-scim-sync/internal/convert"
+	"gopkg.in/yaml.v3"
 )
 
 // show resource structure as outFormat
 func show(outFormat string, resource interface{}) {
 	switch outFormat {
 	case "json":
-		fmt.Print(convert.ToJSONString(resource, true))
+		j, _ := json.MarshalIndent(resource, "", "  ")
+		fmt.Print(string(j))
 	case "yaml":
-		fmt.Print(convert.ToYAML(resource))
+		y, _ := yaml.Marshal(resource)
+		fmt.Print(string(y))
 	default:
-		fmt.Print(convert.ToJSONString(resource, true))
+		j, _ := json.MarshalIndent(resource, "", "  ")
+		fmt.Print(string(j))
 	}
 }

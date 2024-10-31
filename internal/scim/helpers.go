@@ -4,7 +4,6 @@ import (
 	"log/slog"
 	"strings"
 
-	"github.com/slashdevops/idp-scim-sync/internal/convert"
 	"github.com/slashdevops/idp-scim-sync/internal/model"
 	"github.com/slashdevops/idp-scim-sync/pkg/aws"
 )
@@ -137,7 +136,7 @@ func buildUser(user *aws.User) *model.User {
 		WithEnterpriseData(enterpriseData).
 		Build()
 
-	slog.Debug("scim: buildUser() converted user", "from", convert.ToJSONString(user), "to", convert.ToJSONString(userModel))
+	slog.Debug("scim: buildUser() converted user", "from", user, "to", userModel)
 
 	return userModel
 }
