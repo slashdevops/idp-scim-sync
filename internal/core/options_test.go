@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	gomock "github.com/golang/mock/gomock"
-	"github.com/slashdevops/idp-scim-sync/internal/convert"
 	mocks "github.com/slashdevops/idp-scim-sync/mocks/core"
 )
 
@@ -53,7 +52,7 @@ func TestWithIdentityProviderGroupsFilter(t *testing.T) {
 		}
 
 		if !reflect.DeepEqual(got, want) {
-			t.Errorf("NewSyncService() got = %s, want %s", convert.ToJSONString(got, true), convert.ToJSONString(want, true))
+			t.Errorf("NewSyncService() got = %s, want %s", got, want)
 		}
 	})
 }
@@ -102,7 +101,7 @@ func TestWithIdentityProviderUsersFilter(t *testing.T) {
 		}
 
 		if !reflect.DeepEqual(got, want) {
-			t.Errorf("NewSyncService() got = %s, want %s", convert.ToJSONString(got, true), convert.ToJSONString(want, true))
+			t.Errorf("NewSyncService() got = %s, want %s", got, want)
 		}
 	})
 }

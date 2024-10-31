@@ -5,7 +5,6 @@ import (
 	"log/slog"
 	"strings"
 
-	"github.com/slashdevops/idp-scim-sync/internal/convert"
 	"github.com/slashdevops/idp-scim-sync/internal/model"
 	admin "google.golang.org/api/admin/directory/v1"
 )
@@ -232,7 +231,7 @@ func buildUser(usr *admin.User) *model.User {
 		WithEnterpriseData(mainOrganization).
 		Build()
 
-	slog.Debug("idp: buildUser() converted user", "from", convert.ToJSONString(usr), "to", convert.ToJSONString(userModel))
+	slog.Debug("idp: buildUser() converted user", "from", usr, "to", userModel)
 
 	return userModel
 }

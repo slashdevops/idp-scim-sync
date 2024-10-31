@@ -8,7 +8,6 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	"github.com/slashdevops/idp-scim-sync/internal/convert"
 )
 
 func TestGroup_SetHashCode(t *testing.T) {
@@ -238,8 +237,8 @@ func TestGroupsResult_SetHashCode(t *testing.T) {
 	gr5 := MergeGroupsResult(&gr3, &gr2, &gr1)
 	gr5.SetHashCode()
 
-	t.Logf("gr4: %s\n", convert.ToJSON(gr4, true))
-	t.Logf("gr5: %s\n", convert.ToJSON(gr5, true))
+	t.Logf("gr4: %s\n", gr4)
+	t.Logf("gr5: %s\n", gr5)
 
 	t.Logf("gr4.HashCode: %s\n", gr4.HashCode)
 	t.Logf("gr5.HashCode: %s\n", gr5.HashCode)
