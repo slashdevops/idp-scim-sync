@@ -136,6 +136,29 @@ func TestGetGroups(t *testing.T) {
 		assert.Equal(t, "", gr.Resources[0].Email)
 		assert.Equal(t, "", gr.Resources[1].Email)
 	})
+
+	t.Run("Should return a list of zero groups and no error", func(t *testing.T) {
+		mockSCIM := mocks.NewMockAWSSCIMProvider(mockCtrl)
+		groups := &aws.ListGroupsResponse{
+			ListResponse: aws.ListResponse{
+				TotalResults: 0,
+				ItemsPerPage: 0,
+				StartIndex:   0,
+				Schemas:      []string{"urn:ietf:params:scim:api:messages:2.0:ListResponse"},
+			},
+			Resources: []*aws.Group{},
+		}
+
+		mockSCIM.EXPECT().ListGroups(context.TODO(), gomock.Any()).Return(groups, nil)
+
+		svc, _ := NewProvider(mockSCIM)
+		gr, err := svc.GetGroups(context.TODO())
+
+		assert.NoError(t, err)
+		assert.NotNil(t, gr)
+		assert.Equal(t, 0, len(gr.Resources))
+		assert.Equal(t, 0, gr.Items)
+	})
 }
 
 func TestCreateGroups(t *testing.T) {

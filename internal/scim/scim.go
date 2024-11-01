@@ -79,15 +79,15 @@ func (s *Provider) GetGroups(ctx context.Context) (*model.GroupsResult, error) {
 		return nil, fmt.Errorf("scim: error listing groups: %w", err)
 	}
 
-	groups := make([]*model.Group, 0)
-	for _, group := range groupsResponse.Resources {
+	groups := make([]*model.Group, len(groupsResponse.Resources))
+	for i, group := range groupsResponse.Resources {
 		e := model.GroupBuilder().
 			WithSCIMID(group.ID).
 			WithName(group.DisplayName).
 			WithIPID(group.ExternalID).
 			Build()
 
-		groups = append(groups, e)
+		groups[i] = e
 	}
 
 	groupsResult := model.GroupsResultBuilder().WithResources(groups).Build()
@@ -99,9 +99,9 @@ func (s *Provider) GetGroups(ctx context.Context) (*model.GroupsResult, error) {
 
 // CreateGroups creates groups in SCIM Provider
 func (s *Provider) CreateGroups(ctx context.Context, gr *model.GroupsResult) (*model.GroupsResult, error) {
-	groups := make([]*model.Group, 0)
+	groups := make([]*model.Group, len(gr.Resources))
 
-	for _, group := range gr.Resources {
+	for i, group := range gr.Resources {
 		groupRequest := &aws.CreateGroupRequest{
 			DisplayName: group.Name,
 			ExternalID:  group.IPID,
@@ -109,7 +109,6 @@ func (s *Provider) CreateGroups(ctx context.Context, gr *model.GroupsResult) (*m
 
 		slog.Warn("creating group", "group", group.Name)
 
-		// TODO: r, err := s.scim.CreateGroup(ctx, groupRequest)
 		r, err := s.scim.CreateOrGetGroup(ctx, groupRequest)
 		if err != nil {
 			return nil, fmt.Errorf("scim: error creating group: %w", err)
@@ -122,7 +121,7 @@ func (s *Provider) CreateGroups(ctx context.Context, gr *model.GroupsResult) (*m
 			WithEmail(group.Email).
 			Build()
 
-		groups = append(groups, e)
+		groups[i] = e
 	}
 
 	groupsResult := model.GroupsResultBuilder().WithResources(groups).Build()
@@ -134,9 +133,9 @@ func (s *Provider) CreateGroups(ctx context.Context, gr *model.GroupsResult) (*m
 
 // UpdateGroups updates groups in SCIM Provider
 func (s *Provider) UpdateGroups(ctx context.Context, gr *model.GroupsResult) (*model.GroupsResult, error) {
-	groups := make([]*model.Group, 0)
+	groups := make([]*model.Group, len(gr.Resources))
 
-	for _, group := range gr.Resources {
+	for i, group := range gr.Resources {
 		groupRequest := &aws.PatchGroupRequest{
 			Group: aws.Group{
 				ID:          group.SCIMID,
@@ -170,7 +169,7 @@ func (s *Provider) UpdateGroups(ctx context.Context, gr *model.GroupsResult) (*m
 			WithEmail(group.Email).
 			Build()
 
-		groups = append(groups, e)
+		groups[i] = e
 	}
 
 	groupsResult := model.GroupsResultBuilder().WithResources(groups).Build()
@@ -199,14 +198,13 @@ func (s *Provider) GetUsers(ctx context.Context) (*model.UsersResult, error) {
 		return nil, fmt.Errorf("scim: error listing users: %w", err)
 	}
 
-	users := make([]*model.User, 0)
-	for _, user := range usersResponse.Resources {
+	users := make([]*model.User, len(usersResponse.Resources))
+	for i, user := range usersResponse.Resources {
 		e := buildUser(user)
-		users = append(users, e)
+		users[i] = e
 	}
 
 	usersResult := model.UsersResultBuilder().WithResources(users).Build()
-
 	slog.Debug("scim: GetUsers()", "users", len(users))
 
 	return usersResult, nil
@@ -214,14 +212,13 @@ func (s *Provider) GetUsers(ctx context.Context) (*model.UsersResult, error) {
 
 // CreateUsers creates users in SCIM Provider
 func (s *Provider) CreateUsers(ctx context.Context, ur *model.UsersResult) (*model.UsersResult, error) {
-	users := make([]*model.User, 0)
+	users := make([]*model.User, len(ur.Resources))
 
-	for _, user := range ur.Resources {
+	for i, user := range ur.Resources {
 		userRequest := buildCreateUserRequest(user)
 
 		slog.Warn("creating user", "user", user.DisplayName, "email", user.GetPrimaryEmailAddress())
 
-		// TODO: r, err := s.scim.CreateUser(ctx, userRequest)
 		cogu, err := s.scim.CreateOrGetUser(ctx, userRequest)
 		if err != nil {
 			return nil, fmt.Errorf("scim: error creating user: %w", err)
@@ -230,11 +227,10 @@ func (s *Provider) CreateUsers(ctx context.Context, ur *model.UsersResult) (*mod
 		user.SCIMID = cogu.ID
 		user.SetHashCode()
 
-		users = append(users, user)
+		users[i] = user
 	}
 
 	usersResult := model.UsersResultBuilder().WithResources(users).Build()
-
 	slog.Debug("scim: CreateUsers()", "users", len(users))
 
 	return usersResult, nil
@@ -242,9 +238,9 @@ func (s *Provider) CreateUsers(ctx context.Context, ur *model.UsersResult) (*mod
 
 // UpdateUsers updates users in SCIM Provider given a list of users
 func (s *Provider) UpdateUsers(ctx context.Context, ur *model.UsersResult) (*model.UsersResult, error) {
-	users := make([]*model.User, 0)
+	users := make([]*model.User, len(ur.Resources))
 
-	for _, user := range ur.Resources {
+	for i, user := range ur.Resources {
 		if user.SCIMID == "" {
 			return nil, fmt.Errorf("scim: error updating user, user ID is empty: %s", user.SCIMID)
 		}
@@ -262,11 +258,10 @@ func (s *Provider) UpdateUsers(ctx context.Context, ur *model.UsersResult) (*mod
 		user.SCIMID = pur.ID
 		user.SetHashCode()
 
-		users = append(users, user)
+		users[i] = user
 	}
 
 	usersResult := model.UsersResultBuilder().WithResources(users).Build()
-
 	slog.Debug("scim: UpdateUsers()", "users", len(users))
 
 	return usersResult, nil
@@ -317,9 +312,9 @@ func (s *Provider) CreateGroupsMembers(ctx context.Context, gmr *model.GroupsMem
 				WithStatus(member.Status).
 				Build()
 
+			slog.Warn("adding member to group", "group", groupMembers.Group.Name, "email", member.Email)
 			members = append(members, e)
 
-			slog.Warn("adding member to group", "group", groupMembers.Group.Name, "email", member.Email)
 		}
 
 		e := model.GroupMembersBuilder().
@@ -427,9 +422,8 @@ func (s *Provider) GetGroupsMembers(ctx context.Context, gr *model.GroupsResult)
 		}
 	}
 
-	groupsMembersResult := model.GroupsMembersResultBuilder().WithResources(groupMembers).Build()
-
 	slog.Debug("scim: GetGroupsMembers()", "groups_members", len(groupMembers))
+	groupsMembersResult := model.GroupsMembersResultBuilder().WithResources(groupMembers).Build()
 
 	return groupsMembersResult, nil
 }
@@ -462,6 +456,7 @@ func (s *Provider) GetGroupsMembersBruteForce(ctx context.Context, gr *model.Gro
 				if user.Active {
 					m.Status = "ACTIVE"
 				}
+
 				members = append(members, m)
 			}
 		}
@@ -473,9 +468,8 @@ func (s *Provider) GetGroupsMembersBruteForce(ctx context.Context, gr *model.Gro
 		groupMembers = append(groupMembers, e)
 	}
 
-	groupsMembersResult := model.GroupsMembersResultBuilder().WithResources(groupMembers).Build()
-
 	slog.Debug("scim: GetGroupsMembersBruteForce()", "groups_members", len(groupMembers))
+	groupsMembersResult := model.GroupsMembersResultBuilder().WithResources(groupMembers).Build()
 
 	return groupsMembersResult, nil
 }
