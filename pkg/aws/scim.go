@@ -816,6 +816,7 @@ func (s *SCIMService) CreateOrGetGroup(ctx context.Context, cgr *CreateGroupRequ
 				DisplayName: response.DisplayName,
 			}, nil
 		}
+
 		return nil, e
 	}
 
