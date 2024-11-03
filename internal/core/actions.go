@@ -37,7 +37,7 @@ func scimSync(
 
 	groupsCreate, groupsUpdate, groupsEqual, groupsDelete, err := model.GroupsOperations(idpGroupsResult, scimGroupsResult)
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("error reconciling groups: %w", err)
+		return nil, nil, nil, fmt.Errorf("error operating with groups: %w", err)
 	}
 
 	groupsCreated, groupsUpdated, err := reconcilingGroups(ctx, scim, groupsCreate, groupsUpdate, groupsDelete)
