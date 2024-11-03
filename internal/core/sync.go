@@ -81,7 +81,7 @@ func (ss *SyncService) SyncGroupsAndTheirMembers(ctx context.Context) error {
 
 	slog.Info("groups members retrieved from the identity provider for syncing that match the filter",
 		"group_filter", ss.provGroupsFilter,
-		"groups_members", idpGroupsMembersResult.Items,
+		"groups", idpGroupsResult.Items,
 	)
 
 	slog.Info("getting users (using groups members) from the identity provider",
