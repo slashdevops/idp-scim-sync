@@ -105,7 +105,7 @@ func (ds *DirectoryService) ListUsers(ctx context.Context, query []string) ([]*a
 		}
 	}
 
-	slog.Debug("google: ListUsers()", "users", toJSONString(u))
+	slog.Debug("google: ListUsers()", "users", u)
 
 	return u, nil
 }
@@ -146,7 +146,7 @@ func (ds *DirectoryService) ListGroups(ctx context.Context, query []string) ([]*
 		}
 	}
 
-	slog.Debug("google: ListGroups()", "groups", toJSONString(g))
+	slog.Debug("google: ListGroups()", "groups", g)
 
 	return g, nil
 }
@@ -197,7 +197,7 @@ func (ds *DirectoryService) ListGroupMembers(ctx context.Context, groupID string
 		return nil, err
 	}
 
-	slog.Debug("google: ListGroupMembers()", "members", toJSONString(m))
+	slog.Debug("google: ListGroupMembers()", "members", m)
 
 	return m, nil
 }
@@ -228,7 +228,7 @@ func (ds *DirectoryService) GetGroup(ctx context.Context, groupID string) (*admi
 		return nil, fmt.Errorf("google: error getting group %s: %v", groupID, err)
 	}
 
-	slog.Debug("google: GetGroup()", "group", toJSONString(g))
+	slog.Debug("google: GetGroup()", "group", g)
 
 	return g, nil
 }

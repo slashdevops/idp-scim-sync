@@ -134,3 +134,14 @@ func Test_patchGroupOperations(t *testing.T) {
 		})
 	}
 }
+
+func Benchmark_patchGroupOperations(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		patchGroupOperations("add", "members", patchValueGenerator(1, 350), &model.GroupMembers{
+			Group: &model.Group{
+				SCIMID: "016722b2be-ee23ed58-6e4e-4b2f-a94a-3ace8456a36e",
+				Name:   "group 1",
+			},
+		})
+	}
+}

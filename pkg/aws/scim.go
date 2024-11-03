@@ -16,14 +16,10 @@ import (
 	"github.com/pkg/errors"
 )
 
-// Consume http methods
-// implement scim.AWSSCIMProvider interface
-
 // AWS SSO SCIM API
 // reference: https://docs.aws.amazon.com/singlesignon/latest/developerguide/what-is-scim.html
 
 var (
-
 	// ErrURLEmpty is returned when the URL is empty.
 	ErrURLEmpty = errors.Errorf("aws: url may not be empty")
 
@@ -53,6 +49,9 @@ var (
 
 	// ErrGroupExternalIDEmpty is returned when the userName is empty.
 	ErrGroupExternalIDEmpty = errors.Errorf("aws: externalId may not be empty")
+
+	// ErrBearerTokenEmpty is returned when the bearer token is empty.
+	ErrBearerTokenEmpty = errors.Errorf("aws: bearer token may not be empty")
 )
 
 //go:generate go run github.com/golang/mock/mockgen@v1.6.0 -package=mocks -destination=../../mocks/aws/scim_mocks.go -source=scim.go HTTPClient
@@ -83,6 +82,10 @@ func NewSCIMService(httpClient HTTPClient, urlStr, token string) (*SCIMService, 
 	u, err := url.Parse(urlStr)
 	if err != nil {
 		return nil, fmt.Errorf("aws: error parsing url: %w", err)
+	}
+
+	if token == "" {
+		return nil, ErrBearerTokenEmpty
 	}
 
 	return &SCIMService{

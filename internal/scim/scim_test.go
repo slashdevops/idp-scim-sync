@@ -165,11 +165,26 @@ func TestCreateGroups(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
+	t.Run("Should return a error when model.GroupsResult is nil", func(t *testing.T) {
+		mockSCIM := mocks.NewMockAWSSCIMProvider(mockCtrl)
+
+		svc, err := NewProvider(mockSCIM)
+		if err != nil {
+			t.Fatalf("error creating provider: %v", err)
+		}
+		gr, err := svc.CreateGroups(context.TODO(), nil)
+		assert.Error(t, err)
+		assert.Nil(t, gr)
+	})
+
 	t.Run("Should do nothing with empty GroupsResult", func(t *testing.T) {
 		mockSCIM := mocks.NewMockAWSSCIMProvider(mockCtrl)
 		empty := &model.GroupsResult{}
 
-		svc, _ := NewProvider(mockSCIM)
+		svc, err := NewProvider(mockSCIM)
+		if err != nil {
+			t.Fatalf("error creating provider: %v", err)
+		}
 		gr, err := svc.CreateGroups(context.TODO(), empty)
 		assert.NoError(t, err)
 		assert.NotNil(t, gr)
@@ -1677,6 +1692,7 @@ func TestGetGroupsMembers(t *testing.T) {
 				},
 			},
 		}
+
 		filter := fmt.Sprintf("displayName eq %q", grp.Resources[0].Name)
 		lgr := &aws.ListGroupsResponse{
 			Resources: []*aws.Group{
@@ -1712,6 +1728,110 @@ func TestGetGroupsMembers(t *testing.T) {
 		got, err := svc.GetGroupsMembers(ctx, gr)
 		assert.Error(t, err)
 		assert.Nil(t, got)
+	})
+
+	t.Run("Should call ListGroups and GetUser 2 time and no return error", func(t *testing.T) {
+		mockSCIM := mocks.NewMockAWSSCIMProvider(mockCtrl)
+		grp := &model.GroupsResult{
+			Items: 2,
+			Resources: []*model.Group{
+				{
+					IPID:  "1",
+					Name:  "group 1",
+					Email: "group.1@mail.com",
+				},
+				{
+					IPID:  "2",
+					Name:  "group 2",
+					Email: "group.2@mail.com",
+				},
+			},
+		}
+		filter1 := fmt.Sprintf("displayName eq %q", grp.Resources[0].Name)
+		filter2 := fmt.Sprintf("displayName eq %q", grp.Resources[1].Name)
+
+		lgr1 := &aws.ListGroupsResponse{
+			Resources: []*aws.Group{
+				{
+					ID:          "1",
+					DisplayName: grp.Resources[0].Name,
+					Members: []*aws.Member{
+						{
+							Value: "1",
+						},
+					},
+				},
+			},
+		}
+
+		lgr2 := &aws.ListGroupsResponse{
+			Resources: []*aws.Group{
+				{
+					ID:          "2",
+					DisplayName: grp.Resources[1].Name,
+					Members: []*aws.Member{
+						{
+							Value: "2",
+						},
+					},
+				},
+			},
+		}
+
+		gur1 := &aws.GetUserResponse{
+			Emails: []aws.Email{
+				{
+					Value: "user.1@mail.com",
+				},
+				{
+					Value: "user.2@mail.com",
+				},
+			},
+		}
+
+		gur2 := &aws.GetUserResponse{
+			Emails: []aws.Email{
+				{
+					Value: "user.3@mail.com",
+				},
+				{
+					Value: "user.4@mail.com",
+				},
+			},
+		}
+
+		ctx := context.TODO()
+		mockSCIM.EXPECT().ListGroups(ctx, filter1).Return(lgr1, nil).Times(1)
+		mockSCIM.EXPECT().ListGroups(ctx, filter2).Return(lgr2, nil).Times(1)
+		mockSCIM.EXPECT().GetUser(ctx, lgr1.Resources[0].Members[0].Value).Return(gur1, nil).Times(1)
+		mockSCIM.EXPECT().GetUser(ctx, lgr2.Resources[0].Members[0].Value).Return(gur2, nil).Times(1)
+
+		gr := &model.GroupsResult{
+			Items: 2,
+			Resources: []*model.Group{
+				{
+					IPID:   "1",
+					SCIMID: "1",
+					Name:   "group 1",
+					Email:  "group.1@mail.com",
+				},
+				{
+					IPID:   "2",
+					SCIMID: "2",
+					Name:   "group 2",
+					Email:  "group.2@mail.com",
+				},
+			},
+		}
+
+		svc, _ := NewProvider(mockSCIM)
+		got, err := svc.GetGroupsMembers(ctx, gr)
+		assert.NoError(t, err)
+		assert.NotNil(t, got)
+
+		assert.Equal(t, 2, len(got.Resources))
+		assert.Equal(t, 1, len(got.Resources[0].Resources))
+		assert.Equal(t, 1, len(got.Resources[1].Resources))
 	})
 }
 

@@ -101,9 +101,9 @@ type Meta struct {
 
 // Operation represent an operation entity
 type Operation struct {
-	OP    string      `json:"op"`
-	Path  string      `json:"path"`
-	Value interface{} `json:"value"`
+	OP    string      `json:"op,omitempty"`
+	Path  string      `json:"path,omitempty"`
+	Value interface{} `json:"value,omitempty"`
 }
 
 // Patch represent a patch entity and its operations
