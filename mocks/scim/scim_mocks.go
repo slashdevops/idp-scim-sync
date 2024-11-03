@@ -35,21 +35,6 @@ func (m *MockAWSSCIMProvider) EXPECT() *MockAWSSCIMProviderMockRecorder {
 	return m.recorder
 }
 
-// CreateGroup mocks base method.
-func (m *MockAWSSCIMProvider) CreateGroup(ctx context.Context, g *aws.CreateGroupRequest) (*aws.CreateGroupResponse, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateGroup", ctx, g)
-	ret0, _ := ret[0].(*aws.CreateGroupResponse)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// CreateGroup indicates an expected call of CreateGroup.
-func (mr *MockAWSSCIMProviderMockRecorder) CreateGroup(ctx, g interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateGroup", reflect.TypeOf((*MockAWSSCIMProvider)(nil).CreateGroup), ctx, g)
-}
-
 // CreateOrGetGroup mocks base method.
 func (m *MockAWSSCIMProvider) CreateOrGetGroup(ctx context.Context, g *aws.CreateGroupRequest) (*aws.CreateGroupResponse, error) {
 	m.ctrl.T.Helper()
@@ -78,21 +63,6 @@ func (m *MockAWSSCIMProvider) CreateOrGetUser(ctx context.Context, u *aws.Create
 func (mr *MockAWSSCIMProviderMockRecorder) CreateOrGetUser(ctx, u interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateOrGetUser", reflect.TypeOf((*MockAWSSCIMProvider)(nil).CreateOrGetUser), ctx, u)
-}
-
-// CreateUser mocks base method.
-func (m *MockAWSSCIMProvider) CreateUser(ctx context.Context, u *aws.CreateUserRequest) (*aws.CreateUserResponse, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateUser", ctx, u)
-	ret0, _ := ret[0].(*aws.CreateUserResponse)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// CreateUser indicates an expected call of CreateUser.
-func (mr *MockAWSSCIMProviderMockRecorder) CreateUser(ctx, u interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateUser", reflect.TypeOf((*MockAWSSCIMProvider)(nil).CreateUser), ctx, u)
 }
 
 // DeleteGroup mocks base method.

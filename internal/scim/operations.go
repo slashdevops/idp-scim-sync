@@ -8,7 +8,7 @@ import (
 // patchGroupOperations assembles the operations for patch groups
 // bases in the limits of operations we can execute in a single request.
 func patchGroupOperations(op, path string, pvs []patchValue, gms *model.GroupMembers) []*aws.PatchGroupRequest {
-	patchOperations := []*aws.PatchGroupRequest{}
+	patchOperations := make([]*aws.PatchGroupRequest, 0)
 
 	if len(pvs) > MaxPatchGroupMembersPerRequest {
 		for i := 0; i < len(pvs); i += MaxPatchGroupMembersPerRequest {
@@ -33,9 +33,11 @@ func patchGroupOperations(op, path string, pvs []patchValue, gms *model.GroupMem
 					},
 				},
 			}
+
 			patchOperations = append(patchOperations, patchGroupRequest)
 		}
 	} else {
+
 		patchGroupRequest := &aws.PatchGroupRequest{
 			Group: aws.Group{
 				ID:          gms.Group.SCIMID,
@@ -52,6 +54,7 @@ func patchGroupOperations(op, path string, pvs []patchValue, gms *model.GroupMem
 				},
 			},
 		}
+
 		patchOperations = append(patchOperations, patchGroupRequest)
 	}
 
