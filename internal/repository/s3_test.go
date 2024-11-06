@@ -8,8 +8,8 @@ import (
 	"testing"
 
 	"github.com/aws/aws-sdk-go-v2/service/s3"
-	"github.com/golang/mock/gomock"
 	"github.com/slashdevops/idp-scim-sync/internal/model"
+	"go.uber.org/mock/gomock"
 
 	mocks "github.com/slashdevops/idp-scim-sync/mocks/repository"
 	"github.com/stretchr/testify/assert"

@@ -9,7 +9,6 @@ import (
 	"os"
 	"testing"
 
-	gomock "github.com/golang/mock/gomock"
 	"github.com/slashdevops/idp-scim-sync/internal/idp"
 	"github.com/slashdevops/idp-scim-sync/internal/model"
 	"github.com/slashdevops/idp-scim-sync/internal/repository"
@@ -18,6 +17,7 @@ import (
 	"github.com/slashdevops/idp-scim-sync/pkg/aws"
 	"github.com/slashdevops/idp-scim-sync/pkg/google"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/mock/gomock"
 	admin "google.golang.org/api/admin/directory/v1"
 	"google.golang.org/api/option"
 )

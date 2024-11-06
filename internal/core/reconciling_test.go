@@ -5,10 +5,10 @@ import (
 	"errors"
 	"testing"
 
-	gomock "github.com/golang/mock/gomock"
 	"github.com/slashdevops/idp-scim-sync/internal/model"
 	mocks "github.com/slashdevops/idp-scim-sync/mocks/core"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/mock/gomock"
 )
 
 func TestReconcilingGroups(t *testing.T) {
