@@ -17,7 +17,7 @@ var ErrSecretManagerClientNil = errors.New("aws: AWS SecretsManager Client canno
 
 // https://aws.github.io/aws-sdk-go-v2/docs/unit-testing/
 
-//go:generate go run github.com/golang/mock/mockgen@v1.6.0 -package=mocks -destination=../../mocks/aws/secretsmanager_mocks.go -source=secretsmanager.go SecretsManagerClientAPI
+//go:generate go run go.uber.org/mock/mockgen@v0.5.0 -package=mocks -destination=../../mocks/aws/secretsmanager_mocks.go -source=secretsmanager.go SecretsManagerClientAPI
 
 // SecretsManagerClientAPI is the interface to consume the secretsmanager client methods.
 type SecretsManagerClientAPI interface {

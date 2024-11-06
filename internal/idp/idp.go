@@ -24,7 +24,7 @@ var (
 	ErrGroupResultNil = errors.New("provider: group result is nil")
 )
 
-//go:generate go run github.com/golang/mock/mockgen@v1.6.0 -package=mocks -destination=../../mocks/idp/idp_mocks.go -source=idp.go GoogleProviderService
+//go:generate go run go.uber.org/mock/mockgen@v0.5.0 -package=mocks -destination=../../mocks/idp/idp_mocks.go -source=idp.go GoogleProviderService
 
 // GoogleProviderService is the interface that wraps the Google Provider Service methods.
 type GoogleProviderService interface {

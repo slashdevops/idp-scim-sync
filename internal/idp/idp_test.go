@@ -5,10 +5,10 @@ import (
 	"errors"
 	"testing"
 
-	gomock "github.com/golang/mock/gomock"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/slashdevops/idp-scim-sync/internal/model"
+	"go.uber.org/mock/gomock"
 
 	mocks "github.com/slashdevops/idp-scim-sync/mocks/idp"
 	"github.com/stretchr/testify/assert"

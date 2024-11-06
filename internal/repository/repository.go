@@ -6,7 +6,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 )
 
-//go:generate go run github.com/golang/mock/mockgen@v1.6.0 -package=mocks -destination=../../mocks/repository/repository_mocks.go -source=repository.go
+//go:generate go run go.uber.org/mock/mockgen@v0.5.0 -package=mocks -destination=../../mocks/repository/repository_mocks.go -source=repository.go
 
 // S3ClientAPI is an interface to consume S3 client methods
 type S3ClientAPI interface {

@@ -6,11 +6,11 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/golang/mock/gomock"
 	"github.com/slashdevops/idp-scim-sync/internal/model"
 	mocks "github.com/slashdevops/idp-scim-sync/mocks/scim"
 	"github.com/slashdevops/idp-scim-sync/pkg/aws"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/mock/gomock"
 )
 
 // groupMembersGenerator helper function to generate test data for GetGroupMembers

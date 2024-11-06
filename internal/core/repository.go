@@ -6,7 +6,7 @@ import (
 	"github.com/slashdevops/idp-scim-sync/internal/model"
 )
 
-//go:generate go run github.com/golang/mock/mockgen@v1.6.0 -package=mocks -destination=../../mocks/core/repository_mocks.go -source=repository.go
+//go:generate go run go.uber.org/mock/mockgen@v0.5.0 -package=mocks -destination=../../mocks/core/repository_mocks.go -source=repository.go
 
 // StateRepository is an interface for a repository that stores the state of the
 // synchronization process.

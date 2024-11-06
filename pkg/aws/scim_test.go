@@ -13,9 +13,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/golang/mock/gomock"
 	mocks "github.com/slashdevops/idp-scim-sync/mocks/aws"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/mock/gomock"
 )
 
 type mockErrReader int
