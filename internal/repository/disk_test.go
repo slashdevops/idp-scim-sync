@@ -2,7 +2,6 @@ package repository
 
 import (
 	"context"
-	"io/ioutil"
 	"os"
 	"testing"
 
@@ -25,7 +24,7 @@ func TestStateRepository_GetState(t *testing.T) {
 		tmpDir := os.TempDir()
 		defer os.Remove(tmpDir)
 
-		stateFile, err := ioutil.TempFile(tmpDir, stateFileName)
+		stateFile, err := os.CreateTemp(tmpDir, stateFileName)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -72,7 +71,7 @@ func TestStateRepository_SetState(t *testing.T) {
 	t.Run("Empty file", func(t *testing.T) {
 		tmpDir := os.TempDir()
 
-		stateFile, err := ioutil.TempFile(tmpDir, stateFileName)
+		stateFile, err := os.CreateTemp(tmpDir, stateFileName)
 		if err != nil {
 			t.Fatal(err)
 		}

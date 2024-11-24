@@ -136,7 +136,7 @@ func TestNewDirectoryService_ListUsers(t *testing.T) {
 		svr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			assert.Equal(t, "GET", r.Method)
 			assert.Equal(t, urlPath, r.URL.Path)
-			w.Write(jsonBytes)
+			_, _ = w.Write(jsonBytes)
 		}))
 		defer svr.Close()
 
@@ -217,7 +217,7 @@ func TestNewDirectoryService_ListUsers(t *testing.T) {
 		svr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			assert.Equal(t, "GET", r.Method)
 			assert.Equal(t, urlPath, r.URL.Path)
-			w.Write(jsonBytes)
+			_, _ = w.Write(jsonBytes)
 		}))
 		defer svr.Close()
 
@@ -282,7 +282,7 @@ func TestNewDirectoryService_ListUsers(t *testing.T) {
 			assert.Equal(t, "GET", r.Method)
 			assert.Equal(t, urlPath, r.URL.Path)
 			assert.Equal(t, filter[0], r.URL.Query().Get("query"))
-			w.Write(jsonBytes)
+			_, _ = w.Write(jsonBytes)
 		}))
 		defer svr.Close()
 
@@ -316,7 +316,7 @@ func TestNewDirectoryService_ListUsers(t *testing.T) {
 			assert.Equal(t, urlPath, r.URL.Path)
 			assert.Equal(t, filter[0], r.URL.Query().Get("query"))
 			w.WriteHeader(http.StatusOK)
-			w.Write([]byte(`{"etag":"etag-users","kind":"directory#users","users":[{"id":"123456789","etag":"etag-user-123456789","primaryEmail":"""}]}`))
+			_, _ = w.Write([]byte(`{"etag":"etag-users","kind":"directory#users","users":[{"id":"123456789","etag":"etag-user-123456789","primaryEmail":"""}]}`))
 		}))
 		defer svr.Close()
 
@@ -418,7 +418,7 @@ func TestNewDirectoryService_ListGroups(t *testing.T) {
 
 		svr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			assert.Equal(t, "GET", r.Method)
-			w.Write(jsonBytes)
+			_, _ = w.Write(jsonBytes)
 		}))
 		defer svr.Close()
 
@@ -471,7 +471,7 @@ func TestNewDirectoryService_ListGroups(t *testing.T) {
 
 		svr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			assert.Equal(t, "GET", r.Method)
-			w.Write(jsonBytes)
+			_, _ = w.Write(jsonBytes)
 		}))
 		defer svr.Close()
 
@@ -525,7 +525,7 @@ func TestNewDirectoryService_ListGroups(t *testing.T) {
 		svr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			assert.Equal(t, "GET", r.Method)
 			assert.Equal(t, filter[0], r.URL.Query().Get("query"))
-			w.Write(jsonBytes)
+			_, _ = w.Write(jsonBytes)
 		}))
 		defer svr.Close()
 
@@ -582,7 +582,7 @@ func TestNewDirectoryService_ListGroupMembers(t *testing.T) {
 
 		svr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			assert.Equal(t, "GET", r.Method)
-			w.Write(jsonBytes)
+			_, _ = w.Write(jsonBytes)
 		}))
 		defer svr.Close()
 
@@ -630,7 +630,7 @@ func TestNewDirectoryService_ListGroupMembers(t *testing.T) {
 		svr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			assert.Equal(t, "GET", r.Method)
 			assert.Equal(t, urlPath, r.URL.Path)
-			w.Write(jsonBytes)
+			_, _ = w.Write(jsonBytes)
 		}))
 		defer svr.Close()
 
@@ -685,7 +685,7 @@ func TestNewDirectoryService_ListGroupMembers(t *testing.T) {
 		svr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			assert.Equal(t, "GET", r.Method)
 			assert.Equal(t, urlPath, r.URL.Path)
-			w.Write(jsonBytes)
+			_, _ = w.Write(jsonBytes)
 		}))
 		defer svr.Close()
 
@@ -735,7 +735,7 @@ func TestNewDirectoryService_GetUser(t *testing.T) {
 
 		svr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			assert.Equal(t, "GET", r.Method)
-			w.Write(jsonBytes)
+			_, _ = w.Write(jsonBytes)
 		}))
 		defer svr.Close()
 
@@ -781,7 +781,7 @@ func TestNewDirectoryService_GetUser(t *testing.T) {
 		svr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			assert.Equal(t, "GET", r.Method)
 			assert.Equal(t, urlPath, r.URL.Path)
-			w.Write(jsonBytes)
+			_, _ = w.Write(jsonBytes)
 		}))
 		defer svr.Close()
 
@@ -823,7 +823,7 @@ func TestNewDirectoryService_GetGroup(t *testing.T) {
 
 		svr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			assert.Equal(t, "GET", r.Method)
-			w.Write(jsonBytes)
+			_, _ = w.Write(jsonBytes)
 		}))
 		defer svr.Close()
 
@@ -858,7 +858,7 @@ func TestNewDirectoryService_GetGroup(t *testing.T) {
 		svr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			assert.Equal(t, "GET", r.Method)
 			assert.Equal(t, urlPath, r.URL.Path)
-			w.Write(jsonBytes)
+			_, _ = w.Write(jsonBytes)
 		}))
 		defer svr.Close()
 

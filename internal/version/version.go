@@ -4,8 +4,6 @@ import (
 	"runtime"
 )
 
-const unknown string = "unknown"
-
 var (
 	// Version is the version as string.
 	Version string
