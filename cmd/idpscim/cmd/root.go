@@ -111,6 +111,10 @@ func init() {
 
 // initConfig reads in config file and ENV variables if set.
 func initConfig() {
+	// Set the default logger
+	logger = slog.New(logHandler)
+	slog.SetDefault(logger)
+
 	viper.SetEnvPrefix("idpscim") // allow to read in from environment
 
 	envVars := []string{

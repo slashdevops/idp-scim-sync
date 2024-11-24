@@ -90,14 +90,14 @@ func TestSyncService_SyncGroupsAndTheirMembers(t *testing.T) {
 		// mock Google Workspace API calls
 		svrIDP := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			t.Logf("Calling IDP API with method: %s, path: %s, query: %s", r.Method, r.URL.Path, r.URL.RawQuery)
-			w.Write([]byte(`{}`))
+			_, _ = w.Write([]byte(`{}`))
 		}))
 		defer svrIDP.Close()
 
 		// mock Google Workspace API calls
 		svrSCIM := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			t.Logf("Calling SCIM API with method: %s, path: %s, query: %s", r.Method, r.URL.Path, r.URL.RawQuery)
-			w.Write([]byte(`{}`))
+			_, _ = w.Write([]byte(`{}`))
 		}))
 		defer svrSCIM.Close()
 
@@ -410,15 +410,15 @@ func TestSyncService_SyncGroupsAndTheirMembers(t *testing.T) {
 			t.Logf("Calling IDP API with method: %s, path: %s, query: %s", r.Method, r.URL.Path, r.URL.RawQuery)
 			switch r.URL.Path {
 			case "/admin/directory/v1/groups":
-				w.Write(groupsListJSONBytes)
+				_, _ = w.Write(groupsListJSONBytes)
 			case "/admin/directory/v1/groups/group-1/members":
-				w.Write(membersListJSONBytes)
+				_, _ = w.Write(membersListJSONBytes)
 			case "/admin/directory/v1/groups/group-2/members":
-				w.Write(membersListJSONBytes)
+				_, _ = w.Write(membersListJSONBytes)
 			case "/admin/directory/v1/users/user.1@mail.com":
-				w.Write(user1JSONBytes)
+				_, _ = w.Write(user1JSONBytes)
 			case "/admin/directory/v1/users/user.2@mail.com":
-				w.Write(user2JSONBytes)
+				_, _ = w.Write(user2JSONBytes)
 			}
 		}))
 		defer svrIDP.Close()
@@ -434,20 +434,20 @@ func TestSyncService_SyncGroupsAndTheirMembers(t *testing.T) {
 
 					switch filter {
 					case "": // first time getting groups
-						w.Write([]byte(`{}`))
+						_, _ = w.Write([]byte(`{}`))
 					case "id eq \"group-1\" and members eq \"user-1\"":
-						w.Write(listGroupsResponseGroup1User1JSONBytes)
+						_, _ = w.Write(listGroupsResponseGroup1User1JSONBytes)
 					case "id eq \"group-1\" and members eq \"user-2\"":
-						w.Write(listGroupsResponseGroup1User2JSONBytes) // user 2 is not in group 1
+						_, _ = w.Write(listGroupsResponseGroup1User2JSONBytes) // user 2 is not in group 1
 					case "id eq \"group-2\" and members eq \"user-1\"":
-						w.Write(listGroupsResponseGroup2User1JSONBytes) // user 1 is not in group 2
+						_, _ = w.Write(listGroupsResponseGroup2User1JSONBytes) // user 1 is not in group 2
 					case "id eq \"group-2\" and members eq \"user-2\"":
-						w.Write(listGroupsResponseGroup2User2JSONBytes)
+						_, _ = w.Write(listGroupsResponseGroup2User2JSONBytes)
 					default:
 						w.WriteHeader(http.StatusBadRequest)
 					}
 				case "/Users":
-					w.Write([]byte(`{}`))
+					_, _ = w.Write([]byte(`{}`))
 				}
 			case "POST":
 				var bodyData map[string]interface{}
@@ -460,18 +460,18 @@ func TestSyncService_SyncGroupsAndTheirMembers(t *testing.T) {
 				case "/Groups":
 					switch bodyData["displayName"] {
 					case "group 1":
-						w.Write(createGroup1ResponseJSONBytes)
+						_, _ = w.Write(createGroup1ResponseJSONBytes)
 					case "group 2":
-						w.Write(createGroup2ResponseJSONBytes)
+						_, _ = w.Write(createGroup2ResponseJSONBytes)
 					default:
 						w.WriteHeader(http.StatusBadRequest)
 					}
 				case "/Users":
 					switch bodyData["userName"] {
 					case "user.1@mail.com":
-						w.Write(createUser1ResponseJSONBytes)
+						_, _ = w.Write(createUser1ResponseJSONBytes)
 					case "user.2@mail.com":
-						w.Write(createUser2ResponseJSONBytes)
+						_, _ = w.Write(createUser2ResponseJSONBytes)
 					default:
 						w.WriteHeader(http.StatusBadRequest)
 					}
