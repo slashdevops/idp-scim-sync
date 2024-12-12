@@ -1,6 +1,6 @@
 module github.com/slashdevops/idp-scim-sync
 
-go 1.23
+go 1.23.4
 
 require (
 	github.com/aws/aws-lambda-go v1.47.0
@@ -51,6 +51,7 @@ require (
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
+	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/magiconair/properties v1.8.9 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.3 // indirect
