@@ -27,7 +27,8 @@ import (
 )
 
 var (
-	cfg               config.Config
+	cfg config.Config
+
 	logHandler        slog.Handler
 	logHandlerOptions *slog.HandlerOptions
 	logger            *slog.Logger
@@ -111,10 +112,6 @@ func init() {
 
 // initConfig reads in config file and ENV variables if set.
 func initConfig() {
-	// Set the default logger
-	logger = slog.New(logHandler)
-	slog.SetDefault(logger)
-
 	viper.SetEnvPrefix("idpscim") // allow to read in from environment
 
 	envVars := []string{
@@ -175,6 +172,10 @@ func initConfig() {
 		slog.Error("cannot unmarshal config", "error", err)
 	}
 
+	if cfg.Debug {
+		cfg.LogLevel = "debug"
+	}
+
 	switch strings.ToLower(cfg.LogFormat) {
 	case "json":
 		logHandler = slog.NewJSONHandler(os.Stdout, logHandlerOptions)
@@ -198,12 +199,15 @@ func initConfig() {
 		slog.Warn("unknown log level, setting it to info", "level", cfg.LogLevel)
 	}
 
-	if cfg.Debug {
-		cfg.LogLevel = "debug"
-	}
+	// Set the default logger
+	logger = slog.New(logHandler)
+	slog.SetDefault(logger)
 
 	if cfg.IsLambda || cfg.UseSecretsManager {
-		getSecrets()
+		if err := getSecrets(); err != nil {
+			slog.Error("cannot get secrets", "error", err)
+			os.Exit(1)
+		}
 	}
 
 	// not implemented yet block
@@ -213,65 +217,64 @@ func initConfig() {
 	}
 }
 
-func getSecrets() {
+func getSecrets() error {
 	slog.Info("reading secrets from AWS Secrets Manager")
 
 	awsConf, err := aws.NewDefaultConf(context.Background())
 	if err != nil {
-		slog.Error("cannot load aws config", "error", err)
-		os.Exit(1)
+		return errors.Wrap(err, "cannot load aws config")
 	}
 
 	svc := secretsmanager.NewFromConfig(awsConf)
 
 	secrets, err := aws.NewSecretsManagerService(svc)
 	if err != nil {
-		slog.Error("cannot create aws secrets manager service", "error", err)
-		os.Exit(1)
+		return errors.Wrap(err, "cannot create aws secrets manager service")
 	}
 
 	slog.Debug("reading secret", "name", cfg.GWSUserEmailSecretName)
 	unwrap, err := secrets.GetSecretValue(context.Background(), cfg.GWSUserEmailSecretName)
 	if err != nil {
-		slog.Error("cannot get secretmanager value", "error", err)
-		os.Exit(1)
+		return errors.Wrap(err, "cannot get secretmanager value")
 	}
 	cfg.GWSUserEmail = unwrap
 
 	slog.Debug("reading secret", "name", cfg.GWSServiceAccountFileSecretName)
 	unwrap, err = secrets.GetSecretValue(context.Background(), cfg.GWSServiceAccountFileSecretName)
 	if err != nil {
-		slog.Error("cannot get secretmanager value", "error", err)
-		os.Exit(1)
+		return errors.Wrap(err, "cannot get secretmanager value")
 	}
 	cfg.GWSServiceAccountFile = unwrap
 
 	slog.Debug("reading secret", "name", cfg.AWSSCIMAccessTokenSecretName)
 	unwrap, err = secrets.GetSecretValue(context.Background(), cfg.AWSSCIMAccessTokenSecretName)
 	if err != nil {
-		slog.Error("cannot get secretmanager value", "error", err)
-		os.Exit(1)
+		return errors.Wrap(err, "cannot get secretmanager value")
 	}
 	cfg.AWSSCIMAccessToken = unwrap
 
 	slog.Debug("reading secret", "name", cfg.AWSSCIMEndpointSecretName)
 	unwrap, err = secrets.GetSecretValue(context.Background(), cfg.AWSSCIMEndpointSecretName)
 	if err != nil {
-		slog.Error("cannot get secretmanager value", "error", err)
-		os.Exit(1)
+		return errors.Wrap(err, "cannot get secretmanager value")
 	}
 	cfg.AWSSCIMEndpoint = unwrap
+
+	return nil
 }
 
 func sync() error {
 	slog.Debug("viper config", "config", viper.AllSettings())
 
 	if cfg.SyncMethod != "groups" {
-		slog.Error("only 'sync-method=groups' are implemented")
-		return fmt.Errorf("unknown sync method: %s", cfg.SyncMethod)
+		return fmt.Errorf("unknown sync method: %s, only 'groups' are implemented", cfg.SyncMethod)
 	}
 
-	return syncGroups()
+	if err := syncGroups(); err != nil {
+		return errors.Wrap(err, "cannot sync groups")
+	}
+
+	return nil
 }
 
 func syncGroups() error {
@@ -284,7 +287,7 @@ func syncGroups() error {
 	if !cfg.IsLambda {
 		gwsServiceAccount, err := os.ReadFile(cfg.GWSServiceAccountFile)
 		if err != nil {
-			slog.Error("cannot read service account file", "error", err)
+			return errors.Wrap(err, "cannot read google workspace service account file")
 		}
 		gwsServiceAccountContent = gwsServiceAccount
 	}
@@ -343,15 +346,13 @@ func syncGroups() error {
 
 	awsConf, err := aws.NewDefaultConf(context.Background())
 	if err != nil {
-		slog.Error("cannot load aws config", "error", err)
-		os.Exit(1)
+		return errors.Wrap(err, "cannot load aws config")
 	}
 
 	s3Client := s3.NewFromConfig(awsConf)
 	repo, err := repository.NewS3Repository(s3Client, repository.WithBucket(cfg.AWSS3BucketName), repository.WithKey(cfg.AWSS3BucketKey))
 	if err != nil {
-		slog.Error("cannot create s3 repository", "error", err)
-		os.Exit(1)
+		return errors.Wrap(err, "cannot create s3 repository")
 	}
 
 	ss, err := core.NewSyncService(idpService, scimService, repo, core.WithIdentityProviderGroupsFilter(cfg.GWSGroupsFilter))
