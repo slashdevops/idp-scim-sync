@@ -33,10 +33,11 @@ AWS recently announced `AWS Lambda Deprecates Go Runtime 1.x` and posted this ar
 
 This project is already migrated since version `v0.0.19` to the `provided.al2` runtime and `arm64` architecture, so you can use it without any problem.
 
-|   version   | AWS Lambda Runtime | Architecture       | Deprecation Date |
-|-------------|--------------------|--------------------|------------------|
-| <= v0.0.18  | Go 1.x             | amd64 (Intel)      | 2023-12-31       |
-| >= v0.0.19  | provided.al2       | arm64 (Graviton 2) | ----------       |
+|   version            | AWS Lambda Runtime | Architecture       | Deprecation Date |
+|----------------------|--------------------|--------------------|------------------|
+| <= v0.0.18           | Go 1.x             | amd64 (Intel)      | 2023-12-31       |
+| >= v0.0.19 < v0.31.0 | provided.al2       | arm64 (Graviton 2) | 2026-06-30       |
+| >= v0.31.0           | provided.al2023    | arm64 (Graviton 2) | 2029-06-30       |
 
 ## Features
 

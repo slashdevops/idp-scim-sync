@@ -228,9 +228,9 @@ Parameters:
       The Lambda function runtime
 
       Reference: https://docs.aws.amazon.com/lambda/latest/dg/lambda-runtimes.html
-    Default: provided.al2
+    Default: provided.al2023
     AllowedValues:
-      - provided.al2
+      - provided.al2023
 
   Architecture:
     Type: String
