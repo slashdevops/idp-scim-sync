@@ -110,9 +110,6 @@ func stateSync(
 	idpUsersResult *model.UsersResult,
 	idpGroupsMembersResult *model.GroupsMembersResult,
 ) (*model.GroupsResult, *model.UsersResult, *model.GroupsMembersResult, error) {
-	var totalGroupsResult *model.GroupsResult
-	var totalUsersResult *model.UsersResult
-	var totalGroupsMembersResult *model.GroupsMembersResult
 	slog.Info("reconciling the state data with the Identity Provider data")
 
 	lastSyncTime, err := time.Parse(time.RFC3339, state.LastSync)
@@ -125,86 +122,113 @@ func stateSync(
 		"since", time.Since(lastSyncTime).String(),
 	)
 
-	if idpGroupsResult.HashCode == state.Resources.Groups.HashCode {
-		slog.Info("provider groups and state groups are the same, nothing to do with groups")
-
-		totalGroupsResult = state.Resources.Groups
-	} else {
-		slog.Warn("provider groups and state groups are different")
-		// now here we have the google fresh data and the last sync data state
-		// we need to compare the data and decide what to do
-		// see differences between the two datasets
-		slog.Info("reconciling groups",
-			"idp", idpGroupsResult.Items,
-			"state", state.Resources.Groups.Items,
-		)
-		groupsCreate, groupsUpdate, groupsEqual, groupsDelete, err := model.GroupsOperations(idpGroupsResult, state.Resources.Groups)
-		if err != nil {
-			return nil, nil, nil, fmt.Errorf("error reconciling groups: %w", err)
-		}
-
-		groupsCreated, groupsUpdated, err := reconcilingGroups(ctx, scim, groupsCreate, groupsUpdate, groupsDelete)
-		if err != nil {
-			return nil, nil, nil, fmt.Errorf("error reconciling groups: %w", err)
-		}
-
-		// merge in only one data structure the groups created, updated amd equals who has the SCIMID
-		totalGroupsResult = model.MergeGroupsResult(groupsCreated, groupsUpdated, groupsEqual)
+	totalGroupsResult, err := syncGroupsFromState(ctx, scim, idpGroupsResult, state.Resources.Groups)
+	if err != nil {
+		return nil, nil, nil, err
 	}
 
-	if idpUsersResult.HashCode == state.Resources.Users.HashCode {
-		slog.Info("provider users and state users are the same, nothing to do with users")
-
-		totalUsersResult = state.Resources.Users
-	} else {
-		slog.Warn("provider users and state users are different")
-
-		slog.Info("reconciling users",
-			"idp", idpUsersResult.Items,
-			"state", state.Resources.Users.Items,
-		)
-		usersCreate, usersUpdate, usersEqual, usersDelete, err := model.UsersOperations(idpUsersResult, state.Resources.Users)
-		if err != nil {
-			return nil, nil, nil, fmt.Errorf("error operating with users: %w", err)
-		}
-
-		usersCreated, usersUpdated, err := reconcilingUsers(ctx, scim, usersCreate, usersUpdate, usersDelete)
-		if err != nil {
-			return nil, nil, nil, fmt.Errorf("error reconciling users: %w", err)
-		}
-
-		// usersCreated + usersUpdated + usersEqual = users total
-		totalUsersResult = model.MergeUsersResult(usersCreated, usersUpdated, usersEqual)
+	totalUsersResult, err := syncUsersFromState(ctx, scim, idpUsersResult, state.Resources.Users)
+	if err != nil {
+		return nil, nil, nil, err
 	}
 
-	if idpGroupsMembersResult.HashCode == state.Resources.GroupsMembers.HashCode {
-		slog.Info("provider groups-members and state groups-members are the same, nothing to do with groups-members")
-
-		totalGroupsMembersResult = state.Resources.GroupsMembers
-	} else {
-		slog.Warn("provider groups-members and state groups-members are different")
-
-		// if we create a group or user during the sync, we need the scimid of these new groups/users
-		// because to add members to a group the scim api needs that.
-		// so this function will fill the scimid of the new groups/users
-		groupsMembers := model.UpdateGroupsMembersSCIMID(idpGroupsMembersResult, totalGroupsResult, totalUsersResult)
-
-		slog.Info("reconciling groups members",
-			"idp", idpGroupsMembersResult.Items,
-			"state", state.Resources.GroupsMembers.Items,
-		)
-
-		membersCreate, _, membersDelete, err := model.MembersOperations(groupsMembers, state.Resources.GroupsMembers)
-		if err != nil {
-			return nil, nil, nil, fmt.Errorf("error reconciling groups members: %w", err)
-		}
-
-		_, err = reconcilingGroupsMembers(ctx, scim, membersCreate, membersDelete)
-		if err != nil {
-			return nil, nil, nil, fmt.Errorf("error reconciling groups members: %w", err)
-		}
-
-		totalGroupsMembersResult = model.MergeGroupsMembersResult(groupsMembers)
+	totalGroupsMembersResult, err := syncGroupsMembersFromState(ctx, scim, idpGroupsMembersResult, state.Resources.GroupsMembers, totalGroupsResult, totalUsersResult)
+	if err != nil {
+		return nil, nil, nil, err
 	}
+
 	return totalGroupsResult, totalUsersResult, totalGroupsMembersResult, nil
+}
+
+func syncGroupsFromState(
+	ctx context.Context,
+	scim SCIMService,
+	idpGroupsResult *model.GroupsResult,
+	stateGroupsResult *model.GroupsResult,
+) (*model.GroupsResult, error) {
+	if idpGroupsResult.HashCode == stateGroupsResult.HashCode {
+		slog.Info("provider groups and state groups are the same, nothing to do with groups")
+		return stateGroupsResult, nil
+	}
+
+	slog.Warn("provider groups and state groups are different")
+	slog.Info("reconciling groups",
+		"idp", idpGroupsResult.Items,
+		"state", stateGroupsResult.Items,
+	)
+	groupsCreate, groupsUpdate, groupsEqual, groupsDelete, err := model.GroupsOperations(idpGroupsResult, stateGroupsResult)
+	if err != nil {
+		return nil, fmt.Errorf("error reconciling groups: %w", err)
+	}
+
+	groupsCreated, groupsUpdated, err := reconcilingGroups(ctx, scim, groupsCreate, groupsUpdate, groupsDelete)
+	if err != nil {
+		return nil, fmt.Errorf("error reconciling groups: %w", err)
+	}
+
+	return model.MergeGroupsResult(groupsCreated, groupsUpdated, groupsEqual), nil
+}
+
+func syncUsersFromState(
+	ctx context.Context,
+	scim SCIMService,
+	idpUsersResult *model.UsersResult,
+	stateUsersResult *model.UsersResult,
+) (*model.UsersResult, error) {
+	if idpUsersResult.HashCode == stateUsersResult.HashCode {
+		slog.Info("provider users and state users are the same, nothing to do with users")
+		return stateUsersResult, nil
+	}
+
+	slog.Warn("provider users and state users are different")
+	slog.Info("reconciling users",
+		"idp", idpUsersResult.Items,
+		"state", stateUsersResult.Items,
+	)
+	usersCreate, usersUpdate, usersEqual, usersDelete, err := model.UsersOperations(idpUsersResult, stateUsersResult)
+	if err != nil {
+		return nil, fmt.Errorf("error operating with users: %w", err)
+	}
+
+	usersCreated, usersUpdated, err := reconcilingUsers(ctx, scim, usersCreate, usersUpdate, usersDelete)
+	if err != nil {
+		return nil, fmt.Errorf("error reconciling users: %w", err)
+	}
+
+	return model.MergeUsersResult(usersCreated, usersUpdated, usersEqual), nil
+}
+
+func syncGroupsMembersFromState(
+	ctx context.Context,
+	scim SCIMService,
+	idpGroupsMembersResult *model.GroupsMembersResult,
+	stateGroupsMembersResult *model.GroupsMembersResult,
+	totalGroupsResult *model.GroupsResult,
+	totalUsersResult *model.UsersResult,
+) (*model.GroupsMembersResult, error) {
+	if idpGroupsMembersResult.HashCode == stateGroupsMembersResult.HashCode {
+		slog.Info("provider groups-members and state groups-members are the same, nothing to do with groups-members")
+		return stateGroupsMembersResult, nil
+	}
+
+	slog.Warn("provider groups-members and state groups-members are different")
+
+	groupsMembers := model.UpdateGroupsMembersSCIMID(idpGroupsMembersResult, totalGroupsResult, totalUsersResult)
+
+	slog.Info("reconciling groups members",
+		"idp", idpGroupsMembersResult.Items,
+		"state", stateGroupsMembersResult.Items,
+	)
+
+	membersCreate, membersEqual, membersDelete, err := model.MembersOperations(groupsMembers, stateGroupsMembersResult)
+	if err != nil {
+		return nil, fmt.Errorf("error reconciling groups members: %w", err)
+	}
+
+	membersCreated, err := reconcilingGroupsMembers(ctx, scim, membersCreate, membersDelete)
+	if err != nil {
+		return nil, fmt.Errorf("error reconciling groups members: %w", err)
+	}
+
+	return model.MergeGroupsMembersResult(membersCreated, membersEqual), nil
 }
