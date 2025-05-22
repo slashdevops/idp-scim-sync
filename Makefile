@@ -56,26 +56,30 @@ AWS_SAM_OS                 ?= linux
 AWS_SAM_ARCH               ?= arm64
 
 ######## Functions ########
-# this is a funtion that will execute a command and print a message
+# this is a function that will execute a command and print a message
 # MAKE_DEBUG=true make <target> will print the command
 # MAKE_STOP_ON_ERRORS=true make any fail will stop the execution if the command fails, this is useful for CI
-# NOTE: if the dommand has a > it will print the output into the original redirect of the command
+# NOTE: if the command has a > it will print the output into the original redirect of the command
+MAKE_STOP_ON_ERRORS := false
+MAKE_DEBUG := false
+
 define exec_cmd
 $(if $(filter $(MAKE_DEBUG),true),\
-	$1 \
+	${1} \
 , \
 	$(if $(filter $(MAKE_STOP_ON_ERRORS),true),\
-		@$1  > /dev/null 2>&1 && printf "  🤞 ${1} ✅\n" || (printf "  ${1} ❌ 🖕\n"; exit 1) \
+		@ERROR_OCCURRED=0; ${1} > /dev/null || ERROR_OCCURRED=1; if [ $$ERROR_OCCURRED -eq 0 ]; then printf "  🤞 ${1} ✅\n"; else printf "  ${1} ❌ 🖕\n"; exit 1; fi \
 	, \
 		$(if $(findstring >, $1),\
-			@$1 2>/dev/null && printf "  🤞 ${1} ✅\n" || printf "  ${1} ❌ 🖕\n" \
+			@${1} 2>/dev/null && printf "  🤞 ${1} ✅\n" || printf "  ${1} ❌ 🖕\n" \
 		, \
-			@$1 > /dev/null 2>&1 && printf '  🤞 ${1} ✅\n' || printf '  ${1} ❌ 🖕\n' \
+			@${1} > /dev/null 2>&1 && printf '  🤞 ${1} ✅\n' || printf '  ${1} ❌ 🖕\n' \
 		) \
 	) \
 )
 
-endef # don't remove the whiteline before endef
+endef # don't remove the white space at the end of the line
+# this is a function that will execute a command and print a message
 
 ###############################################################################
 ######## Targets ##############################################################

@@ -1,5 +1,7 @@
 package config
 
+import "fmt"
+
 const (
 	// DefaultIsLambda is the program execute as a lambda function?
 	DefaultIsLambda = false
@@ -41,6 +43,21 @@ const (
 
 	// DefaultUseSecretsManager determines if we will use the AWS Secrets Manager secrets or program parameter values
 	DefaultUseSecretsManager = false
+)
+
+var (
+	// ErrInvalidLogLevel is returned when the log level is invalid.
+	ErrInvalidLogLevel = fmt.Errorf("invalid log level")
+	// ErrInvalidLogFormat is returned when the log format is invalid.
+	ErrInvalidLogFormat = fmt.Errorf("invalid log format")
+	// ErrMissingAWSSCIMEndpoint is returned when the AWS SCIM endpoint is missing.
+	ErrMissingAWSSCIMEndpoint = fmt.Errorf("missing AWS SCIM endpoint")
+	// ErrMissingAWSSCIMAccessToken is returned when the AWS SCIM access token is missing.
+	ErrMissingAWSSCIMAccessToken = fmt.Errorf("missing AWS SCIM access token")
+	// ErrMissingGWSServiceAccountFile is returned when the GWS service account file is missing.
+	ErrMissingGWSServiceAccountFile = fmt.Errorf("missing GWS service account file")
+	// ErrMissingGWSUserEmail is returned when the GWS user email is missing.
+	ErrMissingGWSUserEmail = fmt.Errorf("missing GWS user email")
 )
 
 // Config represents the configuration of the application.
@@ -91,4 +108,38 @@ func New() Config {
 		AWSSCIMAccessTokenSecretName:    DefaultAWSSCIMAccessTokenSecretName,
 		UseSecretsManager:               DefaultUseSecretsManager,
 	}
+}
+
+// Validate validates the configuration.
+func (c *Config) Validate() error {
+	validLogLevels := map[string]bool{
+		"debug": true, "info": true, "warn": true, "error": true, "fatal": true, "panic": true,
+	}
+	if !validLogLevels[c.LogLevel] {
+		return ErrInvalidLogLevel
+	}
+
+	validLogFormats := map[string]bool{
+		"text": true, "json": true,
+	}
+	if !validLogFormats[c.LogFormat] {
+		return ErrInvalidLogFormat
+	}
+
+	if !c.UseSecretsManager {
+		if c.AWSSCIMEndpoint == "" {
+			return ErrMissingAWSSCIMEndpoint
+		}
+		if c.AWSSCIMAccessToken == "" {
+			return ErrMissingAWSSCIMAccessToken
+		}
+		if c.GWSServiceAccountFile == "" {
+			return ErrMissingGWSServiceAccountFile
+		}
+		if c.GWSUserEmail == "" {
+			return ErrMissingGWSUserEmail
+		}
+	}
+
+	return nil
 }
