@@ -114,7 +114,7 @@ func (e *Email) UnmarshalBinary(data []byte) error {
 	return nil
 }
 
-// Addresses represent an address entity
+// Address represent an address entity
 type Address struct {
 	Formatted     string `json:"formatted,omitempty"`
 	StreetAddress string `json:"streetAddress,omitempty"`
