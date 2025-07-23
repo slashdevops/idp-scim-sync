@@ -524,7 +524,7 @@ func (s *Provider) GetGroupsMembersBruteForce(ctx context.Context, gr *model.Gro
 				m := model.MemberBuilder().
 					WithIPID(user.IPID).
 					WithSCIMID(user.SCIMID).
-					WithEmail(user.GetPrimaryEmailAddress()).
+					WithEmail(user.Emails[0].Value).
 					Build()
 
 				if user.Active {

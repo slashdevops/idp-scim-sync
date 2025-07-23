@@ -1535,9 +1535,10 @@ func TestProvider_GetGroupsMembersBruteForce(t *testing.T) {
 			},
 			prepare: func(m *mock_scim.MockAWSSCIMProvider) {
 				m.EXPECT().ListGroups(gomock.Any(), gomock.Any()).Return(&aws.ListGroupsResponse{
-					Resources: []*aws.Group{
-						{},
+					ListResponse: aws.ListResponse{
+						TotalResults: 1,
 					},
+					Resources: []*aws.Group{},
 				}, nil)
 			},
 			want: &model.GroupsMembersResult{
