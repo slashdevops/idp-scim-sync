@@ -75,6 +75,19 @@ func TestGetGroups(t *testing.T) {
 			wantErr: false,
 		},
 		{
+			name: "should return empty GroupsResult when no groups are provided",
+			prepare: func(f *fields) {
+				ctx := context.Background()
+				f.ds.EXPECT().ListGroups(ctx, gomock.Eq([]string{""})).Return([]*admin.Group{}, nil).Times(1)
+			},
+			args: args{ctx: context.Background(), filter: []string{""}},
+			want: &model.GroupsResult{
+				Items:     0,
+				Resources: []*model.Group{},
+			},
+			wantErr: false,
+		},
+		{
 			name: "Should return GroupsResult and no error",
 			prepare: func(f *fields) {
 				ctx := context.Background()
@@ -228,6 +241,19 @@ func TestGetUsers(t *testing.T) {
 				Items:     0,
 				HashCode:  "",
 				Resources: make([]*model.User, 0),
+			},
+			wantErr: false,
+		},
+		{
+			name: "should return empty UsersResult when no users are provided",
+			prepare: func(f *fields) {
+				ctx := context.Background()
+				f.ds.EXPECT().ListUsers(ctx, gomock.Eq([]string{""})).Return([]*admin.User{}, nil).Times(1)
+			},
+			args: args{ctx: context.Background(), filter: []string{""}},
+			want: &model.UsersResult{
+				Items:     0,
+				Resources: []*model.User{},
 			},
 			wantErr: false,
 		},
@@ -440,6 +466,19 @@ func TestGetGroupMembers(t *testing.T) {
 			},
 			wantErr: false,
 		},
+		{
+			name: "should return empty MembersResult when no members are provided",
+			prepare: func(f *fields) {
+				ctx := context.Background()
+				f.ds.EXPECT().ListGroupMembers(ctx, gomock.Eq("1"), gomock.Any()).Return([]*admin.Member{}, nil).Times(1)
+			},
+			args: args{ctx: context.Background(), id: "1"},
+			want: &model.MembersResult{
+				Items:     0,
+				Resources: []*model.Member{},
+			},
+			wantErr: false,
+		},
 	}
 
 	for _, tt := range tests {
@@ -505,6 +544,16 @@ func TestGetUsersByGroupsMembers(t *testing.T) {
 				Resources: make([]*model.User, 0),
 			},
 			wantErr: false,
+		},
+		{
+			name:    "nil gmr argument",
+			prepare: func(f *fields) {},
+			args: args{
+				ctx: context.Background(),
+				gmr: nil,
+			},
+			want:    nil,
+			wantErr: true,
 		},
 		{
 			name: "Should return error",
@@ -785,6 +834,17 @@ func TestGetGroupsMembers(t *testing.T) {
 			args:    args{ctx: context.Background(), gr: nil},
 			want:    nil,
 			wantErr: true,
+		},
+		{
+			name: "should return empty GroupsMembersResult when no groups are provided",
+			prepare: func(f *fields) {
+			},
+			args: args{
+				ctx: context.Background(),
+				gr:  &model.GroupsResult{},
+			},
+			want:    &model.GroupsMembersResult{Items: 0, Resources: []*model.GroupMembers{}},
+			wantErr: false,
 		},
 		{
 			name:    "Should return empty GroupsMembersResult when gr items is 0",

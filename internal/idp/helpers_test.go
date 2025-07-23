@@ -6,6 +6,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/slashdevops/idp-scim-sync/internal/model"
+	"github.com/stretchr/testify/assert"
 	admin "google.golang.org/api/admin/directory/v1"
 )
 
@@ -75,24 +76,23 @@ func Test_buildUser(t *testing.T) {
 			name: "should return a valid user with all the fields and using primary email as the only email",
 			given: &admin.User{
 				Addresses: []interface{}{
-					map[string]interface{}{"formatted": "formatted work", "type": "work"},
-					map[string]interface{}{"formatted": "formatted home", "type": "home"},
+					&admin.UserAddress{Formatted: "formatted work", Type: "work"},
+					&admin.UserAddress{Formatted: "formatted home", Type: "home"},
 				},
-				Languages:     []interface{}{map[string]interface{}{"languageCode": "languageCode", "preference": "preferred"}},
-				Organizations: []interface{}{map[string]interface{}{"costCenter": "costCenter", "department": "department", "name": "name", "title": "title", "primary": true}},
+				Languages:     []interface{}{&admin.UserLanguage{LanguageCode: "languageCode", Preference: "preferred"}},
+				Organizations: []interface{}{&admin.UserOrganization{CostCenter: "costCenter", Department: "department", Name: "name", Title: "title", Primary: true}},
 				Phones: []interface{}{
-					map[string]interface{}{"value": "value work", "type": "work"},
-					map[string]interface{}{"value": "value home", "type": "home"},
+					&admin.UserPhone{Value: "value work", Type: "work"},
+					&admin.UserPhone{Value: "value home", Type: "home"},
 				},
 				Id:           "id",
 				Kind:         "kind",
 				PrimaryEmail: "user@mail.com",
 				Suspended:    false,
 				Name: &admin.UserName{
-					GivenName:   "givenName",
-					FamilyName:  "familyName",
-					DisplayName: "displayName",
-					FullName:    "fullName",
+					GivenName:  "givenName",
+					FamilyName: "familyName",
+					FullName:   "fullName",
 				},
 				IsAdmin: false,
 			},
@@ -137,25 +137,24 @@ func Test_buildUser(t *testing.T) {
 			name: "should return a valid user with all the fields",
 			given: &admin.User{
 				Addresses: []interface{}{
-					map[string]interface{}{"formatted": "formatted work", "type": "work"},
-					map[string]interface{}{"formatted": "formatted home", "type": "home"},
+					&admin.UserAddress{Formatted: "formatted work", Type: "work"},
+					&admin.UserAddress{Formatted: "formatted home", Type: "home"},
 				},
-				Emails:        []interface{}{map[string]interface{}{"address": "user@mail.com", "type": "work", "primary": true}},
-				Languages:     []interface{}{map[string]interface{}{"languageCode": "languageCode", "preference": "preferred"}},
-				Organizations: []interface{}{map[string]interface{}{"costCenter": "costCenter", "department": "department", "name": "name", "title": "title", "primary": true}},
+				Emails:        []interface{}{&admin.UserEmail{Address: "user@mail.com", Type: "work", Primary: true}},
+				Languages:     []interface{}{&admin.UserLanguage{LanguageCode: "languageCode", Preference: "preferred"}},
+				Organizations: []interface{}{&admin.UserOrganization{CostCenter: "costCenter", Department: "department", Name: "name", Title: "title", Primary: true}},
 				Phones: []interface{}{
-					map[string]interface{}{"value": "value work", "type": "work"},
-					map[string]interface{}{"value": "value home", "type": "home"},
+					&admin.UserPhone{Value: "value work", Type: "work"},
+					&admin.UserPhone{Value: "value home", Type: "home"},
 				},
 				Id:           "id",
 				Kind:         "kind",
 				PrimaryEmail: "primaryEmail",
 				Suspended:    false,
 				Name: &admin.UserName{
-					GivenName:   "givenName",
-					FamilyName:  "familyName",
-					DisplayName: "displayName",
-					FullName:    "fullName",
+					GivenName:  "givenName",
+					FamilyName: "familyName",
+					FullName:   "fullName",
 				},
 				IsAdmin: false,
 			},
@@ -205,6 +204,245 @@ func Test_buildUser(t *testing.T) {
 			if diff := cmp.Diff(tt.want, got, cmpopts.SortSlices(sort)); diff != "" {
 				t.Errorf("mismatch (-want +got):\n%s", diff)
 			}
+		})
+	}
+}
+
+func Test_toEmails(t *testing.T) {
+	tests := []struct {
+		name    string
+		given   any
+		want    []model.Email
+		wantErr bool
+	}{
+		{
+			name:    "should return error when given is not a []interface{}",
+			given:   "not a slice",
+			want:    nil,
+			wantErr: true,
+		},
+		{
+			name: "should return a valid email",
+			given: []interface{}{
+				&admin.UserEmail{Address: "user@mail.com", Type: "work", Primary: true},
+			},
+			want: []model.Email{
+				model.EmailBuilder().
+					WithValue("user@mail.com").
+					WithType("work").
+					WithPrimary(true).
+					Build(),
+			},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := toEmails(tt.given)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("toEmails() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+
+			sort := func(x, y string) bool { return x > y }
+			if diff := cmp.Diff(tt.want, got, cmpopts.SortSlices(sort)); diff != "" {
+				t.Errorf("mismatch (-want +got):\n%s", diff)
+			}
+		})
+	}
+}
+
+func Test_toLanguages(t *testing.T) {
+	tests := []struct {
+		name    string
+		given   any
+		want    string
+		wantErr bool
+	}{
+		{
+			name:    "should return error when given is not a []interface{}",
+			given:   "not a slice",
+			want:    "",
+			wantErr: true,
+		},
+		{
+			name: "should return a valid language",
+			given: []interface{}{
+				&admin.UserLanguage{LanguageCode: "en-US", Preference: "preferred"},
+			},
+			want:    "en-US",
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := toLanguages(tt.given)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("toLanguages() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func Test_toAddresses(t *testing.T) {
+	tests := []struct {
+		name    string
+		given   any
+		want    []model.Address
+		wantErr bool
+	}{
+		{
+			name:    "should return error when given is not a []interface{}",
+			given:   "not a slice",
+			want:    nil,
+			wantErr: true,
+		},
+		{
+			name: "should return a valid address",
+			given: []interface{}{
+				&admin.UserAddress{Formatted: "123 Main St", Type: "work"},
+			},
+			want: []model.Address{
+				model.AddressBuilder().
+					WithFormatted("123 Main St").
+					Build(),
+			},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := toAddresses(tt.given)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("toAddresses() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+
+			sort := func(x, y string) bool { return x > y }
+			if diff := cmp.Diff(tt.want, got, cmpopts.SortSlices(sort)); diff != "" {
+				t.Errorf("mismatch (-want +got):\n%s", diff)
+			}
+		})
+	}
+}
+
+func Test_toPhones(t *testing.T) {
+	tests := []struct {
+		name    string
+		given   any
+		want    []model.PhoneNumber
+		wantErr bool
+	}{
+		{
+			name:    "should return error when given is not a []interface{}",
+			given:   "not a slice",
+			want:    nil,
+			wantErr: true,
+		},
+		{
+			name: "should return a valid phone number",
+			given: []interface{}{
+				&admin.UserPhone{Value: "555-555-5555", Type: "work"},
+			},
+			want: []model.PhoneNumber{
+				model.PhoneNumberBuilder().
+					WithValue("555-555-5555").
+					WithType("work").
+					Build(),
+			},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := toPhones(tt.given)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("toPhones() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+
+			sort := func(x, y string) bool { return x > y }
+			if diff := cmp.Diff(tt.want, got, cmpopts.SortSlices(sort)); diff != "" {
+				t.Errorf("mismatch (-want +got):\n%s", diff)
+			}
+		})
+	}
+}
+
+func Test_toRelations(t *testing.T) {
+	tests := []struct {
+		name    string
+		given   any
+		want    *model.Manager
+		wantErr bool
+	}{
+		{
+			name:    "should return error when given is not a []interface{}",
+			given:   "not a slice",
+			want:    nil,
+			wantErr: true,
+		},
+		{
+			name: "should return a valid manager",
+			given: []interface{}{
+				&admin.UserRelation{Value: "manager@mail.com", Type: "manager"},
+			},
+			want: model.ManagerBuilder().
+				WithValue("manager@mail.com").
+				Build(),
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := toRelations(tt.given)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("toRelations() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func Test_toOrganizations(t *testing.T) {
+	tests := []struct {
+		name    string
+		given   any
+		want    *model.EnterpriseData
+		want1   string
+		wantErr bool
+	}{
+		{
+			name:    "should return error when given is not a []interface{}",
+			given:   "not a slice",
+			want:    nil,
+			want1:   "",
+			wantErr: true,
+		},
+		{
+			name: "should return a valid organization",
+			given: []interface{}{
+				&admin.UserOrganization{Name: "ACME", Title: "Developer", Primary: true},
+			},
+			want: model.EnterpriseDataBuilder().
+				WithOrganization("ACME").
+				Build(),
+			want1:   "Developer",
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, got1, err := toOrganizations(tt.given, nil)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("toOrganizations() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			assert.Equal(t, tt.want, got)
+			assert.Equal(t, tt.want1, got1)
 		})
 	}
 }

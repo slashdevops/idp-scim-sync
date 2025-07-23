@@ -38,32 +38,12 @@ func buildUser(usr *admin.User) *model.User {
 	}
 
 	var emails []model.Email
-	if m, ok := usr.Emails.([]interface{}); ok {
-		for _, v := range m {
-			if v.(map[string]interface{})["primary"] != nil {
-				if v.(map[string]interface{})["primary"].(bool) {
-
-					var emailValue string
-					if v.(map[string]interface{})["address"] != nil {
-						emailValue = strings.TrimSpace(v.(map[string]interface{})["address"].(string))
-					}
-
-					var emailType string
-					if v.(map[string]interface{})["type"] != nil {
-						emailType = strings.TrimSpace(v.(map[string]interface{})["type"].(string))
-					}
-
-					emails = append(emails,
-						model.EmailBuilder().
-							WithPrimary(v.(map[string]interface{})["primary"].(bool)).
-							WithType(emailType).
-							WithValue(emailValue).
-							Build(),
-					)
-
-					break
-				}
-			}
+	if usr.Emails != nil {
+		e, err := toEmails(usr.Emails)
+		if err != nil {
+			slog.Error("idp: error converting emails", "error", err)
+		} else {
+			emails = e
 		}
 	}
 
@@ -80,117 +60,58 @@ func buildUser(usr *admin.User) *model.User {
 
 	// get the first language from the list of languages
 	var preferredLanguage string
-	if m, ok := usr.Languages.([]interface{}); ok {
-		for _, v := range m {
-			if v.(map[string]interface{})["preference"].(string) == "preferred" {
-				preferredLanguage = strings.TrimSpace(v.(map[string]interface{})["languageCode"].(string))
-				break
-			}
+	if usr.Languages != nil {
+		l, err := toLanguages(usr.Languages)
+		if err != nil {
+			slog.Error("idp: error converting languages", "error", err)
+		} else {
+			preferredLanguage = l
 		}
 	}
 
 	// get the Addresses
 	var addresses []model.Address
-	if m, ok := usr.Addresses.([]interface{}); ok {
-		for _, v := range m {
-			if v.(map[string]interface{})["type"].(string) == "work" {
-				addresses = append(addresses,
-					model.AddressBuilder().
-						WithFormatted(strings.TrimSpace(v.(map[string]interface{})["formatted"].(string))).
-						Build())
-				break
-			} else if v.(map[string]interface{})["type"].(string) == "home" {
-				addresses = append(addresses,
-					model.AddressBuilder().
-						WithFormatted(strings.TrimSpace(v.(map[string]interface{})["formatted"].(string))).
-						Build())
-				break
-			}
+	if usr.Addresses != nil {
+		a, err := toAddresses(usr.Addresses)
+		if err != nil {
+			slog.Error("idp: error converting addresses", "error", err)
+		} else {
+			addresses = a
 		}
 	}
 
 	// get the phones
 	var phoneNumbers []model.PhoneNumber
-	if m, ok := usr.Phones.([]interface{}); ok {
-		for _, v := range m {
-			if v.(map[string]interface{})["type"].(string) == "work" {
-				phoneNumbers = append(phoneNumbers,
-					model.PhoneNumberBuilder().
-						WithValue(strings.TrimSpace(v.(map[string]interface{})["value"].(string))).
-						WithType(strings.TrimSpace(v.(map[string]interface{})["type"].(string))).
-						Build())
-				break
-			} else if v.(map[string]interface{})["type"].(string) == "home" {
-				phoneNumbers = append(phoneNumbers,
-					model.PhoneNumberBuilder().
-						WithValue(strings.TrimSpace(v.(map[string]interface{})["value"].(string))).
-						WithType(strings.TrimSpace(v.(map[string]interface{})["type"].(string))).
-						Build())
-				break
-			}
+	if usr.Phones != nil {
+		p, err := toPhones(usr.Phones)
+		if err != nil {
+			slog.Error("idp: error converting phones", "error", err)
+		} else {
+			phoneNumbers = p
 		}
 	}
 
 	// get the relations (manager)
 	var manager *model.Manager
-	if m, ok := usr.Relations.([]interface{}); ok {
-		for _, v := range m {
-			if v.(map[string]interface{})["type"].(string) == "manager" {
-				manager = model.ManagerBuilder().
-					WithValue(strings.TrimSpace(v.(map[string]interface{})["value"].(string))).
-					WithRef(strings.TrimSpace(v.(map[string]interface{})["customType"].(string))).
-					Build()
-				break
-			}
+	if usr.Relations != nil {
+		m, err := toRelations(usr.Relations)
+		if err != nil {
+			slog.Error("idp: error converting relations", "error", err)
+		} else {
+			manager = m
 		}
 	}
 
 	// get the organizations
 	var mainOrganization *model.EnterpriseData
 	var title string
-	if m, ok := usr.Organizations.([]interface{}); ok {
-		for _, v := range m {
-			if v.(map[string]interface{})["primary"] != nil && v.(map[string]interface{})["primary"].(bool) {
-
-				var employeeNumber string
-				if v.(map[string]interface{})["employeeNumber"] != nil {
-					employeeNumber = strings.TrimSpace(v.(map[string]interface{})["employeeNumber"].(string))
-				}
-
-				var costCenter string
-				if v.(map[string]interface{})["costCenter"] != nil {
-					costCenter = strings.TrimSpace(v.(map[string]interface{})["costCenter"].(string))
-				}
-
-				var organization string
-				if v.(map[string]interface{})["name"] != nil {
-					organization = strings.TrimSpace(v.(map[string]interface{})["name"].(string))
-				}
-
-				var division string
-				if v.(map[string]interface{})["division"] != nil {
-					division = strings.TrimSpace(v.(map[string]interface{})["division"].(string))
-				}
-
-				var department string
-				if v.(map[string]interface{})["department"] != nil {
-					department = strings.TrimSpace(v.(map[string]interface{})["department"].(string))
-				}
-
-				if v.(map[string]interface{})["title"] != nil {
-					title = strings.TrimSpace(v.(map[string]interface{})["title"].(string))
-				}
-
-				mainOrganization = model.EnterpriseDataBuilder().
-					WithEmployeeNumber(employeeNumber).
-					WithCostCenter(costCenter).
-					WithOrganization(organization).
-					WithDivision(division).
-					WithDepartment(department).
-					WithManager(manager).
-					Build()
-				break
-			}
+	if usr.Organizations != nil {
+		o, t, err := toOrganizations(usr.Organizations, manager)
+		if err != nil {
+			slog.Error("idp: error converting organizations", "error", err)
+		} else {
+			mainOrganization = o
+			title = t
 		}
 	}
 
@@ -214,19 +135,13 @@ func buildUser(usr *admin.User) *model.User {
 		WithIPID(strings.TrimSpace(usr.Id)).
 		WithUserName(strings.TrimSpace(usr.PrimaryEmail)).
 		WithDisplayName(strings.TrimSpace(displayName)).
-		// WithNickName("Not Provided").
-		// WithProfileURL("Not Provided").
 		WithTitle(title).
 		WithUserType(strings.TrimSpace(usr.Kind)).
 		WithPreferredLanguage(preferredLanguage).
-		// WithLocale("Not Provided").
-		// WithTimezone("Not Provided").
 		WithActive(!usr.Suspended).
-		// Arrays
 		WithEmails(emails).
 		WithAddresses(addresses).
 		WithPhoneNumbers(phoneNumbers).
-		// Pointers
 		WithName(name).
 		WithEnterpriseData(mainOrganization).
 		Build()
@@ -234,4 +149,167 @@ func buildUser(usr *admin.User) *model.User {
 	slog.Debug("idp: buildUser() converted user", "from", usr, "to", userModel)
 
 	return userModel
+}
+
+func toEmails(e any) ([]model.Email, error) {
+	emails, ok := e.([]interface{})
+	if !ok {
+		return nil, fmt.Errorf("error converting emails: %v", e)
+	}
+
+	fromEmails := make([]*admin.UserEmail, 0, len(emails))
+	for _, email := range emails {
+		fromEmails = append(fromEmails, email.(*admin.UserEmail))
+	}
+
+	modelEmails := make([]model.Email, 0, len(fromEmails))
+	for _, v := range fromEmails {
+		if v.Primary {
+			modelEmails = append(modelEmails,
+				model.EmailBuilder().
+					WithPrimary(v.Primary).
+					WithType(v.Type).
+					WithValue(v.Address).
+					Build(),
+			)
+			break
+		}
+	}
+	return modelEmails, nil
+}
+
+func toLanguages(l any) (string, error) {
+	languages, ok := l.([]interface{})
+	if !ok {
+		return "", fmt.Errorf("error converting languages: %v", l)
+	}
+
+	fromLanguages := make([]*admin.UserLanguage, 0, len(languages))
+	for _, language := range languages {
+		fromLanguages = append(fromLanguages, language.(*admin.UserLanguage))
+	}
+
+	var preferredLanguage string
+	for _, v := range fromLanguages {
+		if v.Preference == "preferred" {
+			preferredLanguage = v.LanguageCode
+			break
+		}
+	}
+	return preferredLanguage, nil
+}
+
+func toAddresses(a any) ([]model.Address, error) {
+	addresses, ok := a.([]interface{})
+	if !ok {
+		return nil, fmt.Errorf("error converting addresses: %v", a)
+	}
+
+	fromAddresses := make([]*admin.UserAddress, 0, len(addresses))
+	for _, address := range addresses {
+		fromAddresses = append(fromAddresses, address.(*admin.UserAddress))
+	}
+
+	modelAddresses := make([]model.Address, 0, len(fromAddresses))
+	for _, v := range fromAddresses {
+		if v.Type == "work" {
+			modelAddresses = append(modelAddresses,
+				model.AddressBuilder().
+					WithFormatted(v.Formatted).
+					Build())
+			break
+		} else if v.Type == "home" {
+			modelAddresses = append(modelAddresses,
+				model.AddressBuilder().
+					WithFormatted(v.Formatted).
+					Build())
+			break
+		}
+	}
+	return modelAddresses, nil
+}
+
+func toPhones(p any) ([]model.PhoneNumber, error) {
+	phones, ok := p.([]interface{})
+	if !ok {
+		return nil, fmt.Errorf("error converting phones: %v", p)
+	}
+
+	fromPhones := make([]*admin.UserPhone, 0, len(phones))
+	for _, phone := range phones {
+		fromPhones = append(fromPhones, phone.(*admin.UserPhone))
+	}
+
+	modelPhoneNumbers := make([]model.PhoneNumber, 0, len(fromPhones))
+	for _, v := range fromPhones {
+		if v.Type == "work" {
+			modelPhoneNumbers = append(modelPhoneNumbers,
+				model.PhoneNumberBuilder().
+					WithValue(v.Value).
+					WithType(v.Type).
+					Build())
+			break
+		} else if v.Type == "home" {
+			modelPhoneNumbers = append(modelPhoneNumbers,
+				model.PhoneNumberBuilder().
+					WithValue(v.Value).
+					WithType(v.Type).
+					Build())
+			break
+		}
+	}
+	return modelPhoneNumbers, nil
+}
+
+func toRelations(r any) (*model.Manager, error) {
+	relations, ok := r.([]interface{})
+	if !ok {
+		return nil, fmt.Errorf("error converting relations: %v", r)
+	}
+
+	fromRelations := make([]*admin.UserRelation, 0, len(relations))
+	for _, relation := range relations {
+		fromRelations = append(fromRelations, relation.(*admin.UserRelation))
+	}
+
+	var manager *model.Manager
+	for _, v := range fromRelations {
+		if v.Type == "manager" {
+			manager = model.ManagerBuilder().
+				WithValue(v.Value).
+				WithRef(v.CustomType).
+				Build()
+			break
+		}
+	}
+	return manager, nil
+}
+
+func toOrganizations(o any, manager *model.Manager) (*model.EnterpriseData, string, error) {
+	organizations, ok := o.([]interface{})
+	if !ok {
+		return nil, "", fmt.Errorf("error converting organizations: %v", o)
+	}
+
+	fromOrganizations := make([]*admin.UserOrganization, 0, len(organizations))
+	for _, organization := range organizations {
+		fromOrganizations = append(fromOrganizations, organization.(*admin.UserOrganization))
+	}
+
+	var mainOrganization *model.EnterpriseData
+	var title string
+	for _, v := range fromOrganizations {
+		if v.Primary {
+			mainOrganization = model.EnterpriseDataBuilder().
+				WithCostCenter(v.CostCenter).
+				WithOrganization(v.Name).
+				WithDivision(v.Domain).
+				WithDepartment(v.Department).
+				WithManager(manager).
+				Build()
+			title = v.Title
+			break
+		}
+	}
+	return mainOrganization, title, nil
 }
