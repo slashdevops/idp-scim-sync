@@ -197,16 +197,31 @@ func toLanguages(l any) (string, error) {
 		return "", fmt.Errorf("error converting languages: %v", l)
 	}
 
-	fromLanguages := make([]*admin.UserLanguage, 0, len(languages))
-	for _, language := range languages {
-		fromLanguages = append(fromLanguages, language.(*admin.UserLanguage))
-	}
-
 	var preferredLanguage string
-	for _, v := range fromLanguages {
-		if v.Preference == "preferred" {
-			preferredLanguage = v.LanguageCode
-			break
+	for _, language := range languages {
+		languageMap, ok := language.(map[string]interface{})
+		if !ok {
+			// try to convert to *admin.UserLanguage
+			if lang, ok := language.(*admin.UserLanguage); ok {
+				if lang.Preference == "preferred" {
+					preferredLanguage = lang.LanguageCode
+					break
+				}
+				continue
+			}
+			return "", fmt.Errorf("error converting language: %v", language)
+		}
+
+		var preference string
+		if p, ok := languageMap["preference"].(string); ok {
+			preference = p
+		}
+
+		if preference == "preferred" {
+			if lc, ok := languageMap["languageCode"].(string); ok {
+				preferredLanguage = lc
+				break
+			}
 		}
 	}
 	return preferredLanguage, nil
@@ -218,23 +233,36 @@ func toAddresses(a any) ([]model.Address, error) {
 		return nil, fmt.Errorf("error converting addresses: %v", a)
 	}
 
-	fromAddresses := make([]*admin.UserAddress, 0, len(addresses))
+	modelAddresses := make([]model.Address, 0, len(addresses))
 	for _, address := range addresses {
-		fromAddresses = append(fromAddresses, address.(*admin.UserAddress))
-	}
+		addressMap, ok := address.(map[string]interface{})
+		if !ok {
+			// try to convert to *admin.UserAddress
+			if addr, ok := address.(*admin.UserAddress); ok {
+				if addr.Type == "work" || addr.Type == "home" {
+					modelAddresses = append(modelAddresses,
+						model.AddressBuilder().
+							WithFormatted(addr.Formatted).
+							Build())
+					break
+				}
+				continue
+			}
+			return nil, fmt.Errorf("error converting address: %v", address)
+		}
 
-	modelAddresses := make([]model.Address, 0, len(fromAddresses))
-	for _, v := range fromAddresses {
-		if v.Type == "work" {
+		var addressType, formatted string
+		if at, ok := addressMap["type"].(string); ok {
+			addressType = at
+		}
+		if f, ok := addressMap["formatted"].(string); ok {
+			formatted = f
+		}
+
+		if addressType == "work" || addressType == "home" {
 			modelAddresses = append(modelAddresses,
 				model.AddressBuilder().
-					WithFormatted(v.Formatted).
-					Build())
-			break
-		} else if v.Type == "home" {
-			modelAddresses = append(modelAddresses,
-				model.AddressBuilder().
-					WithFormatted(v.Formatted).
+					WithFormatted(formatted).
 					Build())
 			break
 		}
@@ -248,25 +276,38 @@ func toPhones(p any) ([]model.PhoneNumber, error) {
 		return nil, fmt.Errorf("error converting phones: %v", p)
 	}
 
-	fromPhones := make([]*admin.UserPhone, 0, len(phones))
+	modelPhoneNumbers := make([]model.PhoneNumber, 0, len(phones))
 	for _, phone := range phones {
-		fromPhones = append(fromPhones, phone.(*admin.UserPhone))
-	}
+		phoneMap, ok := phone.(map[string]interface{})
+		if !ok {
+			// try to convert to *admin.UserPhone
+			if ph, ok := phone.(*admin.UserPhone); ok {
+				if ph.Type == "work" || ph.Type == "home" {
+					modelPhoneNumbers = append(modelPhoneNumbers,
+						model.PhoneNumberBuilder().
+							WithValue(ph.Value).
+							WithType(ph.Type).
+							Build())
+					break
+				}
+				continue
+			}
+			return nil, fmt.Errorf("error converting phone: %v", phone)
+		}
 
-	modelPhoneNumbers := make([]model.PhoneNumber, 0, len(fromPhones))
-	for _, v := range fromPhones {
-		if v.Type == "work" {
+		var phoneType, value string
+		if pt, ok := phoneMap["type"].(string); ok {
+			phoneType = pt
+		}
+		if v, ok := phoneMap["value"].(string); ok {
+			value = v
+		}
+
+		if phoneType == "work" || phoneType == "home" {
 			modelPhoneNumbers = append(modelPhoneNumbers,
 				model.PhoneNumberBuilder().
-					WithValue(v.Value).
-					WithType(v.Type).
-					Build())
-			break
-		} else if v.Type == "home" {
-			modelPhoneNumbers = append(modelPhoneNumbers,
-				model.PhoneNumberBuilder().
-					WithValue(v.Value).
-					WithType(v.Type).
+					WithValue(value).
+					WithType(phoneType).
 					Build())
 			break
 		}
@@ -280,17 +321,39 @@ func toRelations(r any) (*model.Manager, error) {
 		return nil, fmt.Errorf("error converting relations: %v", r)
 	}
 
-	fromRelations := make([]*admin.UserRelation, 0, len(relations))
-	for _, relation := range relations {
-		fromRelations = append(fromRelations, relation.(*admin.UserRelation))
-	}
-
 	var manager *model.Manager
-	for _, v := range fromRelations {
-		if v.Type == "manager" {
+	for _, relation := range relations {
+		relationMap, ok := relation.(map[string]interface{})
+		if !ok {
+			// try to convert to *admin.UserRelation
+			if rel, ok := relation.(*admin.UserRelation); ok {
+				if rel.Type == "manager" {
+					manager = model.ManagerBuilder().
+						WithValue(rel.Value).
+						WithRef(rel.CustomType).
+						Build()
+					break
+				}
+				continue
+			}
+			return nil, fmt.Errorf("error converting relation: %v", relation)
+		}
+
+		var relationType, value, customType string
+		if rt, ok := relationMap["type"].(string); ok {
+			relationType = rt
+		}
+		if v, ok := relationMap["value"].(string); ok {
+			value = v
+		}
+		if ct, ok := relationMap["customType"].(string); ok {
+			customType = ct
+		}
+
+		if relationType == "manager" {
 			manager = model.ManagerBuilder().
-				WithValue(v.Value).
-				WithRef(v.CustomType).
+				WithValue(value).
+				WithRef(customType).
 				Build()
 			break
 		}
@@ -304,23 +367,60 @@ func toOrganizations(o any, manager *model.Manager) (*model.EnterpriseData, stri
 		return nil, "", fmt.Errorf("error converting organizations: %v", o)
 	}
 
-	fromOrganizations := make([]*admin.UserOrganization, 0, len(organizations))
-	for _, organization := range organizations {
-		fromOrganizations = append(fromOrganizations, organization.(*admin.UserOrganization))
-	}
-
 	var mainOrganization *model.EnterpriseData
 	var title string
-	for _, v := range fromOrganizations {
-		if v.Primary {
+	for _, organization := range organizations {
+		organizationMap, ok := organization.(map[string]interface{})
+		if !ok {
+			// try to convert to *admin.UserOrganization
+			if org, ok := organization.(*admin.UserOrganization); ok {
+				if org.Primary {
+					mainOrganization = model.EnterpriseDataBuilder().
+						WithCostCenter(org.CostCenter).
+						WithOrganization(org.Name).
+						WithDivision(org.Domain).
+						WithDepartment(org.Department).
+						WithManager(manager).
+						Build()
+					title = org.Title
+					break
+				}
+				continue
+			}
+			return nil, "", fmt.Errorf("error converting organization: %v", organization)
+		}
+
+		var primary bool
+		if p, ok := organizationMap["primary"].(bool); ok {
+			primary = p
+		}
+
+		if primary {
+			var costCenter, name, domain, department, orgTitle string
+			if cc, ok := organizationMap["costCenter"].(string); ok {
+				costCenter = cc
+			}
+			if n, ok := organizationMap["name"].(string); ok {
+				name = n
+			}
+			if d, ok := organizationMap["domain"].(string); ok {
+				domain = d
+			}
+			if dep, ok := organizationMap["department"].(string); ok {
+				department = dep
+			}
+			if t, ok := organizationMap["title"].(string); ok {
+				orgTitle = t
+			}
+
 			mainOrganization = model.EnterpriseDataBuilder().
-				WithCostCenter(v.CostCenter).
-				WithOrganization(v.Name).
-				WithDivision(v.Domain).
-				WithDepartment(v.Department).
+				WithCostCenter(costCenter).
+				WithOrganization(name).
+				WithDivision(domain).
+				WithDepartment(department).
 				WithManager(manager).
 				Build()
-			title = v.Title
+			title = orgTitle
 			break
 		}
 	}
