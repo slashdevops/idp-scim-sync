@@ -140,7 +140,7 @@ func Test_buildUser(t *testing.T) {
 					&admin.UserAddress{Formatted: "formatted work", Type: "work"},
 					&admin.UserAddress{Formatted: "formatted home", Type: "home"},
 				},
-				Emails:        []any{&admin.UserEmail{Address: "user@mail.com", Type: "work", Primary: true}},
+				Emails:        []any{map[string]interface{}{"address": "user@mail.com", "type": "work", "primary": true}},
 				Languages:     []any{&admin.UserLanguage{LanguageCode: "languageCode", Preference: "preferred"}},
 				Organizations: []any{&admin.UserOrganization{CostCenter: "costCenter", Department: "department", Name: "name", Title: "title", Primary: true}},
 				Phones: []any{
@@ -224,7 +224,7 @@ func Test_toEmails(t *testing.T) {
 		{
 			name: "should return a valid email",
 			given: []any{
-				&admin.UserEmail{Address: "user@mail.com", Type: "work", Primary: true},
+				map[string]interface{}{"address": "user@mail.com", "type": "work", "primary": true},
 			},
 			want: []model.Email{
 				model.EmailBuilder().

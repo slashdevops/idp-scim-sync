@@ -1,3 +1,4 @@
+// Package cmd provides the root command and configuration for the idpscimcli CLI application.
 package cmd
 
 import (

@@ -157,19 +157,32 @@ func toEmails(e any) ([]model.Email, error) {
 		return nil, fmt.Errorf("error converting emails: %v", e)
 	}
 
-	fromEmails := make([]*admin.UserEmail, 0, len(emails))
+	modelEmails := make([]model.Email, 0, len(emails))
 	for _, email := range emails {
-		fromEmails = append(fromEmails, email.(*admin.UserEmail))
-	}
+		emailMap, ok := email.(map[string]interface{})
+		if !ok {
+			return nil, fmt.Errorf("error converting email: %v", email)
+		}
 
-	modelEmails := make([]model.Email, 0, len(fromEmails))
-	for _, v := range fromEmails {
-		if v.Primary {
+		var primary bool
+		if p, ok := emailMap["primary"].(bool); ok {
+			primary = p
+		}
+
+		if primary {
+			var emailType, address string
+			if et, ok := emailMap["type"].(string); ok {
+				emailType = et
+			}
+			if addr, ok := emailMap["address"].(string); ok {
+				address = addr
+			}
+
 			modelEmails = append(modelEmails,
 				model.EmailBuilder().
-					WithPrimary(v.Primary).
-					WithType(v.Type).
-					WithValue(v.Address).
+					WithPrimary(primary).
+					WithType(emailType).
+					WithValue(address).
 					Build(),
 			)
 			break
