@@ -13,9 +13,6 @@ import (
 	"google.golang.org/api/option"
 )
 
-func TestListUsers(t *testing.T) {
-}
-
 func TestNewService(t *testing.T) {
 	t.Run("Should return a new Service with mocked parameters", func(t *testing.T) {
 		ctx := context.TODO()

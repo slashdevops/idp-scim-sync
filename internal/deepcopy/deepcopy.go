@@ -1,3 +1,4 @@
+// Package deepcopy provides utilities for deep copying data structures.
 package deepcopy
 
 // SliceOfPointers creates a new slice of pointers from the given slice.

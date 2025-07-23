@@ -450,7 +450,7 @@ func TestSyncService_SyncGroupsAndTheirMembers(t *testing.T) {
 					_, _ = w.Write([]byte(`{}`))
 				}
 			case "POST":
-				var bodyData map[string]interface{}
+				var bodyData map[string]any
 				if err := json.NewDecoder(r.Body).Decode(&bodyData); err != nil {
 					t.Errorf("Error decoding body: %s", err)
 				}

@@ -8,7 +8,7 @@ import (
 )
 
 // show resource structure as outFormat
-func show(outFormat string, resource interface{}) {
+func show(outFormat string, resource any) {
 	switch outFormat {
 	case "json":
 		j, _ := json.MarshalIndent(resource, "", "  ")

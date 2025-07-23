@@ -3,2108 +3,1738 @@ package scim
 import (
 	"context"
 	"errors"
-	"fmt"
+	"strconv"
+	"sync"
 	"testing"
+	"time"
 
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/slashdevops/idp-scim-sync/internal/model"
-	mocks "github.com/slashdevops/idp-scim-sync/mocks/scim"
+	mock_scim "github.com/slashdevops/idp-scim-sync/mocks/scim"
 	"github.com/slashdevops/idp-scim-sync/pkg/aws"
-	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 )
 
-// groupMembersGenerator helper function to generate test data for GetGroupMembers
-func groupMembersGenerator(numMembers int, scimID bool, idpID bool) []*model.Member {
-	members := make([]*model.Member, numMembers)
+// patchValueGenerator helper function to generate test data for patch operations
+func patchValueGenerator(from, numValues int) []patchValue {
+	values := make([]patchValue, numValues)
 
-	for i := 1; i <= numMembers; i++ {
-		var scim string
-		var idp string
-
-		if scimID {
-			scim = fmt.Sprintf("%d", i)
-		}
-		if idpID {
-			idp = fmt.Sprintf("%d", i)
-		}
-
-		members[i-1] = &model.Member{
-			IPID:   idp,
-			SCIMID: scim,
-			Email:  fmt.Sprintf("user.%d@mail.com", i),
-			Status: "ACTIVE",
+	for i := range numValues {
+		values[i] = patchValue{
+			Value: strconv.Itoa(i + from),
 		}
 	}
-	return members
+	return values
+}
+
+func TestProvider_patchGroupOperations(t *testing.T) {
+	type fields struct {
+		scim                 AWSSCIMProvider
+		maxMembersPerRequest int
+	}
+	type args struct {
+		op   string
+		path string
+		pvs  []patchValue
+		gms  *model.GroupMembers
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   []*aws.PatchGroupRequest
+	}{
+		{
+			name: "one member",
+			fields: fields{
+				maxMembersPerRequest: 100,
+			},
+			args: args{
+				op:   "add",
+				path: "members",
+				pvs: []patchValue{
+					{
+						Value: "906722b2be-ee23ed58-6e4e-4b2f-a94a-3ace8456a36c",
+					},
+				},
+				gms: &model.GroupMembers{
+					Group: &model.Group{
+						SCIMID: "016722b2be-ee23ed58-6e4e-4b2f-a94a-3ace8456a36d",
+						Name:   "group 1",
+					},
+				},
+			},
+			want: []*aws.PatchGroupRequest{
+				{
+					Group: aws.Group{
+						ID:          "016722b2be-ee23ed58-6e4e-4b2f-a94a-3ace8456a36d",
+						DisplayName: "group 1",
+					},
+					Patch: aws.Patch{
+						Schemas: []string{"urn:ietf:params:scim:api:messages:2.0:PatchOp"},
+						Operations: []*aws.Operation{
+							{
+								OP:   "add",
+								Path: "members",
+								Value: []patchValue{
+									{
+										Value: "906722b2be-ee23ed58-6e4e-4b2f-a94a-3ace8456a36c",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "more than 100",
+			fields: fields{
+				maxMembersPerRequest: 100,
+			},
+			args: args{
+				op:   "add",
+				path: "members",
+				pvs:  patchValueGenerator(1, 120),
+				gms: &model.GroupMembers{
+					Group: &model.Group{
+						SCIMID: "016722b2be-ee23ed58-6e4e-4b2f-a94a-3ace8456a36e",
+						Name:   "group 1",
+					},
+				},
+			},
+			want: []*aws.PatchGroupRequest{
+				{
+					Group: aws.Group{
+						ID:          "016722b2be-ee23ed58-6e4e-4b2f-a94a-3ace8456a36e",
+						DisplayName: "group 1",
+					},
+					Patch: aws.Patch{
+						Schemas: []string{"urn:ietf:params:scim:api:messages:2.0:PatchOp"},
+						Operations: []*aws.Operation{
+							{
+								OP:    "add",
+								Path:  "members",
+								Value: patchValueGenerator(1, 100),
+							},
+						},
+					},
+				},
+				{
+					Group: aws.Group{
+						ID:          "016722b2be-ee23ed58-6e4e-4b2f-a94a-3ace8456a36e",
+						DisplayName: "group 1",
+					},
+					Patch: aws.Patch{
+						Schemas: []string{"urn:ietf:params:scim:api:messages:2.0:PatchOp"},
+						Operations: []*aws.Operation{
+							{
+								OP:    "add",
+								Path:  "members",
+								Value: patchValueGenerator(101, 20),
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			p := &Provider{
+				scim:                 tt.fields.scim,
+				maxMembersPerRequest: tt.fields.maxMembersPerRequest,
+			}
+			got := p.patchGroupOperations(tt.args.op, tt.args.path, tt.args.pvs, tt.args.gms)
+
+			sort := func(x, y string) bool { return x > y }
+			if diff := cmp.Diff(tt.want, got, cmpopts.SortSlices(sort)); diff != "" {
+				t.Errorf("patchGroupOperations() (-want +got):\n%s", diff)
+			}
+		})
+	}
+}
+
+func BenchmarkProvider_patchGroupOperations(b *testing.B) {
+	p := &Provider{
+		maxMembersPerRequest: 100,
+	}
+	for b.Loop() {
+		p.patchGroupOperations("add", "members", patchValueGenerator(1, 350), &model.GroupMembers{
+			Group: &model.Group{
+				SCIMID: "016722b2be-ee23ed58-6e4e-4b2f-a94a-3ace8456a36e",
+				Name:   "group 1",
+			},
+		})
+	}
 }
 
 func TestNewProvider(t *testing.T) {
-	mockCtrl := gomock.NewController(t)
-	defer mockCtrl.Finish()
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
 
-	t.Run("Should return SCIMProvider and no error", func(t *testing.T) {
-		mockSCIM := mocks.NewMockAWSSCIMProvider(mockCtrl)
-		svc, err := NewProvider(mockSCIM)
+	mockScimProvider := mock_scim.NewMockAWSSCIMProvider(ctrl)
 
-		assert.NoError(t, err)
-		assert.NotNil(t, svc)
-	})
-
-	t.Run("Should return an error if no AWSSCIMProvider is provided", func(t *testing.T) {
-		svc, err := NewProvider(nil)
-
-		assert.Error(t, err)
-		assert.Nil(t, svc)
-		assert.ErrorIs(t, err, ErrSCIMProviderNil)
-	})
+	type args struct {
+		scim AWSSCIMProvider
+		opts []ProviderOption
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    *Provider
+		wantErr bool
+	}{
+		{
+			name: "should return a new provider",
+			args: args{
+				scim: mockScimProvider,
+			},
+			want: &Provider{
+				scim:                 mockScimProvider,
+				maxMembersPerRequest: 100,
+			},
+			wantErr: false,
+		},
+		{
+			name: "should return an error if scim is nil",
+			args: args{
+				scim: nil,
+			},
+			want:    nil,
+			wantErr: true,
+		},
+		{
+			name: "should return a new provider with options",
+			args: args{
+				scim: mockScimProvider,
+				opts: []ProviderOption{
+					WithMaxMembersPerRequest(200),
+				},
+			},
+			want: &Provider{
+				scim:                 mockScimProvider,
+				maxMembersPerRequest: 200,
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := NewProvider(tt.args.scim, tt.args.opts...)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("NewProvider() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if tt.want != nil {
+				if got.maxMembersPerRequest != tt.want.maxMembersPerRequest {
+					t.Errorf("NewProvider() = %v, want %v", got.maxMembersPerRequest, tt.want.maxMembersPerRequest)
+				}
+			}
+		})
+	}
 }
 
-func TestGetGroups(t *testing.T) {
-	mockCtrl := gomock.NewController(t)
-	defer mockCtrl.Finish()
+func TestProvider_GetGroups(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
 
-	t.Run("Should return a error", func(t *testing.T) {
-		mockSCIM := mocks.NewMockAWSSCIMProvider(mockCtrl)
-		mockSCIM.EXPECT().ListGroups(context.TODO(), gomock.Any()).Return(nil, errors.New("test error"))
+	mockScimProvider := mock_scim.NewMockAWSSCIMProvider(ctrl)
 
-		svc, _ := NewProvider(mockSCIM)
-		gr, err := svc.GetGroups(context.TODO())
-
-		assert.Error(t, err)
-		assert.Nil(t, gr)
-	})
-
-	t.Run("Should return a empty list of groups and no error", func(t *testing.T) {
-		mockSCIM := mocks.NewMockAWSSCIMProvider(mockCtrl)
-		groups := &aws.ListGroupsResponse{}
-		mockSCIM.EXPECT().ListGroups(context.TODO(), gomock.Any()).Return(groups, nil)
-
-		svc, _ := NewProvider(mockSCIM)
-		gr, err := svc.GetGroups(context.TODO())
-
-		assert.NoError(t, err)
-		assert.NotNil(t, gr)
-
-		assert.Equal(t, 0, len(gr.Resources))
-		assert.Equal(t, 0, gr.Items)
-	})
-
-	t.Run("Should return a list of groups and no error", func(t *testing.T) {
-		mockSCIM := mocks.NewMockAWSSCIMProvider(mockCtrl)
-		groups := &aws.ListGroupsResponse{
-			ListResponse: aws.ListResponse{
-				TotalResults: 2,
-				ItemsPerPage: 2,
-				StartIndex:   0,
-				Schemas:      []string{"urn:ietf:params:scim:api:messages:2.0:ListResponse"},
+	type fields struct {
+		scim AWSSCIMProvider
+	}
+	type args struct {
+		ctx context.Context
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		prepare func(m *mock_scim.MockAWSSCIMProvider)
+		want    *model.GroupsResult
+		wantErr bool
+	}{
+		{
+			name: "should return groups",
+			fields: fields{
+				scim: mockScimProvider,
 			},
-			Resources: []*aws.Group{
-				{
-					ID:          "1",
-					DisplayName: "group 1",
-					Schemas:     []string{"urn:ietf:params:scim:schemas:core:2.0:Group"},
-					Members:     []*aws.Member{},
-					Meta:        aws.Meta{ResourceType: "Group", Created: "2020-04-01T12:00:00Z", LastModified: "2020-04-01T12:00:00Z"},
-				},
-				{
-					ID:          "2",
-					DisplayName: "group 2",
-					Schemas:     []string{"urn:ietf:params:scim:schemas:core:2.0:Group"},
-					Members:     []*aws.Member{},
-					Meta:        aws.Meta{ResourceType: "Group", Created: "2020-04-02T12:00:00Z", LastModified: "2020-04-02T12:00:00Z"},
-				},
+			args: args{
+				ctx: context.Background(),
 			},
-		}
-
-		mockSCIM.EXPECT().ListGroups(context.TODO(), gomock.Any()).Return(groups, nil)
-
-		svc, _ := NewProvider(mockSCIM)
-		gr, err := svc.GetGroups(context.TODO())
-
-		assert.NoError(t, err)
-		assert.NotNil(t, gr)
-		assert.Equal(t, 2, len(gr.Resources))
-		assert.Equal(t, 2, gr.Items)
-		// assert.Equal(t, "", gr.HashCode) //TODO: create a object to compare this
-
-		assert.Equal(t, "1", gr.Resources[0].SCIMID)
-		assert.Equal(t, "2", gr.Resources[1].SCIMID)
-
-		assert.Equal(t, "group 1", gr.Resources[0].Name)
-		assert.Equal(t, "group 2", gr.Resources[1].Name)
-
-		assert.Equal(t, "", gr.Resources[0].Email)
-		assert.Equal(t, "", gr.Resources[1].Email)
-	})
-
-	t.Run("Should return a list of zero groups and no error", func(t *testing.T) {
-		mockSCIM := mocks.NewMockAWSSCIMProvider(mockCtrl)
-		groups := &aws.ListGroupsResponse{
-			ListResponse: aws.ListResponse{
-				TotalResults: 0,
-				ItemsPerPage: 0,
-				StartIndex:   0,
-				Schemas:      []string{"urn:ietf:params:scim:api:messages:2.0:ListResponse"},
-			},
-			Resources: []*aws.Group{},
-		}
-
-		mockSCIM.EXPECT().ListGroups(context.TODO(), gomock.Any()).Return(groups, nil)
-
-		svc, _ := NewProvider(mockSCIM)
-		gr, err := svc.GetGroups(context.TODO())
-
-		assert.NoError(t, err)
-		assert.NotNil(t, gr)
-		assert.Equal(t, 0, len(gr.Resources))
-		assert.Equal(t, 0, gr.Items)
-	})
-}
-
-func TestCreateGroups(t *testing.T) {
-	mockCtrl := gomock.NewController(t)
-	defer mockCtrl.Finish()
-
-	t.Run("Should return a error when model.GroupsResult is nil", func(t *testing.T) {
-		mockSCIM := mocks.NewMockAWSSCIMProvider(mockCtrl)
-
-		svc, err := NewProvider(mockSCIM)
-		if err != nil {
-			t.Fatalf("error creating provider: %v", err)
-		}
-		gr, err := svc.CreateGroups(context.TODO(), nil)
-		assert.Error(t, err)
-		assert.Nil(t, gr)
-	})
-
-	t.Run("Should do nothing with empty GroupsResult", func(t *testing.T) {
-		mockSCIM := mocks.NewMockAWSSCIMProvider(mockCtrl)
-		empty := &model.GroupsResult{}
-
-		svc, err := NewProvider(mockSCIM)
-		if err != nil {
-			t.Fatalf("error creating provider: %v", err)
-		}
-		gr, err := svc.CreateGroups(context.TODO(), empty)
-		assert.NoError(t, err)
-		assert.NotNil(t, gr)
-	})
-
-	t.Run("Should call CreateGroup 1 time and no return error", func(t *testing.T) {
-		mockSCIM := mocks.NewMockAWSSCIMProvider(mockCtrl)
-		cgr := &aws.CreateGroupRequest{
-			DisplayName: "group 1",
-			ExternalID:  "1",
-		}
-		resp := &aws.CreateGroupResponse{}
-		ctx := context.TODO()
-
-		mockSCIM.EXPECT().CreateOrGetGroup(ctx, cgr).Return(resp, nil).Times(1)
-
-		gr := &model.GroupsResult{
-			Items: 1,
-			Resources: []*model.Group{
-				{
-					IPID:  "1",
-					Name:  "group 1",
-					Email: "group.1@mail.com",
-				},
-			},
-		}
-
-		svc, _ := NewProvider(mockSCIM)
-		gr, err := svc.CreateGroups(ctx, gr)
-		assert.NoError(t, err)
-		assert.NotNil(t, gr)
-	})
-
-	t.Run("Should call CreateGroup 1 time and return error", func(t *testing.T) {
-		mockSCIM := mocks.NewMockAWSSCIMProvider(mockCtrl)
-		cgr := &aws.CreateGroupRequest{
-			DisplayName: "group 1",
-			ExternalID:  "1",
-		}
-		resp := &aws.CreateGroupResponse{}
-		ctx := context.TODO()
-
-		mockSCIM.EXPECT().CreateOrGetGroup(ctx, cgr).Return(resp, errors.New("test error")).Times(1)
-
-		gr := &model.GroupsResult{
-			Items: 1,
-			Resources: []*model.Group{
-				{
-					IPID:  "1",
-					Name:  "group 1",
-					Email: "group.1@mail.com",
-				},
-			},
-		}
-
-		svc, _ := NewProvider(mockSCIM)
-		gr, err := svc.CreateGroups(ctx, gr)
-		assert.Error(t, err)
-		assert.Nil(t, gr)
-	})
-
-	t.Run("Should call CreateGroup 2 time and no error", func(t *testing.T) {
-		mockSCIM := mocks.NewMockAWSSCIMProvider(mockCtrl)
-		cgr1 := &aws.CreateGroupRequest{
-			DisplayName: "group 1",
-			ExternalID:  "1",
-		}
-		cgr2 := &aws.CreateGroupRequest{
-			DisplayName: "group 2",
-			ExternalID:  "2",
-		}
-		resp1 := &aws.CreateGroupResponse{
-			ID:          "11",
-			DisplayName: "group 1",
-			Meta: aws.Meta{
-				ResourceType: "Group",
-				Created:      "2020-04-02T12:00:00Z",
-				LastModified: "2020-04-02T12:00:00Z",
-			},
-			Schemas: []string{"urn:ietf:params:scim:schemas:core:2.0:Group"},
-		}
-		resp2 := &aws.CreateGroupResponse{
-			ID:          "22",
-			DisplayName: "group 2",
-			Meta: aws.Meta{
-				ResourceType: "Group",
-				Created:      "2020-04-03T12:00:00Z",
-				LastModified: "2020-04-03T12:00:00Z",
-			},
-			Schemas: []string{"urn:ietf:params:scim:schemas:core:2.0:Group"},
-		}
-		ctx := context.TODO()
-
-		mockSCIM.EXPECT().CreateOrGetGroup(ctx, cgr1).Return(resp1, nil).Times(1)
-		mockSCIM.EXPECT().CreateOrGetGroup(ctx, cgr2).Return(resp2, nil).Times(1)
-
-		gr := &model.GroupsResult{
-			Items: 1,
-			Resources: []*model.Group{
-				{
-					IPID:   "1",
-					SCIMID: "1",
-					Name:   "group 1",
-					Email:  "group.1@mail.com",
-				},
-				{
-					IPID:   "2",
-					SCIMID: "2",
-					Name:   "group 2",
-					Email:  "group.2@mail.com",
-				},
-			},
-		}
-
-		svc, _ := NewProvider(mockSCIM)
-		gr, err := svc.CreateGroups(ctx, gr)
-		assert.NoError(t, err)
-		assert.NotNil(t, gr)
-
-		assert.Equal(t, "1", gr.Resources[0].IPID)
-		assert.Equal(t, "2", gr.Resources[1].IPID)
-
-		assert.Equal(t, "11", gr.Resources[0].SCIMID)
-		assert.Equal(t, "22", gr.Resources[1].SCIMID)
-
-		assert.Equal(t, "group 1", gr.Resources[0].Name)
-		assert.Equal(t, "group 2", gr.Resources[1].Name)
-	})
-}
-
-func TestUpdateGroups(t *testing.T) {
-	mockCtrl := gomock.NewController(t)
-	defer mockCtrl.Finish()
-
-	t.Run("Should do nothing with empty GroupsResult", func(t *testing.T) {
-		mockSCIM := mocks.NewMockAWSSCIMProvider(mockCtrl)
-		empty := &model.GroupsResult{}
-
-		svc, _ := NewProvider(mockSCIM)
-		gr, err := svc.UpdateGroups(context.TODO(), empty)
-		assert.NoError(t, err)
-		assert.NotNil(t, gr)
-	})
-
-	t.Run("Should call PatchGroup 1 time and no return error", func(t *testing.T) {
-		mockSCIM := mocks.NewMockAWSSCIMProvider(mockCtrl)
-		pgr := &aws.PatchGroupRequest{
-			Group: aws.Group{
-				ID:          "1",
-				DisplayName: "group 1",
-			},
-			Patch: aws.Patch{
-				Schemas: []string{"urn:ietf:params:scim:api:messages:2.0:PatchOp"},
-				Operations: []*aws.Operation{
-					{
-						OP: "replace",
-						Value: map[string]string{
-							"id":         "1",
-							"externalId": "1",
-						},
-					},
-				},
-			},
-		}
-		ctx := context.TODO()
-
-		mockSCIM.EXPECT().PatchGroup(ctx, pgr).Return(nil).Times(1)
-
-		gr := &model.GroupsResult{
-			Items: 1,
-			Resources: []*model.Group{
-				{
-					IPID:   "1",
-					SCIMID: "1",
-					Name:   "group 1",
-					Email:  "group.1@mail.com",
-				},
-			},
-		}
-
-		svc, _ := NewProvider(mockSCIM)
-		got, err := svc.UpdateGroups(ctx, gr)
-		assert.NoError(t, err)
-		assert.NotNil(t, got)
-
-		assert.Equal(t, 1, got.Items)
-		assert.Equal(t, "1", got.Resources[0].IPID)
-		assert.Equal(t, "1", got.Resources[0].SCIMID)
-		assert.Equal(t, "group 1", got.Resources[0].Name)
-	})
-
-	t.Run("Should call PatchGroup 1 time and return error", func(t *testing.T) {
-		mockSCIM := mocks.NewMockAWSSCIMProvider(mockCtrl)
-		pgr := &aws.PatchGroupRequest{
-			Group: aws.Group{
-				ID:          "1",
-				DisplayName: "group 1",
-			},
-			Patch: aws.Patch{
-				Schemas: []string{"urn:ietf:params:scim:api:messages:2.0:PatchOp"},
-				Operations: []*aws.Operation{
-					{
-						OP: "replace",
-						Value: map[string]string{
-							"id":         "1",
-							"externalId": "1",
-						},
-					},
-				},
-			},
-		}
-		ctx := context.TODO()
-
-		mockSCIM.EXPECT().PatchGroup(ctx, pgr).Return(errors.New("test error")).Times(1)
-
-		gr := &model.GroupsResult{
-			Items: 1,
-			Resources: []*model.Group{
-				{
-					IPID:   "1",
-					SCIMID: "1",
-					Name:   "group 1",
-					Email:  "group.1@mail.com",
-				},
-			},
-		}
-
-		svc, _ := NewProvider(mockSCIM)
-		gr, err := svc.UpdateGroups(ctx, gr)
-		assert.Error(t, err)
-		assert.Nil(t, gr)
-	})
-
-	t.Run("Should call CreateGroup 2 time and no error", func(t *testing.T) {
-		mockSCIM := mocks.NewMockAWSSCIMProvider(mockCtrl)
-		pgr1 := &aws.PatchGroupRequest{
-			Group: aws.Group{
-				ID:          "1",
-				DisplayName: "group 1",
-			},
-			Patch: aws.Patch{
-				Schemas: []string{"urn:ietf:params:scim:api:messages:2.0:PatchOp"},
-				Operations: []*aws.Operation{
-					{
-						OP: "replace",
-						Value: map[string]string{
-							"id":         "1",
-							"externalId": "1",
-						},
-					},
-				},
-			},
-		}
-		pgr2 := &aws.PatchGroupRequest{
-			Group: aws.Group{
-				ID:          "2",
-				DisplayName: "group 2",
-			},
-			Patch: aws.Patch{
-				Schemas: []string{"urn:ietf:params:scim:api:messages:2.0:PatchOp"},
-				Operations: []*aws.Operation{
-					{
-						OP: "replace",
-						Value: map[string]string{
-							"id":         "2",
-							"externalId": "2",
-						},
-					},
-				},
-			},
-		}
-		ctx := context.TODO()
-
-		mockSCIM.EXPECT().PatchGroup(ctx, pgr1).Return(nil).Times(1)
-		mockSCIM.EXPECT().PatchGroup(ctx, pgr2).Return(nil).Times(1)
-
-		gr := &model.GroupsResult{
-			Items: 1,
-			Resources: []*model.Group{
-				{
-					IPID:   "1",
-					SCIMID: "1",
-					Name:   "group 1",
-					Email:  "group.1@mail.com",
-				},
-				{
-					IPID:   "2",
-					SCIMID: "2",
-					Name:   "group 2",
-					Email:  "group.2@mail.com",
-				},
-			},
-		}
-
-		svc, _ := NewProvider(mockSCIM)
-		gr, err := svc.UpdateGroups(ctx, gr)
-		assert.NoError(t, err)
-		assert.NotNil(t, gr)
-
-		assert.Equal(t, "1", gr.Resources[0].IPID)
-		assert.Equal(t, "2", gr.Resources[1].IPID)
-
-		assert.Equal(t, "1", gr.Resources[0].SCIMID)
-		assert.Equal(t, "2", gr.Resources[1].SCIMID)
-
-		assert.Equal(t, "group 1", gr.Resources[0].Name)
-		assert.Equal(t, "group 2", gr.Resources[1].Name)
-	})
-}
-
-func TestDeleteGroups(t *testing.T) {
-	mockCtrl := gomock.NewController(t)
-	defer mockCtrl.Finish()
-
-	t.Run("Should do nothing with empty GroupsResult", func(t *testing.T) {
-		mockSCIM := mocks.NewMockAWSSCIMProvider(mockCtrl)
-		empty := &model.GroupsResult{}
-
-		svc, _ := NewProvider(mockSCIM)
-		err := svc.DeleteGroups(context.TODO(), empty)
-		assert.NoError(t, err)
-	})
-
-	t.Run("Should call PatchGroup 1 time and no return error", func(t *testing.T) {
-		mockSCIM := mocks.NewMockAWSSCIMProvider(mockCtrl)
-		ctx := context.TODO()
-
-		mockSCIM.EXPECT().DeleteGroup(ctx, "1").Return(nil).Times(1)
-
-		gr := &model.GroupsResult{
-			Items: 1,
-			Resources: []*model.Group{
-				{
-					IPID:   "1",
-					SCIMID: "1",
-					Name:   "group 1",
-					Email:  "group.1@mail.com",
-				},
-			},
-		}
-
-		svc, _ := NewProvider(mockSCIM)
-		err := svc.DeleteGroups(ctx, gr)
-		assert.NoError(t, err)
-	})
-
-	t.Run("Should call PatchGroup 1 time and return error", func(t *testing.T) {
-		mockSCIM := mocks.NewMockAWSSCIMProvider(mockCtrl)
-		ctx := context.TODO()
-
-		mockSCIM.EXPECT().DeleteGroup(ctx, "1").Return(errors.New("test error")).Times(1)
-
-		gr := &model.GroupsResult{
-			Items: 1,
-			Resources: []*model.Group{
-				{
-					IPID:   "1",
-					SCIMID: "1",
-					Name:   "group 1",
-					Email:  "group.1@mail.com",
-				},
-			},
-		}
-
-		svc, _ := NewProvider(mockSCIM)
-		err := svc.DeleteGroups(ctx, gr)
-		assert.Error(t, err)
-	})
-
-	t.Run("Should call CreateGroup 2 time and no error", func(t *testing.T) {
-		mockSCIM := mocks.NewMockAWSSCIMProvider(mockCtrl)
-		ctx := context.TODO()
-
-		mockSCIM.EXPECT().DeleteGroup(ctx, "1").Return(nil).Times(1)
-		mockSCIM.EXPECT().DeleteGroup(ctx, "2").Return(nil).Times(1)
-
-		gr := &model.GroupsResult{
-			Items: 1,
-			Resources: []*model.Group{
-				{
-					IPID:   "1",
-					SCIMID: "1",
-					Name:   "group 1",
-					Email:  "group.1@mail.com",
-				},
-				{
-					IPID:   "2",
-					SCIMID: "2",
-					Name:   "group 2",
-					Email:  "group.2@mail.com",
-				},
-			},
-		}
-
-		svc, _ := NewProvider(mockSCIM)
-		err := svc.DeleteGroups(ctx, gr)
-		assert.NoError(t, err)
-	})
-}
-
-func TestGetUsers(t *testing.T) {
-	mockCtrl := gomock.NewController(t)
-	defer mockCtrl.Finish()
-
-	t.Run("Should return a error", func(t *testing.T) {
-		mockSCIM := mocks.NewMockAWSSCIMProvider(mockCtrl)
-		mockSCIM.EXPECT().ListUsers(context.TODO(), gomock.Any()).Return(nil, errors.New("test error"))
-
-		svc, _ := NewProvider(mockSCIM)
-		gr, err := svc.GetUsers(context.TODO())
-
-		assert.Error(t, err)
-		assert.Nil(t, gr)
-	})
-
-	t.Run("Should return a empty list of users and no error", func(t *testing.T) {
-		mockSCIM := mocks.NewMockAWSSCIMProvider(mockCtrl)
-		users := &aws.ListUsersResponse{}
-		mockSCIM.EXPECT().ListUsers(context.TODO(), gomock.Any()).Return(users, nil)
-
-		svc, _ := NewProvider(mockSCIM)
-		gr, err := svc.GetUsers(context.TODO())
-
-		assert.NoError(t, err)
-		assert.NotNil(t, gr)
-
-		assert.Equal(t, 0, len(gr.Resources))
-		assert.Equal(t, 0, gr.Items)
-	})
-
-	t.Run("Should return a list of users and no error", func(t *testing.T) {
-		mockSCIM := mocks.NewMockAWSSCIMProvider(mockCtrl)
-		users := &aws.ListUsersResponse{
-			ListResponse: aws.ListResponse{
-				TotalResults: 2,
-				ItemsPerPage: 2,
-				StartIndex:   0,
-				Schemas:      []string{"urn:ietf:params:scim:api:messages:2.0:ListResponse"},
-			},
-			Resources: []*aws.User{
-				{
-					ID:          "1",
-					ExternalID:  "1",
-					Name:        &aws.Name{FamilyName: "1", GivenName: "user"},
-					DisplayName: "group 1",
-					Schemas:     []string{"urn:ietf:params:scim:schemas:core:2.0:User"},
-					Meta:        &aws.Meta{ResourceType: "User", Created: "2020-04-01T12:00:00Z", LastModified: "2020-04-01T12:00:00Z"},
-					Emails:      []aws.Email{{Value: "user.1@mail.com", Type: "work", Primary: true}},
-				},
-				{
-					ID:          "2",
-					ExternalID:  "2",
-					Name:        &aws.Name{FamilyName: "2", GivenName: "user"},
-					DisplayName: "group 2",
-					Schemas:     []string{"urn:ietf:params:scim:schemas:core:2.0:User"},
-					Meta:        &aws.Meta{ResourceType: "User", Created: "2020-04-02T12:00:00Z", LastModified: "2020-04-02T12:00:00Z"},
-					Emails:      []aws.Email{{Value: "user.2@mail.com", Type: "work", Primary: true}},
-				},
-			},
-		}
-
-		mockSCIM.EXPECT().ListUsers(context.TODO(), gomock.Any()).Return(users, nil)
-
-		svc, _ := NewProvider(mockSCIM)
-		gr, err := svc.GetUsers(context.TODO())
-
-		assert.NoError(t, err)
-		assert.NotNil(t, gr)
-		assert.Equal(t, 2, len(gr.Resources))
-		assert.Equal(t, 2, gr.Items)
-
-		assert.Equal(t, "1", gr.Resources[0].SCIMID)
-		assert.Equal(t, "2", gr.Resources[1].SCIMID)
-
-		assert.Equal(t, "1", gr.Resources[0].Name.FamilyName)
-		assert.Equal(t, "user", gr.Resources[0].Name.GivenName)
-
-		assert.Equal(t, "2", gr.Resources[1].Name.FamilyName)
-		assert.Equal(t, "user", gr.Resources[1].Name.GivenName)
-
-		assert.Equal(t, "user.1@mail.com", gr.Resources[0].Emails[0].Value)
-		assert.Equal(t, "user.2@mail.com", gr.Resources[1].Emails[0].Value)
-	})
-}
-
-func TestCreateUsers(t *testing.T) {
-	mockCtrl := gomock.NewController(t)
-	defer mockCtrl.Finish()
-
-	t.Run("Should do nothing with empty UsersResult", func(t *testing.T) {
-		mockSCIM := mocks.NewMockAWSSCIMProvider(mockCtrl)
-		empty := &model.UsersResult{}
-
-		svc, _ := NewProvider(mockSCIM)
-		cur, err := svc.CreateUsers(context.TODO(), empty)
-
-		assert.NoError(t, err)
-		assert.NotNil(t, cur)
-	})
-
-	t.Run("Should call CreateUser 1 time and no return error", func(t *testing.T) {
-		mockSCIM := mocks.NewMockAWSSCIMProvider(mockCtrl)
-		cur := &aws.CreateUserRequest{
-			UserName:    "user.1@mail.com",
-			DisplayName: "user 1",
-			ExternalID:  "1",
-			Name:        &aws.Name{FamilyName: "1", GivenName: "user"},
-			Emails: []aws.Email{
-				{Value: "user.1@mail.com", Type: "work", Primary: true},
-			},
-			Active: true,
-		}
-		resp := &aws.CreateUserResponse{}
-		ctx := context.TODO()
-
-		mockSCIM.EXPECT().CreateOrGetUser(ctx, cur).Return(resp, nil).Times(1)
-
-		usr := &model.UsersResult{
-			Items: 1,
-			Resources: []*model.User{
-				{
-					IPID:        "1",
-					Name:        &model.Name{FamilyName: "1", GivenName: "user"},
-					DisplayName: "user 1",
-					Emails:      []model.Email{{Value: "user.1@mail.com", Type: "work", Primary: true}},
-					Active:      true,
-					UserName:    "user.1@mail.com",
-				},
-			},
-		}
-
-		svc, _ := NewProvider(mockSCIM)
-		ur, err := svc.CreateUsers(ctx, usr)
-
-		assert.NoError(t, err)
-		assert.NotNil(t, ur)
-	})
-
-	t.Run("Should call CreateUser 1 time and return error", func(t *testing.T) {
-		mockSCIM := mocks.NewMockAWSSCIMProvider(mockCtrl)
-		cur := &aws.CreateUserRequest{
-			UserName:    "user.1@mail.com",
-			DisplayName: "user 1",
-			ExternalID:  "1",
-			Name:        &aws.Name{FamilyName: "1", GivenName: "user"},
-			Emails: []aws.Email{
-				{Value: "user.1@mail.com", Type: "work", Primary: true},
-			},
-			Active: false,
-		}
-		resp := &aws.CreateUserResponse{}
-		ctx := context.TODO()
-
-		mockSCIM.EXPECT().CreateOrGetUser(ctx, cur).Return(resp, errors.New("test error")).Times(1)
-
-		usr := &model.UsersResult{
-			Items: 1,
-			Resources: []*model.User{
-				{
-					IPID:        "1",
-					Name:        &model.Name{FamilyName: "1", GivenName: "user"},
-					DisplayName: "user 1",
-					Emails:      []model.Email{{Value: "user.1@mail.com", Type: "work", Primary: true}},
-					UserName:    "user.1@mail.com",
-				},
-			},
-		}
-
-		svc, _ := NewProvider(mockSCIM)
-		ur, err := svc.CreateUsers(ctx, usr)
-
-		assert.Error(t, err)
-		assert.Nil(t, ur)
-	})
-
-	t.Run("Should call CreateUser 2 time and no return error", func(t *testing.T) {
-		mockSCIM := mocks.NewMockAWSSCIMProvider(mockCtrl)
-		cur1 := &aws.CreateUserRequest{
-			UserName:    "user.1@mail.com",
-			DisplayName: "user 1",
-			ExternalID:  "1",
-			Name:        &aws.Name{FamilyName: "1", GivenName: "user"},
-			Emails: []aws.Email{
-				{Value: "user.1@mail.com", Type: "work", Primary: true},
-			},
-			Active: true,
-		}
-		cur2 := &aws.CreateUserRequest{
-			UserName:    "user.2@mail.com",
-			DisplayName: "user 2",
-			ExternalID:  "2",
-			Name:        &aws.Name{FamilyName: "2", GivenName: "user"},
-			Emails: []aws.Email{
-				{Value: "user.2@mail.com", Type: "work", Primary: true},
-			},
-			Active: true,
-		}
-		resp1 := &aws.CreateUserResponse{
-			ID:         "11",
-			ExternalID: "1",
-			Name: &aws.Name{
-				FamilyName: "1",
-				GivenName:  "user",
-			},
-			DisplayName: "user 1",
-			Active:      true,
-			Emails:      []aws.Email{{Value: "user.1@mail.com", Type: "work", Primary: true}},
-			UserName:    "user.1@mail.com",
-		}
-		resp2 := &aws.CreateUserResponse{
-			ID:         "22",
-			ExternalID: "2",
-			Name: &aws.Name{
-				FamilyName: "2",
-				GivenName:  "user",
-			},
-			DisplayName: "user 2",
-			Active:      true,
-			Emails:      []aws.Email{{Value: "user.2@mail.com", Type: "work", Primary: true}},
-			UserName:    "user.2@mail.com",
-		}
-		ctx := context.TODO()
-
-		gomock.InOrder(
-			mockSCIM.EXPECT().CreateOrGetUser(ctx, cur1).Return(resp1, nil).Times(1),
-			mockSCIM.EXPECT().CreateOrGetUser(ctx, cur2).Return(resp2, nil).Times(1),
-		)
-
-		usr := &model.UsersResult{
-			Items: 2,
-			Resources: []*model.User{
-				{
-					IPID:        "1",
-					Name:        &model.Name{FamilyName: "1", GivenName: "user"},
-					DisplayName: "user 1",
-					Emails:      []model.Email{{Value: "user.1@mail.com", Type: "work", Primary: true}},
-					Active:      true,
-					UserName:    "user.1@mail.com",
-				},
-				{
-					IPID:        "2",
-					Name:        &model.Name{FamilyName: "2", GivenName: "user"},
-					DisplayName: "user 2",
-					Emails:      []model.Email{{Value: "user.2@mail.com", Type: "work", Primary: true}},
-					Active:      true,
-					UserName:    "user.2@mail.com",
-				},
-			},
-		}
-
-		svc, _ := NewProvider(mockSCIM)
-		ur, err := svc.CreateUsers(ctx, usr)
-
-		assert.NoError(t, err)
-		assert.NotNil(t, ur)
-
-		assert.Equal(t, "1", ur.Resources[0].IPID)
-		assert.Equal(t, "2", ur.Resources[1].IPID)
-
-		assert.Equal(t, "11", ur.Resources[0].SCIMID)
-		assert.Equal(t, "22", ur.Resources[1].SCIMID)
-
-		assert.Equal(t, "1", ur.Resources[0].Name.FamilyName)
-		assert.Equal(t, "user", ur.Resources[0].Name.GivenName)
-
-		assert.Equal(t, "2", ur.Resources[1].Name.FamilyName)
-		assert.Equal(t, "user", ur.Resources[1].Name.GivenName)
-	})
-}
-
-func TestUpdateUsers(t *testing.T) {
-	mockCtrl := gomock.NewController(t)
-	defer mockCtrl.Finish()
-
-	t.Run("Should do nothing with empty UsersResult", func(t *testing.T) {
-		mockSCIM := mocks.NewMockAWSSCIMProvider(mockCtrl)
-		empty := &model.UsersResult{}
-
-		svc, _ := NewProvider(mockSCIM)
-		cur, err := svc.UpdateUsers(context.TODO(), empty)
-
-		assert.NoError(t, err)
-		assert.NotNil(t, cur)
-	})
-
-	t.Run("Should call PutUser 1 time and no return error", func(t *testing.T) {
-		mockSCIM := mocks.NewMockAWSSCIMProvider(mockCtrl)
-		pur := &aws.PutUserRequest{
-			ID:          "1",
-			ExternalID:  "1",
-			UserName:    "user.1@mail.com",
-			DisplayName: "user 1",
-			Name:        &aws.Name{FamilyName: "1", GivenName: "user"},
-			Emails: []aws.Email{
-				{Value: "user.1@mail.com", Type: "work", Primary: true},
-			},
-			Active: true,
-		}
-		resp := &aws.PutUserResponse{
-			ID:         "1",
-			ExternalID: "1",
-			Name: &aws.Name{
-				FamilyName: "1",
-				GivenName:  "user",
-				Formatted:  "user 1",
-			},
-			DisplayName: "user 1",
-			Active:      true,
-			UserName:    "user.1@mail.com",
-		}
-		ctx := context.TODO()
-
-		mockSCIM.EXPECT().PutUser(ctx, pur).Return(resp, nil).Times(1)
-
-		usr := &model.UsersResult{
-			Items: 1,
-			Resources: []*model.User{
-				{
-					IPID:        "1",
-					SCIMID:      "1",
-					Name:        &model.Name{FamilyName: "1", GivenName: "user"},
-					DisplayName: "user 1",
-					Emails:      []model.Email{{Value: "user.1@mail.com", Type: "work", Primary: true}},
-					Active:      true,
-					UserName:    "user.1@mail.com",
-				},
-			},
-		}
-
-		svc, _ := NewProvider(mockSCIM)
-		ur, err := svc.UpdateUsers(ctx, usr)
-		assert.NoError(t, err)
-		assert.NotNil(t, ur)
-
-		assert.Equal(t, "1", ur.Resources[0].IPID)
-		assert.Equal(t, "1", ur.Resources[0].SCIMID)
-		assert.Equal(t, "1", ur.Resources[0].Name.FamilyName)
-		assert.Equal(t, "user", ur.Resources[0].Name.GivenName)
-		assert.Equal(t, "user 1", ur.Resources[0].DisplayName)
-	})
-
-	t.Run("Should call PutUser 1 time and return error", func(t *testing.T) {
-		mockSCIM := mocks.NewMockAWSSCIMProvider(mockCtrl)
-		pur := &aws.PutUserRequest{
-			ID:          "1",
-			ExternalID:  "1",
-			UserName:    "user.1@mail.com",
-			DisplayName: "user 1",
-			Name:        &aws.Name{FamilyName: "1", GivenName: "user"},
-			Emails: []aws.Email{
-				{Value: "user.1@mail.com", Type: "work", Primary: true},
-			},
-			Active: false,
-		}
-		resp := &aws.PutUserResponse{
-			ID:         "1",
-			ExternalID: "1",
-			Name: &aws.Name{
-				FamilyName: "1",
-				GivenName:  "user",
-			},
-			DisplayName: "user 1",
-			Active:      true,
-			UserName:    "user.1@mail.com",
-		}
-		ctx := context.TODO()
-
-		mockSCIM.EXPECT().PutUser(ctx, pur).Return(resp, errors.New("test error")).Times(1)
-
-		usr := &model.UsersResult{
-			Items: 1,
-			Resources: []*model.User{
-				{
-					IPID:        "1",
-					SCIMID:      "1",
-					Name:        &model.Name{FamilyName: "1", GivenName: "user"},
-					DisplayName: "user 1",
-					Emails:      []model.Email{{Value: "user.1@mail.com", Type: "work", Primary: true}},
-					UserName:    "user.1@mail.com",
-				},
-			},
-		}
-
-		svc, _ := NewProvider(mockSCIM)
-		ur, err := svc.UpdateUsers(ctx, usr)
-		assert.Error(t, err)
-		assert.Nil(t, ur)
-	})
-
-	t.Run("Should call CreateUser 2 time and no return error", func(t *testing.T) {
-		mockSCIM := mocks.NewMockAWSSCIMProvider(mockCtrl)
-		pur1 := &aws.PutUserRequest{
-			ID:          "1",
-			ExternalID:  "1",
-			UserName:    "user.1@mail.com",
-			DisplayName: "user 1",
-			Name:        &aws.Name{FamilyName: "1", GivenName: "user"},
-			Emails: []aws.Email{
-				{Value: "user.1@mail.com", Type: "work", Primary: true},
-			},
-			Active: true,
-		}
-		pur2 := &aws.PutUserRequest{
-			ID:          "2",
-			ExternalID:  "2",
-			UserName:    "user.2@mail.com",
-			DisplayName: "user 2",
-			Name:        &aws.Name{FamilyName: "2", GivenName: "user"},
-			Emails: []aws.Email{
-				{Value: "user.2@mail.com", Type: "work", Primary: true},
-			},
-			Active: true,
-		}
-		resp1 := &aws.PutUserResponse{
-			ID:         "11",
-			ExternalID: "1",
-			Name: &aws.Name{
-				FamilyName: "1",
-				GivenName:  "user",
-			},
-			DisplayName: "user 1",
-			Active:      true,
-			Emails:      []aws.Email{{Value: "user.1@mail.com", Type: "work", Primary: true}},
-			UserName:    "user.1@mail.com",
-		}
-		resp2 := &aws.PutUserResponse{
-			ID:         "22",
-			ExternalID: "2",
-			Name: &aws.Name{
-				FamilyName: "2",
-				GivenName:  "user",
-			},
-			DisplayName: "user 2",
-			Active:      true,
-			Emails:      []aws.Email{{Value: "user.2@mail.com", Type: "work", Primary: true}},
-			UserName:    "user.2@mail.com",
-		}
-		ctx := context.TODO()
-
-		gomock.InOrder(
-			mockSCIM.EXPECT().PutUser(ctx, pur1).Return(resp1, nil).Times(1),
-			mockSCIM.EXPECT().PutUser(ctx, pur2).Return(resp2, nil).Times(1),
-		)
-
-		usr := &model.UsersResult{
-			Items: 2,
-			Resources: []*model.User{
-				{
-					IPID:        "1",
-					SCIMID:      "1",
-					Name:        &model.Name{FamilyName: "1", GivenName: "user"},
-					DisplayName: "user 1",
-					Emails:      []model.Email{{Value: "user.1@mail.com", Type: "work", Primary: true}},
-					Active:      true,
-					UserName:    "user.1@mail.com",
-				},
-				{
-					IPID:        "2",
-					SCIMID:      "2",
-					Name:        &model.Name{FamilyName: "2", GivenName: "user"},
-					DisplayName: "user 2",
-					Emails:      []model.Email{{Value: "user.2@mail.com", Type: "work", Primary: true}},
-					Active:      true,
-					UserName:    "user.2@mail.com",
-				},
-			},
-		}
-
-		svc, _ := NewProvider(mockSCIM)
-		ur, err := svc.UpdateUsers(ctx, usr)
-
-		assert.NoError(t, err)
-		assert.NotNil(t, ur)
-
-		assert.Equal(t, "1", ur.Resources[0].IPID)
-		assert.Equal(t, "2", ur.Resources[1].IPID)
-
-		assert.Equal(t, "11", ur.Resources[0].SCIMID)
-		assert.Equal(t, "22", ur.Resources[1].SCIMID)
-
-		assert.Equal(t, "1", ur.Resources[0].Name.FamilyName)
-		assert.Equal(t, "user", ur.Resources[0].Name.GivenName)
-
-		assert.Equal(t, "2", ur.Resources[1].Name.FamilyName)
-		assert.Equal(t, "user", ur.Resources[1].Name.GivenName)
-	})
-}
-
-func TestDeleteUsers(t *testing.T) {
-	mockCtrl := gomock.NewController(t)
-	defer mockCtrl.Finish()
-
-	t.Run("Should do nothing with empty UsersResult", func(t *testing.T) {
-		mockSCIM := mocks.NewMockAWSSCIMProvider(mockCtrl)
-		empty := &model.UsersResult{}
-
-		svc, _ := NewProvider(mockSCIM)
-		err := svc.DeleteUsers(context.TODO(), empty)
-		assert.NoError(t, err)
-	})
-
-	t.Run("Should call PutUser 1 time and no return error", func(t *testing.T) {
-		mockSCIM := mocks.NewMockAWSSCIMProvider(mockCtrl)
-		ctx := context.TODO()
-
-		mockSCIM.EXPECT().DeleteUser(ctx, "1").Return(nil).Times(1)
-
-		usr := &model.UsersResult{
-			Items: 1,
-			Resources: []*model.User{
-				{
-					IPID:        "1",
-					SCIMID:      "1",
-					Name:        &model.Name{FamilyName: "1", GivenName: "user"},
-					DisplayName: "user 1",
-					Emails:      []model.Email{{Value: "user.1@mail.com", Type: "work", Primary: true}},
-					Active:      true,
-				},
-			},
-		}
-
-		svc, _ := NewProvider(mockSCIM)
-		err := svc.DeleteUsers(ctx, usr)
-		assert.NoError(t, err)
-	})
-
-	t.Run("Should call PutUser 1 time and return error", func(t *testing.T) {
-		mockSCIM := mocks.NewMockAWSSCIMProvider(mockCtrl)
-		ctx := context.TODO()
-
-		mockSCIM.EXPECT().DeleteUser(ctx, "1").Return(errors.New("test error")).Times(1)
-
-		usr := &model.UsersResult{
-			Items: 1,
-			Resources: []*model.User{
-				{
-					IPID:        "1",
-					SCIMID:      "1",
-					Name:        &model.Name{FamilyName: "1", GivenName: "user"},
-					DisplayName: "user 1",
-					Emails:      []model.Email{{Value: "user.1@mail.com", Type: "work", Primary: true}},
-				},
-			},
-		}
-
-		svc, _ := NewProvider(mockSCIM)
-		err := svc.DeleteUsers(ctx, usr)
-		assert.Error(t, err)
-	})
-
-	t.Run("Should call CreateUser 2 time and no return error", func(t *testing.T) {
-		mockSCIM := mocks.NewMockAWSSCIMProvider(mockCtrl)
-		ctx := context.TODO()
-
-		gomock.InOrder(
-			mockSCIM.EXPECT().DeleteUser(ctx, "1").Return(nil).Times(1),
-			mockSCIM.EXPECT().DeleteUser(ctx, "2").Return(nil).Times(1),
-		)
-
-		usr := &model.UsersResult{
-			Items: 2,
-			Resources: []*model.User{
-				{
-					IPID:        "1",
-					SCIMID:      "1",
-					Name:        &model.Name{FamilyName: "1", GivenName: "user"},
-					DisplayName: "user 1",
-					Emails:      []model.Email{{Value: "user.1@mail.com", Type: "work", Primary: true}},
-					Active:      true,
-				},
-				{
-					IPID:        "2",
-					SCIMID:      "2",
-					Name:        &model.Name{FamilyName: "2", GivenName: "user"},
-					DisplayName: "user 2",
-					Emails:      []model.Email{{Value: "user.2@mail.com", Type: "work", Primary: true}},
-					Active:      true,
-				},
-			},
-		}
-
-		svc, _ := NewProvider(mockSCIM)
-		err := svc.DeleteUsers(ctx, usr)
-		assert.NoError(t, err)
-	})
-}
-
-func TestCreateGroupsMembers(t *testing.T) {
-	mockCtrl := gomock.NewController(t)
-	defer mockCtrl.Finish()
-
-	t.Run("Should do nothing with empty GroupsMembersResult", func(t *testing.T) {
-		mockSCIM := mocks.NewMockAWSSCIMProvider(mockCtrl)
-		empty := &model.GroupsMembersResult{}
-
-		svc, _ := NewProvider(mockSCIM)
-		gr, err := svc.CreateGroupsMembers(context.TODO(), empty)
-		assert.NoError(t, err)
-		assert.NotNil(t, gr)
-	})
-
-	t.Run("Should call GetUserByUserName and PatchGroup 1 time and no return error", func(t *testing.T) {
-		mockSCIM := mocks.NewMockAWSSCIMProvider(mockCtrl)
-		userName := "user.1@mail.com"
-
-		membersIDValue := []patchValue{
-			{Value: "1"},
-		}
-
-		getUserByUserNameResp := &aws.GetUserResponse{
-			ID:         "1",
-			ExternalID: "1",
-			UserName:   userName,
-			Name: &aws.Name{
-				FamilyName: "1",
-				GivenName:  "user",
-			},
-			DisplayName: "user 1",
-			Emails: []aws.Email{
-				{
-					Value:   "user.1@mailcom",
-					Type:    "work",
-					Primary: true,
-				},
-			},
-		}
-		patchGroupRequest := &aws.PatchGroupRequest{
-			Group: aws.Group{
-				ID:          "1",
-				DisplayName: "group 1",
-			},
-			Patch: aws.Patch{
-				Schemas: []string{"urn:ietf:params:scim:api:messages:2.0:PatchOp"},
-				Operations: []*aws.Operation{
-					{
-						OP:    "add",
-						Path:  "members",
-						Value: membersIDValue,
-					},
-				},
-			},
-		}
-		ctx := context.TODO()
-
-		mockSCIM.EXPECT().GetUserByUserName(ctx, userName).Return(getUserByUserNameResp, nil).Times(1)
-		mockSCIM.EXPECT().PatchGroup(ctx, patchGroupRequest).Return(nil).Times(1)
-
-		gmr := &model.GroupsMembersResult{
-			Items: 1,
-			Resources: []*model.GroupMembers{
-				{
-					Items: 1,
-					Group: &model.Group{
-						IPID:   "1",
-						SCIMID: "1",
-						Name:   "group 1",
-						Email:  "group.1@mail.com",
-					},
-					Resources: []*model.Member{
+			prepare: func(m *mock_scim.MockAWSSCIMProvider) {
+				m.EXPECT().ListGroups(gomock.Any(), gomock.Any()).Return(&aws.ListGroupsResponse{
+					Resources: []*aws.Group{
 						{
-							IPID:   "1",
-							Email:  userName,
-							Status: "ACTIVE",
+							ID:          "1",
+							DisplayName: "group1",
+							ExternalID:  "1",
 						},
 					},
-				},
+				}, nil)
 			},
-		}
-
-		svc, _ := NewProvider(mockSCIM)
-		got, err := svc.CreateGroupsMembers(ctx, gmr)
-		assert.NoError(t, err)
-		assert.NotNil(t, got)
-
-		assert.Equal(t, 1, len(got.Resources))
-		assert.Equal(t, 1, len(got.Resources[0].Resources))
-		assert.Equal(t, 1, got.Resources[0].Items)
-		assert.Equal(t, "1", got.Resources[0].Group.IPID)
-		assert.Equal(t, "1", got.Resources[0].Resources[0].IPID)
-		assert.Equal(t, "1", got.Resources[0].Resources[0].SCIMID)
-		assert.Equal(t, userName, got.Resources[0].Resources[0].Email)
-	})
-
-	t.Run("Should return error if GetUserByUserName return error", func(t *testing.T) {
-		mockSCIM := mocks.NewMockAWSSCIMProvider(mockCtrl)
-		userName := "user.1@mail.com"
-
-		ctx := context.TODO()
-
-		mockSCIM.EXPECT().GetUserByUserName(ctx, userName).Return(nil, errors.New("test errors")).Times(1)
-
-		gmr := &model.GroupsMembersResult{
-			Items: 1,
-			Resources: []*model.GroupMembers{
-				{
-					Items: 1,
-					Group: &model.Group{
-						IPID:   "1",
-						SCIMID: "1",
-						Name:   "group 1",
-						Email:  "group.1@mail.com",
-					},
-					Resources: []*model.Member{
-						{
-							IPID:   "1",
-							Email:  userName,
-							Status: "ACTIVE",
-						},
-					},
-				},
-			},
-		}
-
-		svc, _ := NewProvider(mockSCIM)
-		got, err := svc.CreateGroupsMembers(ctx, gmr)
-		assert.Error(t, err)
-		assert.Nil(t, got)
-	})
-
-	t.Run("Should return error if PatchGroup return error", func(t *testing.T) {
-		mockSCIM := mocks.NewMockAWSSCIMProvider(mockCtrl)
-		userName := "user.1@mail.com"
-
-		membersIDValue := []patchValue{
-			{Value: "1"},
-		}
-
-		getUserByUserNameResp := &aws.GetUserResponse{
-			ID:         "1",
-			ExternalID: "1",
-			UserName:   userName,
-			Name: &aws.Name{
-				FamilyName: "1",
-				GivenName:  "user",
-			},
-			DisplayName: "user 1",
-			Emails: []aws.Email{
-				{
-					Value:   "user.1@mailcom",
-					Type:    "work",
-					Primary: true,
-				},
-			},
-		}
-		patchGroupRequest := &aws.PatchGroupRequest{
-			Group: aws.Group{
-				ID:          "1",
-				DisplayName: "group 1",
-			},
-			Patch: aws.Patch{
-				Schemas: []string{"urn:ietf:params:scim:api:messages:2.0:PatchOp"},
-				Operations: []*aws.Operation{
+			want: &model.GroupsResult{
+				Resources: []*model.Group{
 					{
-						OP:    "add",
-						Path:  "members",
-						Value: membersIDValue,
-					},
-				},
-			},
-		}
-		ctx := context.TODO()
-
-		mockSCIM.EXPECT().GetUserByUserName(ctx, userName).Return(getUserByUserNameResp, nil).Times(1)
-		mockSCIM.EXPECT().PatchGroup(ctx, patchGroupRequest).Return(errors.New("test error")).Times(1)
-
-		gmr := &model.GroupsMembersResult{
-			Items: 1,
-			Resources: []*model.GroupMembers{
-				{
-					Items: 1,
-					Group: &model.Group{
-						IPID:   "1",
 						SCIMID: "1",
-						Name:   "group 1",
-						Email:  "group.1@mail.com",
-					},
-					Resources: []*model.Member{
-						{
-							IPID:   "1",
-							Email:  userName,
-							Status: "ACTIVE",
-						},
-					},
-				},
-			},
-		}
-
-		svc, _ := NewProvider(mockSCIM)
-		got, err := svc.CreateGroupsMembers(ctx, gmr)
-		assert.Error(t, err)
-		assert.Nil(t, got)
-	})
-
-	t.Run("Should call GetUserByUserName 1 time and PatchGroup 3 times and no return error", func(t *testing.T) {
-		mockSCIM := mocks.NewMockAWSSCIMProvider(mockCtrl)
-		numUsers := 207
-		members := groupMembersGenerator(numUsers, false, true)
-
-		getUserByUserNameResp := &aws.GetUserResponse{
-			ID:         "1",
-			ExternalID: "1",
-			UserName:   "",
-			Name: &aws.Name{
-				FamilyName: "1",
-				GivenName:  "user",
-			},
-			DisplayName: "user 1",
-			Emails: []aws.Email{
-				{
-					Value:   "user.1@mailcom",
-					Type:    "work",
-					Primary: true,
-				},
-			},
-		}
-		ctx := context.TODO()
-
-		mockSCIM.EXPECT().GetUserByUserName(ctx, gomock.Any()).Return(getUserByUserNameResp, nil).Times(numUsers)
-		mockSCIM.EXPECT().PatchGroup(ctx, gomock.Any()).Return(nil).Times(3)
-
-		gmr := &model.GroupsMembersResult{
-			Items: 1,
-			Resources: []*model.GroupMembers{
-				{
-					Items: len(members),
-					Group: &model.Group{
+						Name:   "group1",
 						IPID:   "1",
-						SCIMID: "1",
-						Name:   "group 1",
-						Email:  "group.1@mail.com",
 					},
-					Resources: members,
 				},
 			},
-		}
-
-		svc, _ := NewProvider(mockSCIM)
-		got, err := svc.CreateGroupsMembers(ctx, gmr)
-		assert.NoError(t, err)
-		assert.NotNil(t, got)
-	})
+			wantErr: false,
+		},
+		{
+			name: "should return empty groups",
+			fields: fields{
+				scim: mockScimProvider,
+			},
+			args: args{
+				ctx: context.Background(),
+			},
+			prepare: func(m *mock_scim.MockAWSSCIMProvider) {
+				m.EXPECT().ListGroups(gomock.Any(), gomock.Any()).Return(&aws.ListGroupsResponse{
+					Resources: []*aws.Group{},
+				}, nil)
+			},
+			want: &model.GroupsResult{
+				Resources: []*model.Group{},
+			},
+			wantErr: false,
+		},
+		{
+			name: "should return an error",
+			fields: fields{
+				scim: mockScimProvider,
+			},
+			args: args{
+				ctx: context.Background(),
+			},
+			prepare: func(m *mock_scim.MockAWSSCIMProvider) {
+				m.EXPECT().ListGroups(gomock.Any(), gomock.Any()).Return(nil, errors.New("error"))
+			},
+			want:    nil,
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.prepare(mockScimProvider)
+			p := &Provider{
+				scim: tt.fields.scim,
+			}
+			got, err := p.GetGroups(tt.args.ctx)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Provider.GetGroups() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if diff := cmp.Diff(tt.want, got, cmpopts.IgnoreFields(model.GroupsResult{}, "HashCode", "Items"), cmpopts.IgnoreFields(model.Group{}, "HashCode")); diff != "" {
+				t.Errorf("Provider.GetGroups() (-want +got):\n%s", diff)
+			}
+		})
+	}
 }
 
-func TestDeleteGroupsMembers(t *testing.T) {
-	mockCtrl := gomock.NewController(t)
-	defer mockCtrl.Finish()
+func TestProvider_CreateGroups(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
 
-	t.Run("Should do nothing with empty GroupsMembersResult", func(t *testing.T) {
-		mockSCIM := mocks.NewMockAWSSCIMProvider(mockCtrl)
-		empty := &model.GroupsMembersResult{}
+	mockScimProvider := mock_scim.NewMockAWSSCIMProvider(ctrl)
 
-		svc, _ := NewProvider(mockSCIM)
-		err := svc.DeleteGroupsMembers(context.TODO(), empty)
-		assert.NoError(t, err)
-	})
-
-	t.Run("Should call PatchGroup 1 time and no return error", func(t *testing.T) {
-		mockSCIM := mocks.NewMockAWSSCIMProvider(mockCtrl)
-		userName := "user.1@mail.com"
-
-		membersIDValue := []patchValue{
-			{Value: "1"},
-		}
-
-		patchGroupRequest := &aws.PatchGroupRequest{
-			Group: aws.Group{
-				ID:          "1",
-				DisplayName: "group 1",
+	type fields struct {
+		scim AWSSCIMProvider
+	}
+	type args struct {
+		ctx context.Context
+		gr  *model.GroupsResult
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		prepare func(m *mock_scim.MockAWSSCIMProvider)
+		want    *model.GroupsResult
+		wantErr bool
+	}{
+		{
+			name: "should create groups",
+			fields: fields{
+				scim: mockScimProvider,
 			},
-			Patch: aws.Patch{
-				Schemas: []string{"urn:ietf:params:scim:api:messages:2.0:PatchOp"},
-				Operations: []*aws.Operation{
-					{
-						OP:    "remove",
-						Path:  "members",
-						Value: membersIDValue,
+			args: args{
+				ctx: context.Background(),
+				gr: &model.GroupsResult{
+					Resources: []*model.Group{
+						{
+							Name: "group1",
+							IPID: "1",
+						},
 					},
 				},
 			},
-		}
-		ctx := context.TODO()
-
-		mockSCIM.EXPECT().PatchGroup(ctx, patchGroupRequest).Return(nil).Times(1)
-
-		gmr := &model.GroupsMembersResult{
-			Items: 1,
-			Resources: []*model.GroupMembers{
-				{
-					Items: 1,
-					Group: &model.Group{
-						IPID:   "1",
+			prepare: func(m *mock_scim.MockAWSSCIMProvider) {
+				m.EXPECT().CreateOrGetGroup(gomock.Any(), gomock.Any()).Return(&aws.CreateGroupResponse{
+					ID: "1",
+				}, nil)
+			},
+			want: &model.GroupsResult{
+				Resources: []*model.Group{
+					{
 						SCIMID: "1",
-						Name:   "group 1",
-						Email:  "group.1@mail.com",
+						Name:   "group1",
+						IPID:   "1",
 					},
-					Resources: []*model.Member{
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "should return an error",
+			fields: fields{
+				scim: mockScimProvider,
+			},
+			args: args{
+				ctx: context.Background(),
+				gr: &model.GroupsResult{
+					Resources: []*model.Group{
 						{
-							IPID:   "1",
+							Name: "group1",
+							IPID: "1",
+						},
+					},
+				},
+			},
+			prepare: func(m *mock_scim.MockAWSSCIMProvider) {
+				m.EXPECT().CreateOrGetGroup(gomock.Any(), gomock.Any()).Return(nil, errors.New("error"))
+			},
+			want:    nil,
+			wantErr: true,
+		},
+		{
+			name: "should return an error if groups result is nil",
+			fields: fields{
+				scim: mockScimProvider,
+			},
+			args: args{
+				ctx: context.Background(),
+				gr:  nil,
+			},
+			prepare: func(m *mock_scim.MockAWSSCIMProvider) {},
+			want:    nil,
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.prepare(mockScimProvider)
+			p := &Provider{
+				scim: tt.fields.scim,
+			}
+			got, err := p.CreateGroups(tt.args.ctx, tt.args.gr)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Provider.CreateGroups() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if diff := cmp.Diff(tt.want, got, cmpopts.IgnoreFields(model.GroupsResult{}, "HashCode", "Items"), cmpopts.IgnoreFields(model.Group{}, "HashCode")); diff != "" {
+				t.Errorf("Provider.CreateGroups() (-want +got):\n%s", diff)
+			}
+		})
+	}
+}
+
+func TestProvider_UpdateGroups(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockScimProvider := mock_scim.NewMockAWSSCIMProvider(ctrl)
+
+	type fields struct {
+		scim AWSSCIMProvider
+	}
+	type args struct {
+		ctx context.Context
+		gr  *model.GroupsResult
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		prepare func(m *mock_scim.MockAWSSCIMProvider)
+		want    *model.GroupsResult
+		wantErr bool
+	}{
+		{
+			name: "should update groups",
+			fields: fields{
+				scim: mockScimProvider,
+			},
+			args: args{
+				ctx: context.Background(),
+				gr: &model.GroupsResult{
+					Resources: []*model.Group{
+						{
 							SCIMID: "1",
-							Email:  userName,
-							Status: "ACTIVE",
-						},
-					},
-				},
-			},
-		}
-
-		svc, _ := NewProvider(mockSCIM)
-		err := svc.DeleteGroupsMembers(ctx, gmr)
-		assert.NoError(t, err)
-	})
-
-	t.Run("Should return error if PatchGroup return error", func(t *testing.T) {
-		mockSCIM := mocks.NewMockAWSSCIMProvider(mockCtrl)
-		userName := "user.1@mail.com"
-
-		membersIDValue := []patchValue{
-			{Value: "1"},
-		}
-
-		patchGroupRequest := &aws.PatchGroupRequest{
-			Group: aws.Group{
-				ID:          "1",
-				DisplayName: "group 1",
-			},
-			Patch: aws.Patch{
-				Schemas: []string{"urn:ietf:params:scim:api:messages:2.0:PatchOp"},
-				Operations: []*aws.Operation{
-					{
-						OP:    "remove",
-						Path:  "members",
-						Value: membersIDValue,
-					},
-				},
-			},
-		}
-		ctx := context.TODO()
-
-		mockSCIM.EXPECT().PatchGroup(ctx, patchGroupRequest).Return(errors.New("test error")).Times(1)
-
-		gmr := &model.GroupsMembersResult{
-			Items: 1,
-			Resources: []*model.GroupMembers{
-				{
-					Items: 1,
-					Group: &model.Group{
-						IPID:   "1",
-						SCIMID: "1",
-						Name:   "group 1",
-						Email:  "group.1@mail.com",
-					},
-					Resources: []*model.Member{
-						{
+							Name:   "group1",
 							IPID:   "1",
-							SCIMID: "1",
-							Email:  userName,
-							Status: "ACTIVE",
 						},
 					},
 				},
 			},
-		}
-
-		svc, _ := NewProvider(mockSCIM)
-		err := svc.DeleteGroupsMembers(ctx, gmr)
-		assert.Error(t, err)
-	})
-	t.Run("Should call PatchGroup 2 times and no return error", func(t *testing.T) {
-		mockSCIM := mocks.NewMockAWSSCIMProvider(mockCtrl)
-		numUsers := 155
-		members := groupMembersGenerator(numUsers, false, true)
-
-		ctx := context.TODO()
-
-		mockSCIM.EXPECT().PatchGroup(ctx, gomock.Any()).Return(nil).Times(2)
-
-		gmr := &model.GroupsMembersResult{
-			Items: 1,
-			Resources: []*model.GroupMembers{
-				{
-					Items: len(members),
-					Group: &model.Group{
-						IPID:   "1",
+			prepare: func(m *mock_scim.MockAWSSCIMProvider) {
+				m.EXPECT().PatchGroup(gomock.Any(), gomock.Any()).Return(nil)
+			},
+			want: &model.GroupsResult{
+				Resources: []*model.Group{
+					{
 						SCIMID: "1",
-						Name:   "group 1",
-						Email:  "group.1@mail.com",
+						Name:   "group1",
+						IPID:   "1",
 					},
-					Resources: members,
 				},
 			},
-		}
-
-		svc, _ := NewProvider(mockSCIM)
-		err := svc.DeleteGroupsMembers(ctx, gmr)
-		assert.NoError(t, err)
-	})
+			wantErr: false,
+		},
+		{
+			name: "should return an error",
+			fields: fields{
+				scim: mockScimProvider,
+			},
+			args: args{
+				ctx: context.Background(),
+				gr: &model.GroupsResult{
+					Resources: []*model.Group{
+						{
+							SCIMID: "1",
+							Name:   "group1",
+							IPID:   "1",
+						},
+					},
+				},
+			},
+			prepare: func(m *mock_scim.MockAWSSCIMProvider) {
+				m.EXPECT().PatchGroup(gomock.Any(), gomock.Any()).Return(errors.New("error"))
+			},
+			want:    nil,
+			wantErr: true,
+		},
+		{
+			name: "should return an error if groups result is nil",
+			fields: fields{
+				scim: mockScimProvider,
+			},
+			args: args{
+				ctx: context.Background(),
+				gr:  nil,
+			},
+			prepare: func(m *mock_scim.MockAWSSCIMProvider) {},
+			want:    nil,
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.prepare(mockScimProvider)
+			p := &Provider{
+				scim: tt.fields.scim,
+			}
+			got, err := p.UpdateGroups(tt.args.ctx, tt.args.gr)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Provider.UpdateGroups() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if diff := cmp.Diff(tt.want, got, cmpopts.IgnoreFields(model.GroupsResult{}, "HashCode", "Items"), cmpopts.IgnoreFields(model.Group{}, "HashCode")); diff != "" {
+				t.Errorf("Provider.UpdateGroups() (-want +got):\n%s", diff)
+			}
+		})
+	}
 }
 
-func TestGetGroupsMembers(t *testing.T) {
-	mockCtrl := gomock.NewController(t)
-	defer mockCtrl.Finish()
+func TestProvider_DeleteGroups(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
 
-	t.Run("Should do nothing with empty GroupsMembersResult", func(t *testing.T) {
-		mockSCIM := mocks.NewMockAWSSCIMProvider(mockCtrl)
-		empty := &model.GroupsResult{}
+	mockScimProvider := mock_scim.NewMockAWSSCIMProvider(ctrl)
 
-		svc, _ := NewProvider(mockSCIM)
-		got, err := svc.GetGroupsMembers(context.TODO(), empty)
-		assert.NoError(t, err)
-		assert.NotNil(t, got)
-	})
-
-	t.Run("Should call ListGroups and GetUser 1 time and no return error", func(t *testing.T) {
-		mockSCIM := mocks.NewMockAWSSCIMProvider(mockCtrl)
-		grp := &model.GroupsResult{
-			Items: 1,
-			Resources: []*model.Group{
-				{
-					IPID:  "1",
-					Name:  "group 1",
-					Email: "group.1@mail.com",
-				},
+	type fields struct {
+		scim AWSSCIMProvider
+	}
+	type args struct {
+		ctx context.Context
+		gr  *model.GroupsResult
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		prepare func(m *mock_scim.MockAWSSCIMProvider)
+		wantErr bool
+	}{
+		{
+			name: "should delete groups",
+			fields: fields{
+				scim: mockScimProvider,
 			},
-		}
-		filter := fmt.Sprintf("displayName eq %q", grp.Resources[0].Name)
-		lgr := &aws.ListGroupsResponse{
-			Resources: []*aws.Group{
-				{
-					ID:          "1",
-					DisplayName: grp.Resources[0].Name,
-					Members: []*aws.Member{
+			args: args{
+				ctx: context.Background(),
+				gr: &model.GroupsResult{
+					Resources: []*model.Group{
 						{
-							Value: "1",
+							SCIMID: "1",
+							Name:   "group1",
+							IPID:   "1",
 						},
 					},
 				},
 			},
-		}
-		gur := &aws.GetUserResponse{
-			Emails: []aws.Email{
-				{
-					Value: "user.1@mail.com",
-				},
+			prepare: func(m *mock_scim.MockAWSSCIMProvider) {
+				m.EXPECT().DeleteGroup(gomock.Any(), gomock.Any()).Return(nil)
 			},
-		}
-
-		ctx := context.TODO()
-
-		mockSCIM.EXPECT().ListGroups(ctx, filter).Return(lgr, nil).Times(1)
-		mockSCIM.EXPECT().GetUser(ctx, lgr.Resources[0].Members[0].Value).Return(gur, nil).Times(1)
-
-		gr := &model.GroupsResult{
-			Items: 1,
-			Resources: []*model.Group{
-				{
-					IPID:   "1",
-					SCIMID: "1",
-					Name:   "group 1",
-					Email:  "group.1@mail.com",
-				},
+			wantErr: false,
+		},
+		{
+			name: "should return an error",
+			fields: fields{
+				scim: mockScimProvider,
 			},
-		}
-
-		svc, _ := NewProvider(mockSCIM)
-		got, err := svc.GetGroupsMembers(ctx, gr)
-		assert.NoError(t, err)
-		assert.NotNil(t, got)
-	})
-
-	t.Run("Should return error when ListGroups return error", func(t *testing.T) {
-		mockSCIM := mocks.NewMockAWSSCIMProvider(mockCtrl)
-
-		filter := fmt.Sprintf("displayName eq %q", "group 1")
-		ctx := context.TODO()
-
-		mockSCIM.EXPECT().ListGroups(ctx, filter).Return(nil, errors.New("test error")).Times(1)
-
-		gr := &model.GroupsResult{
-			Items: 1,
-			Resources: []*model.Group{
-				{
-					IPID:   "1",
-					SCIMID: "1",
-					Name:   "group 1",
-					Email:  "group.1@mail.com",
-				},
-			},
-		}
-
-		svc, _ := NewProvider(mockSCIM)
-		got, err := svc.GetGroupsMembers(ctx, gr)
-		assert.Error(t, err)
-		assert.Nil(t, got)
-	})
-
-	t.Run("Should return error when GetUser return error", func(t *testing.T) {
-		mockSCIM := mocks.NewMockAWSSCIMProvider(mockCtrl)
-		grp := &model.GroupsResult{
-			Items: 1,
-			Resources: []*model.Group{
-				{
-					IPID:  "1",
-					Name:  "group 1",
-					Email: "group.1@mail.com",
-				},
-			},
-		}
-
-		filter := fmt.Sprintf("displayName eq %q", grp.Resources[0].Name)
-		lgr := &aws.ListGroupsResponse{
-			Resources: []*aws.Group{
-				{
-					ID:          "1",
-					DisplayName: grp.Resources[0].Name,
-					Members: []*aws.Member{
+			args: args{
+				ctx: context.Background(),
+				gr: &model.GroupsResult{
+					Resources: []*model.Group{
 						{
-							Value: "1",
+							SCIMID: "1",
+							Name:   "group1",
+							IPID:   "1",
 						},
 					},
 				},
 			},
-		}
-		ctx := context.TODO()
-
-		mockSCIM.EXPECT().ListGroups(ctx, filter).Return(lgr, nil).Times(1)
-		mockSCIM.EXPECT().GetUser(ctx, lgr.Resources[0].Members[0].Value).Return(nil, errors.New("test error")).Times(1)
-
-		gr := &model.GroupsResult{
-			Items: 1,
-			Resources: []*model.Group{
-				{
-					IPID:   "1",
-					SCIMID: "1",
-					Name:   "group 1",
-					Email:  "group.1@mail.com",
-				},
+			prepare: func(m *mock_scim.MockAWSSCIMProvider) {
+				m.EXPECT().DeleteGroup(gomock.Any(), gomock.Any()).Return(errors.New("error"))
 			},
-		}
-
-		svc, _ := NewProvider(mockSCIM)
-		got, err := svc.GetGroupsMembers(ctx, gr)
-		assert.Error(t, err)
-		assert.Nil(t, got)
-	})
-
-	t.Run("Should call ListGroups and GetUser 2 time and no return error", func(t *testing.T) {
-		mockSCIM := mocks.NewMockAWSSCIMProvider(mockCtrl)
-		grp := &model.GroupsResult{
-			Items: 2,
-			Resources: []*model.Group{
-				{
-					IPID:  "1",
-					Name:  "group 1",
-					Email: "group.1@mail.com",
-				},
-				{
-					IPID:  "2",
-					Name:  "group 2",
-					Email: "group.2@mail.com",
-				},
+			wantErr: true,
+		},
+		{
+			name: "should return an error if groups result is nil",
+			fields: fields{
+				scim: mockScimProvider,
 			},
-		}
-		filter1 := fmt.Sprintf("displayName eq %q", grp.Resources[0].Name)
-		filter2 := fmt.Sprintf("displayName eq %q", grp.Resources[1].Name)
-
-		lgr1 := &aws.ListGroupsResponse{
-			Resources: []*aws.Group{
-				{
-					ID:          "1",
-					DisplayName: grp.Resources[0].Name,
-					Members: []*aws.Member{
-						{
-							Value: "1",
-						},
-					},
-				},
+			args: args{
+				ctx: context.Background(),
+				gr:  nil,
 			},
-		}
-
-		lgr2 := &aws.ListGroupsResponse{
-			Resources: []*aws.Group{
-				{
-					ID:          "2",
-					DisplayName: grp.Resources[1].Name,
-					Members: []*aws.Member{
-						{
-							Value: "2",
-						},
-					},
-				},
-			},
-		}
-
-		gur1 := &aws.GetUserResponse{
-			Emails: []aws.Email{
-				{
-					Value: "user.1@mail.com",
-				},
-				{
-					Value: "user.2@mail.com",
-				},
-			},
-		}
-
-		gur2 := &aws.GetUserResponse{
-			Emails: []aws.Email{
-				{
-					Value: "user.3@mail.com",
-				},
-				{
-					Value: "user.4@mail.com",
-				},
-			},
-		}
-
-		ctx := context.TODO()
-		mockSCIM.EXPECT().ListGroups(ctx, filter1).Return(lgr1, nil).Times(1)
-		mockSCIM.EXPECT().ListGroups(ctx, filter2).Return(lgr2, nil).Times(1)
-		mockSCIM.EXPECT().GetUser(ctx, lgr1.Resources[0].Members[0].Value).Return(gur1, nil).Times(1)
-		mockSCIM.EXPECT().GetUser(ctx, lgr2.Resources[0].Members[0].Value).Return(gur2, nil).Times(1)
-
-		gr := &model.GroupsResult{
-			Items: 2,
-			Resources: []*model.Group{
-				{
-					IPID:   "1",
-					SCIMID: "1",
-					Name:   "group 1",
-					Email:  "group.1@mail.com",
-				},
-				{
-					IPID:   "2",
-					SCIMID: "2",
-					Name:   "group 2",
-					Email:  "group.2@mail.com",
-				},
-			},
-		}
-
-		svc, _ := NewProvider(mockSCIM)
-		got, err := svc.GetGroupsMembers(ctx, gr)
-		assert.NoError(t, err)
-		assert.NotNil(t, got)
-
-		assert.Equal(t, 2, len(got.Resources))
-		assert.Equal(t, 1, len(got.Resources[0].Resources))
-		assert.Equal(t, 1, len(got.Resources[1].Resources))
-	})
+			prepare: func(m *mock_scim.MockAWSSCIMProvider) {},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.prepare(mockScimProvider)
+			p := &Provider{
+				scim: tt.fields.scim,
+			}
+			err := p.DeleteGroups(tt.args.ctx, tt.args.gr)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Provider.DeleteGroups() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+		})
+	}
 }
 
-func TestGetGroupsMembersBruteForce(t *testing.T) {
-	mockCtrl := gomock.NewController(t)
-	defer mockCtrl.Finish()
+func TestProvider_GetUsers(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
 
-	t.Run("Should do nothing with empty GroupsMembersResult", func(t *testing.T) {
-		mockSCIM := mocks.NewMockAWSSCIMProvider(mockCtrl)
-		emptyGrpr := &model.GroupsResult{}
-		emptyUsrr := &model.UsersResult{}
+	mockScimProvider := mock_scim.NewMockAWSSCIMProvider(ctrl)
 
-		svc, _ := NewProvider(mockSCIM)
-		got, err := svc.GetGroupsMembersBruteForce(context.TODO(), emptyGrpr, emptyUsrr)
-		assert.NoError(t, err)
-		assert.NotNil(t, got)
-	})
-
-	t.Run("Should call ListGroups 4 time and no return error", func(t *testing.T) {
-		mockSCIM := mocks.NewMockAWSSCIMProvider(mockCtrl)
-		grp := &model.GroupsResult{
-			Items: 2,
-			Resources: []*model.Group{
-				{
-					IPID:   "1",
-					SCIMID: "1",
-					Name:   "group 1",
-					Email:  "group.1@mail.com",
-				},
-				{
-					IPID:   "2",
-					SCIMID: "2",
-					Name:   "group 2",
-					Email:  "group.2@mail.com",
-				},
+	type fields struct {
+		scim AWSSCIMProvider
+	}
+	type args struct {
+		ctx context.Context
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		prepare func(m *mock_scim.MockAWSSCIMProvider)
+		want    *model.UsersResult
+		wantErr bool
+	}{
+		{
+			name: "should return users",
+			fields: fields{
+				scim: mockScimProvider,
 			},
-		}
-		usr := &model.UsersResult{
-			Items: 2,
-			Resources: []*model.User{
-				{
-					IPID:        "1",
-					SCIMID:      "1",
-					Name:        &model.Name{FamilyName: "1", GivenName: "user"},
-					DisplayName: "user 1",
-					Active:      true,
-					Emails:      []model.Email{{Value: "user.1@mail.com", Type: "work", Primary: true}},
-				},
-				{
-					IPID:        "2",
-					SCIMID:      "2",
-					Name:        &model.Name{FamilyName: "2", GivenName: "user"},
-					DisplayName: "user 2",
-					Active:      true,
-					Emails:      []model.Email{{Value: "user.2@mail.com", Type: "work", Primary: true}},
-				},
+			args: args{
+				ctx: context.Background(),
 			},
-		}
-		filter1 := fmt.Sprintf("id eq %q and members eq %q", grp.Resources[0].SCIMID, usr.Resources[0].SCIMID)
-		lgr1 := &aws.ListGroupsResponse{
-			ListResponse: aws.ListResponse{
-				ItemsPerPage: 1,
-				StartIndex:   1,
-				TotalResults: 1,
-			},
-			Resources: []*aws.Group{
-				{
-					ID:          grp.Resources[0].SCIMID,
-					DisplayName: grp.Resources[0].Name,
-					Meta: aws.Meta{
-						ResourceType: "Group",
-						Created:      "2020-01-01T00:00:00Z",
-						LastModified: "2020-01-01T00:00:00Z",
+			prepare: func(m *mock_scim.MockAWSSCIMProvider) {
+				m.EXPECT().ListUsers(gomock.Any(), gomock.Any()).Return(&aws.ListUsersResponse{
+					Resources: []*aws.User{
+						{
+							ID:         "1",
+							UserName:   "user1",
+							ExternalID: "1",
+						},
 					},
-					Members: []*aws.Member{},
-				},
+				}, nil)
 			},
-		}
-		filter2 := fmt.Sprintf("id eq %q and members eq %q", grp.Resources[0].SCIMID, usr.Resources[1].SCIMID)
-		lgr2 := &aws.ListGroupsResponse{
-			ListResponse: aws.ListResponse{
-				TotalResults: 0,
-			},
-			Resources: []*aws.Group{},
-		}
-		filter3 := fmt.Sprintf("id eq %q and members eq %q", grp.Resources[1].SCIMID, usr.Resources[0].SCIMID)
-		lgr3 := &aws.ListGroupsResponse{
-			ListResponse: aws.ListResponse{
-				TotalResults: 0,
-			},
-			Resources: []*aws.Group{},
-		}
-		filter4 := fmt.Sprintf("id eq %q and members eq %q", grp.Resources[1].SCIMID, usr.Resources[1].SCIMID)
-		lgr4 := &aws.ListGroupsResponse{
-			ListResponse: aws.ListResponse{
-				ItemsPerPage: 1,
-				StartIndex:   1,
-				TotalResults: 1,
-			},
-			Resources: []*aws.Group{
-				{
-					ID:          grp.Resources[1].SCIMID,
-					DisplayName: grp.Resources[1].Name,
-					Meta: aws.Meta{
-						ResourceType: "Group",
-						Created:      "2020-01-01T00:00:00Z",
-						LastModified: "2020-01-01T00:00:00Z",
+			want: &model.UsersResult{
+				Resources: []*model.User{
+					{
+						SCIMID:   "1",
+						UserName: "user1",
+						IPID:     "1",
+						Name:     &model.Name{},
 					},
-					Members: []*aws.Member{},
 				},
 			},
-		}
+			wantErr: false,
+		},
+		{
+			name: "should return an error",
+			fields: fields{
+				scim: mockScimProvider,
+			},
+			args: args{
+				ctx: context.Background(),
+			},
+			prepare: func(m *mock_scim.MockAWSSCIMProvider) {
+				m.EXPECT().ListUsers(gomock.Any(), gomock.Any()).Return(nil, errors.New("error"))
+			},
+			want:    nil,
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.prepare(mockScimProvider)
+			p := &Provider{
+				scim: tt.fields.scim,
+			}
+			got, err := p.GetUsers(tt.args.ctx)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Provider.GetUsers() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if diff := cmp.Diff(tt.want, got, cmpopts.IgnoreFields(model.UsersResult{}, "HashCode", "Items"), cmpopts.IgnoreFields(model.User{}, "HashCode")); diff != "" {
+				t.Errorf("Provider.GetUsers() (-want +got):\n%s", diff)
+			}
+		})
+	}
+}
 
-		ctx := context.TODO()
-		mockSCIM.EXPECT().ListGroups(ctx, filter1).Return(lgr1, nil).Times(1)
-		mockSCIM.EXPECT().ListGroups(ctx, filter2).Return(lgr2, nil).Times(1)
-		mockSCIM.EXPECT().ListGroups(ctx, filter3).Return(lgr3, nil).Times(1)
-		mockSCIM.EXPECT().ListGroups(ctx, filter4).Return(lgr4, nil).Times(1)
+func TestProvider_CreateUsers(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
 
-		svc, _ := NewProvider(mockSCIM)
-		got, err := svc.GetGroupsMembersBruteForce(ctx, grp, usr)
-		assert.NoError(t, err)
-		assert.NotNil(t, got)
+	mockScimProvider := mock_scim.NewMockAWSSCIMProvider(ctrl)
 
-		assert.Equal(t, 2, len(got.Resources))
-		assert.Equal(t, 2, got.Items)
-		assert.Equal(t, "group 1", got.Resources[0].Group.Name)
-		assert.Equal(t, "group 2", got.Resources[1].Group.Name)
-		assert.Equal(t, 1, len(got.Resources[0].Resources))
-		assert.Equal(t, 1, len(got.Resources[1].Resources))
-		assert.Equal(t, 1, got.Resources[0].Items)
-		assert.Equal(t, 1, got.Resources[1].Items)
-		assert.Equal(t, "1", got.Resources[0].Resources[0].SCIMID)
-		assert.Equal(t, "1", got.Resources[0].Resources[0].IPID)
-		assert.Equal(t, "user.1@mail.com", got.Resources[0].Resources[0].Email)
-		assert.Equal(t, "2", got.Resources[1].Resources[0].SCIMID)
-		assert.Equal(t, "2", got.Resources[1].Resources[0].IPID)
-		assert.Equal(t, "user.2@mail.com", got.Resources[1].Resources[0].Email)
-	})
-
-	t.Run("Should return error when ListGroups return error", func(t *testing.T) {
-		mockSCIM := mocks.NewMockAWSSCIMProvider(mockCtrl)
-		grp := &model.GroupsResult{
-			Items: 1,
-			Resources: []*model.Group{
-				{
-					IPID:   "1",
-					SCIMID: "1",
-					Name:   "group 1",
-					Email:  "group.1@mail.com",
+	type fields struct {
+		scim AWSSCIMProvider
+	}
+	type args struct {
+		ctx context.Context
+		ur  *model.UsersResult
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		prepare func(m *mock_scim.MockAWSSCIMProvider)
+		want    *model.UsersResult
+		wantErr bool
+	}{
+		{
+			name: "should create users",
+			fields: fields{
+				scim: mockScimProvider,
+			},
+			args: args{
+				ctx: context.Background(),
+				ur: &model.UsersResult{
+					Resources: []*model.User{
+						{
+							UserName: "user1",
+							IPID:     "1",
+						},
+					},
 				},
 			},
-		}
-		usr := &model.UsersResult{
-			Items: 1,
-			Resources: []*model.User{
-				{
-					IPID:        "1",
-					SCIMID:      "1",
-					Name:        &model.Name{FamilyName: "1", GivenName: "user"},
-					DisplayName: "user 1",
-					Active:      true,
-					Emails:      []model.Email{{Value: "user.1@mail.com", Type: "work", Primary: true}},
+			prepare: func(m *mock_scim.MockAWSSCIMProvider) {
+				m.EXPECT().CreateOrGetUser(gomock.Any(), gomock.Any()).Return(&aws.CreateUserResponse{
+					ID: "1",
+				}, nil)
+			},
+			want: &model.UsersResult{
+				Resources: []*model.User{
+					{
+						SCIMID:   "1",
+						UserName: "user1",
+						IPID:     "1",
+					},
 				},
 			},
-		}
-		filter := fmt.Sprintf("id eq %q and members eq %q", grp.Resources[0].SCIMID, usr.Resources[0].SCIMID)
+			wantErr: false,
+		},
+		{
+			name: "should return an error",
+			fields: fields{
+				scim: mockScimProvider,
+			},
+			args: args{
+				ctx: context.Background(),
+				ur: &model.UsersResult{
+					Resources: []*model.User{
+						{
+							UserName: "user1",
+							IPID:     "1",
+						},
+					},
+				},
+			},
+			prepare: func(m *mock_scim.MockAWSSCIMProvider) {
+				m.EXPECT().CreateOrGetUser(gomock.Any(), gomock.Any()).Return(nil, errors.New("error"))
+			},
+			want:    nil,
+			wantErr: true,
+		},
+		{
+			name: "should return an error if users result is nil",
+			fields: fields{
+				scim: mockScimProvider,
+			},
+			args: args{
+				ctx: context.Background(),
+				ur:  nil,
+			},
+			prepare: func(m *mock_scim.MockAWSSCIMProvider) {},
+			want:    nil,
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.prepare(mockScimProvider)
+			p := &Provider{
+				scim: tt.fields.scim,
+			}
+			got, err := p.CreateUsers(tt.args.ctx, tt.args.ur)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Provider.CreateUsers() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if diff := cmp.Diff(tt.want, got, cmpopts.IgnoreFields(model.UsersResult{}, "HashCode", "Items"), cmpopts.IgnoreFields(model.User{}, "HashCode")); diff != "" {
+				t.Errorf("Provider.CreateUsers() (-want +got):\n%s", diff)
+			}
+		})
+	}
+}
 
-		ctx := context.TODO()
-		mockSCIM.EXPECT().ListGroups(ctx, filter).Return(nil, errors.New("test error")).Times(1)
+func TestProvider_UpdateUsers(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
 
-		gr := &model.GroupsResult{
-			Items: 1,
-			Resources: []*model.Group{
-				{
-					IPID:   "1",
-					SCIMID: "1",
-					Name:   "group 1",
-					Email:  "group.1@mail.com",
-				},
-			},
-		}
-		ur := &model.UsersResult{
-			Items: 1,
-			Resources: []*model.User{
-				{
-					IPID:        "1",
-					SCIMID:      "1",
-					Name:        &model.Name{FamilyName: "1", GivenName: "user"},
-					DisplayName: "user 1",
-					Active:      true,
-					Emails:      []model.Email{{Value: "user.1@mail.com", Type: "work", Primary: true}},
-				},
-			},
-		}
+	mockScimProvider := mock_scim.NewMockAWSSCIMProvider(ctrl)
 
-		svc, _ := NewProvider(mockSCIM)
-		got, err := svc.GetGroupsMembersBruteForce(ctx, gr, ur)
-		assert.Error(t, err)
-		assert.Nil(t, got)
-	})
+	type fields struct {
+		scim AWSSCIMProvider
+	}
+	type args struct {
+		ctx context.Context
+		ur  *model.UsersResult
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		prepare func(m *mock_scim.MockAWSSCIMProvider)
+		want    *model.UsersResult
+		wantErr bool
+	}{
+		{
+			name: "should update users",
+			fields: fields{
+				scim: mockScimProvider,
+			},
+			args: args{
+				ctx: context.Background(),
+				ur: &model.UsersResult{
+					Resources: []*model.User{
+						{
+							SCIMID:   "1",
+							UserName: "user1",
+							IPID:     "1",
+						},
+					},
+				},
+			},
+			prepare: func(m *mock_scim.MockAWSSCIMProvider) {
+				m.EXPECT().PutUser(gomock.Any(), gomock.Any()).Return(&aws.PutUserResponse{
+					ID: "1",
+				}, nil)
+			},
+			want: &model.UsersResult{
+				Resources: []*model.User{
+					{
+						SCIMID:   "1",
+						UserName: "user1",
+						IPID:     "1",
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "should return an error",
+			fields: fields{
+				scim: mockScimProvider,
+			},
+			args: args{
+				ctx: context.Background(),
+				ur: &model.UsersResult{
+					Resources: []*model.User{
+						{
+							SCIMID:   "1",
+							UserName: "user1",
+							IPID:     "1",
+						},
+					},
+				},
+			},
+			prepare: func(m *mock_scim.MockAWSSCIMProvider) {
+				m.EXPECT().PutUser(gomock.Any(), gomock.Any()).Return(nil, errors.New("error"))
+			},
+			want:    nil,
+			wantErr: true,
+		},
+		{
+			name: "should return an error if users result is nil",
+			fields: fields{
+				scim: mockScimProvider,
+			},
+			args: args{
+				ctx: context.Background(),
+				ur:  nil,
+			},
+			prepare: func(m *mock_scim.MockAWSSCIMProvider) {},
+			want:    nil,
+			wantErr: true,
+		},
+		{
+			name: "should return an error if user scimid is empty",
+			fields: fields{
+				scim: mockScimProvider,
+			},
+			args: args{
+				ctx: context.Background(),
+				ur: &model.UsersResult{
+					Resources: []*model.User{
+						{
+							UserName: "user1",
+							IPID:     "1",
+						},
+					},
+				},
+			},
+			prepare: func(m *mock_scim.MockAWSSCIMProvider) {},
+			want:    nil,
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.prepare(mockScimProvider)
+			p := &Provider{
+				scim: tt.fields.scim,
+			}
+			got, err := p.UpdateUsers(tt.args.ctx, tt.args.ur)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Provider.UpdateUsers() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if diff := cmp.Diff(tt.want, got, cmpopts.IgnoreFields(model.UsersResult{}, "HashCode", "Items"), cmpopts.IgnoreFields(model.User{}, "HashCode")); diff != "" {
+				t.Errorf("Provider.UpdateUsers() (-want +got):\n%s", diff)
+			}
+		})
+	}
+}
 
-	t.Run("Should call ListGroups one time and no return error when TotalResults >0", func(t *testing.T) {
-		mockSCIM := mocks.NewMockAWSSCIMProvider(mockCtrl)
-		grp := &model.GroupsResult{
-			Items: 1,
-			Resources: []*model.Group{
-				{
-					IPID:   "1",
-					SCIMID: "1",
-					Name:   "group 1",
-					Email:  "group.1@mail.com",
-				},
-			},
-		}
-		usr := &model.UsersResult{
-			Items: 1,
-			Resources: []*model.User{
-				{
-					IPID:        "1",
-					SCIMID:      "1",
-					Name:        &model.Name{FamilyName: "1", GivenName: "user"},
-					DisplayName: "user 1",
-					Active:      true,
-					Emails:      []model.Email{{Value: "user.1@mail.com", Type: "work", Primary: true}},
-				},
-			},
-		}
-		filter := fmt.Sprintf("id eq %q and members eq %q", grp.Resources[0].SCIMID, usr.Resources[0].SCIMID)
-		lgr := &aws.ListGroupsResponse{
-			ListResponse: aws.ListResponse{
-				TotalResults: 1,
-			},
-			Resources: []*aws.Group{
-				{
-					ID:          "1",
-					DisplayName: grp.Resources[0].Name,
-					Members:     []*aws.Member{}, // AWS SSO SCIM API doesn't return members, only TotalResults > 0
-				},
-			},
-		}
+func TestProvider_DeleteUsers(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
 
-		ctx := context.TODO()
-		mockSCIM.EXPECT().ListGroups(ctx, filter).Return(lgr, nil).Times(1)
+	mockScimProvider := mock_scim.NewMockAWSSCIMProvider(ctrl)
 
-		gr := &model.GroupsResult{
-			Items: 1,
-			Resources: []*model.Group{
-				{
-					IPID:   "1",
-					SCIMID: "1",
-					Name:   "group 1",
-					Email:  "group.1@mail.com",
+	type fields struct {
+		scim AWSSCIMProvider
+	}
+	type args struct {
+		ctx context.Context
+		ur  *model.UsersResult
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		prepare func(m *mock_scim.MockAWSSCIMProvider)
+		wantErr bool
+	}{
+		{
+			name: "should delete users",
+			fields: fields{
+				scim: mockScimProvider,
+			},
+			args: args{
+				ctx: context.Background(),
+				ur: &model.UsersResult{
+					Resources: []*model.User{
+						{
+							SCIMID: "1",
+						},
+					},
 				},
 			},
-		}
-		ur := &model.UsersResult{
-			Items: 1,
-			Resources: []*model.User{
-				{
-					IPID:        "1",
-					SCIMID:      "1",
-					Name:        &model.Name{FamilyName: "1", GivenName: "user"},
-					DisplayName: "user 1",
-					Active:      true,
-					Emails:      []model.Email{{Value: "user.1@mail.com", Type: "work", Primary: true}},
+			prepare: func(m *mock_scim.MockAWSSCIMProvider) {
+				m.EXPECT().DeleteUser(gomock.Any(), gomock.Any()).Return(nil)
+			},
+			wantErr: false,
+		},
+		{
+			name: "should return an error",
+			fields: fields{
+				scim: mockScimProvider,
+			},
+			args: args{
+				ctx: context.Background(),
+				ur: &model.UsersResult{
+					Resources: []*model.User{
+						{
+							SCIMID: "1",
+						},
+					},
 				},
 			},
-		}
+			prepare: func(m *mock_scim.MockAWSSCIMProvider) {
+				m.EXPECT().DeleteUser(gomock.Any(), gomock.Any()).Return(errors.New("error"))
+			},
+			wantErr: true,
+		},
+		{
+			name: "should return an error if users result is nil",
+			fields: fields{
+				scim: mockScimProvider,
+			},
+			args: args{
+				ctx: context.Background(),
+				ur:  nil,
+			},
+			prepare: func(m *mock_scim.MockAWSSCIMProvider) {},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.prepare(mockScimProvider)
+			p := &Provider{
+				scim: tt.fields.scim,
+			}
+			err := p.DeleteUsers(tt.args.ctx, tt.args.ur)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Provider.DeleteUsers() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+		})
+	}
+}
 
-		svc, _ := NewProvider(mockSCIM)
-		got, err := svc.GetGroupsMembersBruteForce(ctx, gr, ur)
-		assert.NoError(t, err)
-		assert.NotNil(t, got)
-	})
+func TestProvider_CreateGroupsMembers(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockScimProvider := mock_scim.NewMockAWSSCIMProvider(ctrl)
+
+	type fields struct {
+		scim                 AWSSCIMProvider
+		maxMembersPerRequest int
+	}
+	type args struct {
+		ctx context.Context
+		gmr *model.GroupsMembersResult
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		prepare func(m *mock_scim.MockAWSSCIMProvider)
+		want    *model.GroupsMembersResult
+		wantErr bool
+	}{
+		{
+			name: "should create groups members",
+			fields: fields{
+				scim:                 mockScimProvider,
+				maxMembersPerRequest: 100,
+			},
+			args: args{
+				ctx: context.Background(),
+				gmr: &model.GroupsMembersResult{
+					Resources: []*model.GroupMembers{
+						{
+							Group: &model.Group{
+								SCIMID: "1",
+								Name:   "group1",
+							},
+							Resources: []*model.Member{
+								{
+									SCIMID: "1",
+								},
+							},
+						},
+					},
+				},
+			},
+			prepare: func(m *mock_scim.MockAWSSCIMProvider) {
+				m.EXPECT().PatchGroup(gomock.Any(), gomock.Any()).Return(nil)
+			},
+			want: &model.GroupsMembersResult{
+				Resources: []*model.GroupMembers{
+					{
+						Group: &model.Group{
+							SCIMID: "1",
+							Name:   "group1",
+						},
+						Resources: []*model.Member{
+							{
+								SCIMID: "1",
+							},
+						},
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "should create groups members without scim id",
+			fields: fields{
+				scim:                 mockScimProvider,
+				maxMembersPerRequest: 100,
+			},
+			args: args{
+				ctx: context.Background(),
+				gmr: &model.GroupsMembersResult{
+					Resources: []*model.GroupMembers{
+						{
+							Group: &model.Group{
+								SCIMID: "1",
+								Name:   "group1",
+							},
+							Resources: []*model.Member{
+								{
+									Email: "user1@email.com",
+								},
+							},
+						},
+					},
+				},
+			},
+			prepare: func(m *mock_scim.MockAWSSCIMProvider) {
+				m.EXPECT().GetUserByUserName(gomock.Any(), gomock.Any()).Return(&aws.GetUserResponse{
+					ID: "1",
+				}, nil)
+				m.EXPECT().PatchGroup(gomock.Any(), gomock.Any()).Return(nil)
+			},
+			want: &model.GroupsMembersResult{
+				Resources: []*model.GroupMembers{
+					{
+						Group: &model.Group{
+							SCIMID: "1",
+							Name:   "group1",
+						},
+						Resources: []*model.Member{
+							{
+								SCIMID: "1",
+								Email:  "user1@email.com",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "should return an error when getting user by email",
+			fields: fields{
+				scim:                 mockScimProvider,
+				maxMembersPerRequest: 100,
+			},
+			args: args{
+				ctx: context.Background(),
+				gmr: &model.GroupsMembersResult{
+					Resources: []*model.GroupMembers{
+						{
+							Group: &model.Group{
+								SCIMID: "1",
+								Name:   "group1",
+							},
+							Resources: []*model.Member{
+								{
+									Email: "user1@email.com",
+								},
+							},
+						},
+					},
+				},
+			},
+			prepare: func(m *mock_scim.MockAWSSCIMProvider) {
+				m.EXPECT().GetUserByUserName(gomock.Any(), gomock.Any()).Return(nil, errors.New("error"))
+			},
+			wantErr: true,
+		},
+		{
+			name: "should return an error when patching group",
+			fields: fields{
+				scim:                 mockScimProvider,
+				maxMembersPerRequest: 100,
+			},
+			args: args{
+				ctx: context.Background(),
+				gmr: &model.GroupsMembersResult{
+					Resources: []*model.GroupMembers{
+						{
+							Group: &model.Group{
+								SCIMID: "1",
+								Name:   "group1",
+							},
+							Resources: []*model.Member{
+								{
+									SCIMID: "1",
+								},
+							},
+						},
+					},
+				},
+			},
+			prepare: func(m *mock_scim.MockAWSSCIMProvider) {
+				m.EXPECT().PatchGroup(gomock.Any(), gomock.Any()).Return(errors.New("error"))
+			},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.prepare(mockScimProvider)
+			p := &Provider{
+				scim:                 tt.fields.scim,
+				maxMembersPerRequest: tt.fields.maxMembersPerRequest,
+			}
+			got, err := p.CreateGroupsMembers(tt.args.ctx, tt.args.gmr)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Provider.CreateGroupsMembers() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if diff := cmp.Diff(tt.want, got, cmpopts.IgnoreFields(model.GroupsMembersResult{}, "HashCode", "Items"), cmpopts.IgnoreFields(model.GroupMembers{}, "HashCode", "Items"), cmpopts.IgnoreFields(model.Member{}, "HashCode")); diff != "" {
+				t.Errorf("Provider.CreateGroupsMembers() (-want +got):\n%s", diff)
+			}
+		})
+	}
+}
+
+func TestProvider_DeleteGroupsMembers(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockScimProvider := mock_scim.NewMockAWSSCIMProvider(ctrl)
+
+	type fields struct {
+		scim                 AWSSCIMProvider
+		maxMembersPerRequest int
+	}
+	type args struct {
+		ctx context.Context
+		gmr *model.GroupsMembersResult
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		prepare func(m *mock_scim.MockAWSSCIMProvider)
+		wantErr bool
+	}{
+		{
+			name: "should delete groups members",
+			fields: fields{
+				scim:                 mockScimProvider,
+				maxMembersPerRequest: 100,
+			},
+			args: args{
+				ctx: context.Background(),
+				gmr: &model.GroupsMembersResult{
+					Resources: []*model.GroupMembers{
+						{
+							Group: &model.Group{
+								SCIMID: "1",
+								Name:   "group1",
+							},
+							Resources: []*model.Member{
+								{
+									SCIMID: "1",
+								},
+							},
+						},
+					},
+				},
+			},
+			prepare: func(m *mock_scim.MockAWSSCIMProvider) {
+				m.EXPECT().PatchGroup(gomock.Any(), gomock.Any()).Return(nil)
+			},
+			wantErr: false,
+		},
+		{
+			name: "should return an error when patching group",
+			fields: fields{
+				scim:                 mockScimProvider,
+				maxMembersPerRequest: 100,
+			},
+			args: args{
+				ctx: context.Background(),
+				gmr: &model.GroupsMembersResult{
+					Resources: []*model.GroupMembers{
+						{
+							Group: &model.Group{
+								SCIMID: "1",
+								Name:   "group1",
+							},
+							Resources: []*model.Member{
+								{
+									SCIMID: "1",
+								},
+							},
+						},
+					},
+				},
+			},
+			prepare: func(m *mock_scim.MockAWSSCIMProvider) {
+				m.EXPECT().PatchGroup(gomock.Any(), gomock.Any()).Return(errors.New("error"))
+			},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.prepare(mockScimProvider)
+			p := &Provider{
+				scim:                 tt.fields.scim,
+				maxMembersPerRequest: tt.fields.maxMembersPerRequest,
+			}
+			err := p.DeleteGroupsMembers(tt.args.ctx, tt.args.gmr)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Provider.DeleteGroupsMembers() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+		})
+	}
+}
+
+func TestProvider_GetGroupsMembers(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockScimProvider := mock_scim.NewMockAWSSCIMProvider(ctrl)
+
+	type fields struct {
+		scim AWSSCIMProvider
+	}
+	type args struct {
+		ctx context.Context
+		gr  *model.GroupsResult
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		prepare func(m *mock_scim.MockAWSSCIMProvider)
+		want    *model.GroupsMembersResult
+		wantErr bool
+	}{
+		{
+			name: "should get groups members",
+			fields: fields{
+				scim: mockScimProvider,
+			},
+			args: args{
+				ctx: context.Background(),
+				gr: &model.GroupsResult{
+					Resources: []*model.Group{
+						{
+							SCIMID: "1",
+							Name:   "group1",
+						},
+					},
+				},
+			},
+			prepare: func(m *mock_scim.MockAWSSCIMProvider) {
+				m.EXPECT().ListGroups(gomock.Any(), gomock.Any()).Return(&aws.ListGroupsResponse{
+					Resources: []*aws.Group{
+						{
+							Members: []*aws.Member{
+								{
+									Value: "1",
+								},
+							},
+						},
+					},
+				}, nil)
+				m.EXPECT().GetUser(gomock.Any(), gomock.Any()).Return(&aws.GetUserResponse{
+					Emails: []aws.Email{
+						{
+							Value: "user1@email.com",
+						},
+					},
+				}, nil)
+			},
+			want: &model.GroupsMembersResult{
+				Resources: []*model.GroupMembers{
+					{
+						Group: &model.Group{
+							SCIMID: "1",
+							Name:   "group1",
+						},
+						Resources: []*model.Member{
+							{
+								SCIMID: "1",
+								Email:  "user1@email.com",
+							},
+						},
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "should return an error when listing groups",
+			fields: fields{
+				scim: mockScimProvider,
+			},
+			args: args{
+				ctx: context.Background(),
+				gr: &model.GroupsResult{
+					Resources: []*model.Group{
+						{
+							SCIMID: "1",
+							Name:   "group1",
+						},
+					},
+				},
+			},
+			prepare: func(m *mock_scim.MockAWSSCIMProvider) {
+				m.EXPECT().ListGroups(gomock.Any(), gomock.Any()).Return(nil, errors.New("error"))
+			},
+			wantErr: true,
+		},
+		{
+			name: "should return an error when getting user",
+			fields: fields{
+				scim: mockScimProvider,
+			},
+			args: args{
+				ctx: context.Background(),
+				gr: &model.GroupsResult{
+					Resources: []*model.Group{
+						{
+							SCIMID: "1",
+							Name:   "group1",
+						},
+					},
+				},
+			},
+			prepare: func(m *mock_scim.MockAWSSCIMProvider) {
+				m.EXPECT().ListGroups(gomock.Any(), gomock.Any()).Return(&aws.ListGroupsResponse{
+					Resources: []*aws.Group{
+						{
+							Members: []*aws.Member{
+								{
+									Value: "1",
+								},
+							},
+						},
+					},
+				}, nil)
+				m.EXPECT().GetUser(gomock.Any(), gomock.Any()).Return(nil, errors.New("error"))
+			},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.prepare(mockScimProvider)
+			p := &Provider{
+				scim: tt.fields.scim,
+			}
+			got, err := p.GetGroupsMembers(tt.args.ctx, tt.args.gr)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Provider.GetGroupsMembers() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if diff := cmp.Diff(tt.want, got, cmpopts.IgnoreFields(model.GroupsMembersResult{}, "HashCode", "Items"), cmpopts.IgnoreFields(model.GroupMembers{}, "HashCode", "Items"), cmpopts.IgnoreFields(model.Member{}, "HashCode")); diff != "" {
+				t.Errorf("Provider.GetGroupsMembers() (-want +got):\n%s", diff)
+			}
+		})
+	}
+}
+
+func TestProvider_GetGroupsMembersBruteForce(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockScimProvider := mock_scim.NewMockAWSSCIMProvider(ctrl)
+
+	type fields struct {
+		scim                 AWSSCIMProvider
+		maxMembersPerRequest int
+	}
+	type args struct {
+		ctx context.Context
+		gr  *model.GroupsResult
+		ur  *model.UsersResult
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		prepare func(m *mock_scim.MockAWSSCIMProvider)
+		want    *model.GroupsMembersResult
+		wantErr bool
+	}{
+		{
+			name: "should get groups members",
+			fields: fields{
+				scim: mockScimProvider,
+			},
+			args: args{
+				ctx: context.Background(),
+				gr: &model.GroupsResult{
+					Resources: []*model.Group{
+						{
+							SCIMID: "1",
+							Name:   "group1",
+						},
+					},
+				},
+				ur: &model.UsersResult{
+					Resources: []*model.User{
+						{
+							SCIMID: "1",
+							Active: true,
+							Emails: []model.Email{
+								{
+									Value: "user1@email.com",
+								},
+							},
+						},
+					},
+				},
+			},
+			prepare: func(m *mock_scim.MockAWSSCIMProvider) {
+				m.EXPECT().ListGroups(gomock.Any(), gomock.Any()).Return(&aws.ListGroupsResponse{
+					ListResponse: aws.ListResponse{
+						TotalResults: 1,
+					},
+					Resources: []*aws.Group{},
+				}, nil)
+			},
+			want: &model.GroupsMembersResult{
+				Resources: []*model.GroupMembers{
+					{
+						Group: &model.Group{
+							SCIMID: "1",
+							Name:   "group1",
+						},
+						Resources: []*model.Member{
+							{
+								SCIMID: "1",
+								Email:  "user1@email.com",
+								Status: "ACTIVE",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "should get groups members with concurrency",
+			fields: fields{
+				scim: mockScimProvider,
+			},
+			args: args{
+				ctx: context.Background(),
+				gr: &model.GroupsResult{
+					Resources: []*model.Group{
+						{
+							SCIMID: "1",
+							Name:   "group1",
+						},
+						{
+							SCIMID: "2",
+							Name:   "group2",
+						},
+					},
+				},
+				ur: &model.UsersResult{
+					Resources: []*model.User{
+						{
+							SCIMID: "1",
+							Active: true,
+							Emails: []model.Email{
+								{
+									Value: "user1@email.com",
+								},
+							},
+						},
+						{
+							SCIMID: "2",
+							Active: true,
+							Emails: []model.Email{
+								{
+									Value: "user2@email.com",
+								},
+							},
+						},
+					},
+				},
+			},
+			prepare: func(m *mock_scim.MockAWSSCIMProvider) {
+				var wg sync.WaitGroup
+				var mu sync.Mutex
+				var currentConcurrent int
+				var maxConcurrent int
+
+				calls := 4
+				wg.Add(calls)
+
+				for i := 0; i < calls; i++ {
+					m.EXPECT().ListGroups(gomock.Any(), gomock.Any()).DoAndReturn(func(_ context.Context, _ string) (*aws.ListGroupsResponse, error) {
+						mu.Lock()
+						currentConcurrent++
+						if currentConcurrent > maxConcurrent {
+							maxConcurrent = currentConcurrent
+						}
+						mu.Unlock()
+
+						time.Sleep(100 * time.Millisecond)
+
+						mu.Lock()
+						currentConcurrent--
+						mu.Unlock()
+
+						wg.Done()
+
+						return &aws.ListGroupsResponse{
+							ListResponse: aws.ListResponse{
+								TotalResults: 1,
+							},
+							Resources: []*aws.Group{},
+						}, nil
+					})
+				}
+
+				go func() {
+					wg.Wait()
+					if maxConcurrent > 20 {
+						t.Errorf("max concurrent calls should be less than 20, got %d", maxConcurrent)
+					}
+				}()
+			},
+			want: &model.GroupsMembersResult{
+				Resources: []*model.GroupMembers{
+					{
+						Group: &model.Group{
+							SCIMID: "1",
+							Name:   "group1",
+						},
+						Resources: []*model.Member{
+							{
+								SCIMID: "1",
+								Email:  "user1@email.com",
+								Status: "ACTIVE",
+							},
+							{
+								SCIMID: "2",
+								Email:  "user2@email.com",
+								Status: "ACTIVE",
+							},
+						},
+					},
+					{
+						Group: &model.Group{
+							SCIMID: "2",
+							Name:   "group2",
+						},
+						Resources: []*model.Member{
+							{
+								SCIMID: "1",
+								Email:  "user1@email.com",
+								Status: "ACTIVE",
+							},
+							{
+								SCIMID: "2",
+								Email:  "user2@email.com",
+								Status: "ACTIVE",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "should return an error when listing groups",
+			fields: fields{
+				scim: mockScimProvider,
+			},
+			args: args{
+				ctx: context.Background(),
+				gr: &model.GroupsResult{
+					Resources: []*model.Group{
+						{
+							SCIMID: "1",
+							Name:   "group1",
+						},
+					},
+				},
+				ur: &model.UsersResult{
+					Resources: []*model.User{
+						{
+							SCIMID: "1",
+						},
+					},
+				},
+			},
+			prepare: func(m *mock_scim.MockAWSSCIMProvider) {
+				m.EXPECT().ListGroups(gomock.Any(), gomock.Any()).Return(nil, errors.New("error"))
+			},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.prepare(mockScimProvider)
+			p := &Provider{
+				scim: tt.fields.scim,
+			}
+			got, err := p.GetGroupsMembersBruteForce(tt.args.ctx, tt.args.gr, tt.args.ur)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Provider.GetGroupsMembersBruteForce() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			// sort members by SCIMID to avoid order issues in the test
+			opt := cmpopts.SortSlices(func(a, b *model.Member) bool {
+				return a.SCIMID < b.SCIMID
+			})
+
+			if diff := cmp.Diff(tt.want, got, cmpopts.IgnoreFields(model.GroupsMembersResult{}, "HashCode", "Items"), cmpopts.IgnoreFields(model.GroupMembers{}, "HashCode", "Items"), cmpopts.IgnoreFields(model.Member{}, "HashCode"), opt); diff != "" {
+				t.Errorf("Provider.GetGroupsMembersBruteForce() (-want +got):\n%s", diff)
+			}
+		})
+	}
 }

@@ -169,7 +169,7 @@ func TestNewRequest(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, mockURL)
 
-		mockBody := map[string]interface{}{
+		mockBody := map[string]any{
 			"this will fail when is serialize": make(chan int),
 		}
 
@@ -1978,5 +1978,218 @@ func TestListGroups(t *testing.T) {
 		assert.Equal(t, "urn:ietf:params:scim:api:messages:2.0:ListResponse", got.Schemas[0])
 		assert.Equal(t, groupID, got.Resources[0].ID)
 		assert.Equal(t, "Group Foo", got.Resources[0].DisplayName)
+	})
+}
+
+// Enhanced test cases for improved coverage
+
+func TestNewSCIMServiceWithHTTPConfig(t *testing.T) {
+	t.Run("should create service with custom HTTP config", func(t *testing.T) {
+		got, err := NewSCIMServiceWithHTTPConfig("https://testing.com", "MyToken", 10, 5)
+		assert.NoError(t, err)
+		assert.NotNil(t, got)
+	})
+
+	t.Run("should return error when url is empty", func(t *testing.T) {
+		got, err := NewSCIMServiceWithHTTPConfig("", "MyToken", 10, 5)
+		assert.Error(t, err)
+		assert.ErrorIs(t, err, ErrURLEmpty)
+		assert.Nil(t, got)
+	})
+
+	t.Run("should return error when token is empty", func(t *testing.T) {
+		got, err := NewSCIMServiceWithHTTPConfig("https://testing.com", "", 10, 5)
+		assert.Error(t, err)
+		assert.ErrorIs(t, err, ErrBearerTokenEmpty)
+		assert.Nil(t, got)
+	})
+}
+
+func TestSCIMService_ContextCancellation(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	t.Run("should handle context cancellation", func(t *testing.T) {
+		mockHTTPClient := mocks.NewMockHTTPClient(mockCtrl)
+		service, err := NewSCIMService(mockHTTPClient, "https://testing.com", "MyToken")
+		assert.NoError(t, err)
+
+		ctx, cancel := context.WithCancel(context.Background())
+		cancel() // Cancel immediately
+
+		reqURL, _ := url.Parse("https://testing.com/Users")
+		req, _ := service.newRequest(ctx, http.MethodGet, reqURL, nil)
+
+		_, err = service.do(ctx, req)
+		assert.Error(t, err)
+		assert.Equal(t, context.Canceled, err)
+	})
+}
+
+func TestSCIMService_RateLimiting(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	t.Run("should handle 429 Too Many Requests", func(t *testing.T) {
+		mockHTTPClient := mocks.NewMockHTTPClient(mockCtrl)
+		service, err := NewSCIMService(mockHTTPClient, "https://testing.com", "MyToken")
+		assert.NoError(t, err)
+
+		// Create a mock response with 429 status
+		resp := &http.Response{
+			StatusCode: http.StatusTooManyRequests,
+			Status:     "429 Too Many Requests",
+			Body:       io.NopCloser(strings.NewReader(`{"detail":"Rate limit exceeded"}`)),
+		}
+
+		err = service.checkHTTPResponse(resp)
+		assert.Error(t, err)
+
+		var httpErr *HTTPResponseError
+		assert.True(t, errors.As(err, &httpErr))
+		assert.Equal(t, http.StatusTooManyRequests, httpErr.StatusCode)
+	})
+}
+
+func TestSCIMService_LargeResponse(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	t.Run("should handle large response bodies", func(t *testing.T) {
+		mockHTTPClient := mocks.NewMockHTTPClient(mockCtrl)
+		service, err := NewSCIMService(mockHTTPClient, "https://testing.com", "MyToken")
+		assert.NoError(t, err)
+
+		// Create a large response body (10KB)
+		largeBody := strings.Repeat("x", 10*1024)
+		resp := &http.Response{
+			StatusCode: http.StatusBadRequest,
+			Status:     "400 Bad Request",
+			Body:       io.NopCloser(strings.NewReader(largeBody)),
+		}
+
+		err = service.checkHTTPResponse(resp)
+		assert.Error(t, err)
+
+		var httpErr *HTTPResponseError
+		assert.True(t, errors.As(err, &httpErr))
+		assert.Equal(t, http.StatusBadRequest, httpErr.StatusCode)
+		assert.Equal(t, largeBody, httpErr.Message)
+	})
+}
+
+func TestSCIMService_MalformedJSON(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	t.Run("should handle malformed JSON in error response", func(t *testing.T) {
+		mockHTTPClient := mocks.NewMockHTTPClient(mockCtrl)
+		service, err := NewSCIMService(mockHTTPClient, "https://testing.com", "MyToken")
+		assert.NoError(t, err)
+
+		malformedJSON := `{"detail":"Error","invalid"}`
+		resp := &http.Response{
+			StatusCode: http.StatusBadRequest,
+			Status:     "400 Bad Request",
+			Body:       io.NopCloser(strings.NewReader(malformedJSON)),
+		}
+
+		err = service.checkHTTPResponse(resp)
+		assert.Error(t, err)
+
+		var httpErr *HTTPResponseError
+		assert.True(t, errors.As(err, &httpErr))
+		assert.Equal(t, http.StatusBadRequest, httpErr.StatusCode)
+		assert.Equal(t, malformedJSON, httpErr.Message)
+	})
+}
+
+func TestSCIMService_StructuredErrorResponse(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	t.Run("should parse structured SCIM error response", func(t *testing.T) {
+		mockHTTPClient := mocks.NewMockHTTPClient(mockCtrl)
+		service, err := NewSCIMService(mockHTTPClient, "https://testing.com", "MyToken")
+		assert.NoError(t, err)
+
+		scimError := `{
+			"schemas": ["urn:ietf:params:scim:api:messages:2.0:Error"],
+			"scimType": "invalidValue",
+			"detail": "Invalid filter syntax",
+			"status": "400"
+		}`
+		resp := &http.Response{
+			StatusCode: http.StatusBadRequest,
+			Status:     "400 Bad Request",
+			Body:       io.NopCloser(strings.NewReader(scimError)),
+		}
+
+		err = service.checkHTTPResponse(resp)
+		assert.Error(t, err)
+
+		var httpErr *HTTPResponseError
+		assert.True(t, errors.As(err, &httpErr))
+		assert.Equal(t, http.StatusBadRequest, httpErr.StatusCode)
+		assert.Equal(t, "invalidValue", httpErr.Code)
+		assert.Equal(t, "Invalid filter syntax", httpErr.Message)
+	})
+}
+
+func TestSCIMService_HTTPClientError(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	t.Run("should handle HTTP client errors", func(t *testing.T) {
+		mockHTTPClient := mocks.NewMockHTTPClient(mockCtrl)
+		service, err := NewSCIMService(mockHTTPClient, "https://testing.com", "MyToken")
+		assert.NoError(t, err)
+
+		reqURL, _ := url.Parse("https://testing.com/Users")
+		req, _ := service.newRequest(context.Background(), http.MethodGet, reqURL, nil)
+
+		// Mock HTTP client to return error
+		mockHTTPClient.EXPECT().Do(gomock.Any()).Return(nil, errors.New("network error"))
+
+		_, err = service.do(context.Background(), req)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "network error")
+	})
+}
+
+func TestSCIMService_EmptyResponse(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	t.Run("should handle empty response body", func(t *testing.T) {
+		mockHTTPClient := mocks.NewMockHTTPClient(mockCtrl)
+		service, err := NewSCIMService(mockHTTPClient, "https://testing.com", "MyToken")
+		assert.NoError(t, err)
+
+		resp := &http.Response{
+			StatusCode: http.StatusBadRequest,
+			Status:     "400 Bad Request",
+			Body:       io.NopCloser(strings.NewReader("")),
+		}
+
+		err = service.checkHTTPResponse(resp)
+		assert.Error(t, err)
+
+		var httpErr *HTTPResponseError
+		assert.True(t, errors.As(err, &httpErr))
+		assert.Equal(t, http.StatusBadRequest, httpErr.StatusCode)
+		assert.Equal(t, "", httpErr.Message)
+	})
+}
+
+func TestConstants(t *testing.T) {
+	t.Run("should have correct constant values", func(t *testing.T) {
+		assert.Equal(t, "/Users", UsersPath)
+		assert.Equal(t, "/Groups", GroupsPath)
+		assert.Equal(t, "/ServiceProviderConfig", ServiceProviderConfigPath)
+		assert.Equal(t, "application/scim+json", ContentTypeSCIMJSON)
+		assert.Equal(t, "application/json", ContentTypeJSON)
+		assert.Equal(t, int64(30*1000000000), int64(DefaultTimeout))
+		assert.Equal(t, 3, MaxRetries)
 	})
 }

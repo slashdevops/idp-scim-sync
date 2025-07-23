@@ -21,22 +21,20 @@ func buildUser(user *aws.User) *model.User {
 
 	if user.Name == nil {
 		slog.Warn("scim: User name is nil")
-		return nil
+		user.Name = &aws.Name{}
 	}
 
 	if user.Name.GivenName == "" {
 		slog.Warn("scim: User given name is empty")
-		return nil
 	}
 
 	if user.Name.FamilyName == "" {
 		slog.Warn("scim: User family name is empty")
-		return nil
 	}
 
 	if user.Emails == nil {
 		slog.Warn("scim: User emails is nil, setting primary email as the only email")
-		return nil
+		user.Emails = []aws.Email{}
 	}
 
 	var emails []model.Email

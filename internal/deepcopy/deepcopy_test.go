@@ -15,8 +15,8 @@ func TestSliceOfPointers_any(t *testing.T) {
 	}{
 		{
 			name:   "empty slice",
-			toTest: []*interface{}{},
-			want:   []*interface{}{},
+			toTest: []*any{},
+			want:   []*any{},
 		},
 		{
 			name:   "nil slice",
@@ -25,8 +25,8 @@ func TestSliceOfPointers_any(t *testing.T) {
 		},
 		{
 			name:   "slice of nil pointers",
-			toTest: []*interface{}{nil, nil, nil},
-			want:   []*interface{}{nil, nil, nil},
+			toTest: []*any{nil, nil, nil},
+			want:   []*any{nil, nil, nil},
 		},
 	}
 

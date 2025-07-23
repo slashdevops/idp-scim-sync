@@ -10,7 +10,7 @@ import (
 )
 
 // Hash returns a sha256 hash of value pass as argument
-func Hash(value interface{}) string {
+func Hash(value any) string {
 	if value == nil {
 		slog.Error("value is nil")
 		os.Exit(1)

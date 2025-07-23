@@ -62,7 +62,7 @@ func (dr *DiskRepository) SetState(_ context.Context, state *model.State) error 
 	return nil
 }
 
-// ErrStateFileEmpty, the state file is empty.
+// ErrStateFileEmpty indicates that the state file is empty.
 type ErrStateFileEmpty struct {
 	Message string
 }
@@ -76,7 +76,7 @@ func (e *ErrStateFileEmpty) ErrorMessage() string {
 }
 func (e *ErrStateFileEmpty) ErrorCode() string { return "ErrStateFileEmpty" }
 
-// ErrReadingStateFile, the state file is empty.
+// ErrReadingStateFile indicates an error occurred while reading the state file.
 type ErrReadingStateFile struct {
 	Message string
 }
@@ -90,7 +90,7 @@ func (e *ErrReadingStateFile) ErrorMessage() string {
 }
 func (e *ErrReadingStateFile) ErrorCode() string { return "ErrReadingStateFile" }
 
-// ErrStateFileNil, the state file is empty.
+// ErrStateFileNil indicates that the state file is nil.
 type ErrStateFileNil struct {
 	Message string
 }

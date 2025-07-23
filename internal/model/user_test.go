@@ -693,7 +693,7 @@ func TestUser_SetHashCode_pointer(t *testing.T) {
 	}
 }
 
-func UsersResult_GobEncode(t *testing.T) {
+func TestUsersResultGobEncode(t *testing.T) {
 	tests := []struct {
 		name   string
 		toTest UsersResult
@@ -717,9 +717,10 @@ func UsersResult_GobEncode(t *testing.T) {
 						Emails: []Email{
 							{Value: "user.1@mail.com", Type: "work", Primary: true},
 						},
+						HashCode: "this should not be encoded",
 					},
 				},
-				HashCode: "test",
+				HashCode: "this should not be encoded",
 			},
 		},
 	}
@@ -739,9 +740,18 @@ func UsersResult_GobEncode(t *testing.T) {
 				t.Errorf("UsersResult.GobEncode() error = %v", err)
 			}
 
+			// SCIMID is not exported, so it will not be encoded
+			// HashCode is not exported, so it will not be encoded
+			expected := tt.toTest
+			for i := range expected.Resources {
+				expected.Resources[i].SCIMID = ""
+				expected.Resources[i].HashCode = ""
+			}
+			expected.HashCode = ""
+
 			sort := func(x, y string) bool { return x > y }
-			if diff := cmp.Diff(tt.toTest, got, cmpopts.SortSlices(sort)); diff != "" {
-				t.Errorf("UsersResult.GobEncode() mismatch (-tt.toTest +got):\n%s", diff)
+			if diff := cmp.Diff(expected, got, cmpopts.SortSlices(sort)); diff != "" {
+				t.Errorf("UsersResult.GobEncode() mismatch (-expected +got):\n%s", diff)
 			}
 		})
 	}

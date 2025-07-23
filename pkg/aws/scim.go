@@ -19,6 +19,23 @@ import (
 // AWS SSO SCIM API
 // reference: https://docs.aws.amazon.com/singlesignon/latest/developerguide/what-is-scim.html
 
+const (
+	// DefaultTimeout for HTTP requests
+	DefaultTimeout = 30 * 1000000000 // 30 seconds in nanoseconds
+
+	// MaxRetries for failed requests
+	MaxRetries = 3
+
+	// SCIM API paths
+	UsersPath                 = "/Users"
+	GroupsPath                = "/Groups"
+	ServiceProviderConfigPath = "/ServiceProviderConfig"
+
+	// Content types
+	ContentTypeSCIMJSON = "application/scim+json"
+	ContentTypeJSON     = "application/json"
+)
+
 var (
 	// ErrURLEmpty is returned when the URL is empty.
 	ErrURLEmpty = errors.Errorf("aws: url may not be empty")
@@ -52,6 +69,9 @@ var (
 
 	// ErrBearerTokenEmpty is returned when the bearer token is empty.
 	ErrBearerTokenEmpty = errors.Errorf("aws: bearer token may not be empty")
+
+	// ErrServiceProviderConfigEmpty is returned when the service provider config is empty.
+	ErrServiceProviderConfigEmpty = errors.Errorf("aws: service provider config may not be empty")
 )
 
 //go:generate go run go.uber.org/mock/mockgen@v0.5.0 -package=mocks -destination=../../mocks/aws/scim_mocks.go -source=scim.go HTTPClient
@@ -95,8 +115,25 @@ func NewSCIMService(httpClient HTTPClient, urlStr, token string) (*SCIMService, 
 	}, nil
 }
 
+// NewSCIMServiceWithHTTPConfig creates a new AWS SCIM Service with optimized HTTP client configuration.
+func NewSCIMServiceWithHTTPConfig(urlStr, token string, maxIdleConns, maxConnsPerHost int) (*SCIMService, error) {
+	transport := &http.Transport{
+		MaxIdleConns:        maxIdleConns,
+		MaxConnsPerHost:     maxConnsPerHost,
+		MaxIdleConnsPerHost: maxConnsPerHost,
+		IdleConnTimeout:     90 * 1000000000, // 90 seconds in nanoseconds
+	}
+
+	httpClient := &http.Client{
+		Transport: transport,
+		Timeout:   DefaultTimeout,
+	}
+
+	return NewSCIMService(httpClient, urlStr, token)
+}
+
 // newRequest creates an http.Request with the given method, URL, and (optionally) body.
-func (s *SCIMService) newRequest(ctx context.Context, method string, u *url.URL, body interface{}) (*http.Request, error) {
+func (s *SCIMService) newRequest(ctx context.Context, method string, u *url.URL, body any) (*http.Request, error) {
 	var buf io.ReadWriter
 	if body != nil {
 		buf = &bytes.Buffer{}
@@ -115,10 +152,10 @@ func (s *SCIMService) newRequest(ctx context.Context, method string, u *url.URL,
 	}
 
 	if body != nil {
-		req.Header.Set("Content-Type", "application/scim+json")
+		req.Header.Set("Content-Type", ContentTypeSCIMJSON)
 	}
 
-	req.Header.Set("Accept", "application/json")
+	req.Header.Set("Accept", ContentTypeJSON)
 
 	if s.UserAgent != "" {
 		req.Header.Set("User-Agent", s.UserAgent)
@@ -131,6 +168,13 @@ func (s *SCIMService) newRequest(ctx context.Context, method string, u *url.URL,
 
 // do sends an HTTP request and returns an HTTP response, following policy (e.g. redirects, cookies, auth) as configured on the client.
 func (s *SCIMService) do(ctx context.Context, req *http.Request) (*http.Response, error) {
+	// Check if context is already cancelled
+	select {
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	default:
+	}
+
 	req = req.WithContext(ctx)
 
 	// Set bearer token
@@ -150,6 +194,18 @@ func (s *SCIMService) checkHTTPResponse(resp *http.Response) error {
 		body, err := io.ReadAll(resp.Body)
 		if err != nil {
 			return fmt.Errorf("aws checkHTTPResponse: error reading response body: %w", err)
+		}
+
+		// Try to parse structured error response
+		var errorResp struct {
+			Schemas  []string `json:"schemas"`
+			ScimType string   `json:"scimType"`
+			Detail   string   `json:"detail"`
+			Status   string   `json:"status"`
+		}
+
+		if json.Unmarshal(body, &errorResp) == nil && errorResp.Detail != "" {
+			return &HTTPResponseError{resp.StatusCode, errorResp.ScimType, errorResp.Detail}
 		}
 
 		slog.Debug("aws checkHTTPResponse()", "statusCode", resp.StatusCode, "status", resp.Status, "body", string(body))
@@ -176,7 +232,7 @@ func (s *SCIMService) CreateUser(ctx context.Context, cur *CreateUserRequest) (*
 		return nil, fmt.Errorf("aws CreateUser: error parsing url: %w", err)
 	}
 
-	reqURL.Path = path.Join(reqURL.Path, "/Users")
+	reqURL.Path = path.Join(reqURL.Path, UsersPath)
 
 	req, err := s.newRequest(ctx, http.MethodPost, reqURL, *cur)
 	if err != nil {
@@ -448,10 +504,6 @@ func (s *SCIMService) GetUserByUserName(ctx context.Context, userName string) (*
 
 	if len(lur.Resources) > 0 {
 		dataJSON := lur.Resources[0].String()
-		if err != nil {
-			return nil, fmt.Errorf("aws GetUserByUserName: userName: %s, error decoding response body: %w", userName, err)
-		}
-
 		data := strings.NewReader(dataJSON)
 		if err = json.NewDecoder(data).Decode(&response); err != nil {
 			return nil, fmt.Errorf("aws GetUserByUserName: userName: %s, error decoding response body: %w", userName, err)
@@ -651,9 +703,6 @@ func (s *SCIMService) GetGroupByDisplayName(ctx context.Context, displayName str
 
 	if len(lgr.Resources) > 0 {
 		dataJSON := lgr.Resources[0].String()
-		if err != nil {
-			return nil, fmt.Errorf("aws GetGroupByDisplayName: displayName: %s, error decoding response body: %w", displayName, err)
-		}
 
 		data := strings.NewReader(dataJSON)
 		if err = json.NewDecoder(data).Decode(&response); err != nil {

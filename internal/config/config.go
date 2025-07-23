@@ -1,3 +1,4 @@
+// Package config provides the configuration for the application.
 package config
 
 import "fmt"
@@ -75,6 +76,7 @@ type Config struct {
 	GWSUserEmailSecretName          string   `mapstructure:"gws_user_email_secret_name" json:"gws_user_email_secret_name" yaml:"gws_user_email_secret_name"`
 	GWSGroupsFilter                 []string `mapstructure:"gws_groups_filter" json:"gws_groups_filter" yaml:"gws_groups_filter"`
 	GWSUsersFilter                  []string `mapstructure:"gws_users_filter" json:"gws_users_filter" yaml:"gws_users_filter"`
+	GWSServiceAccountScopes         []string `mapstructure:"gws_service_account_scopes" json:"gws_service_account_scopes" yaml:"gws_service_account_scopes"`
 
 	AWSSCIMEndpoint              string `mapstructure:"aws_scim_endpoint" json:"aws_scim_endpoint" yaml:"aws_scim_endpoint"`
 	AWSSCIMAccessToken           string `mapstructure:"aws_scim_access_token" json:"aws_scim_access_token" yaml:"aws_scim_access_token"`
@@ -107,6 +109,11 @@ func New() Config {
 		AWSSCIMEndpointSecretName:       DefaultAWSSCIMEndpointSecretName,
 		AWSSCIMAccessTokenSecretName:    DefaultAWSSCIMAccessTokenSecretName,
 		UseSecretsManager:               DefaultUseSecretsManager,
+		GWSServiceAccountScopes: []string{
+			"https://www.googleapis.com/auth/admin.directory.group.readonly",
+			"https://www.googleapis.com/auth/admin.directory.group.member.readonly",
+			"https://www.googleapis.com/auth/admin.directory.user.readonly",
+		},
 	}
 }
 
