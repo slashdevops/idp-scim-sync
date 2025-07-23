@@ -44,7 +44,7 @@ func (cs CustomStructSerialized) GobEncode() ([]byte, error) {
 
 func TestHash(t *testing.T) {
 	type args struct {
-		value interface{}
+		value any
 	}
 	tests := []struct {
 		name string

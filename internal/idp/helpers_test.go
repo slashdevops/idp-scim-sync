@@ -75,13 +75,13 @@ func Test_buildUser(t *testing.T) {
 		{
 			name: "should return a valid user with all the fields and using primary email as the only email",
 			given: &admin.User{
-				Addresses: []interface{}{
+				Addresses: []any{
 					&admin.UserAddress{Formatted: "formatted work", Type: "work"},
 					&admin.UserAddress{Formatted: "formatted home", Type: "home"},
 				},
-				Languages:     []interface{}{&admin.UserLanguage{LanguageCode: "languageCode", Preference: "preferred"}},
-				Organizations: []interface{}{&admin.UserOrganization{CostCenter: "costCenter", Department: "department", Name: "name", Title: "title", Primary: true}},
-				Phones: []interface{}{
+				Languages:     []any{&admin.UserLanguage{LanguageCode: "languageCode", Preference: "preferred"}},
+				Organizations: []any{&admin.UserOrganization{CostCenter: "costCenter", Department: "department", Name: "name", Title: "title", Primary: true}},
+				Phones: []any{
 					&admin.UserPhone{Value: "value work", Type: "work"},
 					&admin.UserPhone{Value: "value home", Type: "home"},
 				},
@@ -136,14 +136,14 @@ func Test_buildUser(t *testing.T) {
 		{
 			name: "should return a valid user with all the fields",
 			given: &admin.User{
-				Addresses: []interface{}{
+				Addresses: []any{
 					&admin.UserAddress{Formatted: "formatted work", Type: "work"},
 					&admin.UserAddress{Formatted: "formatted home", Type: "home"},
 				},
-				Emails:        []interface{}{&admin.UserEmail{Address: "user@mail.com", Type: "work", Primary: true}},
-				Languages:     []interface{}{&admin.UserLanguage{LanguageCode: "languageCode", Preference: "preferred"}},
-				Organizations: []interface{}{&admin.UserOrganization{CostCenter: "costCenter", Department: "department", Name: "name", Title: "title", Primary: true}},
-				Phones: []interface{}{
+				Emails:        []any{&admin.UserEmail{Address: "user@mail.com", Type: "work", Primary: true}},
+				Languages:     []any{&admin.UserLanguage{LanguageCode: "languageCode", Preference: "preferred"}},
+				Organizations: []any{&admin.UserOrganization{CostCenter: "costCenter", Department: "department", Name: "name", Title: "title", Primary: true}},
+				Phones: []any{
 					&admin.UserPhone{Value: "value work", Type: "work"},
 					&admin.UserPhone{Value: "value home", Type: "home"},
 				},
@@ -216,14 +216,14 @@ func Test_toEmails(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name:    "should return error when given is not a []interface{}",
+			name:    "should return error when given is not a []any",
 			given:   "not a slice",
 			want:    nil,
 			wantErr: true,
 		},
 		{
 			name: "should return a valid email",
-			given: []interface{}{
+			given: []any{
 				&admin.UserEmail{Address: "user@mail.com", Type: "work", Primary: true},
 			},
 			want: []model.Email{
@@ -260,14 +260,14 @@ func Test_toLanguages(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name:    "should return error when given is not a []interface{}",
+			name:    "should return error when given is not a []any",
 			given:   "not a slice",
 			want:    "",
 			wantErr: true,
 		},
 		{
 			name: "should return a valid language",
-			given: []interface{}{
+			given: []any{
 				&admin.UserLanguage{LanguageCode: "en-US", Preference: "preferred"},
 			},
 			want:    "en-US",
@@ -294,14 +294,14 @@ func Test_toAddresses(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name:    "should return error when given is not a []interface{}",
+			name:    "should return error when given is not a []any",
 			given:   "not a slice",
 			want:    nil,
 			wantErr: true,
 		},
 		{
 			name: "should return a valid address",
-			given: []interface{}{
+			given: []any{
 				&admin.UserAddress{Formatted: "123 Main St", Type: "work"},
 			},
 			want: []model.Address{
@@ -336,14 +336,14 @@ func Test_toPhones(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name:    "should return error when given is not a []interface{}",
+			name:    "should return error when given is not a []any",
 			given:   "not a slice",
 			want:    nil,
 			wantErr: true,
 		},
 		{
 			name: "should return a valid phone number",
-			given: []interface{}{
+			given: []any{
 				&admin.UserPhone{Value: "555-555-5555", Type: "work"},
 			},
 			want: []model.PhoneNumber{
@@ -379,14 +379,14 @@ func Test_toRelations(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name:    "should return error when given is not a []interface{}",
+			name:    "should return error when given is not a []any",
 			given:   "not a slice",
 			want:    nil,
 			wantErr: true,
 		},
 		{
 			name: "should return a valid manager",
-			given: []interface{}{
+			given: []any{
 				&admin.UserRelation{Value: "manager@mail.com", Type: "manager"},
 			},
 			want: model.ManagerBuilder().
@@ -416,7 +416,7 @@ func Test_toOrganizations(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name:    "should return error when given is not a []interface{}",
+			name:    "should return error when given is not a []any",
 			given:   "not a slice",
 			want:    nil,
 			want1:   "",
@@ -424,7 +424,7 @@ func Test_toOrganizations(t *testing.T) {
 		},
 		{
 			name: "should return a valid organization",
-			given: []interface{}{
+			given: []any{
 				&admin.UserOrganization{Name: "ACME", Title: "Developer", Primary: true},
 			},
 			want: model.EnterpriseDataBuilder().

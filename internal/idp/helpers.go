@@ -152,7 +152,7 @@ func buildUser(usr *admin.User) *model.User {
 }
 
 func toEmails(e any) ([]model.Email, error) {
-	emails, ok := e.([]interface{})
+	emails, ok := e.([]any)
 	if !ok {
 		return nil, fmt.Errorf("error converting emails: %v", e)
 	}
@@ -179,7 +179,7 @@ func toEmails(e any) ([]model.Email, error) {
 }
 
 func toLanguages(l any) (string, error) {
-	languages, ok := l.([]interface{})
+	languages, ok := l.([]any)
 	if !ok {
 		return "", fmt.Errorf("error converting languages: %v", l)
 	}
@@ -200,7 +200,7 @@ func toLanguages(l any) (string, error) {
 }
 
 func toAddresses(a any) ([]model.Address, error) {
-	addresses, ok := a.([]interface{})
+	addresses, ok := a.([]any)
 	if !ok {
 		return nil, fmt.Errorf("error converting addresses: %v", a)
 	}
@@ -230,7 +230,7 @@ func toAddresses(a any) ([]model.Address, error) {
 }
 
 func toPhones(p any) ([]model.PhoneNumber, error) {
-	phones, ok := p.([]interface{})
+	phones, ok := p.([]any)
 	if !ok {
 		return nil, fmt.Errorf("error converting phones: %v", p)
 	}
@@ -262,7 +262,7 @@ func toPhones(p any) ([]model.PhoneNumber, error) {
 }
 
 func toRelations(r any) (*model.Manager, error) {
-	relations, ok := r.([]interface{})
+	relations, ok := r.([]any)
 	if !ok {
 		return nil, fmt.Errorf("error converting relations: %v", r)
 	}
@@ -286,7 +286,7 @@ func toRelations(r any) (*model.Manager, error) {
 }
 
 func toOrganizations(o any, manager *model.Manager) (*model.EnterpriseData, string, error) {
-	organizations, ok := o.([]interface{})
+	organizations, ok := o.([]any)
 	if !ok {
 		return nil, "", fmt.Errorf("error converting organizations: %v", o)
 	}

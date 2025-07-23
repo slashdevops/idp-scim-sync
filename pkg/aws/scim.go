@@ -133,7 +133,7 @@ func NewSCIMServiceWithHTTPConfig(urlStr, token string, maxIdleConns, maxConnsPe
 }
 
 // newRequest creates an http.Request with the given method, URL, and (optionally) body.
-func (s *SCIMService) newRequest(ctx context.Context, method string, u *url.URL, body interface{}) (*http.Request, error) {
+func (s *SCIMService) newRequest(ctx context.Context, method string, u *url.URL, body any) (*http.Request, error) {
 	var buf io.ReadWriter
 	if body != nil {
 		buf = &bytes.Buffer{}

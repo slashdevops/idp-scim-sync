@@ -169,7 +169,7 @@ func TestNewRequest(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, mockURL)
 
-		mockBody := map[string]interface{}{
+		mockBody := map[string]any{
 			"this will fail when is serialize": make(chan int),
 		}
 
