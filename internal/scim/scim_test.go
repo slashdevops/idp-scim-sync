@@ -4,7 +4,9 @@ import (
 	"context"
 	"errors"
 	"strconv"
+	"sync"
 	"testing"
+	"time"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
@@ -1489,7 +1491,8 @@ func TestProvider_GetGroupsMembersBruteForce(t *testing.T) {
 	mockScimProvider := mock_scim.NewMockAWSSCIMProvider(ctrl)
 
 	type fields struct {
-		scim AWSSCIMProvider
+		scim                 AWSSCIMProvider
+		maxMembersPerRequest int
 	}
 	type args struct {
 		ctx context.Context
@@ -1560,6 +1563,131 @@ func TestProvider_GetGroupsMembersBruteForce(t *testing.T) {
 			},
 		},
 		{
+			name: "should get groups members with concurrency",
+			fields: fields{
+				scim: mockScimProvider,
+			},
+			args: args{
+				ctx: context.Background(),
+				gr: &model.GroupsResult{
+					Resources: []*model.Group{
+						{
+							SCIMID: "1",
+							Name:   "group1",
+						},
+						{
+							SCIMID: "2",
+							Name:   "group2",
+						},
+					},
+				},
+				ur: &model.UsersResult{
+					Resources: []*model.User{
+						{
+							SCIMID: "1",
+							Active: true,
+							Emails: []model.Email{
+								{
+									Value: "user1@email.com",
+								},
+							},
+						},
+						{
+							SCIMID: "2",
+							Active: true,
+							Emails: []model.Email{
+								{
+									Value: "user2@email.com",
+								},
+							},
+						},
+					},
+				},
+			},
+			prepare: func(m *mock_scim.MockAWSSCIMProvider) {
+				var wg sync.WaitGroup
+				var mu sync.Mutex
+				var currentConcurrent int
+				var maxConcurrent int
+
+				calls := 4
+				wg.Add(calls)
+
+				for i := 0; i < calls; i++ {
+					m.EXPECT().ListGroups(gomock.Any(), gomock.Any()).DoAndReturn(func(_ context.Context, _ string) (*aws.ListGroupsResponse, error) {
+						mu.Lock()
+						currentConcurrent++
+						if currentConcurrent > maxConcurrent {
+							maxConcurrent = currentConcurrent
+						}
+						mu.Unlock()
+
+						time.Sleep(100 * time.Millisecond)
+
+						mu.Lock()
+						currentConcurrent--
+						mu.Unlock()
+
+						wg.Done()
+
+						return &aws.ListGroupsResponse{
+							ListResponse: aws.ListResponse{
+								TotalResults: 1,
+							},
+							Resources: []*aws.Group{},
+						}, nil
+					})
+				}
+
+				go func() {
+					wg.Wait()
+					if maxConcurrent > 20 {
+						t.Errorf("max concurrent calls should be less than 20, got %d", maxConcurrent)
+					}
+				}()
+			},
+			want: &model.GroupsMembersResult{
+				Resources: []*model.GroupMembers{
+					{
+						Group: &model.Group{
+							SCIMID: "1",
+							Name:   "group1",
+						},
+						Resources: []*model.Member{
+							{
+								SCIMID: "1",
+								Email:  "user1@email.com",
+								Status: "ACTIVE",
+							},
+							{
+								SCIMID: "2",
+								Email:  "user2@email.com",
+								Status: "ACTIVE",
+							},
+						},
+					},
+					{
+						Group: &model.Group{
+							SCIMID: "2",
+							Name:   "group2",
+						},
+						Resources: []*model.Member{
+							{
+								SCIMID: "1",
+								Email:  "user1@email.com",
+								Status: "ACTIVE",
+							},
+							{
+								SCIMID: "2",
+								Email:  "user2@email.com",
+								Status: "ACTIVE",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
 			name: "should return an error when listing groups",
 			fields: fields{
 				scim: mockScimProvider,
@@ -1599,7 +1727,12 @@ func TestProvider_GetGroupsMembersBruteForce(t *testing.T) {
 				t.Errorf("Provider.GetGroupsMembersBruteForce() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if diff := cmp.Diff(tt.want, got, cmpopts.IgnoreFields(model.GroupsMembersResult{}, "HashCode", "Items"), cmpopts.IgnoreFields(model.GroupMembers{}, "HashCode", "Items"), cmpopts.IgnoreFields(model.Member{}, "HashCode")); diff != "" {
+			// sort members by SCIMID to avoid order issues in the test
+			opt := cmpopts.SortSlices(func(a, b *model.Member) bool {
+				return a.SCIMID < b.SCIMID
+			})
+
+			if diff := cmp.Diff(tt.want, got, cmpopts.IgnoreFields(model.GroupsMembersResult{}, "HashCode", "Items"), cmpopts.IgnoreFields(model.GroupMembers{}, "HashCode", "Items"), cmpopts.IgnoreFields(model.Member{}, "HashCode"), opt); diff != "" {
 				t.Errorf("Provider.GetGroupsMembersBruteForce() (-want +got):\n%s", diff)
 			}
 		})
