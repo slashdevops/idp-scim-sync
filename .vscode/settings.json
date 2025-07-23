@@ -1,7 +1,9 @@
 {
   "cSpell.words": [
+    "AKIAIOSFODNN",
     "amzn",
     "awsconf",
+    "AWSCURRENT",
     "AWSS",
     "AWSSCIM",
     "Babs",
@@ -11,6 +13,7 @@
     "codecov",
     "codeql",
     "curesp",
+    "Datahub",
     "Debugf",
     "deepcopy",
     "displayname",
@@ -46,6 +49,7 @@
     "Infof",
     "ipdid",
     "ipid",
+    "Keya",
     "lastsync",
     "liberapay",
     "logrus",

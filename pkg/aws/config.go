@@ -2,6 +2,7 @@ package aws
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"os"
 
@@ -13,20 +14,20 @@ import (
 func NewDefaultConf(ctx context.Context) (cfg aws.Config, err error) {
 	var confOptions []func(*config.LoadOptions) error
 
-	if len(os.Getenv("AWS_PROFILE")) > 0 {
-		slog.Debug("Using AWS Profile", "profile", os.Getenv("AWS_PROFILE"))
+	if profile := os.Getenv("AWS_PROFILE"); profile != "" {
+		slog.Debug("Using AWS Profile", "profile", profile)
 		confOptions = append(confOptions,
-			config.WithSharedConfigProfile(os.Getenv("AWS_PROFILE")),
+			config.WithSharedConfigProfile(profile),
 			config.WithAssumeRoleCredentialOptions(func(options *stscreds.AssumeRoleOptions) {
 				options.TokenProvider = stscreds.StdinTokenProvider
 			}),
 		)
 	}
 
-	awsConf, err := config.LoadDefaultConfig(
-		ctx,
-		confOptions...,
-	)
+	awsConf, err := config.LoadDefaultConfig(ctx, confOptions...)
+	if err != nil {
+		return aws.Config{}, fmt.Errorf("failed to load AWS config: %w", err)
+	}
 
-	return awsConf, err
+	return awsConf, nil
 }

@@ -2,6 +2,8 @@ package aws
 
 import (
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestUser_Validate(t *testing.T) {
@@ -727,4 +729,152 @@ func TestGroup_Validate(t *testing.T) {
 			}
 		})
 	}
+}
+
+// Enhanced test cases for improved coverage
+
+func TestUser_ValidateEnhanced(t *testing.T) {
+	t.Run("should fail when user name is nil", func(t *testing.T) {
+		user := &User{
+			DisplayName: "Test User",
+			Name: &Name{
+				GivenName:  "Test",
+				FamilyName: "User",
+			},
+			Emails: []Email{
+				{Value: "test@example.com", Primary: true},
+			},
+		}
+		err := user.Validate()
+		assert.Error(t, err)
+		assert.ErrorIs(t, err, ErrUserNameEmpty)
+	})
+
+	t.Run("should fail when Name is nil", func(t *testing.T) {
+		user := &User{
+			UserName:    "testuser",
+			DisplayName: "Test User",
+			Name:        nil,
+			Emails: []Email{
+				{Value: "test@example.com", Primary: true},
+			},
+		}
+		err := user.Validate()
+		assert.Error(t, err)
+		assert.ErrorIs(t, err, ErrNameEmpty)
+	})
+
+	t.Run("should fail when email value is empty", func(t *testing.T) {
+		user := &User{
+			UserName:    "testuser",
+			DisplayName: "Test User",
+			Name: &Name{
+				GivenName:  "Test",
+				FamilyName: "User",
+			},
+			Emails: []Email{
+				{Value: "", Primary: true},
+			},
+		}
+		err := user.Validate()
+		assert.Error(t, err)
+		assert.ErrorIs(t, err, ErrEmailValueEmpty)
+	})
+
+	t.Run("should fail when no primary email", func(t *testing.T) {
+		user := &User{
+			UserName:    "testuser",
+			DisplayName: "Test User",
+			Name: &Name{
+				GivenName:  "Test",
+				FamilyName: "User",
+			},
+			Emails: []Email{
+				{Value: "test@example.com", Primary: false},
+			},
+		}
+		err := user.Validate()
+		assert.Error(t, err)
+		assert.ErrorIs(t, err, ErrPrimaryEmailEmpty)
+	})
+
+	t.Run("should fail when multiple primary emails", func(t *testing.T) {
+		user := &User{
+			UserName:    "testuser",
+			DisplayName: "Test User",
+			Name: &Name{
+				GivenName:  "Test",
+				FamilyName: "User",
+			},
+			Emails: []Email{
+				{Value: "test1@example.com", Primary: true},
+				{Value: "test2@example.com", Primary: true},
+			},
+		}
+		err := user.Validate()
+		assert.Error(t, err)
+		assert.ErrorIs(t, err, ErrEmailsTooMany)
+	})
+
+	t.Run("should pass with valid user", func(t *testing.T) {
+		user := &User{
+			UserName:    "testuser",
+			DisplayName: "Test User",
+			Name: &Name{
+				GivenName:  "Test",
+				FamilyName: "User",
+			},
+			Emails: []Email{
+				{Value: "test@example.com", Primary: true},
+			},
+		}
+		err := user.Validate()
+		assert.NoError(t, err)
+	})
+}
+
+func TestUser_GetPrimaryEmail(t *testing.T) {
+	t.Run("should return primary email", func(t *testing.T) {
+		user := &User{
+			Emails: []Email{
+				{Value: "test1@example.com", Primary: false},
+				{Value: "test2@example.com", Primary: true},
+			},
+		}
+		primaryEmail := user.GetPrimaryEmail()
+		assert.NotNil(t, primaryEmail)
+		assert.Equal(t, "test2@example.com", primaryEmail.Value)
+		assert.True(t, primaryEmail.Primary)
+	})
+
+	t.Run("should return nil when no primary email", func(t *testing.T) {
+		user := &User{
+			Emails: []Email{
+				{Value: "test1@example.com", Primary: false},
+				{Value: "test2@example.com", Primary: false},
+			},
+		}
+		primaryEmail := user.GetPrimaryEmail()
+		assert.Nil(t, primaryEmail)
+	})
+
+	t.Run("should return nil when no emails", func(t *testing.T) {
+		user := &User{
+			Emails: []Email{},
+		}
+		primaryEmail := user.GetPrimaryEmail()
+		assert.Nil(t, primaryEmail)
+	})
+}
+
+func TestUser_String(t *testing.T) {
+	t.Run("should return JSON string representation", func(t *testing.T) {
+		user := &User{
+			UserName:    "testuser",
+			DisplayName: "Test User",
+		}
+		str := user.String()
+		assert.Contains(t, str, "testuser")
+		assert.Contains(t, str, "Test User")
+	})
 }

@@ -44,6 +44,12 @@ var (
 
 	// ErrTooManyPrimaryEmails when there are more than one primary email
 	ErrTooManyPrimaryEmails = errors.Errorf("aws: there can only be one primary email")
+
+	// ErrNameEmpty is returned when the name is nil.
+	ErrNameEmpty = errors.Errorf("aws: name may not be nil")
+
+	// ErrEmailValueEmpty is returned when the email value is empty.
+	ErrEmailValueEmpty = errors.Errorf("aws: email value may not be empty")
 )
 
 // Name represent a name entity
@@ -63,7 +69,7 @@ type Email struct {
 	Primary bool   `json:"primary,omitempty"`
 }
 
-// Addresses represent an address entity
+// Address represent an address entity
 type Address struct {
 	Formatted     string `json:"formatted,omitempty"`
 	StreetAddress string `json:"streetAddress,omitempty"`
@@ -152,6 +158,9 @@ func (u *User) Validate() error {
 	if u.DisplayName == "" {
 		return ErrDisplayNameEmpty
 	}
+	if u.Name == nil {
+		return ErrNameEmpty
+	}
 	if u.Name.GivenName == "" {
 		return ErrGivenNameEmpty
 	}
@@ -165,14 +174,20 @@ func (u *User) Validate() error {
 		return ErrEmailsTooMany
 	}
 
+	// Validate email format and primary status
 	primaryCount := 0
 	for _, email := range u.Emails {
-		if !email.Primary {
-			return ErrPrimaryEmailEmpty
+		if email.Value == "" {
+			return ErrEmailValueEmpty
 		}
-		primaryCount++
+		if email.Primary {
+			primaryCount++
+		}
 	}
-	if primaryCount != 1 {
+	if primaryCount == 0 {
+		return ErrPrimaryEmailEmpty
+	}
+	if primaryCount > 1 {
 		return ErrTooManyPrimaryEmails
 	}
 
