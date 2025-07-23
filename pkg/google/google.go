@@ -12,11 +12,19 @@ import (
 )
 
 const (
-	// https://cloud.google.com/storage/docs/json_api
-	groupsRequiredFields    googleapi.Field = "nextPageToken, groups(id,name,email,etag)"
-	membersRequiredFields   googleapi.Field = "nextPageToken, members(id,email,status,type,etag)"
-	listUsersRequiredFields googleapi.Field = "nextPageToken, users(id,primaryEmail,name,suspended,kind,etag,emails,addresses,organizations,phones,languages,locations)"
-	getUsersRequiredFields  googleapi.Field = "id,primaryEmail,name,suspended,kind,etag,emails,addresses,organizations,phones,languages,locations"
+	// Base fields common to all objects
+	baseFields = "id,etag"
+
+	// Field definitions for specific object types
+	userFields   = baseFields + ",primaryEmail,name,suspended,kind,emails,addresses,organizations,phones,languages,locations"
+	groupFields  = baseFields + ",name,email"
+	memberFields = baseFields + ",email,status,type"
+
+	// Complete field specifications for API calls
+	groupsRequiredFields    googleapi.Field = "nextPageToken, groups(" + groupFields + ")"
+	membersRequiredFields   googleapi.Field = "nextPageToken, members(" + memberFields + ")"
+	listUsersRequiredFields googleapi.Field = "nextPageToken, users(" + userFields + ")"
+	getUsersRequiredFields  googleapi.Field = userFields
 )
 
 var (
@@ -74,6 +82,12 @@ func NewDirectoryService(svc *admin.Service) (*DirectoryService, error) {
 
 // ListUsers list all users in a Google Directory filtered by query.
 func (ds *DirectoryService) ListUsers(ctx context.Context, query []string) ([]*admin.User, error) {
+	select {
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	default:
+	}
+
 	u := make([]*admin.User, 0)
 	if len(query) > 0 {
 		for _, q := range query {
@@ -83,7 +97,7 @@ func (ds *DirectoryService) ListUsers(ctx context.Context, query []string) ([]*a
 					return nil
 				})
 				if err != nil {
-					return nil, err
+					return nil, fmt.Errorf("google: failed to list users with query %q: %w", q, err)
 				}
 			} else {
 				err := ds.svc.Users.List().Customer("my_customer").Fields(listUsersRequiredFields).Pages(ctx, func(users *admin.Users) error {
@@ -91,7 +105,7 @@ func (ds *DirectoryService) ListUsers(ctx context.Context, query []string) ([]*a
 					return nil
 				})
 				if err != nil {
-					return nil, err
+					return nil, fmt.Errorf("google: failed to list users: %w", err)
 				}
 			}
 		}
@@ -101,7 +115,7 @@ func (ds *DirectoryService) ListUsers(ctx context.Context, query []string) ([]*a
 			return nil
 		})
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("google: failed to list users: %w", err)
 		}
 	}
 
@@ -114,6 +128,12 @@ func (ds *DirectoryService) ListUsers(ctx context.Context, query []string) ([]*a
 // References:
 // - https://developers.google.com/admin-sdk/directory/reference/rest/v1/groups
 func (ds *DirectoryService) ListGroups(ctx context.Context, query []string) ([]*admin.Group, error) {
+	select {
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	default:
+	}
+
 	g := make([]*admin.Group, 0)
 
 	if len(query) > 0 {
@@ -124,7 +144,7 @@ func (ds *DirectoryService) ListGroups(ctx context.Context, query []string) ([]*
 					return nil
 				})
 				if err != nil {
-					return nil, err
+					return nil, fmt.Errorf("google: failed to list groups with query %q: %w", q, err)
 				}
 			} else {
 				err := ds.svc.Groups.List().Customer("my_customer").Fields(groupsRequiredFields).Pages(ctx, func(groups *admin.Groups) error {
@@ -132,7 +152,7 @@ func (ds *DirectoryService) ListGroups(ctx context.Context, query []string) ([]*
 					return nil
 				})
 				if err != nil {
-					return nil, err
+					return nil, fmt.Errorf("google: failed to list groups: %w", err)
 				}
 			}
 		}
@@ -142,7 +162,7 @@ func (ds *DirectoryService) ListGroups(ctx context.Context, query []string) ([]*
 			return nil
 		})
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("google: failed to list groups: %w", err)
 		}
 	}
 
@@ -159,6 +179,12 @@ func (ds *DirectoryService) ListGroups(ctx context.Context, query []string) ([]*
 func (ds *DirectoryService) ListGroupMembers(ctx context.Context, groupID string, queries ...GetGroupMembersOption) ([]*admin.Member, error) {
 	if groupID == "" {
 		return nil, ErrGroupIDNil
+	}
+
+	select {
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	default:
 	}
 
 	qs := getGroupMembersOptions{}
@@ -213,6 +239,8 @@ func (ds *DirectoryService) GetUser(ctx context.Context, userID string) (*admin.
 	if err != nil {
 		return nil, fmt.Errorf("google: error getting user %s: %v", userID, err)
 	}
+
+	slog.Debug("google: GetUser()", "user", u)
 
 	return u, nil
 }
