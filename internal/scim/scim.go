@@ -117,13 +117,15 @@ func (s *Provider) processGroups(ctx context.Context, gr *model.GroupsResult, pr
 		return nil, fmt.Errorf("scim: groups result is nil")
 	}
 
-	processedGroups := make([]*model.Group, len(gr.Resources))
-	for i, group := range gr.Resources {
+	processedGroups := make([]*model.Group, 0, len(gr.Resources))
+	for _, group := range gr.Resources {
 		processedGroup, err := processFunc(ctx, group)
 		if err != nil {
 			return nil, err
 		}
-		processedGroups[i] = processedGroup
+		if processedGroup != nil {
+			processedGroups = append(processedGroups, processedGroup)
+		}
 	}
 
 	return model.GroupsResultBuilder().WithResources(processedGroups).Build(), nil
@@ -229,13 +231,15 @@ func (s *Provider) processUsers(ctx context.Context, ur *model.UsersResult, proc
 		return nil, fmt.Errorf("scim: users result is nil")
 	}
 
-	processedUsers := make([]*model.User, len(ur.Resources))
-	for i, user := range ur.Resources {
+	processedUsers := make([]*model.User, 0, len(ur.Resources))
+	for _, user := range ur.Resources {
 		processedUser, err := processFunc(ctx, user)
 		if err != nil {
 			return nil, err
 		}
-		processedUsers[i] = processedUser
+		if processedUser != nil {
+			processedUsers = append(processedUsers, processedUser)
+		}
 	}
 
 	return model.UsersResultBuilder().WithResources(processedUsers).Build(), nil
@@ -521,7 +525,7 @@ func (s *Provider) GetGroupsMembersBruteForce(ctx context.Context, gr *model.Gro
 				return nil, fmt.Errorf("scim: error listing groups: %w", err)
 			}
 
-			if lgr.TotalResults > 0 {
+			if len(lgr.Resources) > 0 {
 				m := model.MemberBuilder().
 					WithIPID(user.IPID).
 					WithSCIMID(user.SCIMID).
