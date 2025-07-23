@@ -78,20 +78,20 @@ You have several options to use this project:
     * [AWS SAM CLI](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-sam-cli-install.html)
   * **Commands:**
 
-        ```bash
-        # Set your AWS CLI profile and region
-        export AWS_PROFILE=<profile_name>
-        export AWS_REGION=<region>
+```bash
+# Set your AWS CLI profile and region
+export AWS_PROFILE=<profile_name>
+export AWS_REGION=<region>
 
-        # Validate the template
-        sam validate
+# Validate the template
+sam validate
 
-        # Build the project
-        sam build
+# Build the project
+sam build
 
-        # Deploy with a guided process
-        sam deploy --guided --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM
-        ```
+# Deploy with a guided process
+sam deploy --guided --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM
+```
 
 ### Locally
 
@@ -102,13 +102,13 @@ You have several options to use this project:
     * [Make](https://www.gnu.org/software/make/)
   * **Commands:**
 
-        ```bash
-        # Compile for your operating system
-        make
+```bash
+# Compile for your operating system
+make
 
-        # Cross-compile for Windows, macOS, and Linux
-        make build-dist
-        ```
+# Cross-compile for Windows, macOS, and Linux
+make build-dist
+```
 
 * **Pre-built Binaries**
   * Download the binaries from the [GitHub Releases](https://github.com/slashdevops/idp-scim-sync/releases).
