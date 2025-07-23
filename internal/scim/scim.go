@@ -460,7 +460,9 @@ func (s *Provider) patchGroupOperations(op, path string, pvs []patchValue, gms *
 	var patchOperations []*aws.PatchGroupRequest
 	var chunks [][]patchValue
 
-	if len(pvs) > 0 {
+	if len(pvs) == 0 {
+		chunks = append(chunks, []patchValue{})
+	} else {
 		if len(pvs) > s.maxMembersPerRequest {
 			for i := 0; i < len(pvs); i += s.maxMembersPerRequest {
 				end := i + s.maxMembersPerRequest
@@ -474,58 +476,51 @@ func (s *Provider) patchGroupOperations(op, path string, pvs []patchValue, gms *
 		}
 	}
 
-	for _, chunk := range chunks {
-		patchGroupRequest := &aws.PatchGroupRequest{
-			Group: aws.Group{
-				ID:          gms.Group.SCIMID,
-				DisplayName: gms.Group.Name,
-			},
-			Patch: aws.Patch{
-				Schemas: []string{"urn:ietf:params:scim:api:messages:2.0:PatchOp"},
-				Operations: []*aws.Operation{
-					{
-						OP:    op,
-						Path:  path,
-						Value: chunk,
+	if len(chunks) > 0 {
+		for _, chunk := range chunks {
+			patchGroupRequest := &aws.PatchGroupRequest{
+				Group: aws.Group{
+					ID:          gms.Group.SCIMID,
+					DisplayName: gms.Group.Name,
+				},
+				Patch: aws.Patch{
+					Schemas: []string{"urn:ietf:params:scim:api:messages:2.0:PatchOp"},
+					Operations: []*aws.Operation{
+						{
+							OP:    op,
+							Path:  path,
+							Value: chunk,
+						},
 					},
 				},
-			},
+			}
+			patchOperations = append(patchOperations, patchGroupRequest)
 		}
-		patchOperations = append(patchOperations, patchGroupRequest)
 	}
 
 	return patchOperations
 }
 
 // GetGroupsMembersBruteForce returns a list of groups and their members from the SCIM Provider
-// NOTE: this is an alternative to the method GetGroupsMembers, because the AWS SCIM API
-// does not support listing the members of a group directly.
-// This method is more efficient than calling the API for each user-group pair.
+// NOTE: this is an bad alternative to the method GetGroupsMembers,  because read the note in the method.
 func (s *Provider) GetGroupsMembersBruteForce(ctx context.Context, gr *model.GroupsResult, ur *model.UsersResult) (*model.GroupsMembersResult, error) {
-	// Create a map of users for quick lookup
-	usersMap := make(map[string]*model.User)
-	for _, user := range ur.Resources {
-		usersMap[user.SCIMID] = user
-	}
-
 	groupMembers := make([]*model.GroupMembers, len(gr.Resources))
 
+	// brute force implemented here thanks to the fxxckin' aws sso scim api
 	for i, group := range gr.Resources {
 		members := make([]*model.Member, 0)
 
-		// In a real-world scenario with a proper SCIM implementation,
-		// we would expect the API to return the members of the group.
-		// Since the AWS SCIM API does not do this, we have to check
-		// each user to see if they are a member of the group.
-		// This is a workaround for the AWS SCIM API limitation.
 		for _, user := range ur.Resources {
+
+			// https://docs.aws.amazon.com/singlesignon/latest/developerguide/listgroups.html
 			filter := fmt.Sprintf("id eq %q and members eq %q", group.SCIMID, user.SCIMID)
 			lgr, err := s.scim.ListGroups(ctx, filter)
 			if err != nil {
 				return nil, fmt.Errorf("scim: error listing groups: %w", err)
 			}
 
-			if len(lgr.Resources) > 0 {
+			// AWS SSO SCIM API, it doesn't return the member into the Resources array
+			if lgr.TotalResults > 0 {
 				m := model.MemberBuilder().
 					WithIPID(user.IPID).
 					WithSCIMID(user.SCIMID).
