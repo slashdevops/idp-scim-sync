@@ -18,7 +18,7 @@ require (
 	go.uber.org/mock v0.5.2
 	golang.org/x/oauth2 v0.30.0
 	golang.org/x/sync v0.16.0
-	google.golang.org/api v0.244.0
+	google.golang.org/api v0.246.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 
