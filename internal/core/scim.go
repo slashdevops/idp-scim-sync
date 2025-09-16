@@ -6,7 +6,7 @@ import (
 	"github.com/slashdevops/idp-scim-sync/internal/model"
 )
 
-//go:generate go run go.uber.org/mock/mockgen@v0.5.0 -package=mocks -destination=../../mocks/core/scim_mocks.go -source=scim.go
+//go:generate go tool mockgen -package=mocks -destination=../../mocks/core/scim_mocks.go -source=scim.go
 
 // SCIMService is the interface that needs to be implemented by the
 // SCIM Provider service.

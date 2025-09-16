@@ -13,7 +13,7 @@ import (
 
 // This implement core.SCIMService interface
 
-//go:generate go run go.uber.org/mock/mockgen@v0.5.0 -package=mocks -destination=../../mocks/scim/scim_mocks.go -source=scim.go AWSSCIMProvider
+//go:generate go tool mockgen -package=mocks -destination=../../mocks/scim/scim_mocks.go -source=scim.go AWSSCIMProvider
 
 // AWSSCIMProvider interface to consume aws package methods
 type AWSSCIMProvider interface {

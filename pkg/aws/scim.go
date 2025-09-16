@@ -74,7 +74,7 @@ var (
 	ErrServiceProviderConfigEmpty = errors.Errorf("aws: service provider config may not be empty")
 )
 
-//go:generate go run go.uber.org/mock/mockgen@v0.5.0 -package=mocks -destination=../../mocks/aws/scim_mocks.go -source=scim.go HTTPClient
+//go:generate go tool mockgen -package=mocks -destination=../../mocks/aws/scim_mocks.go -source=scim.go HTTPClient
 
 // HTTPClient is an interface for sending HTTP requests.
 type HTTPClient interface {
