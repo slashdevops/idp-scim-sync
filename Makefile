@@ -60,26 +60,25 @@ AWS_SAM_ARCH               ?= arm64
 # MAKE_DEBUG=true make <target> will print the command
 # MAKE_STOP_ON_ERRORS=true make any fail will stop the execution if the command fails, this is useful for CI
 # NOTE: if the command has a > it will print the output into the original redirect of the command
-MAKE_STOP_ON_ERRORS := false
-MAKE_DEBUG := false
+MAKE_STOP_ON_ERRORS ?= false
+MAKE_DEBUG          ?= false
 
 define exec_cmd
 $(if $(filter $(MAKE_DEBUG),true),\
 	${1} \
 , \
 	$(if $(filter $(MAKE_STOP_ON_ERRORS),true),\
-		@ERROR_OCCURRED=0; ${1} > /dev/null || ERROR_OCCURRED=1; if [ $$ERROR_OCCURRED -eq 0 ]; then printf "  🤞 ${1} ✅\n"; else printf "  ${1} ❌ 🖕\n"; exit 1; fi \
+		@${1}  > /dev/null && printf "  🤞 ${1} ✅\n" || (printf "  ${1} ❌ 🖕\n"; exit 1) \
 	, \
 		$(if $(findstring >, $1),\
-			@${1} 2>/dev/null && printf "  🤞 ${1} ✅\n" || printf "  ${1} ❌ 🖕\n" \
+			@${1} 2>/dev/null; _exit_code=$$?; if [ $$_exit_code -eq 0 ]; then printf "  🤞 ${1} ✅\n"; else printf "  ${1} ❌ 🖕\n"; fi; exit $$_exit_code \
 		, \
-			@${1} > /dev/null 2>&1 && printf '  🤞 ${1} ✅\n' || printf '  ${1} ❌ 🖕\n' \
+			@${1} > /dev/null 2>&1; _exit_code=$$?; if [ $$_exit_code -eq 0 ]; then printf '  🤞 ${1} ✅\n'; else printf '  ${1} ❌ 🖕\n'; fi; exit $$_exit_code \
 		) \
 	) \
 )
 
-endef # don't remove the white space at the end of the line
-# this is a function that will execute a command and print a message
+endef # don't remove the white line before endef
 
 ###############################################################################
 ######## Targets ##############################################################
