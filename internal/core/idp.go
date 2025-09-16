@@ -6,7 +6,7 @@ import (
 	"github.com/slashdevops/idp-scim-sync/internal/model"
 )
 
-//go:generate go run go.uber.org/mock/mockgen@v0.5.0 -package=mocks -destination=../../mocks/core/idp_mocks.go -source=idp.go
+//go:generate go tool mockgen -package=mocks -destination=../../mocks/core/idp_mocks.go -source=idp.go
 
 // IdentityProviderService is the interface consumed by the core services and
 // needs to be implemented by the Identity Provider service.
