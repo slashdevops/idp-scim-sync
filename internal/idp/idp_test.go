@@ -559,7 +559,7 @@ func TestGetUsersByGroupsMembers(t *testing.T) {
 			name: "Should return error",
 			prepare: func(f *fields) {
 				ctx := context.Background()
-				f.ds.EXPECT().GetUser(ctx, gomock.Eq("user.1@mail.com")).Return(nil, errors.New("test error")).Times(1)
+				f.ds.EXPECT().GetUsersBatch(ctx, gomock.Eq([]string{"user.1@mail.com"})).Return(nil, errors.New("test error")).Times(1)
 			},
 			args: args{
 				ctx: context.Background(),
@@ -635,12 +635,7 @@ func TestGetUsersByGroupsMembers(t *testing.T) {
 					// },
 				}
 
-				gomock.InOrder(
-					f.ds.EXPECT().GetUser(ctx, gomock.Eq("user.1@mail.com")).Return(googleUser1, nil).Times(1),
-					f.ds.EXPECT().GetUser(ctx, gomock.Eq("user.2@mail.com")).Return(googleUser2, nil).Times(1),
-					f.ds.EXPECT().GetUser(ctx, gomock.Eq("user.3@mail.com")).Return(googleUser3, nil).Times(1),
-					f.ds.EXPECT().GetUser(ctx, gomock.Eq("user.4@mail.com")).Return(googleUser4, nil).Times(1),
-				)
+				f.ds.EXPECT().GetUsersBatch(ctx, gomock.Eq([]string{"user.1@mail.com", "user.2@mail.com", "user.3@mail.com", "user.4@mail.com"})).Return([]*admin.User{googleUser1, googleUser2, googleUser3, googleUser4}, nil).Times(1)
 			},
 			args: args{
 				ctx: context.Background(),
@@ -857,11 +852,11 @@ func TestGetGroupsMembers(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "Should return error when ListGroupMembers return error",
+			name: "Should return error when ListGroupMembersBatch return error",
 			prepare: func(f *fields) {
 				ctx := context.Background()
 
-				f.ds.EXPECT().ListGroupMembers(ctx, "1", gomock.Any()).Return(nil, errors.New("test error")).Times(1)
+				f.ds.EXPECT().ListGroupMembersBatch(ctx, []string{"1"}, gomock.Any()).Return(nil, errors.New("test error")).Times(1)
 			},
 			args: args{
 				ctx: context.Background(),
@@ -883,7 +878,10 @@ func TestGetGroupsMembers(t *testing.T) {
 				googleGroupMembers = append(googleGroupMembers, &admin.Member{Email: "user.1@mail.com", Id: "1", Status: "ACTIVE"})
 				googleGroupMembers = append(googleGroupMembers, &admin.Member{Email: "user.2@mail.com", Id: "2", Status: "ACTIVE"})
 
-				f.ds.EXPECT().ListGroupMembers(ctx, "1", gomock.Any()).Return(googleGroupMembers, nil).Times(1)
+				membersMap := map[string][]*admin.Member{
+					"1": googleGroupMembers,
+				}
+				f.ds.EXPECT().ListGroupMembersBatch(ctx, []string{"1"}, gomock.Any()).Return(membersMap, nil).Times(1)
 			},
 			args: args{
 				ctx: context.Background(),
@@ -902,7 +900,10 @@ func TestGetGroupsMembers(t *testing.T) {
 			prepare: func(f *fields) {
 				ctx := context.Background()
 				googleGroupMembers := make([]*admin.Member, 0)
-				f.ds.EXPECT().ListGroupMembers(ctx, "1", gomock.Any()).Return(googleGroupMembers, nil).Times(1)
+				membersMap := map[string][]*admin.Member{
+					"1": googleGroupMembers,
+				}
+				f.ds.EXPECT().ListGroupMembersBatch(ctx, []string{"1"}, gomock.Any()).Return(membersMap, nil).Times(1)
 			},
 			args: args{
 				ctx: context.Background(),

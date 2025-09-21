@@ -182,29 +182,32 @@ func (i *IdentityProvider) GetUsersByGroupsMembers(ctx context.Context, gmr *mod
 		return uResult, nil
 	}
 
-	uniqUsers := make(map[string]struct{}, len(gmr.Resources))
-	pUsers := make([]*model.User, 0, len(gmr.Resources))
+	// Collect unique emails first
+	uniqEmails := make(map[string]struct{}, len(gmr.Resources))
+	emails := make([]string, 0, len(gmr.Resources))
 	for _, groupMembers := range gmr.Resources {
 		for _, member := range groupMembers.Resources {
-			if _, ok := uniqUsers[member.Email]; !ok {
-				uniqUsers[member.Email] = struct{}{}
-
-				// TODO: instead of retrieve user by user, I can implement a users.list
-				// https://developers.google.com/admin-sdk/directory/reference/rest/v1/users/list
-				// using the query parameter to filter by emails and retrieve the maximum number of users
-				// per request
-				u, err := i.ps.GetUser(ctx, member.Email)
-				if err != nil {
-					return nil, fmt.Errorf("idp: error getting user: %+v, email: %s, error: %w", member.IPID, member.Email, err)
-				}
-				gu := buildUser(u)
-
-				pUsers = append(pUsers, gu)
+			if _, ok := uniqEmails[member.Email]; !ok {
+				uniqEmails[member.Email] = struct{}{}
+				emails = append(emails, member.Email)
 			}
 		}
 	}
 
-	pUsersResult := model.UsersResultBuilder().WithResources(pUsers).Build()
+	// Use batch operation instead of individual GetUser calls
+	pUsers, err := i.ps.GetUsersBatch(ctx, emails)
+	if err != nil {
+		return nil, fmt.Errorf("idp: error getting users batch: %w", err)
+	}
+
+	// Convert to model users
+	syncUsers := make([]*model.User, len(pUsers))
+	for i, usr := range pUsers {
+		gu := buildUser(usr)
+		syncUsers[i] = gu
+	}
+
+	pUsersResult := model.UsersResultBuilder().WithResources(syncUsers).Build()
 
 	return pUsersResult, nil
 }
@@ -226,11 +229,43 @@ func (i *IdentityProvider) GetGroupsMembers(ctx context.Context, gr *model.Group
 		return groupsMembersResult, nil
 	}
 
-	groupMembers := make([]*model.GroupMembers, l)
-	for j, group := range gr.Resources {
-		members, err := i.GetGroupMembers(ctx, group.IPID)
-		if err != nil {
-			return nil, fmt.Errorf("idp: error getting group members: %w", err)
+	// Collect all group IDs for batch operation
+	groupIDs := make([]string, l)
+	groupsByID := make(map[string]*model.Group, l)
+	for i, group := range gr.Resources {
+		groupIDs[i] = group.IPID
+		groupsByID[group.IPID] = group
+	}
+
+	// Use batch operation to get all group members at once
+	membersMap, err := i.ps.ListGroupMembersBatch(ctx, groupIDs, google.WithIncludeDerivedMembership(true))
+	if err != nil {
+		return nil, fmt.Errorf("idp: error getting group members batch: %w", err)
+	}
+
+	// Process the results
+	groupMembers := make([]*model.GroupMembers, 0, l)
+	for groupID, pMembers := range membersMap {
+		group := groupsByID[groupID]
+
+		syncMembers := make([]*model.Member, 0, len(pMembers))
+		for _, member := range pMembers {
+			// avoid nested groups, but members are included thanks to the google.WithIncludeDerivedMembership option above
+			if member.Type == "GROUP" {
+				slog.Warn("skipping member because is a group, but group members will be included",
+					"id", member.Id,
+					"email", member.Email,
+				)
+				continue
+			}
+
+			gm := model.MemberBuilder().
+				WithIPID(member.Id).
+				WithEmail(member.Email).
+				WithStatus(member.Status).
+				Build()
+
+			syncMembers = append(syncMembers, gm)
 		}
 
 		ggm := model.GroupBuilder().
@@ -241,10 +276,10 @@ func (i *IdentityProvider) GetGroupsMembers(ctx context.Context, gr *model.Group
 
 		groupMember := model.GroupMembersBuilder().
 			WithGroup(ggm).
-			WithResources(members.Resources).
+			WithResources(syncMembers).
 			Build()
 
-		groupMembers[j] = groupMember
+		groupMembers = append(groupMembers, groupMember)
 	}
 
 	groupsMembersResult := &model.GroupsMembersResult{

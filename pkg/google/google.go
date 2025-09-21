@@ -312,7 +312,13 @@ func (ds *DirectoryService) GetUsersBatch(ctx context.Context, emails []string) 
 		return []*admin.User{}, nil
 	}
 
-	// Use ListUsers with email queries for batch retrieval
+	// For large numbers of emails, the OR query might be too complex for Google API
+	// Use individual GetUser calls as fallback for reliability
+	if len(emails) > 20 {
+		return ds.getUsersIndividually(ctx, emails)
+	}
+
+	// Use ListUsers with email queries for smaller batches
 	emailQueries := make([]string, len(emails))
 	for i, email := range emails {
 		emailQueries[i] = fmt.Sprintf("email:%s", email)
@@ -323,7 +329,31 @@ func (ds *DirectoryService) GetUsersBatch(ctx context.Context, emails []string) 
 
 	users, err := ds.ListUsers(ctx, []string{query})
 	if err != nil {
-		return nil, fmt.Errorf("google: error in batch get users: %w", err)
+		slog.Warn("google: GetUsersBatch failed, falling back to individual calls", "error", err)
+		return ds.getUsersIndividually(ctx, emails)
+	}
+
+	// If no users returned but we expected some, fallback to individual calls
+	if len(users) == 0 && len(emails) > 0 {
+		slog.Warn("google: GetUsersBatch returned no users, falling back to individual calls", "expected_emails", len(emails))
+		return ds.getUsersIndividually(ctx, emails)
+	}
+
+	return users, nil
+}
+
+// getUsersIndividually retrieves users one by one using GetUser calls
+func (ds *DirectoryService) getUsersIndividually(ctx context.Context, emails []string) ([]*admin.User, error) {
+	users := make([]*admin.User, 0, len(emails))
+
+	for _, email := range emails {
+		user, err := ds.GetUser(ctx, email)
+		if err != nil {
+			// Log the error but continue with other users
+			slog.Warn("google: failed to get individual user", "email", email, "error", err)
+			continue
+		}
+		users = append(users, user)
 	}
 
 	return users, nil

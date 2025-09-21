@@ -57,6 +57,21 @@ func (mr *MockGoogleProviderServiceMockRecorder) GetUser(ctx, userID any) *gomoc
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUser", reflect.TypeOf((*MockGoogleProviderService)(nil).GetUser), ctx, userID)
 }
 
+// GetUsersBatch mocks base method.
+func (m *MockGoogleProviderService) GetUsersBatch(ctx context.Context, emails []string) ([]*admin.User, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetUsersBatch", ctx, emails)
+	ret0, _ := ret[0].([]*admin.User)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetUsersBatch indicates an expected call of GetUsersBatch.
+func (mr *MockGoogleProviderServiceMockRecorder) GetUsersBatch(ctx, emails any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUsersBatch", reflect.TypeOf((*MockGoogleProviderService)(nil).GetUsersBatch), ctx, emails)
+}
+
 // ListGroupMembers mocks base method.
 func (m *MockGoogleProviderService) ListGroupMembers(ctx context.Context, groupID string, queries ...google.GetGroupMembersOption) ([]*admin.Member, error) {
 	m.ctrl.T.Helper()
@@ -75,6 +90,26 @@ func (mr *MockGoogleProviderServiceMockRecorder) ListGroupMembers(ctx, groupID a
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]any{ctx, groupID}, queries...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListGroupMembers", reflect.TypeOf((*MockGoogleProviderService)(nil).ListGroupMembers), varargs...)
+}
+
+// ListGroupMembersBatch mocks base method.
+func (m *MockGoogleProviderService) ListGroupMembersBatch(ctx context.Context, groupIDs []string, queries ...google.GetGroupMembersOption) (map[string][]*admin.Member, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, groupIDs}
+	for _, a := range queries {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "ListGroupMembersBatch", varargs...)
+	ret0, _ := ret[0].(map[string][]*admin.Member)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListGroupMembersBatch indicates an expected call of ListGroupMembersBatch.
+func (mr *MockGoogleProviderServiceMockRecorder) ListGroupMembersBatch(ctx, groupIDs any, queries ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, groupIDs}, queries...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListGroupMembersBatch", reflect.TypeOf((*MockGoogleProviderService)(nil).ListGroupMembersBatch), varargs...)
 }
 
 // ListGroups mocks base method.
