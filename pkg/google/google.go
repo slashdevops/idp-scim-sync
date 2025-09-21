@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"net/http"
 
+	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 	admin "google.golang.org/api/admin/directory/v1"
 	"google.golang.org/api/googleapi"
@@ -100,9 +101,13 @@ func NewService(ctx context.Context, config DirectoryServiceConfig) (*admin.Serv
 		return nil, fmt.Errorf("google: %v", err)
 	}
 
+	config.Client.Transport = &oauth2.Transport{
+		Source: creds.TokenSource,
+		Base:   config.Client.Transport,
+	}
+
 	svc, err := admin.NewService(
 		ctx,
-		option.WithTokenSource(creds.TokenSource),
 		option.WithUserAgent(config.UserAgent),
 		option.WithHTTPClient(config.Client),
 	)

@@ -6,7 +6,7 @@ import (
 
 var (
 	// Version is the version as string.
-	Version string
+	Version string = "v0.0.0"
 
 	// Revision is the revision as string.
 	Revision string

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
@@ -216,10 +217,10 @@ func SyncService(ctx context.Context, cfg *config.Config) (*core.SyncService, er
 		gwsServiceAccountContent = gwsServiceAccount
 	}
 
-	httpRetryClient := httpretrier.NewClient(
+	idpClient := httpretrier.NewClient(
 		3, // Max Retries
 		httpretrier.ExponentialBackoff(10*time.Millisecond, 100*time.Millisecond),
-		nil, // Use http.DefaultTransport
+		http.DefaultTransport,
 	)
 
 	userAgent := fmt.Sprintf("idp-scim-sync/%s", version.Version)
@@ -229,7 +230,7 @@ func SyncService(ctx context.Context, cfg *config.Config) (*core.SyncService, er
 		ServiceAccount: gwsServiceAccountContent,
 		Scopes:         cfg.GWSServiceAccountScopes,
 		UserAgent:      userAgent,
-		Client:         httpRetryClient,
+		Client:         idpClient,
 	}
 
 	// Google Client Service
@@ -251,7 +252,14 @@ func SyncService(ctx context.Context, cfg *config.Config) (*core.SyncService, er
 	}
 
 	// AWS SCIM Service
-	awsSCIM, err := aws.NewSCIMService(httpRetryClient, cfg.AWSSCIMEndpoint, cfg.AWSSCIMAccessToken)
+
+	scimClient := httpretrier.NewClient(
+		3, // Max Retries
+		httpretrier.ExponentialBackoff(10*time.Millisecond, 100*time.Millisecond),
+		http.DefaultTransport,
+	)
+
+	awsSCIM, err := aws.NewSCIMService(scimClient, cfg.AWSSCIMEndpoint, cfg.AWSSCIMAccessToken)
 	if err != nil {
 		return nil, errors.Wrap(err, "cannot create aws scim service")
 	}
