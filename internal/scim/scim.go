@@ -523,8 +523,8 @@ func (s *Provider) GetGroupsMembersBruteForce(ctx context.Context, gr *model.Gro
 	// brute force implemented here thanks to the fxxckin' aws sso scim api
 	// iterate over each group and user and check if the user is a member of the group
 	for _, group := range gr.Resources {
-		// initialize the members slice for the group
-		membersByGroup[group.SCIMID] = make([]*model.Member, 0)
+		// initialize the members slice for the group. Optimistic approach
+		membersByGroup[group.SCIMID] = make([]*model.Member, 0, 10)
 
 		for _, user := range ur.Resources {
 
@@ -545,7 +545,7 @@ func (s *Provider) GetGroupsMembersBruteForce(ctx context.Context, gr *model.Gro
 					return fmt.Errorf("scim: error listing groups: %w", err)
 				}
 
-				slog.Debug("checking group membership", "group_name", group.Name, "user_email", user.Emails[0].Value, "results", lgr.TotalResults)
+				// slog.Debug("checking group membership", "group_name", group.Name, "user_email", user.Emails[0].Value, "results", lgr.TotalResults)
 
 				// AWS SSO SCIM API, it doesn't return the member into the Resources array
 				if lgr.TotalResults > 0 {
@@ -555,9 +555,11 @@ func (s *Provider) GetGroupsMembersBruteForce(ctx context.Context, gr *model.Gro
 						WithSCIMID(user.SCIMID).
 						WithEmail(user.Emails[0].Value).
 						Build()
+
 					if user.Active {
 						m.Status = "ACTIVE"
 					}
+
 					mu.Lock()
 					membersByGroup[group.SCIMID] = append(membersByGroup[group.SCIMID], m)
 					mu.Unlock()
