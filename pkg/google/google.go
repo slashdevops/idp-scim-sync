@@ -318,9 +318,12 @@ func (ds *DirectoryService) GetUsersBatch(ctx context.Context, emails []string) 
 
 	var allUsers []*admin.User
 
-	// Process emails in chunks to avoid overly complex OR queries
+	slog.Debug("google: GetUsersBatch starting chunked processing", "total_emails", len(emails), "chunk_size", chunkSize) // Process emails in chunks to avoid overly complex OR queries
 	for i := 0; i < len(emails); i += chunkSize {
-		end := min(i+chunkSize, len(emails))
+		end := i + chunkSize
+		if end > len(emails) {
+			end = len(emails)
+		}
 
 		chunk := emails[i:end]
 
@@ -331,6 +334,8 @@ func (ds *DirectoryService) GetUsersBatch(ctx context.Context, emails []string) 
 		}
 
 		query := strings.Join(emailQueries, " OR ")
+
+		slog.Debug("google: processing chunk", "chunk_index", i/chunkSize+1, "chunk_size", len(chunk), "chunk_start", i)
 
 		// Execute ListUsers for this chunk
 		users, err := ds.ListUsers(ctx, []string{query})
@@ -344,11 +349,26 @@ func (ds *DirectoryService) GetUsersBatch(ctx context.Context, emails []string) 
 				return nil, fmt.Errorf("google: both batch and individual calls failed: batch_error=%w, individual_error=%v", err, individualErr)
 			}
 			users = individualUsers
+		} else if len(users) == 0 {
+			// If chunk query succeeds but returns no users, also fall back to individual calls
+			slog.Warn("google: GetUsersBatch chunk returned no users, falling back to individual calls for chunk",
+				"chunk_size", len(chunk), "chunk_start", i)
+
+			individualUsers, individualErr := ds.getUsersIndividually(ctx, chunk)
+			if individualErr != nil {
+				slog.Warn("google: individual calls also failed for chunk", "error", individualErr)
+				// Continue with empty users rather than failing completely
+			} else {
+				users = individualUsers
+			}
 		}
 
 		// Accumulate results from this chunk
 		allUsers = append(allUsers, users...)
+		slog.Debug("google: chunk completed", "chunk_users", len(users), "total_users_so_far", len(allUsers))
 	}
+
+	slog.Debug("google: GetUsersBatch completed", "total_users_returned", len(allUsers), "total_emails_requested", len(emails))
 
 	return allUsers, nil
 }
