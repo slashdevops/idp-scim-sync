@@ -11,7 +11,7 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/secretsmanager"
-	"github.com/p2p-b2b/httpretrier"
+	"github.com/hashicorp/go-retryablehttp"
 	"github.com/pkg/errors"
 	"github.com/slashdevops/idp-scim-sync/internal/config"
 	"github.com/slashdevops/idp-scim-sync/internal/core"
@@ -216,16 +216,15 @@ func SyncService(ctx context.Context, cfg *config.Config) (*core.SyncService, er
 		gwsServiceAccountContent = gwsServiceAccount
 	}
 
-	idpClient := httpretrier.NewClientBuilder().
-		WithTimeout(30 * time.Second).                        // Overall request timeout
-		WithMaxRetries(5).                                    // Retry up to 3 times
-		WithRetryStrategy(httpretrier.JitterBackoffStrategy). // Use jitter backoff to avoid thundering herd
-		WithRetryBaseDelay(500 * time.Millisecond).           // Start with 500ms delay (httpretrier default)
-		WithRetryMaxDelay(5 * time.Second).                   // Cap at 5 seconds
-		WithMaxIdleConns(10).                                 // Max idle connections
-		WithMaxIdleConnsPerHost(10).                          // Max idle connections per host
-		WithIdleConnTimeout(90 * time.Second).                // Idle connection timeout
-		Build()
+	idpClient := retryablehttp.NewClient()
+	idpClient.RetryMax = 5
+	idpClient.RetryWaitMin = time.Millisecond * 200
+	// set the logger only in debug mode
+	if cfg.Debug {
+		idpClient.Logger = slog.Default()
+	} else {
+		idpClient.Logger = nil
+	}
 
 	userAgent := fmt.Sprintf("idp-scim-sync/%s", version.Version)
 
@@ -234,7 +233,7 @@ func SyncService(ctx context.Context, cfg *config.Config) (*core.SyncService, er
 		ServiceAccount: gwsServiceAccountContent,
 		Scopes:         cfg.GWSServiceAccountScopes,
 		UserAgent:      userAgent,
-		Client:         idpClient,
+		Client:         idpClient.StandardClient(),
 	}
 
 	// Google Client Service
@@ -257,18 +256,19 @@ func SyncService(ctx context.Context, cfg *config.Config) (*core.SyncService, er
 
 	// AWS SCIM Service
 
-	scimClient := httpretrier.NewClientBuilder().
-		WithTimeout(30 * time.Second).                        // Overall request timeout
-		WithMaxRetries(10).                                   // Retry up to 3 times
-		WithRetryStrategy(httpretrier.JitterBackoffStrategy). // Use jitter backoff to avoid thundering herd
-		WithRetryBaseDelay(500 * time.Millisecond).           // Start with 500ms delay (httpretrier default)
-		WithRetryMaxDelay(10 * time.Second).                  // Cap at 5 seconds
-		WithMaxIdleConns(10).                                 // Max idle connections
-		WithMaxIdleConnsPerHost(10).                          // Max idle connections per host
-		WithIdleConnTimeout(90 * time.Second).                // Idle connection timeout
-		Build()
+	// httpClient
+	scimClient := retryablehttp.NewClient()
+	scimClient.RetryMax = 10
+	scimClient.RetryWaitMin = time.Millisecond * 100
 
-	awsSCIM, err := aws.NewSCIMService(scimClient, cfg.AWSSCIMEndpoint, cfg.AWSSCIMAccessToken)
+	// set the logger only in debug mode
+	if cfg.Debug {
+		scimClient.Logger = slog.Default()
+	} else {
+		scimClient.Logger = nil
+	}
+
+	awsSCIM, err := aws.NewSCIMService(scimClient.StandardClient(), cfg.AWSSCIMEndpoint, cfg.AWSSCIMAccessToken)
 	if err != nil {
 		return nil, errors.Wrap(err, "cannot create aws scim service")
 	}

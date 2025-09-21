@@ -533,8 +533,8 @@ func (s *Provider) GetGroupsMembersBruteForce(ctx context.Context, gr *model.Gro
 			user := user
 
 			g.Go(func() error {
-				// add random delay between 10-200 milliseconds to gap API calls
-				delay := time.Duration(rand.Intn(190)+10) * time.Millisecond
+				// add random delay between 10-150 milliseconds to gap API calls
+				delay := time.Duration(rand.Intn(140)+10) * time.Millisecond
 				time.Sleep(delay)
 
 				// https://docs.aws.amazon.com/singlesignon/latest/developerguide/listgroups.html
