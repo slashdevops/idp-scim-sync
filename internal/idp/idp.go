@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"sync"
+	"time"
 
 	"github.com/slashdevops/idp-scim-sync/internal/model"
 	"github.com/slashdevops/idp-scim-sync/pkg/google"
@@ -32,6 +34,10 @@ type GoogleProviderService interface {
 	ListGroups(ctx context.Context, query []string) ([]*admin.Group, error)
 	ListGroupMembers(ctx context.Context, groupID string, queries ...google.GetGroupMembersOption) ([]*admin.Member, error)
 	GetUser(ctx context.Context, userID string) (*admin.User, error)
+
+	// Batch operations for performance optimization
+	GetUsersBatch(ctx context.Context, emails []string) ([]*admin.User, error)
+	ListGroupMembersBatch(ctx context.Context, groupIDs []string, queries ...google.GetGroupMembersOption) (map[string][]*admin.Member, error)
 }
 
 // IdentityProvider is the Identity Provider service that implements the core.IdentityProvider interface and consumes the pkg.google methods.
@@ -113,11 +119,14 @@ func (i *IdentityProvider) GetUsers(ctx context.Context, filter []string) (*mode
 		return uResult, nil
 	}
 
-	syncUsers := make([]*model.User, len(pUsers))
-	for i, usr := range pUsers {
-		gu := buildUser(usr)
-		syncUsers[i] = gu
+	// Pre-allocate with exact capacity and filter nil users upfront
+	syncUsers := make([]*model.User, 0, len(pUsers))
+	for _, usr := range pUsers {
+		if gu := buildUser(usr); gu != nil {
+			syncUsers = append(syncUsers, gu)
+		}
 	}
+
 	uResult := model.UsersResultBuilder().WithResources(syncUsers).Build()
 	slog.Debug("idp: GetUsers()", "users", len(syncUsers))
 
@@ -180,37 +189,48 @@ func (i *IdentityProvider) GetUsersByGroupsMembers(ctx context.Context, gmr *mod
 		return uResult, nil
 	}
 
-	uniqUsers := make(map[string]struct{}, len(gmr.Resources))
-	pUsers := make([]*model.User, 0, len(gmr.Resources))
+	// Collect unique emails first
+	uniqueEmails := make(map[string]struct{})
 	for _, groupMembers := range gmr.Resources {
 		for _, member := range groupMembers.Resources {
-			if _, ok := uniqUsers[member.Email]; !ok {
-				uniqUsers[member.Email] = struct{}{}
+			uniqueEmails[member.Email] = struct{}{}
+		}
+	}
 
-				// TODO: instead of retrieve user by user, I can implement a users.list
-				// https://developers.google.com/admin-sdk/directory/reference/rest/v1/users/list
-				// using the query parameter to filter by emails and retrieve the maximum number of users
-				// per request
-				u, err := i.ps.GetUser(ctx, member.Email)
-				if err != nil {
-					return nil, fmt.Errorf("idp: error getting user: %+v, email: %s, error: %w", member.IPID, member.Email, err)
-				}
-				gu := buildUser(u)
+	// Convert to slice for batch processing
+	emails := make([]string, 0, len(uniqueEmails))
+	for email := range uniqueEmails {
+		emails = append(emails, email)
+	}
 
-				slog.Debug("idp: GetUsersByGroupsMembers()", "user", gu.Email)
+	// Process emails in chunks of 500 (Google's recommended batch size)
+	const batchSize = 500
+	pUsers := make([]*model.User, 0, len(emails))
+
+	emailChunks := chunkEmails(emails, batchSize)
+	for _, emailBatch := range emailChunks {
+		query := buildEmailQuery(emailBatch)
+
+		users, err := i.ps.ListUsers(ctx, []string{query})
+		if err != nil {
+			return nil, fmt.Errorf("idp: error getting users batch: %w", err)
+		}
+
+		for _, usr := range users {
+			if gu := buildUser(usr); gu != nil {
 				pUsers = append(pUsers, gu)
+				slog.Debug("idp: GetUsersByGroupsMembers()", "user", gu.Email)
 			}
 		}
 	}
 
 	pUsersResult := model.UsersResultBuilder().WithResources(pUsers).Build()
-
 	slog.Debug("idp: GetUsersByGroupsMembers()", "users", len(pUsers))
 
 	return pUsersResult, nil
 }
 
-// GetGroupsMembers return the members of the groups
+// GetGroupsMembers return the members of the groups with parallel processing for improved performance
 func (i *IdentityProvider) GetGroupsMembers(ctx context.Context, gr *model.GroupsResult) (*model.GroupsMembersResult, error) {
 	if gr == nil {
 		return nil, ErrGroupResultNil
@@ -227,26 +247,98 @@ func (i *IdentityProvider) GetGroupsMembers(ctx context.Context, gr *model.Group
 		return groupsMembersResult, nil
 	}
 
-	groupMembers := make([]*model.GroupMembers, l)
-	for j, group := range gr.Resources {
-		members, err := i.GetGroupMembers(ctx, group.IPID)
-		if err != nil {
-			return nil, fmt.Errorf("idp: error getting group members: %w", err)
-		}
+	// Add timeout to prevent hanging operations
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Minute)
+	defer cancel()
 
-		ggm := model.GroupBuilder().
-			WithIPID(group.IPID).
-			WithName(group.Name).
-			WithEmail(group.Email).
-			Build()
-
-		groupMember := model.GroupMembersBuilder().
-			WithGroup(ggm).
-			WithResources(members.Resources).
-			Build()
-
-		groupMembers[j] = groupMember
+	// Use worker pool for concurrent processing
+	const maxWorkers = 10 // Adjust based on Google API rate limits
+	workers := maxWorkers
+	if l < workers {
+		workers = l
 	}
+
+	type groupMemberJob struct {
+		index int
+		group *model.Group
+	}
+
+	type groupMemberResult struct {
+		index       int
+		groupMember *model.GroupMembers
+		err         error
+	}
+
+	jobs := make(chan groupMemberJob, l)
+	results := make(chan groupMemberResult, l)
+
+	// Start workers
+	var wg sync.WaitGroup
+	for w := 0; w < workers; w++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for job := range jobs {
+				select {
+				case <-ctx.Done():
+					results <- groupMemberResult{job.index, nil, ctx.Err()}
+					return
+				default:
+					members, err := i.GetGroupMembers(ctx, job.group.IPID)
+					if err != nil {
+						results <- groupMemberResult{job.index, nil, err}
+						continue
+					}
+
+					ggm := model.GroupBuilder().
+						WithIPID(job.group.IPID).
+						WithName(job.group.Name).
+						WithEmail(job.group.Email).
+						Build()
+
+					groupMember := model.GroupMembersBuilder().
+						WithGroup(ggm).
+						WithResources(members.Resources).
+						Build()
+
+					results <- groupMemberResult{job.index, groupMember, nil}
+				}
+			}
+		}()
+	}
+
+	// Send jobs
+	go func() {
+		defer close(jobs)
+		for i, group := range gr.Resources {
+			select {
+			case <-ctx.Done():
+				return
+			case jobs <- groupMemberJob{i, group}:
+			}
+		}
+	}()
+
+	// Collect results
+	groupMembers := make([]*model.GroupMembers, l)
+	for i := 0; i < l; i++ {
+		select {
+		case <-ctx.Done():
+			// Wait for workers to finish
+			wg.Wait()
+			return nil, fmt.Errorf("idp: context cancelled while getting group members: %w", ctx.Err())
+		case result := <-results:
+			if result.err != nil {
+				// Wait for workers to finish
+				wg.Wait()
+				return nil, fmt.Errorf("idp: error getting group members: %w", result.err)
+			}
+			groupMembers[result.index] = result.groupMember
+		}
+	}
+
+	// Wait for all workers to finish
+	wg.Wait()
 
 	groupsMembersResult := &model.GroupsMembersResult{
 		Items:     len(groupMembers),

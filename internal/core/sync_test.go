@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/slashdevops/idp-scim-sync/internal/idp"
@@ -415,6 +416,40 @@ func TestSyncService_SyncGroupsAndTheirMembers(t *testing.T) {
 				_, _ = w.Write(membersListJSONBytes)
 			case "/admin/directory/v1/groups/group-2/members":
 				_, _ = w.Write(membersListJSONBytes)
+			case "/admin/directory/v1/users":
+				// Handle batch user queries with email filter
+				query := r.URL.Query().Get("query")
+				if strings.Contains(query, "email:user.1@mail.com") && strings.Contains(query, "email:user.2@mail.com") {
+					// Return both users for batch query - use the same user objects as defined above
+					usersResponse := struct {
+						Users []*admin.User `json:"users"`
+					}{
+						Users: []*admin.User{user1, user2},
+					}
+					usersResponseBytes, _ := json.Marshal(usersResponse)
+					_, _ = w.Write(usersResponseBytes)
+				} else if strings.Contains(query, "email:user.1@mail.com") {
+					// Return only user 1
+					usersResponse := struct {
+						Users []*admin.User `json:"users"`
+					}{
+						Users: []*admin.User{user1},
+					}
+					usersResponseBytes, _ := json.Marshal(usersResponse)
+					_, _ = w.Write(usersResponseBytes)
+				} else if strings.Contains(query, "email:user.2@mail.com") {
+					// Return only user 2
+					usersResponse := struct {
+						Users []*admin.User `json:"users"`
+					}{
+						Users: []*admin.User{user2},
+					}
+					usersResponseBytes, _ := json.Marshal(usersResponse)
+					_, _ = w.Write(usersResponseBytes)
+				} else {
+					// Return empty users list for other queries
+					_, _ = w.Write([]byte(`{"users":[]}`))
+				}
 			case "/admin/directory/v1/users/user.1@mail.com":
 				_, _ = w.Write(user1JSONBytes)
 			case "/admin/directory/v1/users/user.2@mail.com":

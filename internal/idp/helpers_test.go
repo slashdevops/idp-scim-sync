@@ -208,3 +208,96 @@ func Test_buildUser(t *testing.T) {
 		})
 	}
 }
+
+func Test_buildEmailQuery(t *testing.T) {
+	tests := []struct {
+		name   string
+		emails []string
+		want   string
+	}{
+		{
+			name:   "should return empty string for empty slice",
+			emails: []string{},
+			want:   "",
+		},
+		{
+			name:   "should return single email query for one email",
+			emails: []string{"user@example.com"},
+			want:   "email:user@example.com",
+		},
+		{
+			name:   "should return OR query for multiple emails",
+			emails: []string{"user1@example.com", "user2@example.com"},
+			want:   "email:user1@example.com OR email:user2@example.com",
+		},
+		{
+			name:   "should handle three emails correctly",
+			emails: []string{"user1@example.com", "user2@example.com", "user3@example.com"},
+			want:   "email:user1@example.com OR email:user2@example.com OR email:user3@example.com",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := buildEmailQuery(tt.emails)
+			if got != tt.want {
+				t.Errorf("buildEmailQuery() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_chunkEmails(t *testing.T) {
+	tests := []struct {
+		name      string
+		emails    []string
+		chunkSize int
+		want      [][]string
+	}{
+		{
+			name:      "should return single chunk for empty slice",
+			emails:    []string{},
+			chunkSize: 2,
+			want:      [][]string{},
+		},
+		{
+			name:      "should return single chunk when size is larger than emails",
+			emails:    []string{"email1", "email2"},
+			chunkSize: 5,
+			want:      [][]string{{"email1", "email2"}},
+		},
+		{
+			name:      "should return multiple chunks when emails exceed chunk size",
+			emails:    []string{"email1", "email2", "email3", "email4", "email5"},
+			chunkSize: 2,
+			want:      [][]string{{"email1", "email2"}, {"email3", "email4"}, {"email5"}},
+		},
+		{
+			name:      "should handle exact chunk size division",
+			emails:    []string{"email1", "email2", "email3", "email4"},
+			chunkSize: 2,
+			want:      [][]string{{"email1", "email2"}, {"email3", "email4"}},
+		},
+		{
+			name:      "should return original slice for zero chunk size",
+			emails:    []string{"email1", "email2", "email3"},
+			chunkSize: 0,
+			want:      [][]string{{"email1", "email2", "email3"}},
+		},
+		{
+			name:      "should return original slice for negative chunk size",
+			emails:    []string{"email1", "email2", "email3"},
+			chunkSize: -1,
+			want:      [][]string{{"email1", "email2", "email3"}},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := chunkEmails(tt.emails, tt.chunkSize)
+			if diff := cmp.Diff(tt.want, got); diff != "" {
+				t.Errorf("chunkEmails() mismatch (-want +got):\n%s", diff)
+			}
+		})
+	}
+}

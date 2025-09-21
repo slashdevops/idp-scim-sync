@@ -556,17 +556,17 @@ func TestGetUsersByGroupsMembers(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "Should return error",
+			name: "Should return error when ListUsers fails",
 			prepare: func(f *fields) {
 				ctx := context.Background()
-				f.ds.EXPECT().GetUser(ctx, gomock.Eq("user.1@mail.com")).Return(nil, errors.New("test error")).Times(1)
+				f.ds.EXPECT().ListUsers(ctx, gomock.Any()).Return(nil, errors.New("test error")).Times(1)
 			},
 			args: args{
 				ctx: context.Background(),
 				gmr: &model.GroupsMembersResult{
 					Resources: []*model.GroupMembers{
 						{
-							Items: 2,
+							Items: 1,
 							Group: &model.Group{IPID: "1", Name: "group 1", Email: "group1@mail.com"},
 							Resources: []*model.Member{
 								{IPID: "1", Email: "user.1@mail.com", Status: "ACTIVE"},
@@ -636,10 +636,7 @@ func TestGetUsersByGroupsMembers(t *testing.T) {
 				}
 
 				gomock.InOrder(
-					f.ds.EXPECT().GetUser(ctx, gomock.Eq("user.1@mail.com")).Return(googleUser1, nil).Times(1),
-					f.ds.EXPECT().GetUser(ctx, gomock.Eq("user.2@mail.com")).Return(googleUser2, nil).Times(1),
-					f.ds.EXPECT().GetUser(ctx, gomock.Eq("user.3@mail.com")).Return(googleUser3, nil).Times(1),
-					f.ds.EXPECT().GetUser(ctx, gomock.Eq("user.4@mail.com")).Return(googleUser4, nil).Times(1),
+					f.ds.EXPECT().ListUsers(ctx, gomock.Any()).Return([]*admin.User{googleUser1, googleUser2, googleUser3, googleUser4}, nil).Times(1),
 				)
 			},
 			args: args{
@@ -727,6 +724,64 @@ func TestGetUsersByGroupsMembers(t *testing.T) {
 							[]model.Email{
 								model.EmailBuilder().
 									WithValue("user.4@mail.com").
+									WithType("work").
+									WithPrimary(true).
+									Build(),
+							},
+						).
+						Build(),
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "Should handle duplicate emails correctly",
+			prepare: func(f *fields) {
+				ctx := context.Background()
+				googleUser1 := &admin.User{
+					Id:           "1",
+					PrimaryEmail: "user.1@mail.com",
+					Name:         &admin.UserName{GivenName: "user", FamilyName: "1"},
+					Suspended:    false,
+				}
+
+				f.ds.EXPECT().ListUsers(ctx, gomock.Any()).Return([]*admin.User{googleUser1}, nil).Times(1)
+			},
+			args: args{
+				ctx: context.Background(),
+				gmr: &model.GroupsMembersResult{
+					Items: 2,
+					Resources: []*model.GroupMembers{
+						{
+							Items: 1,
+							Group: &model.Group{IPID: "1", Name: "group 1", Email: "group1@mail.com"},
+							Resources: []*model.Member{
+								{IPID: "1", Email: "user.1@mail.com", Status: "ACTIVE"},
+							},
+						},
+						{
+							Items: 1,
+							Group: &model.Group{IPID: "2", Name: "group 2", Email: "group2@mail.com"},
+							Resources: []*model.Member{
+								{IPID: "1", Email: "user.1@mail.com", Status: "ACTIVE"}, // Same user in multiple groups
+							},
+						},
+					},
+				},
+			},
+			want: &model.UsersResult{
+				Items: 1,
+				Resources: []*model.User{
+					model.UserBuilder().
+						WithIPID("1").
+						WithName(&model.Name{GivenName: "user", FamilyName: "1"}).
+						WithDisplayName("user 1").
+						WithActive(true).
+						WithUserName("user.1@mail.com").
+						WithEmails(
+							[]model.Email{
+								model.EmailBuilder().
+									WithValue("user.1@mail.com").
 									WithType("work").
 									WithPrimary(true).
 									Build(),
@@ -859,9 +914,7 @@ func TestGetGroupsMembers(t *testing.T) {
 		{
 			name: "Should return error when ListGroupMembers return error",
 			prepare: func(f *fields) {
-				ctx := context.Background()
-
-				f.ds.EXPECT().ListGroupMembers(ctx, "1", gomock.Any()).Return(nil, errors.New("test error")).Times(1)
+				f.ds.EXPECT().ListGroupMembers(gomock.Any(), "1", gomock.Any()).Return(nil, errors.New("test error")).Times(1)
 			},
 			args: args{
 				ctx: context.Background(),
@@ -878,12 +931,11 @@ func TestGetGroupsMembers(t *testing.T) {
 		{
 			name: "Should return MembersResult and no error",
 			prepare: func(f *fields) {
-				ctx := context.Background()
 				googleGroupMembers := make([]*admin.Member, 0)
 				googleGroupMembers = append(googleGroupMembers, &admin.Member{Email: "user.1@mail.com", Id: "1", Status: "ACTIVE"})
 				googleGroupMembers = append(googleGroupMembers, &admin.Member{Email: "user.2@mail.com", Id: "2", Status: "ACTIVE"})
 
-				f.ds.EXPECT().ListGroupMembers(ctx, "1", gomock.Any()).Return(googleGroupMembers, nil).Times(1)
+				f.ds.EXPECT().ListGroupMembers(gomock.Any(), "1", gomock.Any()).Return(googleGroupMembers, nil).Times(1)
 			},
 			args: args{
 				ctx: context.Background(),
@@ -900,9 +952,8 @@ func TestGetGroupsMembers(t *testing.T) {
 		{
 			name: "Should return MembersResult and no error when members is empty",
 			prepare: func(f *fields) {
-				ctx := context.Background()
 				googleGroupMembers := make([]*admin.Member, 0)
-				f.ds.EXPECT().ListGroupMembers(ctx, "1", gomock.Any()).Return(googleGroupMembers, nil).Times(1)
+				f.ds.EXPECT().ListGroupMembers(gomock.Any(), "1", gomock.Any()).Return(googleGroupMembers, nil).Times(1)
 			},
 			args: args{
 				ctx: context.Background(),

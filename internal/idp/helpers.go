@@ -426,3 +426,43 @@ func toOrganizations(o any, manager *model.Manager) (*model.EnterpriseData, stri
 	}
 	return mainOrganization, title, nil
 }
+
+// buildEmailQuery constructs a query string for batch user retrieval by emails.
+// The Google Admin SDK supports OR queries for multiple email addresses.
+func buildEmailQuery(emails []string) string {
+	if len(emails) == 0 {
+		return ""
+	}
+
+	if len(emails) == 1 {
+		return fmt.Sprintf("email:%s", emails[0])
+	}
+
+	emailQueries := make([]string, len(emails))
+	for i, email := range emails {
+		emailQueries[i] = fmt.Sprintf("email:%s", email)
+	}
+	return strings.Join(emailQueries, " OR ")
+}
+
+// chunkEmails splits a slice of emails into chunks of the specified size.
+// This is useful for batch processing when there are API limits.
+func chunkEmails(emails []string, chunkSize int) [][]string {
+	if chunkSize <= 0 {
+		return [][]string{emails}
+	}
+
+	if len(emails) == 0 {
+		return [][]string{}
+	}
+
+	var chunks [][]string
+	for i := 0; i < len(emails); i += chunkSize {
+		end := i + chunkSize
+		if end > len(emails) {
+			end = len(emails)
+		}
+		chunks = append(chunks, emails[i:end])
+	}
+	return chunks
+}
