@@ -134,8 +134,6 @@ func buildUser(user *aws.User) *model.User {
 		WithEnterpriseData(enterpriseData).
 		Build()
 
-	slog.Debug("scim: buildUser() converted user", "from", user, "to", userModel)
-
 	return userModel
 }
 

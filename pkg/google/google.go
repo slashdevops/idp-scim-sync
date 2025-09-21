@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"sync"
 
+	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 	admin "google.golang.org/api/admin/directory/v1"
 	"google.golang.org/api/googleapi"
@@ -100,9 +102,13 @@ func NewService(ctx context.Context, config DirectoryServiceConfig) (*admin.Serv
 		return nil, fmt.Errorf("google: %v", err)
 	}
 
+	config.Client.Transport = &oauth2.Transport{
+		Source: creds.TokenSource,
+		Base:   config.Client.Transport,
+	}
+
 	svc, err := admin.NewService(
 		ctx,
-		option.WithTokenSource(creds.TokenSource),
 		option.WithUserAgent(config.UserAgent),
 		option.WithHTTPClient(config.Client),
 	)
@@ -130,11 +136,15 @@ func (ds *DirectoryService) ListUsers(ctx context.Context, query []string) ([]*a
 	default:
 	}
 
-	u := make([]*admin.User, 0)
+	// optimistic initial capacity
+	u := make([]*admin.User, 0, 50)
+
 	if len(query) > 0 {
 		for _, q := range query {
 			if q != "" {
+				slog.Debug("google: Listing users with query", "query", q)
 				err := ds.svc.Users.List().Query(q).Customer("my_customer").Fields(listUsersRequiredFields).Pages(ctx, func(users *admin.Users) error {
+					slog.Debug("google: Retrieved users page", "page_size", len(users.Users))
 					u = append(u, users.Users...)
 					return nil
 				})
@@ -161,8 +171,6 @@ func (ds *DirectoryService) ListUsers(ctx context.Context, query []string) ([]*a
 		}
 	}
 
-	slog.Debug("google: ListUsers()", "users", u)
-
 	return u, nil
 }
 
@@ -176,7 +184,8 @@ func (ds *DirectoryService) ListGroups(ctx context.Context, query []string) ([]*
 	default:
 	}
 
-	g := make([]*admin.Group, 0)
+	// optimistic initial capacity
+	g := make([]*admin.Group, 0, 50)
 
 	if len(query) > 0 {
 		for _, q := range query {
@@ -208,8 +217,6 @@ func (ds *DirectoryService) ListGroups(ctx context.Context, query []string) ([]*
 		}
 	}
 
-	slog.Debug("google: ListGroups()", "groups", g)
-
 	return g, nil
 }
 
@@ -234,7 +241,8 @@ func (ds *DirectoryService) ListGroupMembers(ctx context.Context, groupID string
 		q(&qs)
 	}
 
-	m := make([]*admin.Member, 0)
+	// optimistic initial capacity
+	m := make([]*admin.Member, 0, 20)
 	mlc := ds.svc.Members.List(groupID)
 
 	if qs.includeDerivedMembership {
@@ -265,8 +273,6 @@ func (ds *DirectoryService) ListGroupMembers(ctx context.Context, groupID string
 		return nil, err
 	}
 
-	slog.Debug("google: ListGroupMembers()", "members", m)
-
 	return m, nil
 }
 
@@ -282,8 +288,6 @@ func (ds *DirectoryService) GetUser(ctx context.Context, userID string) (*admin.
 		return nil, fmt.Errorf("google: error getting user %s: %v", userID, err)
 	}
 
-	slog.Debug("google: GetUser()", "user", u)
-
 	return u, nil
 }
 
@@ -298,7 +302,53 @@ func (ds *DirectoryService) GetGroup(ctx context.Context, groupID string) (*admi
 		return nil, fmt.Errorf("google: error getting group %s: %v", groupID, err)
 	}
 
-	slog.Debug("google: GetGroup()", "group", g)
-
 	return g, nil
+}
+
+// ListGroupMembersBatch retrieves members for multiple groups concurrently.
+// Returns a map where keys are group IDs and values are slices of members.
+func (ds *DirectoryService) ListGroupMembersBatch(ctx context.Context, groupIDs []string, queries ...GetGroupMembersOption) (map[string][]*admin.Member, error) {
+	if len(groupIDs) == 0 {
+		return make(map[string][]*admin.Member), nil
+	}
+
+	result := make(map[string][]*admin.Member, len(groupIDs))
+
+	// Process groups concurrently with a reasonable limit
+	const maxConcurrent = 10
+	sem := make(chan struct{}, maxConcurrent)
+	var mu sync.Mutex
+	var wg sync.WaitGroup
+
+	errChan := make(chan error, len(groupIDs))
+
+	for _, groupID := range groupIDs {
+		wg.Add(1)
+		go func(gid string) {
+			defer wg.Done()
+
+			sem <- struct{}{}        // Acquire semaphore
+			defer func() { <-sem }() // Release semaphore
+
+			members, err := ds.ListGroupMembers(ctx, gid, queries...)
+			if err != nil {
+				errChan <- fmt.Errorf("google: error getting members for group %s: %w", gid, err)
+				return
+			}
+
+			mu.Lock()
+			result[gid] = members
+			mu.Unlock()
+		}(groupID)
+	}
+
+	wg.Wait()
+	close(errChan)
+
+	// Check for errors
+	if err := <-errChan; err != nil {
+		return nil, err
+	}
+
+	return result, nil
 }

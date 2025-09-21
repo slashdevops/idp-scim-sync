@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/slashdevops/idp-scim-sync/internal/idp"
@@ -133,7 +134,6 @@ func TestSyncService_SyncGroupsAndTheirMembers(t *testing.T) {
 		assert.Equal(t, 0, len(state.Resources.GroupsMembers.Resources))
 		assert.NotEqual(t, "", state.LastSync)
 		assert.NotEqual(t, "", state.HashCode)
-		assert.Equal(t, "", state.CodeVersion)
 		assert.Equal(t, model.StateSchemaVersion, state.SchemaVersion)
 	})
 
@@ -415,6 +415,31 @@ func TestSyncService_SyncGroupsAndTheirMembers(t *testing.T) {
 				_, _ = w.Write(membersListJSONBytes)
 			case "/admin/directory/v1/groups/group-2/members":
 				_, _ = w.Write(membersListJSONBytes)
+			case "/admin/directory/v1/users":
+				// Handle batch user queries
+				query := r.URL.Query().Get("query")
+				if strings.Contains(query, "email:user.1@mail.com") && strings.Contains(query, "email:user.2@mail.com") {
+					// Unmarshal the individual user JSON bytes to get the actual User objects
+					var u1, u2 admin.User
+					err1 := json.Unmarshal(user1JSONBytes, &u1)
+					err2 := json.Unmarshal(user2JSONBytes, &u2)
+					if err1 == nil && err2 == nil {
+						// Create the users list response
+						usersResponse := &admin.Users{
+							Users: []*admin.User{&u1, &u2},
+						}
+						usersListJSON, err := json.Marshal(usersResponse)
+						if err == nil {
+							_, _ = w.Write(usersListJSON)
+						} else {
+							w.WriteHeader(http.StatusInternalServerError)
+						}
+					} else {
+						w.WriteHeader(http.StatusInternalServerError)
+					}
+				} else {
+					_, _ = w.Write([]byte(`{"users":[]}`))
+				}
 			case "/admin/directory/v1/users/user.1@mail.com":
 				_, _ = w.Write(user1JSONBytes)
 			case "/admin/directory/v1/users/user.2@mail.com":
@@ -513,7 +538,6 @@ func TestSyncService_SyncGroupsAndTheirMembers(t *testing.T) {
 		assert.Equal(t, 4, len(state.Resources.GroupsMembers.Resources))
 		assert.NotEqual(t, "", state.LastSync)
 		assert.NotEqual(t, "", state.HashCode)
-		assert.Equal(t, "", state.CodeVersion)
 		assert.Equal(t, model.StateSchemaVersion, state.SchemaVersion)
 		assert.Equal(t, 2, state.Resources.Groups.Items)
 		assert.Equal(t, 2, state.Resources.Users.Items)

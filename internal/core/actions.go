@@ -84,7 +84,11 @@ func scimSync(
 		"idp", idpGroupsMembersResult.Items,
 		"scim", scimGroupsMembersResult.Items,
 	)
-	membersCreate, membersEqual, membersDelete, err := model.MembersOperations(idpGroupsMembersResult, scimGroupsMembersResult)
+
+	// Update the IDP group members with SCIM IDs from the created/updated groups and users
+	groupsMembers := model.UpdateGroupsMembersSCIMID(idpGroupsMembersResult, totalGroupsResult, totalUsersResult)
+
+	membersCreate, membersEqual, membersDelete, err := model.MembersOperations(groupsMembers, scimGroupsMembersResult)
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("error reconciling groups members: %w", err)
 	}

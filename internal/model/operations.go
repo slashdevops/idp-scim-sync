@@ -2,7 +2,6 @@ package model
 
 import (
 	"errors"
-	"log/slog"
 )
 
 var (
@@ -133,9 +132,6 @@ func UsersOperations(idp, scim *UsersResult) (create, update, equal, remove *Use
 		create, update, equal, remove, err = nil, nil, nil, nil, ErrSCIMUsersNil
 		return
 	}
-
-	slog.Debug("idp UsersResult", "idp", idp)
-	slog.Debug("scim UsersResult", "scim", scim)
 
 	idpUsers := make(map[string]struct{})
 	scimUsers := make(map[string]User)

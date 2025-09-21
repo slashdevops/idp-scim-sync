@@ -34,3 +34,6 @@ dist/
 *.log
 
 credentials.json
+run.sh
+idpscim
+idpscimcli
