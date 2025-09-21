@@ -43,6 +43,7 @@
     "grpr",
     "hashcode",
     "hashicorp",
+    "httpretrier",
     "idpid",
     "idpscim",
     "idpscimcli",

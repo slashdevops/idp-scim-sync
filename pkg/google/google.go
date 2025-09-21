@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"net/http"
 
 	"golang.org/x/oauth2/google"
 	admin "google.golang.org/api/admin/directory/v1"
@@ -36,11 +37,28 @@ var (
 
 	// ErrGroupIDNil is returned when the group ID is nil.
 	ErrGroupIDNil = fmt.Errorf("google: group id is required")
+
+	// ErrServiceAccountNil is returned when the service account credentials are nil.
+	ErrServiceAccountNil = fmt.Errorf("google: service account credentials are required")
+
+	// ErrUserAgentNil is returned when the user agent is nil.
+	ErrUserAgentNil = fmt.Errorf("google: user agent is required")
+
+	// ErrGoogleClientNil is returned when the google client is nil.
+	ErrGoogleClientNil = fmt.Errorf("google: google client is required")
 )
 
 // DirectoryService represent the  Google Directory API client.
 type DirectoryService struct {
 	svc *admin.Service
+}
+
+type DirectoryServiceConfig struct {
+	Client         *http.Client
+	UserEmail      string
+	ServiceAccount []byte
+	Scopes         []string
+	UserAgent      string
 }
 
 // NewService create a Google Directory Service.
@@ -50,22 +68,43 @@ type DirectoryService struct {
 // - "https://www.googleapis.com/auth/admin.directory.group.readonly"
 // - "https://www.googleapis.com/auth/admin.directory.group.member.readonly"
 // - "https://www.googleapis.com/auth/admin.directory.user.readonly"
-func NewService(ctx context.Context, userEmail string, serviceAccount []byte, scope ...string) (*admin.Service, error) {
-	if len(scope) == 0 {
+func NewService(ctx context.Context, config DirectoryServiceConfig) (*admin.Service, error) {
+	if config.Client == nil {
+		return nil, ErrGoogleClientNil
+	}
+
+	if config.UserEmail == "" {
+		return nil, ErrUserIDNil
+	}
+
+	if config.ServiceAccount == nil {
+		return nil, ErrServiceAccountNil
+	}
+
+	if len(config.Scopes) == 0 {
 		return nil, ErrGoogleClientScopeNil
 	}
 
-	creds, err := google.CredentialsFromJSONWithParams(ctx, serviceAccount, google.CredentialsParams{
-		Scopes:  scope,
-		Subject: userEmail,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("google: error getting config for Service Account: %v", err)
+	if config.UserAgent == "" {
+		return nil, ErrUserAgentNil
 	}
 
-	svc, err := admin.NewService(ctx, option.WithTokenSource(creds.TokenSource))
+	creds, err := google.CredentialsFromJSONWithParams(ctx, config.ServiceAccount, google.CredentialsParams{
+		Scopes:  config.Scopes,
+		Subject: config.UserEmail,
+	})
 	if err != nil {
-		return nil, fmt.Errorf("google: error creating service: %v", err)
+		return nil, fmt.Errorf("google: %v", err)
+	}
+
+	svc, err := admin.NewService(
+		ctx,
+		option.WithTokenSource(creds.TokenSource),
+		option.WithUserAgent(config.UserAgent),
+		option.WithHTTPClient(config.Client),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("google: %v", err)
 	}
 
 	return svc, nil
