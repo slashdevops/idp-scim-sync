@@ -305,41 +305,52 @@ func (ds *DirectoryService) GetGroup(ctx context.Context, groupID string) (*admi
 }
 
 // GetUsersBatch retrieves multiple users by their email addresses using batch queries.
-// This method is optimized for performance by using the ListUsers method with email queries
+// This method is optimized for performance by using multiple ListUsers calls with email queries
 // instead of making individual GetUser calls.
 func (ds *DirectoryService) GetUsersBatch(ctx context.Context, emails []string) ([]*admin.User, error) {
 	if len(emails) == 0 {
 		return []*admin.User{}, nil
 	}
 
-	// For large numbers of emails, the OR query might be too complex for Google API
-	// Use individual GetUser calls as fallback for reliability
-	if len(emails) > 20 {
-		return ds.getUsersIndividually(ctx, emails)
+	// Use chunked approach for better reliability and performance
+	// Optimal chunk size balances API complexity vs number of requests
+	const chunkSize = 15
+
+	var allUsers []*admin.User
+
+	// Process emails in chunks to avoid overly complex OR queries
+	for i := 0; i < len(emails); i += chunkSize {
+		end := min(i+chunkSize, len(emails))
+
+		chunk := emails[i:end]
+
+		// Create OR query for this chunk
+		emailQueries := make([]string, len(chunk))
+		for j, email := range chunk {
+			emailQueries[j] = fmt.Sprintf("email:%s", email)
+		}
+
+		query := strings.Join(emailQueries, " OR ")
+
+		// Execute ListUsers for this chunk
+		users, err := ds.ListUsers(ctx, []string{query})
+		if err != nil {
+			// If chunk query fails, fall back to individual calls for this chunk only
+			slog.Warn("google: GetUsersBatch chunk failed, falling back to individual calls for chunk",
+				"error", err, "chunk_size", len(chunk), "chunk_start", i)
+
+			individualUsers, individualErr := ds.getUsersIndividually(ctx, chunk)
+			if individualErr != nil {
+				return nil, fmt.Errorf("google: both batch and individual calls failed: batch_error=%w, individual_error=%v", err, individualErr)
+			}
+			users = individualUsers
+		}
+
+		// Accumulate results from this chunk
+		allUsers = append(allUsers, users...)
 	}
 
-	// Use ListUsers with email queries for smaller batches
-	emailQueries := make([]string, len(emails))
-	for i, email := range emails {
-		emailQueries[i] = fmt.Sprintf("email:%s", email)
-	}
-
-	// Join queries with OR to get all users in one request
-	query := strings.Join(emailQueries, " OR ")
-
-	users, err := ds.ListUsers(ctx, []string{query})
-	if err != nil {
-		slog.Warn("google: GetUsersBatch failed, falling back to individual calls", "error", err)
-		return ds.getUsersIndividually(ctx, emails)
-	}
-
-	// If no users returned but we expected some, fallback to individual calls
-	if len(users) == 0 && len(emails) > 0 {
-		slog.Warn("google: GetUsersBatch returned no users, falling back to individual calls", "expected_emails", len(emails))
-		return ds.getUsersIndividually(ctx, emails)
-	}
-
-	return users, nil
+	return allUsers, nil
 }
 
 // getUsersIndividually retrieves users one by one using GetUser calls
