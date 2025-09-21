@@ -108,6 +108,16 @@ func NewSCIMService(httpClient HTTPClient, urlStr, token string) (*SCIMService, 
 		return nil, ErrBearerTokenEmpty
 	}
 
+	// Debug token format for troubleshooting
+	slog.Debug("aws: creating SCIM service",
+		"url", urlStr,
+		"token_length", len(token),
+		"token_has_newlines", strings.Contains(token, "\n"),
+		"token_has_carriage_returns", strings.Contains(token, "\r"),
+		"token_has_tabs", strings.Contains(token, "\t"),
+		"token_starts_with_space", strings.HasPrefix(token, " "),
+		"token_ends_with_space", strings.HasSuffix(token, " "))
+
 	return &SCIMService{
 		httpClient:  httpClient,
 		url:         u,
@@ -151,9 +161,8 @@ func (s *SCIMService) newRequest(ctx context.Context, method string, u *url.URL,
 		return nil, fmt.Errorf("aws: error creating request: %w", err)
 	}
 
-	if body != nil {
-		req.Header.Set("Content-Type", ContentTypeSCIMJSON)
-	}
+	// Always set Content-Type for SCIM requests, even for GET requests
+	req.Header.Set("Content-Type", ContentTypeSCIMJSON)
 
 	req.Header.Set("Accept", ContentTypeJSON)
 
@@ -178,7 +187,20 @@ func (s *SCIMService) do(ctx context.Context, req *http.Request) (*http.Response
 	req = req.WithContext(ctx)
 
 	// Set bearer token
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", s.bearerToken))
+	authHeader := fmt.Sprintf("Bearer %s", s.bearerToken)
+	req.Header.Set("Authorization", authHeader)
+
+	// Debug log for authentication (don't log the actual token for security)
+	// slog.Debug("aws: setting authorization header",
+	// 	"url", req.URL.String(),
+	// 	"method", req.Method,
+	// 	"token_length", len(s.bearerToken),
+	// 	"token_empty", s.bearerToken == "",
+	// 	"has_auth_header", req.Header.Get("Authorization") != "",
+	// 	"content_type", req.Header.Get("Content-Type"),
+	// 	"accept", req.Header.Get("Accept"),
+	// 	"user_agent", req.Header.Get("User-Agent"),
+	// 	"all_headers", fmt.Sprintf("%v", req.Header))
 
 	resp, err := s.httpClient.Do(req)
 	if err != nil {
@@ -194,6 +216,15 @@ func (s *SCIMService) checkHTTPResponse(resp *http.Response) error {
 		body, err := io.ReadAll(resp.Body)
 		if err != nil {
 			return fmt.Errorf("aws checkHTTPResponse: error reading response body: %w", err)
+		}
+
+		// Special handling for 401 Unauthorized errors
+		if resp.StatusCode == http.StatusUnauthorized {
+			slog.Error("aws: 401 Unauthorized - authentication failed",
+				"url", resp.Request.URL.String(),
+				"token_length", len(s.bearerToken),
+				"token_empty", s.bearerToken == "",
+				"response_body", string(body))
 		}
 
 		// Try to parse structured error response

@@ -41,6 +41,9 @@ type SCIMService interface {
 	// GetGroupsMembersBruteForce get the Groups and their Members from the SCIM service using brute force.
 	GetGroupsMembersBruteForce(ctx context.Context, gr *model.GroupsResult, ur *model.UsersResult) (*model.GroupsMembersResult, error)
 
+	// PopulateSCIMIDsForGroupMembers populates SCIM IDs for group members using reconciled users.
+	PopulateSCIMIDsForGroupMembers(ctx context.Context, gmr *model.GroupsMembersResult, users *model.UsersResult) error
+
 	// CreateGroupsMembers create groups members in the SCIM Service given a list of groups members.
 	CreateGroupsMembers(ctx context.Context, gmr *model.GroupsMembersResult) (*model.GroupsMembersResult, error)
 

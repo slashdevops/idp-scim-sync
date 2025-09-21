@@ -188,6 +188,20 @@ func (mr *MockSCIMServiceMockRecorder) GetUsers(ctx any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUsers", reflect.TypeOf((*MockSCIMService)(nil).GetUsers), ctx)
 }
 
+// PopulateSCIMIDsForGroupMembers mocks base method.
+func (m *MockSCIMService) PopulateSCIMIDsForGroupMembers(ctx context.Context, gmr *model.GroupsMembersResult, users *model.UsersResult) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PopulateSCIMIDsForGroupMembers", ctx, gmr, users)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// PopulateSCIMIDsForGroupMembers indicates an expected call of PopulateSCIMIDsForGroupMembers.
+func (mr *MockSCIMServiceMockRecorder) PopulateSCIMIDsForGroupMembers(ctx, gmr, users any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PopulateSCIMIDsForGroupMembers", reflect.TypeOf((*MockSCIMService)(nil).PopulateSCIMIDsForGroupMembers), ctx, gmr, users)
+}
+
 // UpdateGroups mocks base method.
 func (m *MockSCIMService) UpdateGroups(ctx context.Context, gr *model.GroupsResult) (*model.GroupsResult, error) {
 	m.ctrl.T.Helper()

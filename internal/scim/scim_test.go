@@ -1117,7 +1117,7 @@ func TestProvider_CreateGroupsMembers(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "should create groups members without scim id",
+			name: "should return an error when member has no scim id",
 			fields: fields{
 				scim:                 mockScimProvider,
 				maxMembersPerRequest: 100,
@@ -1141,54 +1141,7 @@ func TestProvider_CreateGroupsMembers(t *testing.T) {
 				},
 			},
 			prepare: func(m *mock_scim.MockAWSSCIMProvider) {
-				m.EXPECT().GetUserByUserName(gomock.Any(), gomock.Any()).Return(&aws.GetUserResponse{
-					ID: "1",
-				}, nil)
-				m.EXPECT().PatchGroup(gomock.Any(), gomock.Any()).Return(nil)
-			},
-			want: &model.GroupsMembersResult{
-				Resources: []*model.GroupMembers{
-					{
-						Group: &model.Group{
-							SCIMID: "1",
-							Name:   "group1",
-						},
-						Resources: []*model.Member{
-							{
-								SCIMID: "1",
-								Email:  "user1@email.com",
-							},
-						},
-					},
-				},
-			},
-		},
-		{
-			name: "should return an error when getting user by email",
-			fields: fields{
-				scim:                 mockScimProvider,
-				maxMembersPerRequest: 100,
-			},
-			args: args{
-				ctx: context.Background(),
-				gmr: &model.GroupsMembersResult{
-					Resources: []*model.GroupMembers{
-						{
-							Group: &model.Group{
-								SCIMID: "1",
-								Name:   "group1",
-							},
-							Resources: []*model.Member{
-								{
-									Email: "user1@email.com",
-								},
-							},
-						},
-					},
-				},
-			},
-			prepare: func(m *mock_scim.MockAWSSCIMProvider) {
-				m.EXPECT().GetUserByUserName(gomock.Any(), gomock.Any()).Return(nil, errors.New("error"))
+				// No expectations since we expect it to fail before calling any methods
 			},
 			wantErr: true,
 		},
@@ -1734,6 +1687,254 @@ func TestProvider_GetGroupsMembersBruteForce(t *testing.T) {
 
 			if diff := cmp.Diff(tt.want, got, cmpopts.IgnoreFields(model.GroupsMembersResult{}, "HashCode", "Items"), cmpopts.IgnoreFields(model.GroupMembers{}, "HashCode", "Items"), cmpopts.IgnoreFields(model.Member{}, "HashCode"), opt); diff != "" {
 				t.Errorf("Provider.GetGroupsMembersBruteForce() (-want +got):\n%s", diff)
+			}
+		})
+	}
+}
+
+func TestProvider_PopulateSCIMIDsForGroupMembers(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockScimProvider := mock_scim.NewMockAWSSCIMProvider(ctrl)
+	p := &Provider{scim: mockScimProvider}
+
+	tests := []struct {
+		name    string
+		gmr     *model.GroupsMembersResult
+		users   *model.UsersResult
+		want    *model.GroupsMembersResult
+		prepare func(m *mock_scim.MockAWSSCIMProvider)
+		wantErr bool
+	}{
+		{
+			name: "should populate SCIM IDs for group members",
+			gmr: &model.GroupsMembersResult{
+				Resources: []*model.GroupMembers{
+					{
+						Group: &model.Group{
+							SCIMID: "group-1",
+							Name:   "group1",
+						},
+						Resources: []*model.Member{
+							{
+								Email: "user1@example.com",
+							},
+							{
+								Email: "user2@example.com",
+							},
+						},
+					},
+				},
+			},
+			users: &model.UsersResult{
+				Resources: []*model.User{
+					{
+						SCIMID: "user-1",
+						Emails: []model.Email{
+							{Value: "user1@example.com", Primary: true},
+						},
+					},
+					{
+						SCIMID: "user-2",
+						Emails: []model.Email{
+							{Value: "user2@example.com", Primary: true},
+						},
+					},
+				},
+			},
+			want: &model.GroupsMembersResult{
+				Resources: []*model.GroupMembers{
+					{
+						Group: &model.Group{
+							SCIMID: "group-1",
+							Name:   "group1",
+						},
+						Resources: []*model.Member{
+							{
+								SCIMID: "user-1",
+								Email:  "user1@example.com",
+							},
+							{
+								SCIMID: "user-2",
+								Email:  "user2@example.com",
+							},
+						},
+					},
+				},
+			},
+			prepare: func(m *mock_scim.MockAWSSCIMProvider) {
+				// No SCIM calls expected since all users found in reconciled list
+			},
+		},
+		{
+			name: "should handle members with existing SCIM IDs",
+			gmr: &model.GroupsMembersResult{
+				Resources: []*model.GroupMembers{
+					{
+						Group: &model.Group{
+							SCIMID: "group-1",
+							Name:   "group1",
+						},
+						Resources: []*model.Member{
+							{
+								SCIMID: "existing-id",
+								Email:  "user1@example.com",
+							},
+							{
+								Email: "user2@example.com",
+							},
+						},
+					},
+				},
+			},
+			users: &model.UsersResult{
+				Resources: []*model.User{
+					{
+						SCIMID: "user-1",
+						Emails: []model.Email{
+							{Value: "user1@example.com", Primary: true},
+						},
+					},
+					{
+						SCIMID: "user-2",
+						Emails: []model.Email{
+							{Value: "user2@example.com", Primary: true},
+						},
+					},
+				},
+			},
+			want: &model.GroupsMembersResult{
+				Resources: []*model.GroupMembers{
+					{
+						Group: &model.Group{
+							SCIMID: "group-1",
+							Name:   "group1",
+						},
+						Resources: []*model.Member{
+							{
+								SCIMID: "existing-id", // Should keep existing SCIM ID
+								Email:  "user1@example.com",
+							},
+							{
+								SCIMID: "user-2",
+								Email:  "user2@example.com",
+							},
+						},
+					},
+				},
+			},
+			prepare: func(m *mock_scim.MockAWSSCIMProvider) {
+				// No SCIM calls expected since all users found in reconciled list
+			},
+		},
+		{
+			name: "should handle missing users with SCIM lookup fallback",
+			gmr: &model.GroupsMembersResult{
+				Resources: []*model.GroupMembers{
+					{
+						Group: &model.Group{
+							SCIMID: "group-1",
+							Name:   "group1",
+						},
+						Resources: []*model.Member{
+							{
+								Email: "user1@example.com",
+							},
+							{
+								Email: "missing@example.com", // This user is not in the users list
+							},
+						},
+					},
+				},
+			},
+			users: &model.UsersResult{
+				Resources: []*model.User{
+					{
+						SCIMID: "user-1",
+						Emails: []model.Email{
+							{Value: "user1@example.com", Primary: true},
+						},
+					},
+				},
+			},
+			want: &model.GroupsMembersResult{
+				Resources: []*model.GroupMembers{
+					{
+						Group: &model.Group{
+							SCIMID: "group-1",
+							Name:   "group1",
+						},
+						Resources: []*model.Member{
+							{
+								SCIMID: "user-1",
+								Email:  "user1@example.com",
+							},
+							{
+								SCIMID: "scim-fallback-id", // Should get ID from SCIM lookup
+								Email:  "missing@example.com",
+							},
+						},
+					},
+				},
+			},
+			prepare: func(m *mock_scim.MockAWSSCIMProvider) {
+				m.EXPECT().GetUserByUserName(gomock.Any(), "missing@example.com").Return(&aws.GetUserResponse{
+					ID: "scim-fallback-id",
+				}, nil)
+			},
+		},
+		{
+			name: "should return error when user not found anywhere",
+			gmr: &model.GroupsMembersResult{
+				Resources: []*model.GroupMembers{
+					{
+						Group: &model.Group{
+							SCIMID: "group-1",
+							Name:   "group1",
+						},
+						Resources: []*model.Member{
+							{
+								Email: "user1@example.com",
+							},
+							{
+								Email: "notfound@example.com", // This user is not in the users list and not in SCIM
+							},
+						},
+					},
+				},
+			},
+			users: &model.UsersResult{
+				Resources: []*model.User{
+					{
+						SCIMID: "user-1",
+						Emails: []model.Email{
+							{Value: "user1@example.com", Primary: true},
+						},
+					},
+				},
+			},
+			prepare: func(m *mock_scim.MockAWSSCIMProvider) {
+				m.EXPECT().GetUserByUserName(gomock.Any(), "notfound@example.com").Return(&aws.GetUserResponse{
+					ID: "", // Empty ID means user not found
+				}, nil)
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.prepare(mockScimProvider)
+			err := p.PopulateSCIMIDsForGroupMembers(context.Background(), tt.gmr, tt.users)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Provider.PopulateSCIMIDsForGroupMembers() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !tt.wantErr {
+				if diff := cmp.Diff(tt.want, tt.gmr, cmpopts.IgnoreFields(model.GroupsMembersResult{}, "HashCode", "Items"), cmpopts.IgnoreFields(model.GroupMembers{}, "HashCode", "Items"), cmpopts.IgnoreFields(model.Member{}, "HashCode")); diff != "" {
+					t.Errorf("Provider.PopulateSCIMIDsForGroupMembers() (-want +got):\n%s", diff)
+				}
 			}
 		})
 	}

@@ -195,29 +195,65 @@ func (i *IdentityProvider) GetUsersByGroupsMembers(ctx context.Context, gmr *mod
 		}
 	}
 
-	// Convert to slice for batch processing
+	// Convert to slice for processing
 	emails := make([]string, 0, len(uniqueEmails))
 	for email := range uniqueEmails {
 		emails = append(emails, email)
 	}
 
-	// Process emails in chunks of 500 (Google's recommended batch size)
-	const batchSize = 500
+	// slog.Debug("idp: GetUsersByGroupsMembers() collected emails", "total_emails", len(emails))
+	// if len(emails) > 0 && len(emails) <= 10 {
+	// 	slog.Debug("idp: GetUsersByGroupsMembers() email samples", "emails", emails)
+	// } else if len(emails) > 10 {
+	// 	slog.Debug("idp: GetUsersByGroupsMembers() email samples", "first_10_emails", emails[:10])
+	// }
+
+	// Use small batch queries instead of individual queries for better performance
+	// Large OR queries fail, but small batches should work
+	slog.Debug("idp: GetUsersByGroupsMembers() using small batch email queries", "total_emails", len(emails))
+
+	const batchSize = 10 // Small batch size that works with Google API
 	pUsers := make([]*model.User, 0, len(emails))
 
 	emailChunks := chunkEmails(emails, batchSize)
-	for _, emailBatch := range emailChunks {
-		query := buildEmailQuery(emailBatch)
+	for chunkIndex, emailBatch := range emailChunks {
+		if len(emailBatch) == 1 {
+			// Single email query
+			query := fmt.Sprintf("email:%s", emailBatch[0])
+			slog.Debug("idp: GetUsersByGroupsMembers() single email query", "chunk", chunkIndex, "email", emailBatch[0])
 
-		users, err := i.ps.ListUsers(ctx, []string{query})
-		if err != nil {
-			return nil, fmt.Errorf("idp: error getting users batch: %w", err)
-		}
+			users, err := i.ps.ListUsers(ctx, []string{query})
+			if err != nil {
+				slog.Warn("idp: GetUsersByGroupsMembers() single email query failed", "email", emailBatch[0], "error", err.Error())
+				return nil, fmt.Errorf("idp: error getting user %s: %w", emailBatch[0], err)
+			}
 
-		for _, usr := range users {
-			if gu := buildUser(usr); gu != nil {
-				pUsers = append(pUsers, gu)
-				slog.Debug("idp: GetUsersByGroupsMembers()", "user", gu.Email)
+			slog.Debug("idp: GetUsersByGroupsMembers() single email response", "email", emailBatch[0], "users_found", len(users))
+
+			for _, usr := range users {
+				if gu := buildUser(usr); gu != nil {
+					pUsers = append(pUsers, gu)
+					slog.Debug("idp: GetUsersByGroupsMembers()", "user", gu.Email)
+				}
+			}
+		} else {
+			// Small batch query
+			query := buildEmailQuery(emailBatch)
+			slog.Debug("idp: GetUsersByGroupsMembers() small batch query", "chunk", chunkIndex, "batch_size", len(emailBatch))
+
+			users, err := i.ps.ListUsers(ctx, []string{query})
+			if err != nil {
+				slog.Warn("idp: GetUsersByGroupsMembers() small batch query failed", "chunk", chunkIndex, "error", err.Error())
+				return nil, fmt.Errorf("idp: error getting users batch: %w", err)
+			}
+
+			slog.Debug("idp: GetUsersByGroupsMembers() small batch response", "chunk", chunkIndex, "batch_size", len(emailBatch), "users_found", len(users))
+
+			for _, usr := range users {
+				if gu := buildUser(usr); gu != nil {
+					pUsers = append(pUsers, gu)
+					slog.Debug("idp: GetUsersByGroupsMembers()", "user", gu.Email)
+				}
 			}
 		}
 	}

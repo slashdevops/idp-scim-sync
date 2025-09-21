@@ -89,6 +89,17 @@ func scimSync(
 		return nil, nil, nil, fmt.Errorf("error reconciling groups members: %w", err)
 	}
 
+	slog.Info("group members operations completed",
+		"members_to_create", membersCreate.Items,
+		"members_equal", membersEqual.Items,
+		"members_to_delete", membersDelete.Items,
+		"total_users_reconciled", totalUsersResult.Items)
+
+	// Populate SCIM IDs for group members using reconciled users
+	if err := scim.PopulateSCIMIDsForGroupMembers(ctx, membersCreate, totalUsersResult); err != nil {
+		return nil, nil, nil, fmt.Errorf("error populating SCIM IDs for group members: %w", err)
+	}
+
 	membersCreated, err := reconcilingGroupsMembers(ctx, scim, membersCreate, membersDelete)
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("error reconciling groups members: %w", err)

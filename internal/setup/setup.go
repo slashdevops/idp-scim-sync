@@ -105,6 +105,9 @@ func Configuration(cfg *config.Config) error {
 
 		// Search config in home directory with name "downloader" (without extension).
 		fileExtension := filepath.Ext(cfg.ConfigFile)
+		if len(fileExtension) == 0 {
+			return errors.New("config file must have an extension")
+		}
 		fileExtensionName := fileExtension[1:]
 		viper.SetConfigType(fileExtensionName)
 
@@ -217,12 +220,21 @@ func SyncService(ctx context.Context, cfg *config.Config) (*core.SyncService, er
 		gwsServiceAccountContent = gwsServiceAccount
 	}
 
+	// Use retry client for Google services to handle OAuth2 correctly
 	httpRetryClient := httpretrier.NewClient(
 		3, // Max Retries
 		httpretrier.ExponentialBackoff(10*time.Millisecond, 100*time.Millisecond),
 		nil, // Use http.DefaultTransport
 	)
 
+	// Create separate HTTP client for SCIM to avoid authentication conflicts
+	scimClient := httpretrier.NewClient(
+		3, // Max Retries
+		httpretrier.ExponentialBackoff(10*time.Millisecond, 100*time.Millisecond),
+		nil, // Use http.DefaultTransport
+	)
+
+	// Temporarily use curl user agent to test if that's the issue
 	userAgent := fmt.Sprintf("idp-scim-sync/%s", version.Version)
 
 	gServiceConfig := google.DirectoryServiceConfig{
@@ -252,7 +264,29 @@ func SyncService(ctx context.Context, cfg *config.Config) (*core.SyncService, er
 	}
 
 	// AWS SCIM Service
-	awsSCIM, err := aws.NewSCIMService(httpRetryClient, cfg.AWSSCIMEndpoint, cfg.AWSSCIMAccessToken)
+	// Clean the token to remove any potential whitespace/newlines
+	cleanedToken := strings.TrimSpace(cfg.AWSSCIMAccessToken)
+	cleanedEndpoint := strings.TrimSpace(cfg.AWSSCIMEndpoint)
+
+	// Debug log to verify SCIM configuration
+	slog.Debug("creating AWS SCIM service",
+		"endpoint", cleanedEndpoint,
+		"original_token_length", len(cfg.AWSSCIMAccessToken),
+		"cleaned_token_length", len(cleanedToken),
+		"token_empty", cleanedToken == "",
+		"endpoint_empty", cleanedEndpoint == "",
+		"token_has_newlines", strings.Contains(cfg.AWSSCIMAccessToken, "\n"),
+		"token_has_spaces_at_end", cfg.AWSSCIMAccessToken != cleanedToken)
+
+	if cleanedEndpoint == "" {
+		return nil, errors.New("AWS SCIM endpoint is empty - check your configuration or secrets manager")
+	}
+
+	if cleanedToken == "" {
+		return nil, errors.New("AWS SCIM access token is empty - check your configuration or secrets manager")
+	}
+
+	awsSCIM, err := aws.NewSCIMService(scimClient, cleanedEndpoint, cleanedToken)
 	if err != nil {
 		return nil, errors.Wrap(err, "cannot create aws scim service")
 	}

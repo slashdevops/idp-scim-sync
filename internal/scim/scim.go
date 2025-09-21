@@ -313,6 +313,83 @@ type patchValue struct {
 	Value string `json:"value"`
 }
 
+// PopulateSCIMIDsForGroupMembers populates SCIM IDs for group members using reconciled users
+func (s *Provider) PopulateSCIMIDsForGroupMembers(ctx context.Context, gmr *model.GroupsMembersResult, users *model.UsersResult) error {
+	// Create a map of email to SCIM ID from reconciled users
+	emailToSCIMID := make(map[string]string)
+	for _, user := range users.Resources {
+		if user.SCIMID != "" {
+			for _, email := range user.Emails {
+				emailToSCIMID[email.Value] = user.SCIMID
+			}
+		}
+	}
+
+	slog.Debug("scim: PopulateSCIMIDsForGroupMembers()",
+		"reconciled_users", len(users.Resources),
+		"email_mapping_entries", len(emailToSCIMID))
+
+	// Track users not found for better error reporting
+	var usersNotFound []string
+
+	// Populate SCIM IDs for group members
+	for _, groupMembers := range gmr.Resources {
+		for _, member := range groupMembers.Resources {
+			if member.SCIMID == "" {
+				if scimID, exists := emailToSCIMID[member.Email]; exists {
+					member.SCIMID = scimID
+					slog.Debug("scim: populated SCIM ID for member from reconciled users",
+						"email", member.Email,
+						"scimid", scimID)
+				} else {
+					// Try to look up the user in SCIM in case they exist from a previous sync
+					// but were filtered out during this sync due to incomplete Google Workspace profile
+					slog.Warn("scim: member not found in reconciled users, trying SCIM lookup",
+						"email", member.Email,
+						"group", groupMembers.Group.Name)
+
+					user, err := s.scim.GetUserByUserName(ctx, member.Email)
+					if err != nil {
+						slog.Warn("scim: failed to look up user in SCIM",
+							"email", member.Email,
+							"error", err.Error())
+						usersNotFound = append(usersNotFound, member.Email)
+					} else if user.ID == "" {
+						slog.Warn("scim: user not found in SCIM",
+							"email", member.Email)
+						usersNotFound = append(usersNotFound, member.Email)
+					} else {
+						member.SCIMID = user.ID
+						slog.Info("scim: successfully found user in SCIM",
+							"email", member.Email,
+							"scimid", user.ID)
+					}
+				}
+			}
+		}
+	}
+
+	// If we have users not found, provide detailed error information
+	if len(usersNotFound) > 0 {
+		slog.Error("scim: some group members do not have SCIM IDs",
+			"users_not_found", usersNotFound,
+			"total_reconciled_users", len(users.Resources),
+			"total_email_mappings", len(emailToSCIMID))
+
+		// Return an error with detailed information about what users are missing
+		// This will help identify whether it's a Google Workspace profile issue
+		// or a SCIM creation issue
+		return fmt.Errorf("scim: %d group members not found in reconciled users and not found in SCIM: %v. "+
+			"This usually indicates that these users don't have complete profiles in Google Workspace "+
+			"(missing given name, family name, or other required fields). "+
+			"Check the Google Workspace user profiles for these users and ensure they have: "+
+			"given name, family name, and primary email",
+			len(usersNotFound), usersNotFound)
+	}
+
+	return nil
+}
+
 // CreateGroupsMembers creates groups members in SCIM Provider given a list of groups members
 func (s *Provider) CreateGroupsMembers(ctx context.Context, gmr *model.GroupsMembersResult) (*model.GroupsMembersResult, error) {
 	groupsMembers := make([]*model.GroupMembers, len(gmr.Resources))
@@ -323,11 +400,7 @@ func (s *Provider) CreateGroupsMembers(ctx context.Context, gmr *model.GroupsMem
 
 		for j, member := range groupMembers.Resources {
 			if member.SCIMID == "" {
-				u, err := s.scim.GetUserByUserName(ctx, member.Email)
-				if err != nil {
-					return nil, fmt.Errorf("scim: error getting user by email: %w", err)
-				}
-				member.SCIMID = u.ID
+				return nil, fmt.Errorf("scim: member %s has empty SCIM ID - ensure PopulateSCIMIDsForGroupMembers is called first", member.Email)
 			}
 
 			membersIDValue[j] = patchValue{

@@ -103,22 +103,27 @@ func NewService(ctx context.Context, config DirectoryServiceConfig) (*admin.Serv
 		return nil, fmt.Errorf("google: getting credentials from JSON: %v", err)
 	}
 
-	// Create OAuth2 client with proper authentication
-	oauth2Client := oauth2.NewClient(ctx, creds.TokenSource)
+	// // Create OAuth2 client with proper authentication
+	// oauth2Client := oauth2.NewClient(ctx, creds.TokenSource)
 
-	// If a custom transport is provided (like retry transport), wrap it with OAuth2
-	if config.Client != nil && config.Client.Transport != nil {
-		// The OAuth2 client already has the proper RoundTripper for authentication
-		// We need to chain the transports: Custom Transport -> OAuth2 Transport -> HTTP Transport
-		oauth2Client.Transport = &oauth2.Transport{
-			Source: creds.TokenSource,
-			Base:   config.Client.Transport,
-		}
+	// // If a custom transport is provided (like retry transport), wrap it with OAuth2
+	// if config.Client != nil && config.Client.Transport != nil {
+	// 	// The OAuth2 client already has the proper RoundTripper for authentication
+	// 	// We need to chain the transports: Custom Transport -> OAuth2 Transport -> HTTP Transport
+	// 	oauth2Client.Transport = &oauth2.Transport{
+	// 		Source: creds.TokenSource,
+	// 		Base:   config.Client.Transport,
+	// 	}
+	// }
+
+	config.Client.Transport = &oauth2.Transport{
+		Source: creds.TokenSource,
+		Base:   config.Client.Transport,
 	}
 
 	svc, err := admin.NewService(
 		ctx,
-		option.WithHTTPClient(oauth2Client),
+		option.WithHTTPClient(config.Client),
 		option.WithUserAgent(config.UserAgent),
 	)
 	if err != nil {
@@ -280,7 +285,7 @@ func (ds *DirectoryService) ListGroupMembers(ctx context.Context, groupID string
 		return nil, err
 	}
 
-	slog.Debug("google: ListGroupMembers()", "members", m)
+	// slog.Debug("google: ListGroupMembers()", "members", m)
 
 	return m, nil
 }
