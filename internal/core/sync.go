@@ -153,8 +153,6 @@ func (ss *SyncService) SyncGroupsAndTheirMembers(ctx context.Context) error {
 		}
 	}
 
-	// after be sure all the SCIM side is aligned with the identity provider side
-	// we can update the state with the last data coming from the reconciliation
 	newState := model.StateBuilder().
 		WithCodeVersion(version.Version).
 		WithLastSync(time.Now().Format(time.RFC3339)).

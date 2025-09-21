@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"math/rand"
+	"sync"
 	"time"
 
 	"github.com/slashdevops/idp-scim-sync/internal/model"
@@ -516,6 +517,8 @@ func (s *Provider) GetGroupsMembersBruteForce(ctx context.Context, gr *model.Gro
 	// set a limit to the number of concurrent goroutines
 	// to avoid hitting the API rate limit
 	g.SetLimit(5)
+	// protect concurrent access to membersByGroup
+	var mu sync.Mutex
 
 	// brute force implemented here thanks to the fxxckin' aws sso scim api
 	// iterate over each group and user and check if the user is a member of the group
@@ -546,15 +549,18 @@ func (s *Provider) GetGroupsMembersBruteForce(ctx context.Context, gr *model.Gro
 
 				// AWS SSO SCIM API, it doesn't return the member into the Resources array
 				if lgr.TotalResults > 0 {
+					// build member and append to group map
 					m := model.MemberBuilder().
 						WithIPID(user.IPID).
 						WithSCIMID(user.SCIMID).
 						WithEmail(user.Emails[0].Value).
 						Build()
-
 					if user.Active {
 						m.Status = "ACTIVE"
 					}
+					mu.Lock()
+					membersByGroup[group.SCIMID] = append(membersByGroup[group.SCIMID], m)
+					mu.Unlock()
 				}
 
 				return nil

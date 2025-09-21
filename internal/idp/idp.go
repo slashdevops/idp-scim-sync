@@ -34,7 +34,6 @@ type GoogleProviderService interface {
 	GetUser(ctx context.Context, userID string) (*admin.User, error)
 
 	// Batch operations for performance optimization
-	GetUsersBatch(ctx context.Context, emails []string) ([]*admin.User, error)
 	ListGroupMembersBatch(ctx context.Context, groupIDs []string, queries ...google.GetGroupMembersOption) (map[string][]*admin.Member, error)
 }
 
@@ -182,32 +181,27 @@ func (i *IdentityProvider) GetUsersByGroupsMembers(ctx context.Context, gmr *mod
 		return uResult, nil
 	}
 
-	// Collect unique emails first
-	uniqEmails := make(map[string]struct{}, len(gmr.Resources))
-	emails := make([]string, 0, len(gmr.Resources))
+	uniqUsers := make(map[string]struct{}, len(gmr.Resources))
+	pUsers := make([]*model.User, 0, len(gmr.Resources))
 	for _, groupMembers := range gmr.Resources {
 		for _, member := range groupMembers.Resources {
-			if _, ok := uniqEmails[member.Email]; !ok {
-				uniqEmails[member.Email] = struct{}{}
-				emails = append(emails, member.Email)
+			if _, ok := uniqUsers[member.Email]; !ok {
+				uniqUsers[member.Email] = struct{}{}
+
+				u, err := i.ps.GetUser(ctx, member.Email)
+				if err != nil {
+					return nil, fmt.Errorf("idp: error getting user: %+v, email: %s, error: %w", member.IPID, member.Email, err)
+				}
+				gu := buildUser(u)
+
+				pUsers = append(pUsers, gu)
 			}
 		}
 	}
 
-	// Use batch operation instead of individual GetUser calls
-	pUsers, err := i.ps.GetUsersBatch(ctx, emails)
-	if err != nil {
-		return nil, fmt.Errorf("idp: error getting users batch: %w", err)
-	}
+	pUsersResult := model.UsersResultBuilder().WithResources(pUsers).Build()
 
-	// Convert to model users
-	syncUsers := make([]*model.User, len(pUsers))
-	for i, usr := range pUsers {
-		gu := buildUser(usr)
-		syncUsers[i] = gu
-	}
-
-	pUsersResult := model.UsersResultBuilder().WithResources(syncUsers).Build()
+	slog.Debug("idp: GetUsersByGroupsMembers()", "users", len(pUsers))
 
 	return pUsersResult, nil
 }

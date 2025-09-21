@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
-	"strings"
 	"sync"
 
 	"golang.org/x/oauth2"
@@ -143,7 +142,9 @@ func (ds *DirectoryService) ListUsers(ctx context.Context, query []string) ([]*a
 	if len(query) > 0 {
 		for _, q := range query {
 			if q != "" {
+				slog.Debug("google: Listing users with query", "query", q)
 				err := ds.svc.Users.List().Query(q).Customer("my_customer").Fields(listUsersRequiredFields).Pages(ctx, func(users *admin.Users) error {
+					slog.Debug("google: Retrieved users page", "page_size", len(users.Users))
 					u = append(u, users.Users...)
 					return nil
 				})
@@ -302,92 +303,6 @@ func (ds *DirectoryService) GetGroup(ctx context.Context, groupID string) (*admi
 	}
 
 	return g, nil
-}
-
-// GetUsersBatch retrieves multiple users by their email addresses using batch queries.
-// This method is optimized for performance by using multiple ListUsers calls with email queries
-// instead of making individual GetUser calls.
-func (ds *DirectoryService) GetUsersBatch(ctx context.Context, emails []string) ([]*admin.User, error) {
-	if len(emails) == 0 {
-		return []*admin.User{}, nil
-	}
-
-	// Use chunked approach for better reliability and performance
-	// Optimal chunk size balances API complexity vs number of requests
-	const chunkSize = 15
-
-	var allUsers []*admin.User
-
-	slog.Debug("google: GetUsersBatch starting chunked processing", "total_emails", len(emails), "chunk_size", chunkSize) // Process emails in chunks to avoid overly complex OR queries
-	for i := 0; i < len(emails); i += chunkSize {
-		end := i + chunkSize
-		if end > len(emails) {
-			end = len(emails)
-		}
-
-		chunk := emails[i:end]
-
-		// Create OR query for this chunk
-		emailQueries := make([]string, len(chunk))
-		for j, email := range chunk {
-			emailQueries[j] = fmt.Sprintf("email:%s", email)
-		}
-
-		query := strings.Join(emailQueries, " OR ")
-
-		slog.Debug("google: processing chunk", "chunk_index", i/chunkSize+1, "chunk_size", len(chunk), "chunk_start", i)
-
-		// Execute ListUsers for this chunk
-		users, err := ds.ListUsers(ctx, []string{query})
-		if err != nil {
-			// If chunk query fails, fall back to individual calls for this chunk only
-			slog.Warn("google: GetUsersBatch chunk failed, falling back to individual calls for chunk",
-				"error", err, "chunk_size", len(chunk), "chunk_start", i)
-
-			individualUsers, individualErr := ds.getUsersIndividually(ctx, chunk)
-			if individualErr != nil {
-				return nil, fmt.Errorf("google: both batch and individual calls failed: batch_error=%w, individual_error=%v", err, individualErr)
-			}
-			users = individualUsers
-		} else if len(users) == 0 {
-			// If chunk query succeeds but returns no users, also fall back to individual calls
-			slog.Warn("google: GetUsersBatch chunk returned no users, falling back to individual calls for chunk",
-				"chunk_size", len(chunk), "chunk_start", i)
-
-			individualUsers, individualErr := ds.getUsersIndividually(ctx, chunk)
-			if individualErr != nil {
-				slog.Warn("google: individual calls also failed for chunk", "error", individualErr)
-				// Continue with empty users rather than failing completely
-			} else {
-				users = individualUsers
-			}
-		}
-
-		// Accumulate results from this chunk
-		allUsers = append(allUsers, users...)
-		slog.Debug("google: chunk completed", "chunk_users", len(users), "total_users_so_far", len(allUsers))
-	}
-
-	slog.Debug("google: GetUsersBatch completed", "total_users_returned", len(allUsers), "total_emails_requested", len(emails))
-
-	return allUsers, nil
-}
-
-// getUsersIndividually retrieves users one by one using GetUser calls
-func (ds *DirectoryService) getUsersIndividually(ctx context.Context, emails []string) ([]*admin.User, error) {
-	users := make([]*admin.User, 0, len(emails))
-
-	for _, email := range emails {
-		user, err := ds.GetUser(ctx, email)
-		if err != nil {
-			// Log the error but continue with other users
-			slog.Warn("google: failed to get individual user", "email", email, "error", err)
-			continue
-		}
-		users = append(users, user)
-	}
-
-	return users, nil
 }
 
 // ListGroupMembersBatch retrieves members for multiple groups concurrently.

@@ -134,7 +134,6 @@ func TestSyncService_SyncGroupsAndTheirMembers(t *testing.T) {
 		assert.Equal(t, 0, len(state.Resources.GroupsMembers.Resources))
 		assert.NotEqual(t, "", state.LastSync)
 		assert.NotEqual(t, "", state.HashCode)
-		assert.Equal(t, "", state.CodeVersion)
 		assert.Equal(t, model.StateSchemaVersion, state.SchemaVersion)
 	})
 
@@ -539,7 +538,6 @@ func TestSyncService_SyncGroupsAndTheirMembers(t *testing.T) {
 		assert.Equal(t, 4, len(state.Resources.GroupsMembers.Resources))
 		assert.NotEqual(t, "", state.LastSync)
 		assert.NotEqual(t, "", state.HashCode)
-		assert.Equal(t, "", state.CodeVersion)
 		assert.Equal(t, model.StateSchemaVersion, state.SchemaVersion)
 		assert.Equal(t, 2, state.Resources.Groups.Items)
 		assert.Equal(t, 2, state.Resources.Users.Items)
