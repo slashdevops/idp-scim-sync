@@ -18,14 +18,26 @@ func TestNewService(t *testing.T) {
 		ctx := context.TODO()
 		userEmail := "mock-email@mock-project.iam.gserviceaccount.com"
 		serviceAccountFile := "testdata/service_account.json"
-		scope := "admin.AdminDirectoryGroupReadonlyScope, admin.AdminDirectoryGroupMemberReadonlyScope, admin.AdminDirectoryUserReadonlyScope"
+		scopes := []string{
+			"https://www.googleapis.com/auth/admin.directory.group.readonly",
+			"https://www.googleapis.com/auth/admin.directory.group.member.readonly",
+			"https://www.googleapis.com/auth/admin.directory.user.readonly",
+		}
 
 		serviceAccount, err := os.ReadFile(serviceAccountFile)
 		if err != nil {
 			t.Fatalf("Error loading golden file: %s", err)
 		}
 
-		svc, err := NewService(ctx, userEmail, serviceAccount, scope)
+		config := DirectoryServiceConfig{
+			Client:         &http.Client{},
+			UserEmail:      userEmail,
+			ServiceAccount: serviceAccount,
+			Scopes:         scopes,
+			UserAgent:      "test-agent",
+		}
+
+		svc, err := NewService(ctx, config)
 		assert.NoError(t, err)
 		assert.NotNil(t, svc)
 	})
@@ -33,18 +45,34 @@ func TestNewService(t *testing.T) {
 	t.Run("Should return a new Service with empty service account parameter", func(t *testing.T) {
 		ctx := context.TODO()
 		userEmail := ""
-		scope := ""
+		scopes := []string{}
 
-		svc, err := NewService(ctx, userEmail, nil, scope)
+		config := DirectoryServiceConfig{
+			Client:         &http.Client{},
+			UserEmail:      userEmail,
+			ServiceAccount: nil,
+			Scopes:         scopes,
+			UserAgent:      "test-agent",
+		}
+
+		svc, err := NewService(ctx, config)
 		assert.Error(t, err)
 		assert.Nil(t, svc)
 	})
 
 	t.Run("Should return an error when scope is nil", func(t *testing.T) {
 		ctx := context.TODO()
-		userEmail := ""
+		userEmail := "test@example.com"
 
-		svc, err := NewService(ctx, userEmail, nil)
+		config := DirectoryServiceConfig{
+			Client:         &http.Client{},
+			UserEmail:      userEmail,
+			ServiceAccount: []byte("{}"), // provide minimal valid JSON
+			Scopes:         nil,
+			UserAgent:      "test-agent",
+		}
+
+		svc, err := NewService(ctx, config)
 		assert.Error(t, err)
 		assert.Nil(t, svc)
 		assert.ErrorIs(t, err, ErrGoogleClientScopeNil)
@@ -56,14 +84,26 @@ func TestNewDirectoryService(t *testing.T) {
 		ctx := context.TODO()
 		userEmail := "mock-email@mock-project.iam.gserviceaccount.com"
 		serviceAccountFile := "testdata/service_account.json"
-		scope := "admin.AdminDirectoryGroupReadonlyScope, admin.AdminDirectoryGroupMemberReadonlyScope, admin.AdminDirectoryUserReadonlyScope"
+		scopes := []string{
+			"https://www.googleapis.com/auth/admin.directory.group.readonly",
+			"https://www.googleapis.com/auth/admin.directory.group.member.readonly",
+			"https://www.googleapis.com/auth/admin.directory.user.readonly",
+		}
 
 		serviceAccount, err := os.ReadFile(serviceAccountFile)
 		if err != nil {
 			t.Fatalf("Error loading golden file: %s", err)
 		}
 
-		svc, err := NewService(ctx, userEmail, serviceAccount, scope)
+		config := DirectoryServiceConfig{
+			Client:         &http.Client{},
+			UserEmail:      userEmail,
+			ServiceAccount: serviceAccount,
+			Scopes:         scopes,
+			UserAgent:      "test-agent",
+		}
+
+		svc, err := NewService(ctx, config)
 		if err != nil {
 			t.Fatalf("Error creating a service: %s", err)
 		}

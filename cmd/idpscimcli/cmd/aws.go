@@ -4,7 +4,9 @@ import (
 	"context"
 	"log/slog"
 	"net/http"
+	"time"
 
+	"github.com/p2p-b2b/httpretrier"
 	"github.com/slashdevops/idp-scim-sync/internal/version"
 	"github.com/slashdevops/idp-scim-sync/pkg/aws"
 	"github.com/spf13/cobra"
@@ -90,17 +92,13 @@ func runAWSServiceConfig(_ *cobra.Command, _ []string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), reqTimeout)
 	defer cancel()
 
-	httpTransport := http.DefaultTransport.(*http.Transport).Clone()
-	httpTransport.MaxIdleConns = 100
-	httpTransport.MaxConnsPerHost = 100
-	httpTransport.MaxIdleConnsPerHost = 100
+	httpRetryClient := httpretrier.NewClient(
+		3, // Max Retries
+		httpretrier.ExponentialBackoff(10*time.Millisecond, 100*time.Millisecond),
+		nil, // Use http.DefaultTransport
+	)
 
-	httpClient := &http.Client{
-		Transport: httpTransport,
-		Timeout:   maxTimeout,
-	}
-
-	awsSCIMService, err := aws.NewSCIMService(httpClient, cfg.AWSSCIMEndpoint, cfg.AWSSCIMAccessToken)
+	awsSCIMService, err := aws.NewSCIMService(httpRetryClient, cfg.AWSSCIMEndpoint, cfg.AWSSCIMAccessToken)
 	if err != nil {
 		slog.Error("error creating SCIM service", "error", err.Error())
 		return err

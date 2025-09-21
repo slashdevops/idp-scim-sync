@@ -11,7 +11,7 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/secretsmanager"
-	"github.com/hashicorp/go-retryablehttp"
+	"github.com/p2p-b2b/httpretrier"
 	"github.com/pkg/errors"
 	"github.com/slashdevops/idp-scim-sync/internal/config"
 	"github.com/slashdevops/idp-scim-sync/internal/core"
@@ -216,8 +216,24 @@ func SyncService(ctx context.Context, cfg *config.Config) (*core.SyncService, er
 		gwsServiceAccountContent = gwsServiceAccount
 	}
 
+	httpRetryClient := httpretrier.NewClient(
+		3, // Max Retries
+		httpretrier.ExponentialBackoff(10*time.Millisecond, 100*time.Millisecond),
+		nil, // Use http.DefaultTransport
+	)
+
+	userAgent := fmt.Sprintf("idp-scim-sync/%s", version.Version)
+
+	gServiceConfig := google.DirectoryServiceConfig{
+		UserEmail:      cfg.GWSUserEmail,
+		ServiceAccount: gwsServiceAccountContent,
+		Scopes:         cfg.GWSServiceAccountScopes,
+		UserAgent:      userAgent,
+		Client:         httpRetryClient,
+	}
+
 	// Google Client Service
-	gwsService, err := google.NewService(ctx, cfg.GWSUserEmail, gwsServiceAccountContent, cfg.GWSServiceAccountScopes...)
+	gwsService, err := google.NewService(ctx, gServiceConfig)
 	if err != nil {
 		return nil, errors.Wrap(err, "cannot create google service")
 	}
@@ -234,26 +250,12 @@ func SyncService(ctx context.Context, cfg *config.Config) (*core.SyncService, er
 		return nil, errors.Wrap(err, "cannot create identity provider service")
 	}
 
-	// httpClient
-	retryClient := retryablehttp.NewClient()
-	retryClient.RetryMax = 10
-	retryClient.RetryWaitMin = time.Millisecond * 100
-
-	// set the logger only in debug mode
-	if cfg.Debug {
-		retryClient.Logger = slog.Default()
-	} else {
-		retryClient.Logger = nil
-	}
-
-	httpClient := retryClient.StandardClient()
-
 	// AWS SCIM Service
-	awsSCIM, err := aws.NewSCIMService(httpClient, cfg.AWSSCIMEndpoint, cfg.AWSSCIMAccessToken)
+	awsSCIM, err := aws.NewSCIMService(httpRetryClient, cfg.AWSSCIMEndpoint, cfg.AWSSCIMAccessToken)
 	if err != nil {
 		return nil, errors.Wrap(err, "cannot create aws scim service")
 	}
-	awsSCIM.UserAgent = fmt.Sprintf("idp-scim-sync/%s", version.Version)
+	awsSCIM.UserAgent = userAgent
 
 	scimService, err := scim.NewProvider(awsSCIM)
 	if err != nil {

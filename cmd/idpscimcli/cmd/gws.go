@@ -2,10 +2,14 @@ package cmd
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"os"
+	"time"
 
+	"github.com/p2p-b2b/httpretrier"
 	"github.com/slashdevops/idp-scim-sync/internal/config"
+	"github.com/slashdevops/idp-scim-sync/internal/version"
 	"github.com/slashdevops/idp-scim-sync/pkg/google"
 	"github.com/spf13/cobra"
 	admin "google.golang.org/api/admin/directory/v1"
@@ -122,7 +126,21 @@ func getGWSDirectoryService(ctx context.Context) *google.DirectoryService {
 		"https://www.googleapis.com/auth/admin.directory.user.readonly",
 	}
 
-	gService, err := google.NewService(ctx, cfg.GWSUserEmail, gCreds, gScopes...)
+	httpRetryClient := httpretrier.NewClient(
+		3, // Max Retries
+		httpretrier.ExponentialBackoff(10*time.Millisecond, 100*time.Millisecond),
+		nil, // Use http.DefaultTransport
+	)
+
+	gServiceConfig := google.DirectoryServiceConfig{
+		UserEmail:      cfg.GWSUserEmail,
+		ServiceAccount: gCreds,
+		Scopes:         gScopes,
+		Client:         httpRetryClient,
+		UserAgent:      fmt.Sprintf("idp-scim-sync/%s", version.Version),
+	}
+
+	gService, err := google.NewService(ctx, gServiceConfig)
 	if err != nil {
 		slog.Error("error creating service", "error", err)
 		os.Exit(1)
