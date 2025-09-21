@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"strings"
+	"sync"
 
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
@@ -135,7 +137,9 @@ func (ds *DirectoryService) ListUsers(ctx context.Context, query []string) ([]*a
 	default:
 	}
 
-	u := make([]*admin.User, 0)
+	// optimistic initial capacity
+	u := make([]*admin.User, 0, 50)
+
 	if len(query) > 0 {
 		for _, q := range query {
 			if q != "" {
@@ -166,8 +170,6 @@ func (ds *DirectoryService) ListUsers(ctx context.Context, query []string) ([]*a
 		}
 	}
 
-	slog.Debug("google: ListUsers()", "users", u)
-
 	return u, nil
 }
 
@@ -181,7 +183,8 @@ func (ds *DirectoryService) ListGroups(ctx context.Context, query []string) ([]*
 	default:
 	}
 
-	g := make([]*admin.Group, 0)
+	// optimistic initial capacity
+	g := make([]*admin.Group, 0, 50)
 
 	if len(query) > 0 {
 		for _, q := range query {
@@ -213,8 +216,6 @@ func (ds *DirectoryService) ListGroups(ctx context.Context, query []string) ([]*
 		}
 	}
 
-	slog.Debug("google: ListGroups()", "groups", g)
-
 	return g, nil
 }
 
@@ -239,7 +240,8 @@ func (ds *DirectoryService) ListGroupMembers(ctx context.Context, groupID string
 		q(&qs)
 	}
 
-	m := make([]*admin.Member, 0)
+	// optimistic initial capacity
+	m := make([]*admin.Member, 0, 20)
 	mlc := ds.svc.Members.List(groupID)
 
 	if qs.includeDerivedMembership {
@@ -270,8 +272,6 @@ func (ds *DirectoryService) ListGroupMembers(ctx context.Context, groupID string
 		return nil, err
 	}
 
-	slog.Debug("google: ListGroupMembers()", "members", m)
-
 	return m, nil
 }
 
@@ -287,8 +287,6 @@ func (ds *DirectoryService) GetUser(ctx context.Context, userID string) (*admin.
 		return nil, fmt.Errorf("google: error getting user %s: %v", userID, err)
 	}
 
-	slog.Debug("google: GetUser()", "user", u)
-
 	return u, nil
 }
 
@@ -303,7 +301,78 @@ func (ds *DirectoryService) GetGroup(ctx context.Context, groupID string) (*admi
 		return nil, fmt.Errorf("google: error getting group %s: %v", groupID, err)
 	}
 
-	slog.Debug("google: GetGroup()", "group", g)
-
 	return g, nil
+}
+
+// GetUsersBatch retrieves multiple users by their email addresses using batch queries.
+// This method is optimized for performance by using the ListUsers method with email queries
+// instead of making individual GetUser calls.
+func (ds *DirectoryService) GetUsersBatch(ctx context.Context, emails []string) ([]*admin.User, error) {
+	if len(emails) == 0 {
+		return []*admin.User{}, nil
+	}
+
+	// Use ListUsers with email queries for batch retrieval
+	emailQueries := make([]string, len(emails))
+	for i, email := range emails {
+		emailQueries[i] = fmt.Sprintf("email:%s", email)
+	}
+
+	// Join queries with OR to get all users in one request
+	query := strings.Join(emailQueries, " OR ")
+
+	users, err := ds.ListUsers(ctx, []string{query})
+	if err != nil {
+		return nil, fmt.Errorf("google: error in batch get users: %w", err)
+	}
+
+	return users, nil
+}
+
+// ListGroupMembersBatch retrieves members for multiple groups concurrently.
+// Returns a map where keys are group IDs and values are slices of members.
+func (ds *DirectoryService) ListGroupMembersBatch(ctx context.Context, groupIDs []string, queries ...GetGroupMembersOption) (map[string][]*admin.Member, error) {
+	if len(groupIDs) == 0 {
+		return make(map[string][]*admin.Member), nil
+	}
+
+	result := make(map[string][]*admin.Member, len(groupIDs))
+
+	// Process groups concurrently with a reasonable limit
+	const maxConcurrent = 10
+	sem := make(chan struct{}, maxConcurrent)
+	var mu sync.Mutex
+	var wg sync.WaitGroup
+
+	errChan := make(chan error, len(groupIDs))
+
+	for _, groupID := range groupIDs {
+		wg.Add(1)
+		go func(gid string) {
+			defer wg.Done()
+
+			sem <- struct{}{}        // Acquire semaphore
+			defer func() { <-sem }() // Release semaphore
+
+			members, err := ds.ListGroupMembers(ctx, gid, queries...)
+			if err != nil {
+				errChan <- fmt.Errorf("google: error getting members for group %s: %w", gid, err)
+				return
+			}
+
+			mu.Lock()
+			result[gid] = members
+			mu.Unlock()
+		}(groupID)
+	}
+
+	wg.Wait()
+	close(errChan)
+
+	// Check for errors
+	if err := <-errChan; err != nil {
+		return nil, err
+	}
+
+	return result, nil
 }

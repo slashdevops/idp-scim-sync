@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
@@ -217,11 +216,16 @@ func SyncService(ctx context.Context, cfg *config.Config) (*core.SyncService, er
 		gwsServiceAccountContent = gwsServiceAccount
 	}
 
-	idpClient := httpretrier.NewClient(
-		3, // Max Retries
-		httpretrier.ExponentialBackoff(10*time.Millisecond, 100*time.Millisecond),
-		http.DefaultTransport,
-	)
+	idpClient := httpretrier.NewClientBuilder().
+		WithTimeout(30 * time.Second).                        // Overall request timeout
+		WithMaxRetries(5).                                    // Retry up to 3 times
+		WithRetryStrategy(httpretrier.JitterBackoffStrategy). // Use jitter backoff to avoid thundering herd
+		WithRetryBaseDelay(500 * time.Millisecond).           // Start with 500ms delay (httpretrier default)
+		WithRetryMaxDelay(5 * time.Second).                   // Cap at 5 seconds
+		WithMaxIdleConns(10).                                 // Max idle connections
+		WithMaxIdleConnsPerHost(10).                          // Max idle connections per host
+		WithIdleConnTimeout(90 * time.Second).                // Idle connection timeout
+		Build()
 
 	userAgent := fmt.Sprintf("idp-scim-sync/%s", version.Version)
 
@@ -253,11 +257,16 @@ func SyncService(ctx context.Context, cfg *config.Config) (*core.SyncService, er
 
 	// AWS SCIM Service
 
-	scimClient := httpretrier.NewClient(
-		3, // Max Retries
-		httpretrier.ExponentialBackoff(10*time.Millisecond, 100*time.Millisecond),
-		http.DefaultTransport,
-	)
+	scimClient := httpretrier.NewClientBuilder().
+		WithTimeout(30 * time.Second).                        // Overall request timeout
+		WithMaxRetries(10).                                   // Retry up to 3 times
+		WithRetryStrategy(httpretrier.JitterBackoffStrategy). // Use jitter backoff to avoid thundering herd
+		WithRetryBaseDelay(500 * time.Millisecond).           // Start with 500ms delay (httpretrier default)
+		WithRetryMaxDelay(10 * time.Second).                  // Cap at 5 seconds
+		WithMaxIdleConns(10).                                 // Max idle connections
+		WithMaxIdleConnsPerHost(10).                          // Max idle connections per host
+		WithIdleConnTimeout(90 * time.Second).                // Idle connection timeout
+		Build()
 
 	awsSCIM, err := aws.NewSCIMService(scimClient, cfg.AWSSCIMEndpoint, cfg.AWSSCIMAccessToken)
 	if err != nil {

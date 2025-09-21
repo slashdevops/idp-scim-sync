@@ -32,6 +32,10 @@ type GoogleProviderService interface {
 	ListGroups(ctx context.Context, query []string) ([]*admin.Group, error)
 	ListGroupMembers(ctx context.Context, groupID string, queries ...google.GetGroupMembersOption) ([]*admin.Member, error)
 	GetUser(ctx context.Context, userID string) (*admin.User, error)
+
+	// Batch operations for performance optimization
+	GetUsersBatch(ctx context.Context, emails []string) ([]*admin.User, error)
+	ListGroupMembersBatch(ctx context.Context, groupIDs []string, queries ...google.GetGroupMembersOption) (map[string][]*admin.Member, error)
 }
 
 // IdentityProvider is the Identity Provider service that implements the core.IdentityProvider interface and consumes the pkg.google methods.
@@ -163,8 +167,6 @@ func (i *IdentityProvider) GetGroupMembers(ctx context.Context, groupID string) 
 
 	syncMembersResult := model.MembersResultBuilder().WithResources(syncMembers).Build()
 
-	slog.Debug("idp: GetGroupMembers()", "members", len(syncMembers))
-
 	return syncMembersResult, nil
 }
 
@@ -197,15 +199,12 @@ func (i *IdentityProvider) GetUsersByGroupsMembers(ctx context.Context, gmr *mod
 				}
 				gu := buildUser(u)
 
-				slog.Debug("idp: GetUsersByGroupsMembers()", "user", gu.Email)
 				pUsers = append(pUsers, gu)
 			}
 		}
 	}
 
 	pUsersResult := model.UsersResultBuilder().WithResources(pUsers).Build()
-
-	slog.Debug("idp: GetUsersByGroupsMembers()", "users", len(pUsers))
 
 	return pUsersResult, nil
 }

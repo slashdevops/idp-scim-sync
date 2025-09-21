@@ -28,6 +28,14 @@ func patchValueGenerator(from, numValues int) []patchValue {
 	return values
 }
 
+// newTestProvider creates a Provider with fast settings for testing
+func newTestProvider(scim AWSSCIMProvider) *Provider {
+	return &Provider{
+		scim:                 scim,
+		maxMembersPerRequest: 100,
+	}
+}
+
 func TestProvider_patchGroupOperations(t *testing.T) {
 	type fields struct {
 		scim                 AWSSCIMProvider
@@ -1720,7 +1728,8 @@ func TestProvider_GetGroupsMembersBruteForce(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.prepare(mockScimProvider)
 			p := &Provider{
-				scim: tt.fields.scim,
+				scim:                 tt.fields.scim,
+				maxMembersPerRequest: 100,
 			}
 			got, err := p.GetGroupsMembersBruteForce(tt.args.ctx, tt.args.gr, tt.args.ur)
 			if (err != nil) != tt.wantErr {

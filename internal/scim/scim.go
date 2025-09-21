@@ -4,7 +4,8 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"sync"
+	"math/rand"
+	"time"
 
 	"github.com/slashdevops/idp-scim-sync/internal/model"
 	"github.com/slashdevops/idp-scim-sync/pkg/aws"
@@ -508,8 +509,6 @@ func (s *Provider) patchGroupOperations(op, path string, pvs []patchValue, gms *
 func (s *Provider) GetGroupsMembersBruteForce(ctx context.Context, gr *model.GroupsResult, ur *model.UsersResult) (*model.GroupsMembersResult, error) {
 	// a map of group SCIM IDs to a slice of members
 	membersByGroup := make(map[string][]*model.Member)
-	// a mutex to protect the map from concurrent writes
-	var mu sync.Mutex
 
 	// use an errgroup to manage the goroutines
 	g, ctx := errgroup.WithContext(ctx)
@@ -525,17 +524,25 @@ func (s *Provider) GetGroupsMembersBruteForce(ctx context.Context, gr *model.Gro
 		membersByGroup[group.SCIMID] = make([]*model.Member, 0)
 
 		for _, user := range ur.Resources {
+
 			// create a new variable for the group and user to avoid data races
 			group := group
 			user := user
 
 			g.Go(func() error {
+				// add random delay between 10-200 milliseconds to gap API calls
+				delay := time.Duration(rand.Intn(190)+10) * time.Millisecond
+				time.Sleep(delay)
+
 				// https://docs.aws.amazon.com/singlesignon/latest/developerguide/listgroups.html
 				filter := fmt.Sprintf("id eq %q and members eq %q", group.SCIMID, user.SCIMID)
+
 				lgr, err := s.scim.ListGroups(ctx, filter)
 				if err != nil {
 					return fmt.Errorf("scim: error listing groups: %w", err)
 				}
+
+				slog.Debug("checking group membership", "group_name", group.Name, "user_email", user.Emails[0].Value, "results", lgr.TotalResults)
 
 				// AWS SSO SCIM API, it doesn't return the member into the Resources array
 				if lgr.TotalResults > 0 {
@@ -548,11 +555,6 @@ func (s *Provider) GetGroupsMembersBruteForce(ctx context.Context, gr *model.Gro
 					if user.Active {
 						m.Status = "ACTIVE"
 					}
-
-					// lock the mutex to write to the map
-					mu.Lock()
-					membersByGroup[group.SCIMID] = append(membersByGroup[group.SCIMID], m)
-					mu.Unlock()
 				}
 
 				return nil

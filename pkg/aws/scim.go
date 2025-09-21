@@ -20,12 +20,6 @@ import (
 // reference: https://docs.aws.amazon.com/singlesignon/latest/developerguide/what-is-scim.html
 
 const (
-	// DefaultTimeout for HTTP requests
-	DefaultTimeout = 30 * 1000000000 // 30 seconds in nanoseconds
-
-	// MaxRetries for failed requests
-	MaxRetries = 3
-
 	// SCIM API paths
 	UsersPath                 = "/Users"
 	GroupsPath                = "/Groups"
@@ -115,23 +109,6 @@ func NewSCIMService(httpClient HTTPClient, urlStr, token string) (*SCIMService, 
 	}, nil
 }
 
-// NewSCIMServiceWithHTTPConfig creates a new AWS SCIM Service with optimized HTTP client configuration.
-func NewSCIMServiceWithHTTPConfig(urlStr, token string, maxIdleConns, maxConnsPerHost int) (*SCIMService, error) {
-	transport := &http.Transport{
-		MaxIdleConns:        maxIdleConns,
-		MaxConnsPerHost:     maxConnsPerHost,
-		MaxIdleConnsPerHost: maxConnsPerHost,
-		IdleConnTimeout:     90 * 1000000000, // 90 seconds in nanoseconds
-	}
-
-	httpClient := &http.Client{
-		Transport: transport,
-		Timeout:   DefaultTimeout,
-	}
-
-	return NewSCIMService(httpClient, urlStr, token)
-}
-
 // newRequest creates an http.Request with the given method, URL, and (optionally) body.
 func (s *SCIMService) newRequest(ctx context.Context, method string, u *url.URL, body any) (*http.Request, error) {
 	var buf io.ReadWriter
@@ -160,8 +137,6 @@ func (s *SCIMService) newRequest(ctx context.Context, method string, u *url.URL,
 	if s.UserAgent != "" {
 		req.Header.Set("User-Agent", s.UserAgent)
 	}
-
-	slog.Debug("aws: newRequest()", "method", method, "url", u.String(), "query", u.RawQuery, "path", u.Path)
 
 	return req, nil
 }

@@ -146,8 +146,6 @@ func buildUser(usr *admin.User) *model.User {
 		WithEnterpriseData(mainOrganization).
 		Build()
 
-	slog.Debug("idp: buildUser() converted user", "from", usr, "to", userModel)
-
 	return userModel
 }
 

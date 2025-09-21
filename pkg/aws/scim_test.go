@@ -1983,28 +1983,6 @@ func TestListGroups(t *testing.T) {
 
 // Enhanced test cases for improved coverage
 
-func TestNewSCIMServiceWithHTTPConfig(t *testing.T) {
-	t.Run("should create service with custom HTTP config", func(t *testing.T) {
-		got, err := NewSCIMServiceWithHTTPConfig("https://testing.com", "MyToken", 10, 5)
-		assert.NoError(t, err)
-		assert.NotNil(t, got)
-	})
-
-	t.Run("should return error when url is empty", func(t *testing.T) {
-		got, err := NewSCIMServiceWithHTTPConfig("", "MyToken", 10, 5)
-		assert.Error(t, err)
-		assert.ErrorIs(t, err, ErrURLEmpty)
-		assert.Nil(t, got)
-	})
-
-	t.Run("should return error when token is empty", func(t *testing.T) {
-		got, err := NewSCIMServiceWithHTTPConfig("https://testing.com", "", 10, 5)
-		assert.Error(t, err)
-		assert.ErrorIs(t, err, ErrBearerTokenEmpty)
-		assert.Nil(t, got)
-	})
-}
-
 func TestSCIMService_ContextCancellation(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
@@ -2189,7 +2167,5 @@ func TestConstants(t *testing.T) {
 		assert.Equal(t, "/ServiceProviderConfig", ServiceProviderConfigPath)
 		assert.Equal(t, "application/scim+json", ContentTypeSCIMJSON)
 		assert.Equal(t, "application/json", ContentTypeJSON)
-		assert.Equal(t, int64(30*1000000000), int64(DefaultTimeout))
-		assert.Equal(t, 3, MaxRetries)
 	})
 }
