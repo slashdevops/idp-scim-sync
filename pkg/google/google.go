@@ -35,6 +35,9 @@ var (
 	// ErrUserIDNil is returned when the user ID is nil.
 	ErrUserIDNil = fmt.Errorf("google: user id is required")
 
+	// ErrUserEmailNil is returned when the user email is nil.
+	ErrUserEmailNil = fmt.Errorf("google: user email is required")
+
 	// ErrGroupIDNil is returned when the group ID is nil.
 	ErrGroupIDNil = fmt.Errorf("google: group id is required")
 
@@ -74,7 +77,7 @@ func NewService(ctx context.Context, config DirectoryServiceConfig) (*admin.Serv
 	}
 
 	if config.UserEmail == "" {
-		return nil, ErrUserIDNil
+		return nil, ErrUserEmailNil
 	}
 
 	if config.ServiceAccount == nil {
