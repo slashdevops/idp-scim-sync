@@ -914,7 +914,7 @@ func TestGetGroupsMembers(t *testing.T) {
 		{
 			name: "Should return error when ListGroupMembers return error",
 			prepare: func(f *fields) {
-				f.ds.EXPECT().ListGroupMembers(gomock.Any(), "1", gomock.Any()).Return(nil, errors.New("test error")).Times(1)
+				f.ds.EXPECT().ListGroupMembersBatch(gomock.Any(), []string{"1"}, gomock.Any()).Return(nil, errors.New("test error")).Times(1)
 			},
 			args: args{
 				ctx: context.Background(),
@@ -935,7 +935,10 @@ func TestGetGroupsMembers(t *testing.T) {
 				googleGroupMembers = append(googleGroupMembers, &admin.Member{Email: "user.1@mail.com", Id: "1", Status: "ACTIVE"})
 				googleGroupMembers = append(googleGroupMembers, &admin.Member{Email: "user.2@mail.com", Id: "2", Status: "ACTIVE"})
 
-				f.ds.EXPECT().ListGroupMembers(gomock.Any(), "1", gomock.Any()).Return(googleGroupMembers, nil).Times(1)
+				membersMap := map[string][]*admin.Member{
+					"1": googleGroupMembers,
+				}
+				f.ds.EXPECT().ListGroupMembersBatch(gomock.Any(), []string{"1"}, gomock.Any()).Return(membersMap, nil).Times(1)
 			},
 			args: args{
 				ctx: context.Background(),
@@ -953,7 +956,10 @@ func TestGetGroupsMembers(t *testing.T) {
 			name: "Should return MembersResult and no error when members is empty",
 			prepare: func(f *fields) {
 				googleGroupMembers := make([]*admin.Member, 0)
-				f.ds.EXPECT().ListGroupMembers(gomock.Any(), "1", gomock.Any()).Return(googleGroupMembers, nil).Times(1)
+				membersMap := map[string][]*admin.Member{
+					"1": googleGroupMembers,
+				}
+				f.ds.EXPECT().ListGroupMembersBatch(gomock.Any(), []string{"1"}, gomock.Any()).Return(membersMap, nil).Times(1)
 			},
 			args: args{
 				ctx: context.Background(),

@@ -8,6 +8,7 @@ import (
 	"strings"
 	"sync"
 
+	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 	admin "google.golang.org/api/admin/directory/v1"
 	"google.golang.org/api/googleapi"
@@ -99,17 +100,29 @@ func NewService(ctx context.Context, config DirectoryServiceConfig) (*admin.Serv
 		Subject: config.UserEmail,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("google: %v", err)
+		return nil, fmt.Errorf("google: getting credentials from JSON: %v", err)
+	}
+
+	// Create OAuth2 client with proper authentication
+	oauth2Client := oauth2.NewClient(ctx, creds.TokenSource)
+
+	// If a custom transport is provided (like retry transport), wrap it with OAuth2
+	if config.Client != nil && config.Client.Transport != nil {
+		// The OAuth2 client already has the proper RoundTripper for authentication
+		// We need to chain the transports: Custom Transport -> OAuth2 Transport -> HTTP Transport
+		oauth2Client.Transport = &oauth2.Transport{
+			Source: creds.TokenSource,
+			Base:   config.Client.Transport,
+		}
 	}
 
 	svc, err := admin.NewService(
 		ctx,
-		option.WithTokenSource(creds.TokenSource),
+		option.WithHTTPClient(oauth2Client),
 		option.WithUserAgent(config.UserAgent),
-		option.WithHTTPClient(config.Client),
 	)
 	if err != nil {
-		return nil, fmt.Errorf("google: %v", err)
+		return nil, fmt.Errorf("google: creating admin service: %v", err)
 	}
 
 	return svc, nil

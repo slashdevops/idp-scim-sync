@@ -194,7 +194,7 @@ func Secrets(cfg *config.Config) error {
 	}()
 
 	// wait for all the goroutines to finish
-	for i := 0; i < 4; i++ {
+	for range 4 {
 		if err := <-results; err != nil {
 			return err
 		}
@@ -213,6 +213,7 @@ func SyncService(ctx context.Context, cfg *config.Config) (*core.SyncService, er
 		if err != nil {
 			return nil, errors.Wrap(err, "cannot read google workspace service account file")
 		}
+
 		gwsServiceAccountContent = gwsServiceAccount
 	}
 

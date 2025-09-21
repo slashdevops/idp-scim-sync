@@ -42,21 +42,6 @@ func (m *MockGoogleProviderService) EXPECT() *MockGoogleProviderServiceMockRecor
 	return m.recorder
 }
 
-// GetUser mocks base method.
-func (m *MockGoogleProviderService) GetUser(ctx context.Context, userID string) (*admin.User, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetUser", ctx, userID)
-	ret0, _ := ret[0].(*admin.User)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetUser indicates an expected call of GetUser.
-func (mr *MockGoogleProviderServiceMockRecorder) GetUser(ctx, userID any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUser", reflect.TypeOf((*MockGoogleProviderService)(nil).GetUser), ctx, userID)
-}
-
 // GetUsersBatch mocks base method.
 func (m *MockGoogleProviderService) GetUsersBatch(ctx context.Context, emails []string) ([]*admin.User, error) {
 	m.ctrl.T.Helper()

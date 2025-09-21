@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-	"sync"
 	"time"
 
 	"github.com/slashdevops/idp-scim-sync/internal/model"
@@ -33,7 +32,6 @@ type GoogleProviderService interface {
 	ListUsers(ctx context.Context, query []string) ([]*admin.User, error)
 	ListGroups(ctx context.Context, query []string) ([]*admin.Group, error)
 	ListGroupMembers(ctx context.Context, groupID string, queries ...google.GetGroupMembersOption) ([]*admin.Member, error)
-	GetUser(ctx context.Context, userID string) (*admin.User, error)
 
 	// Batch operations for performance optimization
 	GetUsersBatch(ctx context.Context, emails []string) ([]*admin.User, error)
@@ -230,7 +228,7 @@ func (i *IdentityProvider) GetUsersByGroupsMembers(ctx context.Context, gmr *mod
 	return pUsersResult, nil
 }
 
-// GetGroupsMembers return the members of the groups with parallel processing for improved performance
+// GetGroupsMembers return the members of the groups using batch processing for improved performance
 func (i *IdentityProvider) GetGroupsMembers(ctx context.Context, gr *model.GroupsResult) (*model.GroupsMembersResult, error) {
 	if gr == nil {
 		return nil, ErrGroupResultNil
@@ -251,94 +249,62 @@ func (i *IdentityProvider) GetGroupsMembers(ctx context.Context, gr *model.Group
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Minute)
 	defer cancel()
 
-	// Use worker pool for concurrent processing
-	const maxWorkers = 10 // Adjust based on Google API rate limits
-	workers := maxWorkers
-	if l < workers {
-		workers = l
+	// Collect group IDs for batch processing
+	groupIDs := make([]string, 0, len(gr.Resources))
+	groupMap := make(map[string]*model.Group, len(gr.Resources))
+
+	for _, group := range gr.Resources {
+		groupIDs = append(groupIDs, group.IPID)
+		groupMap[group.IPID] = group
 	}
 
-	type groupMemberJob struct {
-		index int
-		group *model.Group
+	// Use batch method to get all group members at once
+	groupMembersMap, err := i.ps.ListGroupMembersBatch(ctx, groupIDs, google.WithIncludeDerivedMembership(true))
+	if err != nil {
+		return nil, fmt.Errorf("idp: error getting group members batch: %w", err)
 	}
 
-	type groupMemberResult struct {
-		index       int
-		groupMember *model.GroupMembers
-		err         error
-	}
+	// Process the results and build the final structure
+	groupMembers := make([]*model.GroupMembers, 0, len(gr.Resources))
 
-	jobs := make(chan groupMemberJob, l)
-	results := make(chan groupMemberResult, l)
+	for _, group := range gr.Resources {
+		pMembers := groupMembersMap[group.IPID]
 
-	// Start workers
-	var wg sync.WaitGroup
-	for w := 0; w < workers; w++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			for job := range jobs {
-				select {
-				case <-ctx.Done():
-					results <- groupMemberResult{job.index, nil, ctx.Err()}
-					return
-				default:
-					members, err := i.GetGroupMembers(ctx, job.group.IPID)
-					if err != nil {
-						results <- groupMemberResult{job.index, nil, err}
-						continue
-					}
-
-					ggm := model.GroupBuilder().
-						WithIPID(job.group.IPID).
-						WithName(job.group.Name).
-						WithEmail(job.group.Email).
-						Build()
-
-					groupMember := model.GroupMembersBuilder().
-						WithGroup(ggm).
-						WithResources(members.Resources).
-						Build()
-
-					results <- groupMemberResult{job.index, groupMember, nil}
-				}
+		// Filter and convert members, similar to GetGroupMembers logic
+		syncMembers := make([]*model.Member, 0, len(pMembers))
+		for _, member := range pMembers {
+			// avoid nested groups, but members are included thanks to the google.WithIncludeDerivedMembership option above
+			if member.Type == "GROUP" {
+				slog.Warn("skipping member because is a group, but group members will be included",
+					"id", member.Id,
+					"email", member.Email,
+				)
+				continue
 			}
-		}()
-	}
 
-	// Send jobs
-	go func() {
-		defer close(jobs)
-		for i, group := range gr.Resources {
-			select {
-			case <-ctx.Done():
-				return
-			case jobs <- groupMemberJob{i, group}:
-			}
+			gm := model.MemberBuilder().
+				WithIPID(member.Id).
+				WithEmail(member.Email).
+				WithStatus(member.Status).
+				Build()
+
+			syncMembers = append(syncMembers, gm)
 		}
-	}()
 
-	// Collect results
-	groupMembers := make([]*model.GroupMembers, l)
-	for i := 0; i < l; i++ {
-		select {
-		case <-ctx.Done():
-			// Wait for workers to finish
-			wg.Wait()
-			return nil, fmt.Errorf("idp: context cancelled while getting group members: %w", ctx.Err())
-		case result := <-results:
-			if result.err != nil {
-				// Wait for workers to finish
-				wg.Wait()
-				return nil, fmt.Errorf("idp: error getting group members: %w", result.err)
-			}
-			groupMembers[result.index] = result.groupMember
-		}
+		// Build the group with members
+		ggm := model.GroupBuilder().
+			WithIPID(group.IPID).
+			WithName(group.Name).
+			WithEmail(group.Email).
+			Build()
+
+		groupMember := model.GroupMembersBuilder().
+			WithGroup(ggm).
+			WithResources(syncMembers).
+			Build()
+
+		groupMembers = append(groupMembers, groupMember)
 	}
-
-	// Wait for all workers to finish
-	wg.Wait()
 
 	groupsMembersResult := &model.GroupsMembersResult{
 		Items:     len(groupMembers),
