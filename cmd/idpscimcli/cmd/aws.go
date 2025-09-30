@@ -93,8 +93,8 @@ func runAWSServiceConfig(_ *cobra.Command, _ []string) error {
 	defer cancel()
 
 	httpRetryClient := httpretrier.NewClient(
-		3, // Max Retries
-		httpretrier.ExponentialBackoff(10*time.Millisecond, 100*time.Millisecond),
+		10, // Max Retries
+		httpretrier.ExponentialBackoff(10*time.Millisecond, 500*time.Millisecond),
 		nil, // Use http.DefaultTransport
 	)
 
@@ -125,10 +125,11 @@ func runAWSGroupsList(_ *cobra.Command, _ []string) error {
 	httpTransport.MaxConnsPerHost = 100
 	httpTransport.MaxIdleConnsPerHost = 100
 
-	httpClient := &http.Client{
-		Transport: httpTransport,
-		Timeout:   maxTimeout,
-	}
+	httpClient := httpretrier.NewClient(
+		10, // Max Retries
+		httpretrier.ExponentialBackoff(10*time.Millisecond, 500*time.Millisecond),
+		httpTransport,
+	)
 
 	awsSCIMService, err := aws.NewSCIMService(httpClient, cfg.AWSSCIMEndpoint, cfg.AWSSCIMAccessToken)
 	if err != nil {
@@ -158,10 +159,11 @@ func runAWSUsersList(_ *cobra.Command, _ []string) error {
 	httpTransport.MaxConnsPerHost = 100
 	httpTransport.MaxIdleConnsPerHost = 100
 
-	httpClient := &http.Client{
-		Transport: httpTransport,
-		Timeout:   maxTimeout,
-	}
+	httpClient := httpretrier.NewClient(
+		10, // Max Retries
+		httpretrier.ExponentialBackoff(10*time.Millisecond, 500*time.Millisecond),
+		httpTransport,
+	)
 
 	awsSCIMService, err := aws.NewSCIMService(httpClient, cfg.AWSSCIMEndpoint, cfg.AWSSCIMAccessToken)
 	if err != nil {

@@ -11,7 +11,7 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/secretsmanager"
-	"github.com/hashicorp/go-retryablehttp"
+	"github.com/p2p-b2b/httpretrier"
 	"github.com/pkg/errors"
 	"github.com/slashdevops/idp-scim-sync/internal/config"
 	"github.com/slashdevops/idp-scim-sync/internal/core"
@@ -216,15 +216,11 @@ func SyncService(ctx context.Context, cfg *config.Config) (*core.SyncService, er
 		gwsServiceAccountContent = gwsServiceAccount
 	}
 
-	idpClient := retryablehttp.NewClient()
-	idpClient.RetryMax = 5
-	idpClient.RetryWaitMin = time.Millisecond * 200
-	// set the logger only in debug mode
-	if cfg.Debug {
-		idpClient.Logger = slog.Default()
-	} else {
-		idpClient.Logger = nil
-	}
+	idpClient := httpretrier.NewClient(
+		10, // Max Retries
+		httpretrier.ExponentialBackoff(10*time.Millisecond, 500*time.Millisecond),
+		nil, // Use http.DefaultTransport
+	)
 
 	userAgent := fmt.Sprintf("idp-scim-sync/%s", version.Version)
 
@@ -233,7 +229,7 @@ func SyncService(ctx context.Context, cfg *config.Config) (*core.SyncService, er
 		ServiceAccount: gwsServiceAccountContent,
 		Scopes:         cfg.GWSServiceAccountScopes,
 		UserAgent:      userAgent,
-		Client:         idpClient.StandardClient(),
+		Client:         idpClient,
 	}
 
 	// Google Client Service
@@ -257,18 +253,13 @@ func SyncService(ctx context.Context, cfg *config.Config) (*core.SyncService, er
 	// AWS SCIM Service
 
 	// httpClient
-	scimClient := retryablehttp.NewClient()
-	scimClient.RetryMax = 10
-	scimClient.RetryWaitMin = time.Millisecond * 100
+	scimClient := httpretrier.NewClient(
+		10, // Max Retries
+		httpretrier.ExponentialBackoff(10*time.Millisecond, 500*time.Millisecond),
+		nil, // Use http.DefaultTransport
+	)
 
-	// set the logger only in debug mode
-	if cfg.Debug {
-		scimClient.Logger = slog.Default()
-	} else {
-		scimClient.Logger = nil
-	}
-
-	awsSCIM, err := aws.NewSCIMService(scimClient.StandardClient(), cfg.AWSSCIMEndpoint, cfg.AWSSCIMAccessToken)
+	awsSCIM, err := aws.NewSCIMService(scimClient, cfg.AWSSCIMEndpoint, cfg.AWSSCIMAccessToken)
 	if err != nil {
 		return nil, errors.Wrap(err, "cannot create aws scim service")
 	}
