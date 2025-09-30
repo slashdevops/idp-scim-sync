@@ -90,8 +90,8 @@ github.com/mattn/go-colorable v0.1.13 h1:fFA4WZxdEF4tXPZVKMLwD8oUnCTTo08duU7wxec
 github.com/mattn/go-colorable v0.1.13/go.mod h1:7S9/ev0klgBDR4GtXTXX8a3vIGJpMovkB8vQcUbaXHg=
 github.com/mattn/go-isatty v0.0.20 h1:xfD0iDuEKnDkl03q4limB+vH+GxLEtL/jb4xVJSWWEY=
 github.com/mattn/go-isatty v0.0.20/go.mod h1:W+V8PltTTMOvKvAeJH7IuucS94S2C6jfK/D7dTCTo3Y=
-github.com/p2p-b2b/httpretrier v0.0.3 h1:6Udp+5zuzgBZ6Hu5Es4/dKWHv8pzRSvXCHXRjYJTgNU=
-github.com/p2p-b2b/httpretrier v0.0.3/go.mod h1:J/aV00SornLs70X/DY3B4IPkDjICynXLfA/TWpAlErw=
+github.com/p2p-b2b/httpretrier v0.0.4 h1:TREDrCthpm0jMTLq2T9+rf8hhH9h36W8Vf8l3L5+WiI=
+github.com/p2p-b2b/httpretrier v0.0.4/go.mod h1:0yKtg4EekYBRzwLIiRVBqh4A/I3VQRiSdBnpu5InyOw=
 github.com/pelletier/go-toml/v2 v2.2.4 h1:mye9XuhQ6gvn5h28+VilKrrPoQVanw5PMw/TB0t5Ec4=
 github.com/pelletier/go-toml/v2 v2.2.4/go.mod h1:2gIqNv+qfxSVS7cM2xJQKtLSTLUE9V8t9Stt+h56mCY=
 github.com/pkg/errors v0.9.1 h1:FEBLx1zS214owpjy7qsBeixbURkuhQAwrK5UwLGTwt4=
