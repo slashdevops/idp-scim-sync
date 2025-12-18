@@ -114,6 +114,7 @@ go-mod-update: go-mod-tidy ## Update go.mod and go.sum
 	$(foreach DEP, $(PROJECT_DEPENDENCIES), \
 		$(call exec_cmd, go get -u $(DEP)) \
 	)
+	$(call exec_cmd, go mod tidy)
 
 .PHONY: go-mod-vendor
 go-mod-vendor: ## Create mod vendor
