@@ -67,7 +67,7 @@ func TestSyncService_NewSyncService(t *testing.T) {
 		mockProviderService := mocks.NewMockIdentityProviderService(mockCtrl)
 		mockSCIMService := mocks.NewMockSCIMService(mockCtrl)
 
-		svc, err := NewSyncService(mockProviderService, mockSCIMService, nil, nil)
+		svc, err := NewSyncService(mockProviderService, mockSCIMService, nil)
 
 		assert.Error(t, err)
 		assert.Nil(t, svc)
