@@ -23,7 +23,7 @@ jobs:
       MAKE_DEBUG: "true"
     steps:
       - name: Check out code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Set up Go 1.x
         id: go
