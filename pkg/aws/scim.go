@@ -340,7 +340,7 @@ func (s *SCIMService) CreateOrGetUser(ctx context.Context, cur *CreateUserReques
 					"externalId", response.ExternalID,
 					"active", response.Active,
 					"displayName", response.DisplayName,
-					"email", response.Emails[0].Value,
+					"email", (*User)(response).GetPrimaryEmailAddress(),
 				)
 
 				pur := &PutUserRequest{
