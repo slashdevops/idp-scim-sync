@@ -469,10 +469,7 @@ func (s *Provider) patchGroupOperations(op, path string, pvs []patchValue, gms *
 	} else {
 		if len(pvs) > s.maxMembersPerRequest {
 			for i := 0; i < len(pvs); i += s.maxMembersPerRequest {
-				end := i + s.maxMembersPerRequest
-				if end > len(pvs) {
-					end = len(pvs)
-				}
+				end := min(i+s.maxMembersPerRequest, len(pvs))
 				chunks = append(chunks, pvs[i:end])
 			}
 		} else {

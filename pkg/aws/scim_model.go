@@ -295,7 +295,7 @@ type Member struct {
 // Group represent a group entity
 type Group struct {
 	ID          string    `json:"id"`
-	Meta        Meta      `json:"meta,omitempty"`
+	Meta        Meta      `json:"meta"`
 	Schemas     []string  `json:"schemas,omitempty"`
 	DisplayName string    `json:"displayName"`
 	ExternalID  string    `json:"externalId,omitempty"`
