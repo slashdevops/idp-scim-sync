@@ -281,8 +281,8 @@ func (u *PatchUserRequest) Validate() error {
 
 // ListUsersResponse represent a list users response entity
 type ListUsersResponse struct {
-	ListResponse
 	Resources []*User `json:"Resources"`
+	ListResponse
 }
 
 // Member represent a member group entity
@@ -336,8 +336,8 @@ type CreateGroupResponse Group
 
 // ListGroupsResponse represent a list groups response entity
 type ListGroupsResponse struct {
-	ListResponse
 	Resources []*Group `json:"Resources"`
+	ListResponse
 }
 
 // PatchGroupRequest represent a patch group request entity
