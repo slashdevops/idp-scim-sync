@@ -194,7 +194,7 @@ func Secrets(cfg *config.Config) error {
 	}()
 
 	// wait for all the goroutines to finish
-	for i := 0; i < 4; i++ {
+	for range 4 {
 		if err := <-results; err != nil {
 			return err
 		}

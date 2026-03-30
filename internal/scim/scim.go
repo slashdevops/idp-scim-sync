@@ -469,10 +469,7 @@ func (s *Provider) patchGroupOperations(op, path string, pvs []patchValue, gms *
 	} else {
 		if len(pvs) > s.maxMembersPerRequest {
 			for i := 0; i < len(pvs); i += s.maxMembersPerRequest {
-				end := i + s.maxMembersPerRequest
-				if end > len(pvs) {
-					end = len(pvs)
-				}
+				end := min(i+s.maxMembersPerRequest, len(pvs))
 				chunks = append(chunks, pvs[i:end])
 			}
 		} else {
@@ -511,6 +508,12 @@ func (s *Provider) GetGroupsMembersBruteForce(ctx context.Context, gr *model.Gro
 	// a map of group SCIM IDs to a slice of members
 	membersByGroup := make(map[string][]*model.Member)
 
+	// pre-initialize all map entries before launching goroutines to avoid
+	// concurrent map writes between the outer loop and goroutine appends
+	for _, group := range gr.Resources {
+		membersByGroup[group.SCIMID] = make([]*model.Member, 0, 10)
+	}
+
 	// use an errgroup to manage the goroutines
 	g, ctx := errgroup.WithContext(ctx)
 
@@ -523,9 +526,6 @@ func (s *Provider) GetGroupsMembersBruteForce(ctx context.Context, gr *model.Gro
 	// brute force implemented here thanks to the fxxckin' aws sso scim api
 	// iterate over each group and user and check if the user is a member of the group
 	for _, group := range gr.Resources {
-		// initialize the members slice for the group. Optimistic approach
-		membersByGroup[group.SCIMID] = make([]*model.Member, 0, 10)
-
 		for _, user := range ur.Resources {
 
 			// create a new variable for the group and user to avoid data races

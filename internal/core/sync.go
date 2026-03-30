@@ -26,11 +26,11 @@ var (
 
 // SyncService represent the sync service and the core of the sync process
 type SyncService struct {
-	provGroupsFilter []string
-	provUsersFilter  []string
 	prov             IdentityProviderService
 	scim             SCIMService
 	repo             StateRepository
+	provGroupsFilter []string
+	provUsersFilter  []string
 }
 
 // NewSyncService creates a new sync service.

@@ -7,6 +7,7 @@
     "AWSS",
     "AWSSCIM",
     "Babs",
+    "betteralign",
     "bjensen",
     "christiangda",
     "cmpopts",
@@ -87,5 +88,8 @@
     "usrs",
     "vuln",
     "Warnf"
-  ]
+  ],
+  "chat.tools.terminal.autoApprove": {
+    "$(go": true
+  }
 }

@@ -73,9 +73,9 @@ func (m *Member) SetHashCode() {
 
 // MembersResult represents a member result list entity.
 type MembersResult struct {
-	Items     int       `json:"items"`
 	HashCode  string    `json:"hashCode,omitempty"`
 	Resources []*Member `json:"resources"`
+	Items     int       `json:"items"`
 }
 
 // MarshalBinary implements the encoding.BinaryMarshaler interface for MembersResult entity.
@@ -142,10 +142,10 @@ func (mr *MembersResult) SetHashCode() {
 
 // GroupMembers represents a group members entity.
 type GroupMembers struct {
-	Items     int       `json:"items"`
-	HashCode  string    `json:"hashCode,omitempty"`
 	Group     *Group    `json:"group"`
+	HashCode  string    `json:"hashCode,omitempty"`
 	Resources []*Member `json:"resources"`
+	Items     int       `json:"items"`
 }
 
 // MarshalBinary implements the encoding.BinaryMarshaler interface for GroupMembers entity.
@@ -226,9 +226,9 @@ func (gm *GroupMembers) SetHashCode() {
 
 // GroupsMembersResult represents a group members result list entity.
 type GroupsMembersResult struct {
-	Items     int             `json:"items"`
 	HashCode  string          `json:"hashCode,omitempty"`
 	Resources []*GroupMembers `json:"resources"`
+	Items     int             `json:"items"`
 }
 
 // MarshalBinary implements the encoding.BinaryMarshaler interface for GroupsMembersResult entity.

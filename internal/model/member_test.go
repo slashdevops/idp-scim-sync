@@ -537,8 +537,8 @@ func TestGroupsMembersResult_MarshalJSON(t *testing.T) {
 			name:   "empty",
 			fields: fields{},
 			want: []byte(`{
-  "items": 0,
-  "resources": []
+  "resources": [],
+  "items": 0
 }`),
 			wantErr: false,
 		},
@@ -560,20 +560,20 @@ func TestGroupsMembersResult_MarshalJSON(t *testing.T) {
 				},
 			},
 			want: []byte(`{
-  "items": 1,
   "hashCode": "test",
   "resources": [
     {
-      "items": 1,
       "group": {
         "ipid": "1",
         "scimid": "1",
         "name": "group 1",
         "email": "group.1@mai.com"
       },
-      "resources": null
+      "resources": null,
+      "items": 1
     }
-  ]
+  ],
+  "items": 1
 }`),
 			wantErr: false,
 		},

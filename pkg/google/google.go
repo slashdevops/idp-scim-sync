@@ -61,9 +61,9 @@ type DirectoryService struct {
 type DirectoryServiceConfig struct {
 	Client         *http.Client
 	UserEmail      string
+	UserAgent      string
 	ServiceAccount []byte
 	Scopes         []string
-	UserAgent      string
 }
 
 // NewService create a Google Directory Service.

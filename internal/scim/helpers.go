@@ -53,23 +53,21 @@ func buildUser(user *aws.User) *model.User {
 	}
 
 	var addresses []model.Address
-	if user.Addresses != nil {
-		if len(user.Addresses) > 0 {
-			addresses = append(addresses,
-				model.AddressBuilder().
-					WithFormatted(strings.TrimSpace(user.Addresses[0].Formatted)).
-					WithStreetAddress(user.Addresses[0].StreetAddress).
-					WithLocality(user.Addresses[0].Locality).
-					WithRegion(user.Addresses[0].Region).
-					WithPostalCode(user.Addresses[0].PostalCode).
-					WithCountry(user.Addresses[0].Country).
-					Build(),
-			)
-		}
+	if len(user.Addresses) > 0 {
+		addresses = append(addresses,
+			model.AddressBuilder().
+				WithFormatted(strings.TrimSpace(user.Addresses[0].Formatted)).
+				WithStreetAddress(user.Addresses[0].StreetAddress).
+				WithLocality(user.Addresses[0].Locality).
+				WithRegion(user.Addresses[0].Region).
+				WithPostalCode(user.Addresses[0].PostalCode).
+				WithCountry(user.Addresses[0].Country).
+				Build(),
+		)
 	}
 
 	var phoneNumbers []model.PhoneNumber
-	if user.PhoneNumbers != nil {
+	if len(user.PhoneNumbers) > 0 {
 		phoneNumbers = append(phoneNumbers,
 			model.PhoneNumberBuilder().
 				WithValue(strings.TrimSpace(user.PhoneNumbers[0].Value)).
@@ -178,7 +176,7 @@ func buildCreateUserRequest(user *model.User) *aws.CreateUserRequest {
 		}
 	}
 
-	if user.Addresses != nil {
+	if len(user.Addresses) > 0 {
 		userRequest.Addresses = []aws.Address{
 			{
 				Formatted:     user.Addresses[0].Formatted,
@@ -191,7 +189,7 @@ func buildCreateUserRequest(user *model.User) *aws.CreateUserRequest {
 		}
 	}
 
-	if user.PhoneNumbers != nil {
+	if len(user.PhoneNumbers) > 0 {
 		userRequest.PhoneNumbers = []aws.PhoneNumber{
 			{
 				Value: user.PhoneNumbers[0].Value,
@@ -264,7 +262,7 @@ func buildPutUserRequest(user *model.User) *aws.PutUserRequest {
 		}
 	}
 
-	if user.Addresses != nil {
+	if len(user.Addresses) > 0 {
 		userRequest.Addresses = []aws.Address{
 			{
 				Formatted:     user.Addresses[0].Formatted,
@@ -277,7 +275,7 @@ func buildPutUserRequest(user *model.User) *aws.PutUserRequest {
 		}
 	}
 
-	if user.PhoneNumbers != nil {
+	if len(user.PhoneNumbers) > 0 {
 		userRequest.PhoneNumbers = []aws.PhoneNumber{
 			{
 				Value: user.PhoneNumbers[0].Value,

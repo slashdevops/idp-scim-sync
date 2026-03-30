@@ -30,9 +30,9 @@ var (
 
 // S3Repository represent a repository that stores state in S3 and implements model.Repository interface
 type S3Repository struct {
+	client S3ClientAPI
 	bucket string
 	key    string
-	client S3ClientAPI
 }
 
 // NewS3Repository returns a new S3Repository

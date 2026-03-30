@@ -66,9 +66,9 @@ func (g *Group) SetHashCode() {
 
 // GroupsResult represents a group result list entity.
 type GroupsResult struct {
-	Items     int      `json:"items"`
 	HashCode  string   `json:"hashCode,omitempty"`
 	Resources []*Group `json:"resources"`
+	Items     int      `json:"items"`
 }
 
 // MarshalBinary implements the encoding.BinaryMarshaler interface for GroupsResult entity.

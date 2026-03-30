@@ -90,12 +90,12 @@ type Manager struct {
 }
 
 type SchemaEnterpriseUser struct {
+	Manager        *Manager `json:"manager,omitempty"`
 	EmployeeNumber string   `json:"employeeNumber,omitempty"`
 	CostCenter     string   `json:"costCenter,omitempty"`
 	Organization   string   `json:"organization,omitempty"`
 	Division       string   `json:"division,omitempty"`
 	Department     string   `json:"department,omitempty"`
-	Manager        *Manager `json:"manager,omitempty"`
 }
 
 // Meta represent a meta entity
@@ -107,9 +107,9 @@ type Meta struct {
 
 // Operation represent an operation entity
 type Operation struct {
+	Value any    `json:"value,omitempty"`
 	OP    string `json:"op,omitempty"`
 	Path  string `json:"path,omitempty"`
-	Value any    `json:"value,omitempty"`
 }
 
 // Patch represent a patch entity and its operations
@@ -120,10 +120,10 @@ type Patch struct {
 
 // ListResponse represent a general response entity
 type ListResponse struct {
+	Schemas      []string `json:"schemas"`
 	TotalResults int      `json:"totalResults"`
 	ItemsPerPage int      `json:"itemsPerPage"`
 	StartIndex   int      `json:"startIndex"`
-	Schemas      []string `json:"schemas"`
 }
 
 // User represent a user entity
@@ -268,8 +268,8 @@ type PatchUserResponse User
 
 // PatchUserRequest represent a patch user request entity
 type PatchUserRequest struct {
-	User  User  `json:"user"`
 	Patch Patch `json:"patch"`
+	User  User  `json:"user"`
 }
 
 func (u *PatchUserRequest) Validate() error {
@@ -281,8 +281,8 @@ func (u *PatchUserRequest) Validate() error {
 
 // ListUsersResponse represent a list users response entity
 type ListUsersResponse struct {
-	ListResponse
 	Resources []*User `json:"Resources"`
+	ListResponse
 }
 
 // Member represent a member group entity
@@ -295,7 +295,7 @@ type Member struct {
 // Group represent a group entity
 type Group struct {
 	ID          string    `json:"id"`
-	Meta        Meta      `json:"meta,omitempty"`
+	Meta        Meta      `json:"meta"`
 	Schemas     []string  `json:"schemas,omitempty"`
 	DisplayName string    `json:"displayName"`
 	ExternalID  string    `json:"externalId,omitempty"`
@@ -336,8 +336,8 @@ type CreateGroupResponse Group
 
 // ListGroupsResponse represent a list groups response entity
 type ListGroupsResponse struct {
-	ListResponse
 	Resources []*Group `json:"Resources"`
+	ListResponse
 }
 
 // PatchGroupRequest represent a patch group request entity
@@ -348,8 +348,8 @@ type PatchGroupRequest struct {
 
 // ServiceProviderConfig represent a service provider config entity
 type ServiceProviderConfig struct {
-	Schemas               []string `json:"schemas"`
 	DocumentationURI      string   `json:"documentationUri"`
+	Schemas               []string `json:"schemas"`
 	AuthenticationSchemes []struct {
 		Type             string `json:"type"`
 		Name             string `json:"name"`
@@ -358,9 +358,6 @@ type ServiceProviderConfig struct {
 		DocumentationURI string `json:"documentationUri"`
 		Primary          bool   `json:"primary"`
 	} `json:"authenticationSchemes"`
-	Patch struct {
-		Supported bool `json:"supported"`
-	} `json:"patch"`
 	Bulk struct {
 		Supported      bool `json:"supported"`
 		MaxOperations  int  `json:"maxOperations"`
@@ -370,6 +367,9 @@ type ServiceProviderConfig struct {
 		Supported  bool `json:"supported"`
 		MaxResults int  `json:"maxResults"`
 	} `json:"filter"`
+	Patch struct {
+		Supported bool `json:"supported"`
+	} `json:"patch"`
 	ChangePassword struct {
 		Supported bool `json:"supported"`
 	} `json:"changePassword"`

@@ -15,7 +15,7 @@ func TestWithIdentityProviderGroupsFilter(t *testing.T) {
 
 		got := WithIdentityProviderGroupsFilter(filter)
 
-		if reflect.TypeOf(got) != reflect.TypeOf(sso) {
+		if reflect.TypeFor[SyncServiceOption]() != reflect.TypeFor[SyncServiceOption]() {
 			t.Errorf("WithIdentityProviderGroupsFilter() return %T, different type than %T", got, sso)
 		}
 	})
@@ -64,7 +64,7 @@ func TestWithIdentityProviderUsersFilter(t *testing.T) {
 
 		got := WithIdentityProviderUsersFilter(filter)
 
-		if reflect.TypeOf(got) != reflect.TypeOf(sso) {
+		if reflect.TypeFor[SyncServiceOption]() != reflect.TypeFor[SyncServiceOption]() {
 			t.Errorf("WithIdentityProviderUsersFilter() return %T, different type than %T", got, sso)
 		}
 	})

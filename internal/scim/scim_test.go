@@ -1621,7 +1621,7 @@ func TestProvider_GetGroupsMembersBruteForce(t *testing.T) {
 				calls := 4
 				wg.Add(calls)
 
-				for i := 0; i < calls; i++ {
+				for range calls {
 					m.EXPECT().ListGroups(gomock.Any(), gomock.Any()).DoAndReturn(func(_ context.Context, _ string) (*aws.ListGroupsResponse, error) {
 						mu.Lock()
 						currentConcurrent++

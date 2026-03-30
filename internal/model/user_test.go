@@ -773,8 +773,8 @@ func TestUsersResult_MarshalJSON(t *testing.T) {
 			name:   "empty",
 			fields: fields{},
 			want: []byte(`{
-  "items": 0,
-  "resources": []
+  "resources": [],
+  "items": 0
 }`),
 			wantErr: false,
 		},
@@ -799,10 +799,13 @@ func TestUsersResult_MarshalJSON(t *testing.T) {
 				},
 			},
 			want: []byte(`{
-  "items": 1,
   "hashCode": "test",
   "resources": [
     {
+      "name": {
+        "familyName": "1",
+        "givenName": "user"
+      },
       "hashCode": "1111",
       "ipid": "1",
       "scimid": "1",
@@ -814,13 +817,10 @@ func TestUsersResult_MarshalJSON(t *testing.T) {
           "primary": true
         }
       ],
-      "name": {
-        "familyName": "1",
-        "givenName": "user"
-      },
       "active": true
     }
-  ]
+  ],
+  "items": 1
 }`),
 			wantErr: false,
 		},

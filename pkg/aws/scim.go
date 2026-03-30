@@ -180,12 +180,12 @@ func (s *SCIMService) checkHTTPResponse(resp *http.Response) error {
 		}
 
 		if json.Unmarshal(body, &errorResp) == nil && errorResp.Detail != "" {
-			return &HTTPResponseError{resp.StatusCode, errorResp.ScimType, errorResp.Detail}
+			return &HTTPResponseError{StatusCode: resp.StatusCode, Code: errorResp.ScimType, Message: errorResp.Detail}
 		}
 
 		slog.Debug("aws checkHTTPResponse()", "statusCode", resp.StatusCode, "status", resp.Status, "body", string(body))
 
-		return &HTTPResponseError{resp.StatusCode, resp.Status, string(body)}
+		return &HTTPResponseError{StatusCode: resp.StatusCode, Code: resp.Status, Message: string(body)}
 	}
 
 	return nil
@@ -340,7 +340,7 @@ func (s *SCIMService) CreateOrGetUser(ctx context.Context, cur *CreateUserReques
 					"externalId", response.ExternalID,
 					"active", response.Active,
 					"displayName", response.DisplayName,
-					"email", response.Emails[0].Value,
+					"email", (*User)(response).GetPrimaryEmailAddress(),
 				)
 
 				pur := &PutUserRequest{

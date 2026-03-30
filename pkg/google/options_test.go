@@ -11,7 +11,7 @@ func TestWithIncludeDerivedMembership(t *testing.T) {
 
 		got := WithIncludeDerivedMembership(false)
 
-		if reflect.TypeOf(got) != reflect.TypeOf(ggmo) {
+		if reflect.TypeFor[GetGroupMembersOption]() != reflect.TypeFor[GetGroupMembersOption]() {
 			t.Errorf("WithIncludeDerivedMembership() return %T, different type than %T", got, ggmo)
 		}
 	})
@@ -36,7 +36,7 @@ func TestWithMaxResults(t *testing.T) {
 		var ggmo GetGroupMembersOption
 		got := WithMaxResults(100)
 
-		if reflect.TypeOf(got) != reflect.TypeOf(ggmo) {
+		if reflect.TypeFor[GetGroupMembersOption]() != reflect.TypeFor[GetGroupMembersOption]() {
 			t.Errorf("WithMaxResults() return %T, different type than %T", got, ggmo)
 		}
 	})
@@ -61,7 +61,7 @@ func TestWithPageToken(t *testing.T) {
 		var ggmo GetGroupMembersOption
 		got := WithPageToken("thisIsAToken")
 
-		if reflect.TypeOf(got) != reflect.TypeOf(ggmo) {
+		if reflect.TypeFor[GetGroupMembersOption]() != reflect.TypeFor[GetGroupMembersOption]() {
 			t.Errorf("WithPageToken() return %T, different type than %T", got, ggmo)
 		}
 	})
@@ -86,7 +86,7 @@ func TestWithRoles(t *testing.T) {
 		var ggmo GetGroupMembersOption
 		got := WithRoles("OWNER,MANAGER,MEMBER")
 
-		if reflect.TypeOf(got) != reflect.TypeOf(ggmo) {
+		if reflect.TypeFor[GetGroupMembersOption]() != reflect.TypeFor[GetGroupMembersOption]() {
 			t.Errorf("WithRoles() return %T, different type than %T", got, ggmo)
 		}
 	})

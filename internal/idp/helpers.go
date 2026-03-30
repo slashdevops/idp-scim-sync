@@ -157,7 +157,7 @@ func toEmails(e any) ([]model.Email, error) {
 
 	modelEmails := make([]model.Email, 0, len(emails))
 	for _, email := range emails {
-		emailMap, ok := email.(map[string]interface{})
+		emailMap, ok := email.(map[string]any)
 		if !ok {
 			return nil, fmt.Errorf("error converting email: %v", email)
 		}
@@ -197,7 +197,7 @@ func toLanguages(l any) (string, error) {
 
 	var preferredLanguage string
 	for _, language := range languages {
-		languageMap, ok := language.(map[string]interface{})
+		languageMap, ok := language.(map[string]any)
 		if !ok {
 			// try to convert to *admin.UserLanguage
 			if lang, ok := language.(*admin.UserLanguage); ok {
@@ -233,7 +233,7 @@ func toAddresses(a any) ([]model.Address, error) {
 
 	modelAddresses := make([]model.Address, 0, len(addresses))
 	for _, address := range addresses {
-		addressMap, ok := address.(map[string]interface{})
+		addressMap, ok := address.(map[string]any)
 		if !ok {
 			// try to convert to *admin.UserAddress
 			if addr, ok := address.(*admin.UserAddress); ok {
@@ -276,7 +276,7 @@ func toPhones(p any) ([]model.PhoneNumber, error) {
 
 	modelPhoneNumbers := make([]model.PhoneNumber, 0, len(phones))
 	for _, phone := range phones {
-		phoneMap, ok := phone.(map[string]interface{})
+		phoneMap, ok := phone.(map[string]any)
 		if !ok {
 			// try to convert to *admin.UserPhone
 			if ph, ok := phone.(*admin.UserPhone); ok {
@@ -321,7 +321,7 @@ func toRelations(r any) (*model.Manager, error) {
 
 	var manager *model.Manager
 	for _, relation := range relations {
-		relationMap, ok := relation.(map[string]interface{})
+		relationMap, ok := relation.(map[string]any)
 		if !ok {
 			// try to convert to *admin.UserRelation
 			if rel, ok := relation.(*admin.UserRelation); ok {
@@ -368,7 +368,7 @@ func toOrganizations(o any, manager *model.Manager) (*model.EnterpriseData, stri
 	var mainOrganization *model.EnterpriseData
 	var title string
 	for _, organization := range organizations {
-		organizationMap, ok := organization.(map[string]interface{})
+		organizationMap, ok := organization.(map[string]any)
 		if !ok {
 			// try to convert to *admin.UserOrganization
 			if org, ok := organization.(*admin.UserOrganization); ok {

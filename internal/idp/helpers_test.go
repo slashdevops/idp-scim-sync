@@ -74,15 +74,15 @@ func Test_buildUser(t *testing.T) {
 		{
 			name: "should return a valid user with all the fields and using primary email as the only email",
 			given: &admin.User{
-				Addresses: []interface{}{
-					map[string]interface{}{"formatted": "formatted work", "type": "work"},
-					map[string]interface{}{"formatted": "formatted home", "type": "home"},
+				Addresses: []any{
+					map[string]any{"formatted": "formatted work", "type": "work"},
+					map[string]any{"formatted": "formatted home", "type": "home"},
 				},
-				Languages:     []interface{}{map[string]interface{}{"languageCode": "languageCode", "preference": "preferred"}},
-				Organizations: []interface{}{map[string]interface{}{"costCenter": "costCenter", "department": "department", "name": "name", "title": "title", "primary": true}},
-				Phones: []interface{}{
-					map[string]interface{}{"value": "value work", "type": "work"},
-					map[string]interface{}{"value": "value home", "type": "home"},
+				Languages:     []any{map[string]any{"languageCode": "languageCode", "preference": "preferred"}},
+				Organizations: []any{map[string]any{"costCenter": "costCenter", "department": "department", "name": "name", "title": "title", "primary": true}},
+				Phones: []any{
+					map[string]any{"value": "value work", "type": "work"},
+					map[string]any{"value": "value home", "type": "home"},
 				},
 				Id:           "id",
 				Kind:         "kind",
@@ -136,16 +136,16 @@ func Test_buildUser(t *testing.T) {
 		{
 			name: "should return a valid user with all the fields",
 			given: &admin.User{
-				Addresses: []interface{}{
-					map[string]interface{}{"formatted": "formatted work", "type": "work"},
-					map[string]interface{}{"formatted": "formatted home", "type": "home"},
+				Addresses: []any{
+					map[string]any{"formatted": "formatted work", "type": "work"},
+					map[string]any{"formatted": "formatted home", "type": "home"},
 				},
-				Emails:        []interface{}{map[string]interface{}{"address": "user@mail.com", "type": "work", "primary": true}},
-				Languages:     []interface{}{map[string]interface{}{"languageCode": "languageCode", "preference": "preferred"}},
-				Organizations: []interface{}{map[string]interface{}{"costCenter": "costCenter", "department": "department", "name": "name", "title": "title", "primary": true}},
-				Phones: []interface{}{
-					map[string]interface{}{"value": "value work", "type": "work"},
-					map[string]interface{}{"value": "value home", "type": "home"},
+				Emails:        []any{map[string]any{"address": "user@mail.com", "type": "work", "primary": true}},
+				Languages:     []any{map[string]any{"languageCode": "languageCode", "preference": "preferred"}},
+				Organizations: []any{map[string]any{"costCenter": "costCenter", "department": "department", "name": "name", "title": "title", "primary": true}},
+				Phones: []any{
+					map[string]any{"value": "value work", "type": "work"},
+					map[string]any{"value": "value home", "type": "home"},
 				},
 				Id:           "id",
 				Kind:         "kind",

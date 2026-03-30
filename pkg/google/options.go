@@ -1,10 +1,10 @@
 package google
 
 type getGroupMembersOptions struct {
-	includeDerivedMembership bool
-	maxResults               int64
 	pageToken                string
 	roles                    string
+	maxResults               int64
+	includeDerivedMembership bool
 }
 
 // GetGroupMembersOption is a function that can be used to configure the Google provider
