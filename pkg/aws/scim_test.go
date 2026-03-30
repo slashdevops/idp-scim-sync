@@ -1047,6 +1047,91 @@ func TestCreateOrGetUser(t *testing.T) {
 		assert.Equal(t, true, got.Emails[0].Primary)
 		assert.Equal(t, true, got.Active)
 	})
+
+	t.Run("should not panic when existing user has no emails and fields changed", func(t *testing.T) {
+		CreateUserResponseConflictFile := "testdata/CreateUserResponse_Conflict.json"
+		ListUserResponseFile := "testdata/ListUserResponse_no_emails.json"
+		PutUserResponseFile := "testdata/PutUserResponse.json"
+
+		mockHTTPClient := mocks.NewMockHTTPClient(mockCtrl)
+		jsonRespConflict := ReadJSONFileAsString(t, CreateUserResponseConflictFile)
+		jsonListRespOK := ReadJSONFileAsString(t, ListUserResponseFile)
+		jsonPutUserRespOK := ReadJSONFileAsString(t, PutUserResponseFile)
+
+		httpRespConflict := &http.Response{
+			Status:     "409 Conflict",
+			StatusCode: http.StatusConflict,
+			Header: http.Header{
+				"Date":             []string{"Fri, 18 Mar 2022 10:57:08 GMT"},
+				"Content-Type":     []string{"application/json"},
+				"x-amzn-RequestId": []string{"81abca44-4ee3-47fa-b4d9-729908ef1dd9"},
+			},
+			Proto:         "HTTP/1.1",
+			Body:          io.NopCloser(strings.NewReader(jsonRespConflict)),
+			ContentLength: int64(len(jsonRespConflict)),
+		}
+
+		ListRespOK := &http.Response{
+			Status:     "200 OK",
+			StatusCode: http.StatusOK,
+			Header: http.Header{
+				"Date":             []string{"Tue, 31 Mar 2020 02:36:15 GMT"},
+				"Content-Type":     []string{"application/json"},
+				"x-amzn-RequestId": []string{"abbf9e53-9ecc-46d2-8efe-104a66ff128f"},
+			},
+			Proto:         "HTTP/1.1",
+			Body:          io.NopCloser(strings.NewReader(jsonListRespOK)),
+			ContentLength: int64(len(jsonListRespOK)),
+		}
+
+		PutUserRespOK := &http.Response{
+			Status:     "200 OK",
+			StatusCode: http.StatusOK,
+			Header: http.Header{
+				"Date":             []string{"Tue, 31 Mar 2020 02:36:15 GMT"},
+				"Content-Type":     []string{"application/json"},
+				"x-amzn-RequestId": []string{"abbf9e53-9ecc-46d2-8efe-104a66ff128f"},
+			},
+			Proto:         "HTTP/1.1",
+			Body:          io.NopCloser(strings.NewReader(jsonPutUserRespOK)),
+			ContentLength: int64(len(jsonPutUserRespOK)),
+		}
+
+		mockHTTPClient.EXPECT().Do(gomock.Any()).Return(httpRespConflict, nil).Times(1)
+		mockHTTPClient.EXPECT().Do(gomock.Any()).Return(ListRespOK, nil).Times(1)
+		mockHTTPClient.EXPECT().Do(gomock.Any()).Return(PutUserRespOK, nil).Times(1)
+
+		service, err := NewSCIMService(mockHTTPClient, endpoint, "MyToken")
+		assert.NoError(t, err)
+		assert.NotNil(t, service)
+
+		usrr := &CreateUserRequest{
+			ID:         "90677c608a-7afcdc23-0bd4-4fb7-b2ff-10ccffdff447",
+			ExternalID: "702135",
+			UserName:   "mjack",
+			Name: &Name{
+				FamilyName: "Jackson",
+				GivenName:  "Mark",
+			},
+			DisplayName: "Mark Jackson",
+			Emails: []Email{
+				{
+					Value:   "mjack@example.com",
+					Type:    "work",
+					Primary: true,
+				},
+			},
+			Active: true,
+		}
+
+		var got *CreateUserResponse
+		assert.NotPanics(t, func() {
+			var callErr error
+			got, callErr = service.CreateOrGetUser(context.Background(), usrr)
+			assert.NoError(t, callErr)
+		})
+		assert.NotNil(t, got)
+	})
 }
 
 func TestDeleteUser(t *testing.T) {
