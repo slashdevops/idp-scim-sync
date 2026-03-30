@@ -432,23 +432,23 @@ func TestState_MarshalJSON(t *testing.T) {
 			name:   "empty",
 			fields: fields{},
 			want: []byte(`{
-  "schemaVersion": "",
-  "codeVersion": "",
-  "lastSync": "",
   "resources": {
     "groups": {
-      "items": 0,
-      "resources": []
+      "resources": [],
+      "items": 0
     },
     "users": {
-      "items": 0,
-      "resources": []
+      "resources": [],
+      "items": 0
     },
     "groupsMembers": {
-      "items": 0,
-      "resources": []
+      "resources": [],
+      "items": 0
     }
-  }
+  },
+  "schemaVersion": "",
+  "codeVersion": "",
+  "lastSync": ""
 }`),
 			wantErr: false,
 		},
@@ -487,12 +487,8 @@ func TestState_MarshalJSON(t *testing.T) {
 				},
 			},
 			want: []byte(`{
-  "schemaVersion": "",
-  "codeVersion": "",
-  "lastSync": "2020-01-01T00:00:00Z",
   "resources": {
     "groups": {
-      "items": 1,
       "hashCode": "hashCode",
       "resources": [
         {
@@ -502,13 +498,17 @@ func TestState_MarshalJSON(t *testing.T) {
           "email": "email",
           "hashCode": "hashCode"
         }
-      ]
+      ],
+      "items": 1
     },
     "users": {
-      "items": 1,
       "hashCode": "hashCode",
       "resources": [
         {
+          "name": {
+            "familyName": "lastName",
+            "givenName": "name"
+          },
           "hashCode": "hashCode",
           "ipid": "ipid",
           "scimid": "scimid",
@@ -518,19 +518,19 @@ func TestState_MarshalJSON(t *testing.T) {
               "type": "work",
               "primary": true
             }
-          ],
-          "name": {
-            "familyName": "lastName",
-            "givenName": "name"
-          }
+          ]
         }
-      ]
+      ],
+      "items": 1
     },
     "groupsMembers": {
-      "items": 0,
-      "resources": []
+      "resources": [],
+      "items": 0
     }
-  }
+  },
+  "schemaVersion": "",
+  "codeVersion": "",
+  "lastSync": "2020-01-01T00:00:00Z"
 }`),
 			wantErr: false,
 		},

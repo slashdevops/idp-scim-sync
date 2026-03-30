@@ -246,12 +246,12 @@ func (m *Manager) UnmarshalBinary(data []byte) error {
 }
 
 type EnterpriseData struct {
+	Manager        *Manager `json:"manager,omitempty"`
 	EmployeeNumber string   `json:"employeeNumber,omitempty"`
 	CostCenter     string   `json:"costCenter,omitempty"`
 	Organization   string   `json:"organization,omitempty"`
 	Division       string   `json:"division,omitempty"`
 	Department     string   `json:"department,omitempty"`
-	Manager        *Manager `json:"manager,omitempty"`
 }
 
 // MarshalBinary implements the gob.GobEncoder interface for EnterpriseData entity.
@@ -315,18 +315,20 @@ func (ed *EnterpriseData) UnmarshalBinary(data []byte) error {
 
 // User represents a user entity.
 type User struct {
-	HashCode          string `json:"hashCode,omitempty"`
-	IPID              string `json:"ipid,omitempty"`
-	SCIMID            string `json:"scimid,omitempty"`
-	UserName          string `json:"userName,omitempty"`
-	DisplayName       string `json:"displayName,omitempty"`
-	NickName          string `json:"nickName,omitempty"`
-	ProfileURL        string `json:"profileURL,omitempty"`
-	Title             string `json:"title,omitempty"`
-	UserType          string `json:"userType,omitempty"`
-	PreferredLanguage string `json:"preferredLanguage,omitempty"`
-	Locale            string `json:"locale,omitempty"`
-	Timezone          string `json:"timezone,omitempty"`
+	Name              *Name           `json:"name,omitempty"`
+	EnterpriseData    *EnterpriseData `json:"enterpriseData,omitempty"`
+	HashCode          string          `json:"hashCode,omitempty"`
+	IPID              string          `json:"ipid,omitempty"`
+	SCIMID            string          `json:"scimid,omitempty"`
+	UserName          string          `json:"userName,omitempty"`
+	DisplayName       string          `json:"displayName,omitempty"`
+	NickName          string          `json:"nickName,omitempty"`
+	ProfileURL        string          `json:"profileURL,omitempty"`
+	Title             string          `json:"title,omitempty"`
+	UserType          string          `json:"userType,omitempty"`
+	PreferredLanguage string          `json:"preferredLanguage,omitempty"`
+	Locale            string          `json:"locale,omitempty"`
+	Timezone          string          `json:"timezone,omitempty"`
 
 	// this field is to have compatibility with the old version of the application <= v0.0.19
 	// and will be removed in the future maybe after >= v0.1.1
@@ -336,11 +338,9 @@ type User struct {
 	// this is implemented in the new version of the application > v0.0.19
 	Emails []Email `json:"emails,omitempty"`
 
-	Addresses      []Address       `json:"addresses,omitempty"`
-	PhoneNumbers   []PhoneNumber   `json:"phoneNumbers,omitempty"`
-	Name           *Name           `json:"name,omitempty"`
-	EnterpriseData *EnterpriseData `json:"enterpriseData,omitempty"`
-	Active         bool            `json:"active,omitempty"`
+	Addresses    []Address     `json:"addresses,omitempty"`
+	PhoneNumbers []PhoneNumber `json:"phoneNumbers,omitempty"`
+	Active       bool          `json:"active,omitempty"`
 }
 
 // MarshalBinary implements the gob.GobEncoder interface for User entity.
@@ -509,9 +509,9 @@ func (u *User) GetPrimaryEmailAddress() string {
 
 // UsersResult represents a user result list entity.
 type UsersResult struct {
-	Items     int     `json:"items"`
 	HashCode  string  `json:"hashCode,omitempty"`
 	Resources []*User `json:"resources"`
+	Items     int     `json:"items"`
 }
 
 // MarshalBinary implements the gob.GobEncoder interface for UsersResult entity.

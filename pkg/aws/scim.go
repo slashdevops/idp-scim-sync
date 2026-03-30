@@ -180,12 +180,12 @@ func (s *SCIMService) checkHTTPResponse(resp *http.Response) error {
 		}
 
 		if json.Unmarshal(body, &errorResp) == nil && errorResp.Detail != "" {
-			return &HTTPResponseError{resp.StatusCode, errorResp.ScimType, errorResp.Detail}
+			return &HTTPResponseError{StatusCode: resp.StatusCode, Code: errorResp.ScimType, Message: errorResp.Detail}
 		}
 
 		slog.Debug("aws checkHTTPResponse()", "statusCode", resp.StatusCode, "status", resp.Status, "body", string(body))
 
-		return &HTTPResponseError{resp.StatusCode, resp.Status, string(body)}
+		return &HTTPResponseError{StatusCode: resp.StatusCode, Code: resp.Status, Message: string(body)}
 	}
 
 	return nil

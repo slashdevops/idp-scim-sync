@@ -71,11 +71,11 @@ func (s *StateResources) UnmarshalBinary(data []byte) error {
 
 // State is the state of the system.
 type State struct {
+	Resources     *StateResources `json:"resources"`
 	SchemaVersion string          `json:"schemaVersion"`
 	CodeVersion   string          `json:"codeVersion"`
 	LastSync      string          `json:"lastSync"`
 	HashCode      string          `json:"hashCode,omitempty"`
-	Resources     *StateResources `json:"resources"`
 }
 
 // MarshalBinary implements the encoding.BinaryMarshaler interface for State entity.
