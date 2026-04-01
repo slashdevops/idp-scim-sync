@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"strings"
 	"sync"
 
+	"github.com/slashdevops/idp-scim-sync/internal/model"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 	admin "google.golang.org/api/admin/directory/v1"
@@ -55,7 +57,9 @@ var (
 
 // DirectoryService represent the  Google Directory API client.
 type DirectoryService struct {
-	svc *admin.Service
+	svc                     *admin.Service
+	listUsersRequiredFields googleapi.Field
+	getUsersRequiredFields  googleapi.Field
 }
 
 type DirectoryServiceConfig struct {
@@ -119,13 +123,64 @@ func NewService(ctx context.Context, config DirectoryServiceConfig) (*admin.Serv
 	return svc, nil
 }
 
+// DirectoryServiceOption is a function that configures a DirectoryService.
+type DirectoryServiceOption func(*DirectoryService)
+
+// WithSyncFieldSet configures the DirectoryService to only request fields
+// needed for the configured sync field set from the Google API.
+// When fields is nil or empty, all user fields are requested (default behavior).
+func WithSyncFieldSet(fields *model.SyncFieldSet) DirectoryServiceOption {
+	return func(ds *DirectoryService) {
+		uf := buildUserFields(fields)
+		ds.listUsersRequiredFields = googleapi.Field("nextPageToken, users(" + uf + ")")
+		ds.getUsersRequiredFields = googleapi.Field(uf)
+	}
+}
+
+// buildUserFields constructs the Google API fields parameter based on the configured field set.
+func buildUserFields(fields *model.SyncFieldSet) string {
+	// Always include required fields
+	parts := []string{baseFields, "primaryEmail", "name", "suspended", "kind", "emails"}
+
+	if fields.Includes(model.SyncUserFieldAddresses) {
+		parts = append(parts, "addresses")
+	}
+	if fields.Includes(model.SyncUserFieldPhoneNumbers) {
+		parts = append(parts, "phones")
+	}
+	if fields.Includes(model.SyncUserFieldPreferredLanguage) {
+		parts = append(parts, "languages")
+	}
+	if fields.Includes(model.SyncUserFieldTitle) || fields.Includes(model.SyncUserFieldEnterpriseData) {
+		parts = append(parts, "organizations")
+	}
+	if fields.Includes(model.SyncUserFieldEnterpriseData) {
+		parts = append(parts, "relations")
+	}
+	// locations is currently not mapped to any SCIM attribute, but include it
+	// when all fields are synced for backward compatibility
+	if fields == nil || fields.IsEmpty() {
+		parts = append(parts, "locations")
+	}
+
+	return strings.Join(parts, ",")
+}
+
 // NewDirectoryService create a Google Directory API client.
 // References:
 // - https://developers.google.com/admin-sdk/directory/v1/guides/delegation?utm_source=pocket_mylist#go
-func NewDirectoryService(svc *admin.Service) (*DirectoryService, error) {
-	return &DirectoryService{
-		svc: svc,
-	}, nil
+func NewDirectoryService(svc *admin.Service, opts ...DirectoryServiceOption) (*DirectoryService, error) {
+	ds := &DirectoryService{
+		svc:                     svc,
+		listUsersRequiredFields: listUsersRequiredFields,
+		getUsersRequiredFields:  getUsersRequiredFields,
+	}
+
+	for _, opt := range opts {
+		opt(ds)
+	}
+
+	return ds, nil
 }
 
 // ListUsers list all users in a Google Directory filtered by query.
@@ -143,7 +198,7 @@ func (ds *DirectoryService) ListUsers(ctx context.Context, query []string) ([]*a
 		for _, q := range query {
 			if q != "" {
 				slog.Debug("google: Listing users with query", "query", q)
-				err := ds.svc.Users.List().Query(q).Customer("my_customer").Fields(listUsersRequiredFields).Pages(ctx, func(users *admin.Users) error {
+				err := ds.svc.Users.List().Query(q).Customer("my_customer").Fields(ds.listUsersRequiredFields).Pages(ctx, func(users *admin.Users) error {
 					slog.Debug("google: Retrieved users page", "page_size", len(users.Users))
 					u = append(u, users.Users...)
 					return nil
@@ -152,7 +207,7 @@ func (ds *DirectoryService) ListUsers(ctx context.Context, query []string) ([]*a
 					return nil, fmt.Errorf("google: failed to list users with query %q: %w", q, err)
 				}
 			} else {
-				err := ds.svc.Users.List().Customer("my_customer").Fields(listUsersRequiredFields).Pages(ctx, func(users *admin.Users) error {
+				err := ds.svc.Users.List().Customer("my_customer").Fields(ds.listUsersRequiredFields).Pages(ctx, func(users *admin.Users) error {
 					u = append(u, users.Users...)
 					return nil
 				})
@@ -162,7 +217,7 @@ func (ds *DirectoryService) ListUsers(ctx context.Context, query []string) ([]*a
 			}
 		}
 	} else {
-		err := ds.svc.Users.List().Customer("my_customer").Fields(listUsersRequiredFields).Pages(ctx, func(users *admin.Users) error {
+		err := ds.svc.Users.List().Customer("my_customer").Fields(ds.listUsersRequiredFields).Pages(ctx, func(users *admin.Users) error {
 			u = append(u, users.Users...)
 			return nil
 		})
@@ -283,7 +338,7 @@ func (ds *DirectoryService) GetUser(ctx context.Context, userID string) (*admin.
 		return nil, ErrUserIDNil
 	}
 
-	u, err := ds.svc.Users.Get(userID).Fields(getUsersRequiredFields).Context(ctx).Do()
+	u, err := ds.svc.Users.Get(userID).Fields(ds.getUsersRequiredFields).Context(ctx).Do()
 	if err != nil {
 		return nil, fmt.Errorf("google: error getting user %s: %v", userID, err)
 	}

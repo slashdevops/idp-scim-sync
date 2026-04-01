@@ -16,6 +16,7 @@ Keep your [AWS IAM Identity Center](https://aws.amazon.com/iam/identity-center/)
 ## ✨ Features
 
 * ✅ **Extended Attribute Support**: Syncs extended AWS SSO SCIM API fields as described in the [official documentation](https://docs.aws.amazon.com/singlesignon/latest/developerguide/limitations.html).
+* ✅ **Configurable User Fields**: Choose which optional user attributes (phone numbers, addresses, enterprise data, etc.) to sync. See [Configurable User Fields](#configurable-user-fields) for details.
 * ✅ **Efficient Data Retrieval**: Uses [partial responses](https://cloud.google.com/storage/docs/json_api#partial-response) from the Google Workspace API to fetch only the data you need.
 * ✅ **Nested Groups Support**: Supports nested groups in Google Workspace thanks to the `includeDerivedMembership` API query parameter.
 * ✅ **Multiple Deployment Options**: Can be deployed via the `AWS Serverless Application Repository`, as a `Container Image`, or as a `CLI`.
@@ -122,6 +123,61 @@ make build-dist
 * 📦 [AWS ECR Public Gallery](https://gallery.ecr.aws/l2n7y5s7/slashdevops/idp-scim-sync)
 * 📦 [GitHub Packages](https://github.com/slashdevops/idp-scim-sync/pkgs/container/idp-scim-sync)
 * 📦 [Docker Hub](https://hub.docker.com/r/slashdevops/idp-scim-sync)
+
+## Configurable User Fields
+
+By default, all optional user attributes are synced from Google Workspace to AWS SSO SCIM. You can control which optional fields are included using the `sync_user_fields` configuration option.
+
+**Available fields:**
+
+| Field               | Description                                                                 |
+| ------------------- | --------------------------------------------------------------------------- |
+| `phoneNumbers`      | User's phone numbers                                                        |
+| `addresses`         | User's addresses (street, city, region, postal code, country)               |
+| `title`             | User's job title                                                            |
+| `preferredLanguage` | User's preferred language                                                   |
+| `locale`            | User's locale                                                               |
+| `timezone`          | User's timezone                                                             |
+| `nickName`          | User's nickname                                                             |
+| `profileURL`        | User's profile URL                                                          |
+| `userType`          | User type attribute                                                         |
+| `enterpriseData`    | Enterprise extension (employeeNumber, costCenter, organization, department, division, manager) |
+
+**Required fields** (always synced, not configurable): `name`, `userName`, `displayName`, `emails`, `active`.
+
+### Configuration Examples
+
+**Config file (.idpscim.yaml):**
+
+```yaml
+# Sync only phone numbers, addresses, and enterprise data
+sync_user_fields:
+  - phoneNumbers
+  - addresses
+  - enterpriseData
+```
+
+**Environment variable (Lambda / SAM):**
+
+```bash
+IDPSCIM_SYNC_USER_FIELDS=phoneNumbers,addresses,enterpriseData
+```
+
+**CLI flag:**
+
+```bash
+idpscim --sync-user-fields phoneNumbers,addresses,enterpriseData
+```
+
+**SAM template parameter:**
+
+Set the `SyncUserFields` parameter when deploying:
+
+```bash
+sam deploy --parameter-overrides SyncUserFields=phoneNumbers,addresses,enterpriseData
+```
+
+> **Note:** When changing this configuration on an existing deployment, the first sync will detect all users as "changed" (due to hash differences) and update them in AWS SSO. This is expected behavior and will clear excluded fields from SCIM.
 
 ## ⚠️ Limitations
 

@@ -39,18 +39,36 @@ type GoogleProviderService interface {
 
 // IdentityProvider is the Identity Provider service that implements the core.IdentityProvider interface and consumes the pkg.google methods.
 type IdentityProvider struct {
-	ps GoogleProviderService
+	ps           GoogleProviderService
+	syncFieldSet *model.SyncFieldSet
+}
+
+// IdentityProviderOption is a function that configures an IdentityProvider.
+type IdentityProviderOption func(*IdentityProvider)
+
+// WithSyncFieldSet configures which optional user fields are included in the sync.
+// When the field set is nil or empty, all fields are synced (default behavior).
+func WithSyncFieldSet(fields *model.SyncFieldSet) IdentityProviderOption {
+	return func(ip *IdentityProvider) {
+		ip.syncFieldSet = fields
+	}
 }
 
 // NewIdentityProvider returns a new instance of the Identity Provider service.
-func NewIdentityProvider(gps GoogleProviderService) (*IdentityProvider, error) {
+func NewIdentityProvider(gps GoogleProviderService, opts ...IdentityProviderOption) (*IdentityProvider, error) {
 	if gps == nil {
 		return nil, ErrDirectoryServiceNil
 	}
 
-	return &IdentityProvider{
+	ip := &IdentityProvider{
 		ps: gps,
-	}, nil
+	}
+
+	for _, opt := range opts {
+		opt(ip)
+	}
+
+	return ip, nil
 }
 
 // GetGroups returns a list of groups from the Identity Provider API.
@@ -117,9 +135,9 @@ func (i *IdentityProvider) GetUsers(ctx context.Context, filter []string) (*mode
 	}
 
 	syncUsers := make([]*model.User, len(pUsers))
-	for i, usr := range pUsers {
-		gu := buildUser(usr)
-		syncUsers[i] = gu
+	for idx, usr := range pUsers {
+		gu := buildUser(usr, i.syncFieldSet)
+		syncUsers[idx] = gu
 	}
 	uResult := model.UsersResultBuilder().WithResources(syncUsers).Build()
 	slog.Debug("idp: GetUsers()", "users", len(syncUsers))
@@ -192,7 +210,7 @@ func (i *IdentityProvider) GetUsersByGroupsMembers(ctx context.Context, gmr *mod
 				if err != nil {
 					return nil, fmt.Errorf("idp: error getting user: %+v, email: %s, error: %w", member.IPID, member.Email, err)
 				}
-				gu := buildUser(u)
+				gu := buildUser(u, i.syncFieldSet)
 
 				pUsers = append(pUsers, gu)
 			}

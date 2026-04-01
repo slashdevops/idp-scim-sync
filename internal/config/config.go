@@ -1,7 +1,11 @@
 // Package config provides the configuration for the application.
 package config
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/slashdevops/idp-scim-sync/internal/model"
+)
 
 const (
 	// DefaultIsLambda is the program execute as a lambda function?
@@ -88,6 +92,12 @@ type Config struct {
 	GWSUsersFilter          []string `mapstructure:"gws_users_filter" json:"gws_users_filter" yaml:"gws_users_filter"`
 	GWSServiceAccountScopes []string `mapstructure:"gws_service_account_scopes" json:"gws_service_account_scopes" yaml:"gws_service_account_scopes"`
 
+	// SyncUserFields controls which optional user attributes are synced from the identity provider.
+	// When empty (default), all fields are synced. When specified, only listed fields are included.
+	// Valid values: phoneNumbers, addresses, title, preferredLanguage, locale, timezone,
+	// nickName, profileURL, userType, enterpriseData
+	SyncUserFields []string `mapstructure:"sync_user_fields" json:"sync_user_fields" yaml:"sync_user_fields"`
+
 	IsLambda bool
 	Debug    bool
 
@@ -147,6 +157,12 @@ func (c *Config) Validate() error {
 		}
 		if c.GWSUserEmail == "" {
 			return ErrMissingGWSUserEmail
+		}
+	}
+
+	for _, field := range c.SyncUserFields {
+		if err := model.ValidateSyncUserField(field); err != nil {
+			return fmt.Errorf("invalid sync_user_fields configuration: %w", err)
 		}
 	}
 

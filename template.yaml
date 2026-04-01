@@ -15,6 +15,7 @@ Metadata:
           default: "Lambda Function - Configuration"
         Parameters:
           - SyncMethod
+          - SyncUserFields
           - GWSGroupsFilter
           - LogLevel
           - LogFormat
@@ -175,6 +176,15 @@ Parameters:
     AllowedValues:
       - groups
 
+  SyncUserFields:
+    Type: String
+    Description: |
+      Comma-separated list of optional user fields to sync from Google Workspace to AWS SSO SCIM.
+      When empty (default), all fields are synced. Valid values: phoneNumbers, addresses, title,
+      preferredLanguage, locale, timezone, nickName, profileURL, userType, enterpriseData.
+      Example: 'phoneNumbers,addresses,enterpriseData'
+    Default: ""
+
   MemorySize:
     Type: Number
     Description: |
@@ -285,6 +295,7 @@ Resources:
           IDPSCIM_SYNC_METHOD: !Ref SyncMethod
           IDPSCIM_AWS_S3_BUCKET_NAME: !Sub "${BucketNamePrefix}-${AWS::AccountId}-${AWS::Region}"
           IDPSCIM_AWS_S3_BUCKET_KEY: !Ref BucketKey
+          IDPSCIM_SYNC_USER_FIELDS: !Ref SyncUserFields
           IDPSCIM_GWS_GROUPS_FILTER: !Ref GWSGroupsFilter
           IDPSCIM_GWS_USER_EMAIL_SECRET_NAME: !Ref AWSGWSUserEmailSecret
           IDPSCIM_GWS_SERVICE_ACCOUNT_FILE_SECRET_NAME: !Ref AWSGWSServiceAccountFileSecret

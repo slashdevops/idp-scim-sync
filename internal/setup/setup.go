@@ -16,6 +16,7 @@ import (
 	"github.com/slashdevops/idp-scim-sync/internal/config"
 	"github.com/slashdevops/idp-scim-sync/internal/core"
 	"github.com/slashdevops/idp-scim-sync/internal/idp"
+	"github.com/slashdevops/idp-scim-sync/internal/model"
 	"github.com/slashdevops/idp-scim-sync/internal/repository"
 	"github.com/slashdevops/idp-scim-sync/internal/scim"
 	"github.com/slashdevops/idp-scim-sync/internal/version"
@@ -78,6 +79,7 @@ func Configuration(cfg *config.Config) error {
 		"aws_scim_endpoint",
 		"aws_scim_endpoint_secret_name",
 		"use_secrets_manager",
+		"sync_user_fields",
 	}
 	for _, e := range envVars {
 		if err := viper.BindEnv(e); err != nil {
@@ -238,14 +240,17 @@ func SyncService(ctx context.Context, cfg *config.Config) (*core.SyncService, er
 		return nil, errors.Wrap(err, "cannot create google service")
 	}
 
+	// Build the sync field set from configuration
+	syncFieldSet := model.NewSyncFieldSet(cfg.SyncUserFields)
+
 	// Google Directory Service
-	gwsDS, err := google.NewDirectoryService(gwsService)
+	gwsDS, err := google.NewDirectoryService(gwsService, google.WithSyncFieldSet(syncFieldSet))
 	if err != nil {
 		return nil, errors.Wrap(err, "cannot create google directory service")
 	}
 
 	// Identity Provider Service
-	idpService, err := idp.NewIdentityProvider(gwsDS)
+	idpService, err := idp.NewIdentityProvider(gwsDS, idp.WithSyncFieldSet(syncFieldSet))
 	if err != nil {
 		return nil, errors.Wrap(err, "cannot create identity provider service")
 	}

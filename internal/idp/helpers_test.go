@@ -199,7 +199,8 @@ func Test_buildUser(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := buildUser(tt.given)
+			// nil field set = all fields (backward compatible)
+			got := buildUser(tt.given, nil)
 
 			sort := func(x, y string) bool { return x > y }
 			if diff := cmp.Diff(tt.want, got, cmpopts.SortSlices(sort)); diff != "" {
@@ -207,4 +208,126 @@ func Test_buildUser(t *testing.T) {
 			}
 		})
 	}
+}
+
+func Test_buildUser_withFieldSet(t *testing.T) {
+	fullUser := &admin.User{
+		Addresses: []any{
+			map[string]any{"formatted": "formatted work", "type": "work"},
+		},
+		Emails:        []any{map[string]any{"address": "user@mail.com", "type": "work", "primary": true}},
+		Languages:     []any{map[string]any{"languageCode": "en", "preference": "preferred"}},
+		Organizations: []any{map[string]any{"costCenter": "CC1", "department": "Eng", "name": "Acme", "title": "Engineer", "primary": true}},
+		Phones: []any{
+			map[string]any{"value": "+1234", "type": "work"},
+		},
+		Id:           "id1",
+		Kind:         "admin#directory#user",
+		PrimaryEmail: "user@mail.com",
+		Suspended:    false,
+		Name: &admin.UserName{
+			GivenName:  "John",
+			FamilyName: "Doe",
+			FullName:   "John Doe",
+		},
+	}
+
+	t.Run("empty field set syncs all fields", func(t *testing.T) {
+		fields := model.NewSyncFieldSet(nil)
+		got := buildUser(fullUser, fields)
+
+		if got.Title != "Engineer" {
+			t.Errorf("expected title 'Engineer', got %q", got.Title)
+		}
+		if len(got.PhoneNumbers) == 0 {
+			t.Error("expected phone numbers to be populated")
+		}
+		if len(got.Addresses) == 0 {
+			t.Error("expected addresses to be populated")
+		}
+		if got.EnterpriseData == nil {
+			t.Error("expected enterprise data to be populated")
+		}
+		if got.PreferredLanguage != "en" {
+			t.Errorf("expected preferred language 'en', got %q", got.PreferredLanguage)
+		}
+	})
+
+	t.Run("only phoneNumbers field includes only phones", func(t *testing.T) {
+		fields := model.NewSyncFieldSet([]string{"phoneNumbers"})
+		got := buildUser(fullUser, fields)
+
+		// Required fields are always present
+		if got.UserName != "user@mail.com" {
+			t.Errorf("expected userName 'user@mail.com', got %q", got.UserName)
+		}
+		if got.DisplayName != "John Doe" {
+			t.Errorf("expected displayName 'John Doe', got %q", got.DisplayName)
+		}
+
+		// phoneNumbers should be included
+		if len(got.PhoneNumbers) == 0 {
+			t.Error("expected phone numbers to be populated")
+		}
+
+		// Everything else should be excluded
+		if len(got.Addresses) != 0 {
+			t.Error("expected addresses to be empty")
+		}
+		if got.Title != "" {
+			t.Errorf("expected empty title, got %q", got.Title)
+		}
+		if got.EnterpriseData != nil {
+			t.Error("expected enterprise data to be nil")
+		}
+		if got.PreferredLanguage != "" {
+			t.Errorf("expected empty preferred language, got %q", got.PreferredLanguage)
+		}
+		if got.UserType != "" {
+			t.Errorf("expected empty user type, got %q", got.UserType)
+		}
+	})
+
+	t.Run("title and enterpriseData include organizations", func(t *testing.T) {
+		fields := model.NewSyncFieldSet([]string{"title", "enterpriseData"})
+		got := buildUser(fullUser, fields)
+
+		if got.Title != "Engineer" {
+			t.Errorf("expected title 'Engineer', got %q", got.Title)
+		}
+		if got.EnterpriseData == nil {
+			t.Fatal("expected enterprise data to be populated")
+		}
+		if got.EnterpriseData.Department != "Eng" {
+			t.Errorf("expected department 'Eng', got %q", got.EnterpriseData.Department)
+		}
+
+		// Excluded fields
+		if len(got.PhoneNumbers) != 0 {
+			t.Error("expected phone numbers to be empty")
+		}
+		if len(got.Addresses) != 0 {
+			t.Error("expected addresses to be empty")
+		}
+	})
+
+	t.Run("addresses only", func(t *testing.T) {
+		fields := model.NewSyncFieldSet([]string{"addresses"})
+		got := buildUser(fullUser, fields)
+
+		if len(got.Addresses) == 0 {
+			t.Error("expected addresses to be populated")
+		}
+		if got.Addresses[0].Formatted != "formatted work" {
+			t.Errorf("expected formatted 'formatted work', got %q", got.Addresses[0].Formatted)
+		}
+
+		// Excluded
+		if len(got.PhoneNumbers) != 0 {
+			t.Error("expected phone numbers to be empty")
+		}
+		if got.Title != "" {
+			t.Errorf("expected empty title, got %q", got.Title)
+		}
+	})
 }
