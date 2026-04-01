@@ -68,7 +68,11 @@ $(if $(filter $(MAKE_DEBUG),true),\
 	${1} \
 , \
 	$(if $(filter $(MAKE_STOP_ON_ERRORS),true),\
-		@${1}  > /dev/null && printf "  🤞 ${1} ✅\n" || (printf "  ${1} ❌ 🖕\n"; exit 1) \
+		$(if $(findstring >, $1),\
+			@${1} 2>/dev/null && printf "  🤞 ${1} ✅\n" || (printf "  ${1} ❌ 🖕\n"; exit 1) \
+		, \
+			@${1}  > /dev/null && printf "  🤞 ${1} ✅\n" || (printf "  ${1} ❌ 🖕\n"; exit 1) \
+		) \
 	, \
 		$(if $(findstring >, $1),\
 			@${1} 2>/dev/null; _exit_code=$$?; if [ $$_exit_code -eq 0 ]; then printf "  🤞 ${1} ✅\n"; else printf "  ${1} ❌ 🖕\n"; fi; exit $$_exit_code \
@@ -97,6 +101,11 @@ go-fmt: ## Format go code
 go-vet: ## Vet go code
 	@printf "👉 Vet go code...\n"
 	$(call exec_cmd, go vet ./... )
+
+.PHONY: go-betteralign
+go-betteralign: install-betteralign ## Align go code with betteralign
+	@printf "👉 Aligning go code with betteralign...\n"
+	$(call exec_cmd, betteralign -apply ./... )
 
 .PHONY: go-generate
 go-generate: ## Generate go code
@@ -338,6 +347,13 @@ container-publish-aws-ecr: ## Publish the container image to AWS ECR
 			$(call exec_cmd, docker manifest push "$(AWS_ECR_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME):$(GIT_VERSION)" ) \
 		) \
 	)
+
+###############################################################################
+##@ Install Commands
+.PHONY: install-betteralign
+install-betteralign: ## Install betteralign for code alignment (https://github.com/dkorunic/betteralign)
+	@printf "👉 Installing betteralign...\n"
+	$(call exec_cmd, go install github.com/dkorunic/betteralign/cmd/betteralign@latest )
 
 ###############################################################################
 ##@ Support Commands
