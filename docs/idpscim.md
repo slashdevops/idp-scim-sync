@@ -39,6 +39,7 @@ Flags:
   -f, --log-format string                             set the log format (default "text")
   -l, --log-level string                              set the log level [panic|fatal|error|warn|info|debug|trace] (default "info")
   -m, --sync-method string                            Sync method to use [groups] (default "groups")
+      --sync-user-fields strings                      optional user fields to sync (e.g., phoneNumbers,addresses,enterpriseData); default: all fields
   -g, --use-secrets-manager                           use AWS Secrets Manager content or not
   -v, --version                                       version for idpscim
 ```

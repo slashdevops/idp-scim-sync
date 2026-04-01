@@ -77,6 +77,7 @@ func init() {
 	rootCmd.Flags().StringSliceVarP(&cfg.GWSGroupsFilter, "gws-groups-filter", "q", []string{""}, "GWS Groups query parameter, example: --gws-groups-filter 'name:Admin* email:admin*' --gws-groups-filter 'name:Power* email:power*'")
 	rootCmd.PersistentFlags().StringVarP(&cfg.SyncMethod, "sync-method", "m", config.DefaultSyncMethod, "Sync method to use [groups]")
 	rootCmd.PersistentFlags().BoolVarP(&cfg.UseSecretsManager, "use-secrets-manager", "g", config.DefaultUseSecretsManager, "use AWS Secrets Manager content or not (default false)")
+	rootCmd.Flags().StringSliceVar(&cfg.SyncUserFields, "sync-user-fields", nil, "optional user fields to sync (e.g., phoneNumbers,addresses,enterpriseData); default: all fields")
 }
 
 func run(ctx context.Context) error {

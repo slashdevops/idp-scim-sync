@@ -535,7 +535,7 @@ func TestSyncService_SyncGroupsAndTheirMembers(t *testing.T) {
 		// t.Logf("State: %s", utils.ToJSON(state))
 		assert.Equal(t, 2, len(state.Resources.Groups.Resources))
 		assert.Equal(t, 2, len(state.Resources.Users.Resources))
-		assert.Equal(t, 4, len(state.Resources.GroupsMembers.Resources))
+		assert.Equal(t, 2, len(state.Resources.GroupsMembers.Resources))
 		assert.NotEqual(t, "", state.LastSync)
 		assert.NotEqual(t, "", state.HashCode)
 		assert.Equal(t, model.StateSchemaVersion, state.SchemaVersion)

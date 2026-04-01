@@ -16,10 +16,15 @@ Keep your [AWS IAM Identity Center](https://aws.amazon.com/iam/identity-center/)
 ## ✨ Features
 
 * ✅ **Extended Attribute Support**: Syncs extended AWS SSO SCIM API fields as described in the [official documentation](https://docs.aws.amazon.com/singlesignon/latest/developerguide/limitations.html).
+* ✅ **Configurable User Fields**: Choose which optional user attributes (phone numbers, addresses, enterprise data, etc.) to sync. See [Configurable User Fields](#configurable-user-fields) for details.
 * ✅ **Efficient Data Retrieval**: Uses [partial responses](https://cloud.google.com/storage/docs/json_api#partial-response) from the Google Workspace API to fetch only the data you need.
 * ✅ **Nested Groups Support**: Supports nested groups in Google Workspace thanks to the `includeDerivedMembership` API query parameter.
 * ✅ **Multiple Deployment Options**: Can be deployed via the `AWS Serverless Application Repository`, as a `Container Image`, or as a `CLI`.
 * ✅ **Incremental Sync**: Drastically reduces the number of requests to the AWS SSO SCIM API by using a [state file](docs/State-File-example.md) to track changes.
+
+## 🆕 What's New
+
+For a detailed list of new features, improvements, and bug fixes in each release, see the [What's New](docs/Whats-New.md) page.
 
 ## Compatibility
 
@@ -116,6 +121,66 @@ make build-dist
 * **Docker Image**
   * Pull the image from one of the public repositories.
 
+## Configurable User Fields
+
+By default, all optional user attributes are synced from Google Workspace to AWS SSO SCIM. You can control which optional fields are included using the `sync_user_fields` configuration option.
+
+**Available fields:**
+
+| Field               | Description                                                                 |
+| ------------------- | --------------------------------------------------------------------------- |
+| `phoneNumbers`      | User's phone numbers                                                        |
+| `addresses`         | User's addresses (street, city, region, postal code, country)               |
+| `title`             | User's job title                                                            |
+| `preferredLanguage` | User's preferred language                                                   |
+| `locale`            | User's locale                                                               |
+| `timezone`          | User's timezone                                                             |
+| `nickName`          | User's nickname                                                             |
+| `profileURL`        | User's profile URL                                                          |
+| `userType`          | User type attribute                                                         |
+| `enterpriseData`    | Enterprise extension (employeeNumber, costCenter, organization, department, division, manager) |
+
+**Required fields** (always synced, not configurable): `name`, `userName`, `displayName`, `emails`, `active`.
+
+### Configuration Examples
+
+**Config file (.idpscim.yaml):**
+
+```yaml
+# Sync only phone numbers, addresses, and enterprise data
+sync_user_fields:
+  - phoneNumbers
+  - addresses
+  - enterpriseData
+```
+
+**Environment variable (Lambda / SAM):**
+
+```bash
+IDPSCIM_SYNC_USER_FIELDS=phoneNumbers,addresses,enterpriseData
+```
+
+**CLI flag:**
+
+```bash
+idpscim --sync-user-fields phoneNumbers,addresses,enterpriseData
+```
+
+**SAM template parameter:**
+
+Set the `SyncUserFields` parameter when deploying:
+
+```bash
+sam deploy --parameter-overrides SyncUserFields=phoneNumbers,addresses,enterpriseData
+```
+
+### Behavior Notes
+
+* **Default (empty or not set):** When `sync_user_fields` is empty or not configured, all optional fields are synced. This preserves backward compatibility with existing deployments.
+* **Specifying fields:** Only the listed fields will be synced. For example, setting `sync_user_fields: [phoneNumbers]` will sync only phone numbers; addresses, enterprise data, and other optional attributes will not be sent to AWS SSO SCIM.
+* **Invalid field names:** If an invalid field name is provided, the application will fail at startup with a clear error message listing the unrecognized field.
+* **Changing on an existing deployment:** The first sync after modifying this configuration will detect all users as "changed" (due to hash differences) and update them in AWS SSO. This is expected behavior — it will clear the excluded fields from SCIM.
+
 ## 📦 Repositories
 
 * 📦 [AWS Serverless Application Repository](https://serverlessrepo.aws.amazon.com/applications/us-east-1/889836709304/idp-scim-sync)
@@ -126,7 +191,7 @@ make build-dist
 ## ⚠️ Limitations
 
 * **Group Limit**: The AWS SSO SCIM API has a limit of 50 groups per request. Please support the feature request on the [AWS Support site](https://repost.aws/questions/QUqqnVkIo_SYyF_SlX5LcUjg/aws-sso-scim-api-pagination-for-methods) to help get this limit increased.
-* **Throttling**: With a large number of users and groups, you may encounter a `ThrottlingException` from the AWS SSO SCIM API. This project uses a [retryable HTTP client](https://github.com/hashicorp/go-retryablehttp) to mitigate this, but it's still a possibility.
+* **Throttling**: With a large number of users and groups, you may encounter a `ThrottlingException` from the AWS SSO SCIM API. This project uses a [retryable HTTP client](https://github.com/p2p-b2b/httpretrier) to mitigate this, but it's still a possibility.
 * **User Status**: The Google Workspace API doesn't differentiate between normal and guest users except for their status. This project only syncs `ACTIVE` users.
 
 ## For `ssosync` Users
@@ -135,6 +200,7 @@ If you are coming from the [awslabs/ssosync](https://github.com/awslabs/ssosync)
 
 * This project only implements the `--sync-method groups`.
 * This project only implements filtering for Google Workspace Groups, not Users.
+* This project supports selecting which optional user attributes to sync via `--sync-user-fields` (e.g., phone numbers, addresses, enterprise data).
 * The flag names are different.
 * Not all features of `ssosync` are implemented here, and they may not be in the future.
 

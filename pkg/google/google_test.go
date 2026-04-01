@@ -8,6 +8,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/slashdevops/idp-scim-sync/internal/model"
 	"github.com/stretchr/testify/assert"
 	admin "google.golang.org/api/admin/directory/v1"
 	"google.golang.org/api/option"
@@ -914,5 +915,128 @@ func TestNewDirectoryService_GetGroup(t *testing.T) {
 		assert.Equal(t, "etag-group-123456789", got.Etag)
 		assert.Equal(t, "group.1@mail.com", got.Email)
 		assert.Equal(t, "group 1", got.Name)
+	})
+}
+
+func TestNewDirectoryService_ListGroupMembersBatch(t *testing.T) {
+	t.Run("should return empty map for empty groupIDs", func(t *testing.T) {
+		ctx := context.TODO()
+
+		svc := &admin.Service{}
+		client, err := NewDirectoryService(svc)
+		assert.NoError(t, err)
+
+		got, err := client.ListGroupMembersBatch(ctx, []string{})
+		assert.NoError(t, err)
+		assert.NotNil(t, got)
+		assert.Empty(t, got)
+	})
+
+	t.Run("should return members for multiple groups", func(t *testing.T) {
+		ctx := context.TODO()
+
+		group1ID := "group-1"
+		group2ID := "group-2"
+
+		members1 := &admin.Members{
+			Etag: "etag-1",
+			Kind: "directory#members",
+			Members: []*admin.Member{
+				{Id: "m1", Email: "user1@mail.com", Status: "ACTIVE", Type: "USER"},
+			},
+		}
+		members2 := &admin.Members{
+			Etag: "etag-2",
+			Kind: "directory#members",
+			Members: []*admin.Member{
+				{Id: "m2", Email: "user2@mail.com", Status: "ACTIVE", Type: "USER"},
+				{Id: "m3", Email: "user3@mail.com", Status: "ACTIVE", Type: "USER"},
+			},
+		}
+
+		json1, err := members1.MarshalJSON()
+		assert.NoError(t, err)
+		json2, err := members2.MarshalJSON()
+		assert.NoError(t, err)
+
+		svr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			assert.Equal(t, "GET", r.Method)
+			if r.URL.Path == fmt.Sprintf("/admin/directory/v1/groups/%s/members", group1ID) {
+				_, _ = w.Write(json1)
+			} else if r.URL.Path == fmt.Sprintf("/admin/directory/v1/groups/%s/members", group2ID) {
+				_, _ = w.Write(json2)
+			} else {
+				w.WriteHeader(http.StatusNotFound)
+			}
+		}))
+		defer svr.Close()
+
+		svc, err := admin.NewService(ctx, option.WithHTTPClient(svr.Client()), option.WithEndpoint(svr.URL), option.WithUserAgent("test"))
+		assert.NoError(t, err)
+
+		client, err := NewDirectoryService(svc)
+		assert.NoError(t, err)
+
+		got, err := client.ListGroupMembersBatch(ctx, []string{group1ID, group2ID})
+		assert.NoError(t, err)
+		assert.NotNil(t, got)
+		assert.Len(t, got, 2)
+		assert.Len(t, got[group1ID], 1)
+		assert.Len(t, got[group2ID], 2)
+		assert.Equal(t, "user1@mail.com", got[group1ID][0].Email)
+		assert.Equal(t, "user2@mail.com", got[group2ID][0].Email)
+		assert.Equal(t, "user3@mail.com", got[group2ID][1].Email)
+	})
+
+	t.Run("should return error when a group fetch fails", func(t *testing.T) {
+		ctx := context.TODO()
+
+		svr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusInternalServerError)
+		}))
+		defer svr.Close()
+
+		svc, err := admin.NewService(ctx, option.WithHTTPClient(svr.Client()), option.WithEndpoint(svr.URL), option.WithUserAgent("test"))
+		assert.NoError(t, err)
+
+		client, err := NewDirectoryService(svc)
+		assert.NoError(t, err)
+
+		got, err := client.ListGroupMembersBatch(ctx, []string{"bad-group"})
+		assert.Error(t, err)
+		assert.Nil(t, got)
+	})
+}
+
+func TestWithSyncFieldSet(t *testing.T) {
+	t.Run("should apply sync field set to directory service", func(t *testing.T) {
+		svc := &admin.Service{}
+
+		fields := model.NewSyncFieldSet([]string{"phoneNumbers"})
+		client, err := NewDirectoryService(svc, WithSyncFieldSet(fields))
+		assert.NoError(t, err)
+		assert.NotNil(t, client)
+
+		// The fields should now be applied — verify internal state
+		// by checking that the field strings contain "phones" but not "addresses"
+		listFields := string(client.listUsersRequiredFields)
+		assert.Contains(t, listFields, "phones")
+		assert.NotContains(t, listFields, "addresses")
+
+		getFields := string(client.getUsersRequiredFields)
+		assert.Contains(t, getFields, "phones")
+		assert.NotContains(t, getFields, "addresses")
+	})
+
+	t.Run("should use default fields when no option provided", func(t *testing.T) {
+		svc := &admin.Service{}
+
+		client, err := NewDirectoryService(svc)
+		assert.NoError(t, err)
+
+		listFields := string(client.listUsersRequiredFields)
+		assert.Contains(t, listFields, "phones")
+		assert.Contains(t, listFields, "addresses")
+		assert.Contains(t, listFields, "organizations")
 	})
 }

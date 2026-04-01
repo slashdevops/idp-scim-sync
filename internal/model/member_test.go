@@ -337,9 +337,9 @@ func TestGroupsMembersResult_SetHashCode(t *testing.T) {
 	m2.SetHashCode()
 	m3.SetHashCode()
 
-	gm1 := &GroupMembers{Group: &Group{IPID: "1", SCIMID: "1", Name: "group", Email: "group.1@mail.com"}, Resources: []*Member{m1, m2, m3}}
-	gm2 := &GroupMembers{Group: &Group{IPID: "2", SCIMID: "2", Name: "group", Email: "group.2@mail.com"}, Resources: []*Member{m2, m1, m3}}
-	gm3 := &GroupMembers{Group: &Group{IPID: "3", SCIMID: "3", Name: "group", Email: "group.3@mail.com"}, Resources: []*Member{m1, m3, m2}}
+	gm1 := &GroupMembers{Group: &Group{IPID: "1", SCIMID: "1", Name: "group 1", Email: "group.1@mail.com"}, Resources: []*Member{m1, m2, m3}}
+	gm2 := &GroupMembers{Group: &Group{IPID: "2", SCIMID: "2", Name: "group 2", Email: "group.2@mail.com"}, Resources: []*Member{m2, m1, m3}}
+	gm3 := &GroupMembers{Group: &Group{IPID: "3", SCIMID: "3", Name: "group 3", Email: "group.3@mail.com"}, Resources: []*Member{m1, m3, m2}}
 
 	gm1.SetHashCode()
 	gm2.SetHashCode()
@@ -363,14 +363,7 @@ func TestGroupsMembersResult_SetHashCode(t *testing.T) {
 	}
 	gmr3.SetHashCode()
 
-	gmr4 := MergeGroupsMembersResult(&gmr2, &gmr1, &gmr3)
-	gmr4.SetHashCode()
-	gmr5 := MergeGroupsMembersResult(&gmr3, &gmr2, &gmr1)
-	gmr5.SetHashCode()
-
-	t.Logf("gmr4.HashCode: %s\n", gmr4.HashCode)
-	t.Logf("gmr5.HashCode: %s\n", gmr5.HashCode)
-
+	// Test that individual results with same groups in different order produce equal hashes
 	if gmr1.HashCode != gmr2.HashCode {
 		t.Errorf("GroupsMembersResult.HashCode should be equal")
 	}
@@ -380,6 +373,17 @@ func TestGroupsMembersResult_SetHashCode(t *testing.T) {
 	if gmr2.HashCode != gmr3.HashCode {
 		t.Errorf("GroupsMembersResult.HashCode should be equal")
 	}
+
+	// Test merging disjoint groups produces consistent results regardless of input order
+	partA := GroupsMembersResult{Items: 1, Resources: []*GroupMembers{gm1}}
+	partA.SetHashCode()
+	partB := GroupsMembersResult{Items: 1, Resources: []*GroupMembers{gm2}}
+	partB.SetHashCode()
+	partC := GroupsMembersResult{Items: 1, Resources: []*GroupMembers{gm3}}
+	partC.SetHashCode()
+
+	gmr4 := MergeGroupsMembersResult(&partA, &partB, &partC)
+	gmr5 := MergeGroupsMembersResult(&partC, &partB, &partA)
 
 	if gmr5.HashCode != gmr4.HashCode {
 		t.Errorf("GroupsMembersResult.HashCode should be equal: gmr5-> %s, gmr4-> %s", gmr5.HashCode, gmr4.HashCode)

@@ -534,6 +534,29 @@ func TestState_MarshalJSON(t *testing.T) {
 }`),
 			wantErr: false,
 		},
+		{
+			name: "nil GroupMembers resources and nil members within",
+			fields: fields{
+				Resources: &StateResources{
+					Groups: &GroupsResult{
+						Resources: []*Group{},
+					},
+					Users: &UsersResult{
+						Resources: []*User{},
+					},
+					GroupsMembers: &GroupsMembersResult{
+						Resources: []*GroupMembers{
+							nil,
+							{
+								Group:     &Group{IPID: "g1", Name: "Group1"},
+								Resources: []*Member{nil},
+							},
+						},
+					},
+				},
+			},
+			wantErr: false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -547,9 +570,11 @@ func TestState_MarshalJSON(t *testing.T) {
 				return
 			}
 
-			sort := func(x, y string) bool { return x > y }
-			if diff := cmp.Diff(tt.want, got, cmpopts.SortSlices(sort)); diff != "" {
-				t.Errorf("mismatch (-tt.want +got):\n%s", diff)
+			if !tt.wantErr && tt.want != nil {
+				sort := func(x, y string) bool { return x > y }
+				if diff := cmp.Diff(tt.want, got, cmpopts.SortSlices(sort)); diff != "" {
+					t.Errorf("mismatch (-tt.want +got):\n%s", diff)
+				}
 			}
 		})
 	}

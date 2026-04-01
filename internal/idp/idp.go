@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"sync"
 
 	"github.com/slashdevops/idp-scim-sync/internal/model"
 	"github.com/slashdevops/idp-scim-sync/pkg/google"
@@ -39,18 +40,36 @@ type GoogleProviderService interface {
 
 // IdentityProvider is the Identity Provider service that implements the core.IdentityProvider interface and consumes the pkg.google methods.
 type IdentityProvider struct {
-	ps GoogleProviderService
+	ps           GoogleProviderService
+	syncFieldSet *model.SyncFieldSet
+}
+
+// IdentityProviderOption is a function that configures an IdentityProvider.
+type IdentityProviderOption func(*IdentityProvider)
+
+// WithSyncFieldSet configures which optional user fields are included in the sync.
+// When the field set is nil or empty, all fields are synced (default behavior).
+func WithSyncFieldSet(fields *model.SyncFieldSet) IdentityProviderOption {
+	return func(ip *IdentityProvider) {
+		ip.syncFieldSet = fields
+	}
 }
 
 // NewIdentityProvider returns a new instance of the Identity Provider service.
-func NewIdentityProvider(gps GoogleProviderService) (*IdentityProvider, error) {
+func NewIdentityProvider(gps GoogleProviderService, opts ...IdentityProviderOption) (*IdentityProvider, error) {
 	if gps == nil {
 		return nil, ErrDirectoryServiceNil
 	}
 
-	return &IdentityProvider{
+	ip := &IdentityProvider{
 		ps: gps,
-	}, nil
+	}
+
+	for _, opt := range opts {
+		opt(ip)
+	}
+
+	return ip, nil
 }
 
 // GetGroups returns a list of groups from the Identity Provider API.
@@ -117,9 +136,9 @@ func (i *IdentityProvider) GetUsers(ctx context.Context, filter []string) (*mode
 	}
 
 	syncUsers := make([]*model.User, len(pUsers))
-	for i, usr := range pUsers {
-		gu := buildUser(usr)
-		syncUsers[i] = gu
+	for idx, usr := range pUsers {
+		gu := buildUser(usr, i.syncFieldSet)
+		syncUsers[idx] = gu
 	}
 	uResult := model.UsersResultBuilder().WithResources(syncUsers).Build()
 	slog.Debug("idp: GetUsers()", "users", len(syncUsers))
@@ -170,6 +189,7 @@ func (i *IdentityProvider) GetGroupMembers(ctx context.Context, groupID string) 
 }
 
 // GetUsersByGroupsMembers returns a list of users from the Identity Provider API.
+// It fetches user details concurrently with a bounded number of goroutines.
 func (i *IdentityProvider) GetUsersByGroupsMembers(ctx context.Context, gmr *model.GroupsMembersResult) (*model.UsersResult, error) {
 	if gmr == nil {
 		return nil, ErrGroupResultNil
@@ -181,22 +201,51 @@ func (i *IdentityProvider) GetUsersByGroupsMembers(ctx context.Context, gmr *mod
 		return uResult, nil
 	}
 
-	uniqUsers := make(map[string]struct{}, len(gmr.Resources))
-	pUsers := make([]*model.User, 0, len(gmr.Resources))
+	// Collect unique emails first
+	uniqEmails := make(map[string]string, len(gmr.Resources)) // email -> IPID
 	for _, groupMembers := range gmr.Resources {
 		for _, member := range groupMembers.Resources {
-			if _, ok := uniqUsers[member.Email]; !ok {
-				uniqUsers[member.Email] = struct{}{}
-
-				u, err := i.ps.GetUser(ctx, member.Email)
-				if err != nil {
-					return nil, fmt.Errorf("idp: error getting user: %+v, email: %s, error: %w", member.IPID, member.Email, err)
-				}
-				gu := buildUser(u)
-
-				pUsers = append(pUsers, gu)
+			if _, ok := uniqEmails[member.Email]; !ok {
+				uniqEmails[member.Email] = member.IPID
 			}
 		}
+	}
+
+	// Fetch users concurrently
+	const maxConcurrent = 10
+	sem := make(chan struct{}, maxConcurrent)
+	var mu sync.Mutex
+	var wg sync.WaitGroup
+
+	pUsers := make([]*model.User, 0, len(uniqEmails))
+	errChan := make(chan error, len(uniqEmails))
+
+	for email, ipid := range uniqEmails {
+		wg.Add(1)
+		go func(email, ipid string) {
+			defer wg.Done()
+
+			sem <- struct{}{}        // Acquire semaphore
+			defer func() { <-sem }() // Release semaphore
+
+			u, err := i.ps.GetUser(ctx, email)
+			if err != nil {
+				errChan <- fmt.Errorf("idp: error getting user: %+v, email: %s, error: %w", ipid, email, err)
+				return
+			}
+			gu := buildUser(u, i.syncFieldSet)
+
+			mu.Lock()
+			pUsers = append(pUsers, gu)
+			mu.Unlock()
+		}(email, ipid)
+	}
+
+	wg.Wait()
+	close(errChan)
+
+	if err := <-errChan; err != nil {
+		return nil, err
 	}
 
 	pUsersResult := model.UsersResultBuilder().WithResources(pUsers).Build()

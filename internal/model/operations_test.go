@@ -1337,6 +1337,84 @@ func TestMergeGroupsMembersResult(t *testing.T) {
 	}
 }
 
+// TestMergeGroupsMembersResult_DuplicateGroups reproduces the production bug where
+// MergeGroupsMembersResult creates duplicate entries for the same group when
+// merging "created" and "equal" results from membersDataSets.
+// This causes the state file to grow with duplicates, making the hash never
+// match the IDP data, triggering unnecessary re-syncs on every execution.
+func TestMergeGroupsMembersResult_DuplicateGroups(t *testing.T) {
+	// Simulate what happens during stateSync when a group has both
+	// new members (create) and existing members (equal).
+	// membersDataSets splits group "DevOps" into:
+	//   create: DevOps -> [newMember]
+	//   equal:  DevOps -> [existingMember]
+	// Then MergeGroupsMembersResult(created, equal) should produce ONE entry:
+	//   DevOps -> [newMember, existingMember]
+	// NOT TWO entries (the bug).
+
+	group1 := &Group{IPID: "1", SCIMID: "s1", Name: "AWS-SSO-DevOps", Email: "devops@test.com"}
+	group1.SetHashCode()
+
+	group2 := &Group{IPID: "2", SCIMID: "s2", Name: "AWS-SSO-Backend", Email: "backend@test.com"}
+	group2.SetHashCode()
+
+	newMember := MemberBuilder().WithIPID("m1").WithSCIMID("sm1").WithEmail("new@test.com").WithStatus("ACTIVE").Build()
+	existingMember := MemberBuilder().WithIPID("m2").WithSCIMID("sm2").WithEmail("existing@test.com").WithStatus("ACTIVE").Build()
+	backendMember := MemberBuilder().WithIPID("m3").WithSCIMID("sm3").WithEmail("backend@test.com").WithStatus("ACTIVE").Build()
+
+	// "created" result: DevOps has 1 new member
+	created := &GroupsMembersResult{
+		Items: 1,
+		Resources: []*GroupMembers{
+			GroupMembersBuilder().WithGroup(group1).WithResources([]*Member{newMember}).Build(),
+		},
+	}
+	created.SetHashCode()
+
+	// "equal" result: DevOps has 1 existing member, Backend has 1 existing member
+	equal := &GroupsMembersResult{
+		Items: 2,
+		Resources: []*GroupMembers{
+			GroupMembersBuilder().WithGroup(group1).WithResources([]*Member{existingMember}).Build(),
+			GroupMembersBuilder().WithGroup(group2).WithResources([]*Member{backendMember}).Build(),
+		},
+	}
+	equal.SetHashCode()
+
+	got := MergeGroupsMembersResult(created, equal)
+
+	// Key assertion: DevOps should appear ONCE with both members merged,
+	// not twice as separate entries
+	if got.Items != 2 {
+		t.Errorf("expected 2 group entries (DevOps + Backend), got %d", got.Items)
+	}
+
+	// Check no duplicate group names
+	groupNames := make(map[string]int)
+	for _, gm := range got.Resources {
+		groupNames[gm.Group.Name]++
+	}
+	for name, count := range groupNames {
+		if count > 1 {
+			t.Errorf("group %q appears %d times in merged result, expected 1", name, count)
+		}
+	}
+
+	// DevOps should have both members combined
+	for _, gm := range got.Resources {
+		if gm.Group.Name == "AWS-SSO-DevOps" {
+			if gm.Items != 2 {
+				t.Errorf("DevOps should have 2 members, got %d", gm.Items)
+			}
+		}
+		if gm.Group.Name == "AWS-SSO-Backend" {
+			if gm.Items != 1 {
+				t.Errorf("Backend should have 1 member, got %d", gm.Items)
+			}
+		}
+	}
+}
+
 func TestMembersDataSets(t *testing.T) {
 	type args struct {
 		idp  []*GroupMembers

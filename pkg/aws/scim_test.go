@@ -2254,3 +2254,486 @@ func TestConstants(t *testing.T) {
 		assert.Equal(t, "application/json", ContentTypeJSON)
 	})
 }
+
+func TestDeleteUser_ErrorCases(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	endpoint := "https://testing.com"
+
+	t.Run("should return error when id is empty", func(t *testing.T) {
+		mockHTTPClient := mocks.NewMockHTTPClient(mockCtrl)
+
+		service, err := NewSCIMService(mockHTTPClient, endpoint, "MyToken")
+		assert.NoError(t, err)
+
+		err = service.DeleteUser(context.Background(), "")
+		assert.Error(t, err)
+		assert.ErrorIs(t, err, ErrUserIDEmpty)
+	})
+
+	t.Run("should return nil when user already deleted (404)", func(t *testing.T) {
+		mockHTTPClient := mocks.NewMockHTTPClient(mockCtrl)
+
+		notFoundResp := `{"schemas":["urn:ietf:params:scim:api:messages:2.0:Error"],"detail":"User not found","status":"404"}`
+		httpResp := &http.Response{
+			Status:     "404 Not Found",
+			StatusCode: http.StatusNotFound,
+			Body:       io.NopCloser(strings.NewReader(notFoundResp)),
+		}
+
+		mockHTTPClient.EXPECT().Do(gomock.Any()).Return(httpResp, nil)
+
+		service, err := NewSCIMService(mockHTTPClient, endpoint, "MyToken")
+		assert.NoError(t, err)
+
+		err = service.DeleteUser(context.Background(), "non-existent-id")
+		assert.NoError(t, err)
+	})
+
+	t.Run("should return error on server error (500)", func(t *testing.T) {
+		mockHTTPClient := mocks.NewMockHTTPClient(mockCtrl)
+
+		httpResp := &http.Response{
+			Status:     "500 Internal Server Error",
+			StatusCode: http.StatusInternalServerError,
+			Body:       io.NopCloser(strings.NewReader(`{"detail":"Internal error","status":"500"}`)),
+		}
+
+		mockHTTPClient.EXPECT().Do(gomock.Any()).Return(httpResp, nil)
+
+		service, err := NewSCIMService(mockHTTPClient, endpoint, "MyToken")
+		assert.NoError(t, err)
+
+		err = service.DeleteUser(context.Background(), "user-id-123")
+		assert.Error(t, err)
+
+		var httpErr *HTTPResponseError
+		assert.True(t, errors.As(err, &httpErr))
+		assert.Equal(t, http.StatusInternalServerError, httpErr.StatusCode)
+	})
+
+	t.Run("should return error when HTTP client returns error", func(t *testing.T) {
+		mockHTTPClient := mocks.NewMockHTTPClient(mockCtrl)
+
+		mockHTTPClient.EXPECT().Do(gomock.Any()).Return(nil, fmt.Errorf("connection refused"))
+
+		service, err := NewSCIMService(mockHTTPClient, endpoint, "MyToken")
+		assert.NoError(t, err)
+
+		err = service.DeleteUser(context.Background(), "user-id-123")
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "connection refused")
+	})
+}
+
+func TestGetUser_ErrorCases(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	endpoint := "https://testing.com"
+
+	t.Run("should return error when userID is empty", func(t *testing.T) {
+		mockHTTPClient := mocks.NewMockHTTPClient(mockCtrl)
+
+		service, err := NewSCIMService(mockHTTPClient, endpoint, "MyToken")
+		assert.NoError(t, err)
+
+		got, err := service.GetUser(context.Background(), "")
+		assert.Error(t, err)
+		assert.Nil(t, got)
+		assert.ErrorIs(t, err, ErrUserIDEmpty)
+	})
+
+	t.Run("should return error on HTTP error response", func(t *testing.T) {
+		mockHTTPClient := mocks.NewMockHTTPClient(mockCtrl)
+
+		httpResp := &http.Response{
+			Status:     "500 Internal Server Error",
+			StatusCode: http.StatusInternalServerError,
+			Body:       io.NopCloser(strings.NewReader(`{"detail":"server error","status":"500"}`)),
+		}
+
+		mockHTTPClient.EXPECT().Do(gomock.Any()).Return(httpResp, nil)
+
+		service, err := NewSCIMService(mockHTTPClient, endpoint, "MyToken")
+		assert.NoError(t, err)
+
+		got, err := service.GetUser(context.Background(), "some-user-id")
+		assert.Error(t, err)
+		assert.Nil(t, got)
+	})
+
+	t.Run("should return error on invalid JSON response", func(t *testing.T) {
+		mockHTTPClient := mocks.NewMockHTTPClient(mockCtrl)
+
+		httpResp := &http.Response{
+			Status:     "200 OK",
+			StatusCode: http.StatusOK,
+			Body:       io.NopCloser(strings.NewReader("not valid json")),
+		}
+
+		mockHTTPClient.EXPECT().Do(gomock.Any()).Return(httpResp, nil)
+
+		service, err := NewSCIMService(mockHTTPClient, endpoint, "MyToken")
+		assert.NoError(t, err)
+
+		got, err := service.GetUser(context.Background(), "some-user-id")
+		assert.Error(t, err)
+		assert.Nil(t, got)
+		assert.Contains(t, err.Error(), "error decoding response body")
+	})
+
+	t.Run("should return error when HTTP client fails", func(t *testing.T) {
+		mockHTTPClient := mocks.NewMockHTTPClient(mockCtrl)
+
+		mockHTTPClient.EXPECT().Do(gomock.Any()).Return(nil, fmt.Errorf("timeout"))
+
+		service, err := NewSCIMService(mockHTTPClient, endpoint, "MyToken")
+		assert.NoError(t, err)
+
+		got, err := service.GetUser(context.Background(), "some-user-id")
+		assert.Error(t, err)
+		assert.Nil(t, got)
+		assert.Contains(t, err.Error(), "timeout")
+	})
+}
+
+func TestDeleteGroup_ErrorCases(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	endpoint := "https://testing.com"
+
+	t.Run("should return error when id is empty", func(t *testing.T) {
+		mockHTTPClient := mocks.NewMockHTTPClient(mockCtrl)
+
+		service, err := NewSCIMService(mockHTTPClient, endpoint, "MyToken")
+		assert.NoError(t, err)
+
+		err = service.DeleteGroup(context.Background(), "")
+		assert.Error(t, err)
+		assert.ErrorIs(t, err, ErrGroupIDEmpty)
+	})
+
+	t.Run("should return nil when group already deleted (404)", func(t *testing.T) {
+		mockHTTPClient := mocks.NewMockHTTPClient(mockCtrl)
+
+		notFoundResp := `{"schemas":["urn:ietf:params:scim:api:messages:2.0:Error"],"detail":"Group not found","status":"404"}`
+		httpResp := &http.Response{
+			Status:     "404 Not Found",
+			StatusCode: http.StatusNotFound,
+			Body:       io.NopCloser(strings.NewReader(notFoundResp)),
+		}
+
+		mockHTTPClient.EXPECT().Do(gomock.Any()).Return(httpResp, nil)
+
+		service, err := NewSCIMService(mockHTTPClient, endpoint, "MyToken")
+		assert.NoError(t, err)
+
+		err = service.DeleteGroup(context.Background(), "non-existent-group")
+		assert.NoError(t, err)
+	})
+
+	t.Run("should return error on server error (500)", func(t *testing.T) {
+		mockHTTPClient := mocks.NewMockHTTPClient(mockCtrl)
+
+		httpResp := &http.Response{
+			Status:     "500 Internal Server Error",
+			StatusCode: http.StatusInternalServerError,
+			Body:       io.NopCloser(strings.NewReader(`{"detail":"Internal error","status":"500"}`)),
+		}
+
+		mockHTTPClient.EXPECT().Do(gomock.Any()).Return(httpResp, nil)
+
+		service, err := NewSCIMService(mockHTTPClient, endpoint, "MyToken")
+		assert.NoError(t, err)
+
+		err = service.DeleteGroup(context.Background(), "group-id-123")
+		assert.Error(t, err)
+
+		var httpErr *HTTPResponseError
+		assert.True(t, errors.As(err, &httpErr))
+		assert.Equal(t, http.StatusInternalServerError, httpErr.StatusCode)
+	})
+
+	t.Run("should return error when HTTP client fails", func(t *testing.T) {
+		mockHTTPClient := mocks.NewMockHTTPClient(mockCtrl)
+
+		mockHTTPClient.EXPECT().Do(gomock.Any()).Return(nil, fmt.Errorf("connection reset"))
+
+		service, err := NewSCIMService(mockHTTPClient, endpoint, "MyToken")
+		assert.NoError(t, err)
+
+		err = service.DeleteGroup(context.Background(), "group-id-123")
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "connection reset")
+	})
+}
+
+func TestCreateGroup_ErrorCases(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	endpoint := "https://testing.com"
+
+	t.Run("should return error on HTTP error response", func(t *testing.T) {
+		mockHTTPClient := mocks.NewMockHTTPClient(mockCtrl)
+
+		httpResp := &http.Response{
+			Status:     "500 Internal Server Error",
+			StatusCode: http.StatusInternalServerError,
+			Body:       io.NopCloser(strings.NewReader(`{"detail":"server error","status":"500"}`)),
+		}
+
+		mockHTTPClient.EXPECT().Do(gomock.Any()).Return(httpResp, nil)
+
+		service, err := NewSCIMService(mockHTTPClient, endpoint, "MyToken")
+		assert.NoError(t, err)
+
+		req := &CreateGroupRequest{DisplayName: "TestGroup"}
+		got, err := service.CreateGroup(context.Background(), req)
+		assert.Error(t, err)
+		assert.Nil(t, got)
+	})
+
+	t.Run("should return error when HTTP client fails", func(t *testing.T) {
+		mockHTTPClient := mocks.NewMockHTTPClient(mockCtrl)
+
+		mockHTTPClient.EXPECT().Do(gomock.Any()).Return(nil, fmt.Errorf("network error"))
+
+		service, err := NewSCIMService(mockHTTPClient, endpoint, "MyToken")
+		assert.NoError(t, err)
+
+		req := &CreateGroupRequest{DisplayName: "TestGroup"}
+		got, err := service.CreateGroup(context.Background(), req)
+		assert.Error(t, err)
+		assert.Nil(t, got)
+		assert.Contains(t, err.Error(), "network error")
+	})
+
+	t.Run("should return error on invalid JSON response", func(t *testing.T) {
+		mockHTTPClient := mocks.NewMockHTTPClient(mockCtrl)
+
+		httpResp := &http.Response{
+			Status:     "201 Created",
+			StatusCode: http.StatusCreated,
+			Body:       io.NopCloser(strings.NewReader("not json")),
+		}
+
+		mockHTTPClient.EXPECT().Do(gomock.Any()).Return(httpResp, nil)
+
+		service, err := NewSCIMService(mockHTTPClient, endpoint, "MyToken")
+		assert.NoError(t, err)
+
+		req := &CreateGroupRequest{DisplayName: "TestGroup"}
+		got, err := service.CreateGroup(context.Background(), req)
+		assert.Error(t, err)
+		assert.Nil(t, got)
+		assert.Contains(t, err.Error(), "error decoding response body")
+	})
+}
+
+func TestServiceProviderConfig(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	endpoint := "https://testing.com"
+
+	ServiceProviderConfigFile := "testdata/ServiceProviderConfig.json"
+
+	t.Run("should return valid config", func(t *testing.T) {
+		mockHTTPClient := mocks.NewMockHTTPClient(mockCtrl)
+		jsonResp := ReadJSONFileAsString(t, ServiceProviderConfigFile)
+
+		httpResp := &http.Response{
+			Status:     "200 OK",
+			StatusCode: http.StatusOK,
+			Header: http.Header{
+				"Content-Type": []string{"application/json"},
+			},
+			Body:          io.NopCloser(strings.NewReader(jsonResp)),
+			ContentLength: int64(len(jsonResp)),
+		}
+
+		mockHTTPClient.EXPECT().Do(gomock.Any()).Return(httpResp, nil)
+
+		service, err := NewSCIMService(mockHTTPClient, endpoint, "MyToken")
+		assert.NoError(t, err)
+
+		got, err := service.ServiceProviderConfig(context.Background())
+		assert.NoError(t, err)
+		assert.NotNil(t, got)
+		assert.True(t, got.Filter.Supported)
+		assert.Equal(t, 50, got.Filter.MaxResults)
+		assert.True(t, got.Patch.Supported)
+		assert.False(t, got.Bulk.Supported)
+		assert.False(t, got.ChangePassword.Supported)
+		assert.False(t, got.Sort.Supported)
+		assert.False(t, got.Etag.Supported)
+		assert.Len(t, got.AuthenticationSchemes, 1)
+		assert.Equal(t, "oauthbearertoken", got.AuthenticationSchemes[0].Type)
+	})
+
+	t.Run("should return error on HTTP error response", func(t *testing.T) {
+		mockHTTPClient := mocks.NewMockHTTPClient(mockCtrl)
+
+		httpResp := &http.Response{
+			Status:     "401 Unauthorized",
+			StatusCode: http.StatusUnauthorized,
+			Body:       io.NopCloser(strings.NewReader(`{"detail":"Invalid token","status":"401"}`)),
+		}
+
+		mockHTTPClient.EXPECT().Do(gomock.Any()).Return(httpResp, nil)
+
+		service, err := NewSCIMService(mockHTTPClient, endpoint, "MyToken")
+		assert.NoError(t, err)
+
+		got, err := service.ServiceProviderConfig(context.Background())
+		assert.Error(t, err)
+		assert.Nil(t, got)
+
+		var httpErr *HTTPResponseError
+		assert.True(t, errors.As(err, &httpErr))
+		assert.Equal(t, http.StatusUnauthorized, httpErr.StatusCode)
+	})
+
+	t.Run("should return error on invalid JSON response", func(t *testing.T) {
+		mockHTTPClient := mocks.NewMockHTTPClient(mockCtrl)
+
+		httpResp := &http.Response{
+			Status:     "200 OK",
+			StatusCode: http.StatusOK,
+			Body:       io.NopCloser(strings.NewReader("invalid json")),
+		}
+
+		mockHTTPClient.EXPECT().Do(gomock.Any()).Return(httpResp, nil)
+
+		service, err := NewSCIMService(mockHTTPClient, endpoint, "MyToken")
+		assert.NoError(t, err)
+
+		got, err := service.ServiceProviderConfig(context.Background())
+		assert.Error(t, err)
+		assert.Nil(t, got)
+		assert.Contains(t, err.Error(), "error decoding response body")
+	})
+
+	t.Run("should return error when HTTP client fails", func(t *testing.T) {
+		mockHTTPClient := mocks.NewMockHTTPClient(mockCtrl)
+
+		mockHTTPClient.EXPECT().Do(gomock.Any()).Return(nil, fmt.Errorf("connection timeout"))
+
+		service, err := NewSCIMService(mockHTTPClient, endpoint, "MyToken")
+		assert.NoError(t, err)
+
+		got, err := service.ServiceProviderConfig(context.Background())
+		assert.Error(t, err)
+		assert.Nil(t, got)
+		assert.Contains(t, err.Error(), "connection timeout")
+	})
+}
+
+func TestCreateOrGetGroup_AdditionalCases(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	endpoint := "https://testing.com"
+
+	CreateGroupResponseFile := "testdata/CreateGroupResponse.json"
+	ListGroupsResponseFile := "testdata/ListGroupsResponse.json"
+
+	t.Run("should return error when request is nil", func(t *testing.T) {
+		mockHTTPClient := mocks.NewMockHTTPClient(mockCtrl)
+
+		service, err := NewSCIMService(mockHTTPClient, endpoint, "MyToken")
+		assert.NoError(t, err)
+
+		got, err := service.CreateOrGetGroup(context.Background(), nil)
+		assert.Error(t, err)
+		assert.Nil(t, got)
+		assert.ErrorIs(t, err, ErrCreateGroupRequestEmpty)
+	})
+
+	t.Run("should return error when DisplayName is empty", func(t *testing.T) {
+		mockHTTPClient := mocks.NewMockHTTPClient(mockCtrl)
+
+		service, err := NewSCIMService(mockHTTPClient, endpoint, "MyToken")
+		assert.NoError(t, err)
+
+		req := &CreateGroupRequest{DisplayName: ""}
+		got, err := service.CreateOrGetGroup(context.Background(), req)
+		assert.Error(t, err)
+		assert.Nil(t, got)
+		assert.ErrorIs(t, err, ErrDisplayNameEmpty)
+	})
+
+	t.Run("should create group successfully when no conflict", func(t *testing.T) {
+		mockHTTPClient := mocks.NewMockHTTPClient(mockCtrl)
+		jsonResp := ReadJSONFileAsString(t, CreateGroupResponseFile)
+
+		httpResp := &http.Response{
+			Status:     "201 Created",
+			StatusCode: http.StatusCreated,
+			Header: http.Header{
+				"Content-Type": []string{"application/json"},
+			},
+			Body:          io.NopCloser(strings.NewReader(jsonResp)),
+			ContentLength: int64(len(jsonResp)),
+		}
+
+		mockHTTPClient.EXPECT().Do(gomock.Any()).Return(httpResp, nil)
+
+		service, err := NewSCIMService(mockHTTPClient, endpoint, "MyToken")
+		assert.NoError(t, err)
+
+		req := &CreateGroupRequest{DisplayName: "Group Bar"}
+		got, err := service.CreateOrGetGroup(context.Background(), req)
+		assert.NoError(t, err)
+		assert.NotNil(t, got)
+		assert.Equal(t, "9067729b3d-a2cfc8a5-f4ab-4443-9d7d-b32a9013c554", got.ID)
+		assert.Equal(t, "Group Bar", got.DisplayName)
+	})
+
+	t.Run("should get existing group on 409 conflict", func(t *testing.T) {
+		mockHTTPClient := mocks.NewMockHTTPClient(mockCtrl)
+
+		// First call: POST returns 409 conflict
+		conflictResp := ReadJSONFileAsString(t, "testdata/CreateGroupResponse_Conflict.json")
+		httpResp409 := &http.Response{
+			Status:     "409 Conflict",
+			StatusCode: http.StatusConflict,
+			Body:       io.NopCloser(strings.NewReader(conflictResp)),
+		}
+
+		// Second call: GET returns existing group list
+		listGroupsResp := ReadJSONFileAsString(t, ListGroupsResponseFile)
+		httpRespList := &http.Response{
+			Status:     "200 OK",
+			StatusCode: http.StatusOK,
+			Body:       io.NopCloser(strings.NewReader(listGroupsResp)),
+		}
+
+		gomock.InOrder(
+			mockHTTPClient.EXPECT().Do(gomock.Any()).Return(httpResp409, nil),
+			mockHTTPClient.EXPECT().Do(gomock.Any()).Return(httpRespList, nil),
+		)
+
+		service, err := NewSCIMService(mockHTTPClient, endpoint, "MyToken")
+		assert.NoError(t, err)
+
+		req := &CreateGroupRequest{DisplayName: "Group Foo"}
+		got, err := service.CreateOrGetGroup(context.Background(), req)
+		assert.NoError(t, err)
+		assert.NotNil(t, got)
+		assert.NotEmpty(t, got.ID)
+	})
+
+	t.Run("should return error when HTTP client fails", func(t *testing.T) {
+		mockHTTPClient := mocks.NewMockHTTPClient(mockCtrl)
+
+		mockHTTPClient.EXPECT().Do(gomock.Any()).Return(nil, fmt.Errorf("network failure"))
+
+		service, err := NewSCIMService(mockHTTPClient, endpoint, "MyToken")
+		assert.NoError(t, err)
+
+		req := &CreateGroupRequest{DisplayName: "Group Test"}
+		got, err := service.CreateOrGetGroup(context.Background(), req)
+		assert.Error(t, err)
+		assert.Nil(t, got)
+		assert.Contains(t, err.Error(), "network failure")
+	})
+}

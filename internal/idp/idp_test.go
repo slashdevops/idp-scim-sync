@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"testing/synctest"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
@@ -764,12 +765,82 @@ func TestGetUsersByGroupsMembers(t *testing.T) {
 				return
 			}
 
-			sort := func(x, y string) bool { return x > y }
-			if diff := cmp.Diff(tt.want, got, cmpopts.SortSlices(sort)); diff != "" {
+			sortStr := func(x, y string) bool { return x > y }
+			sortUsers := func(x, y *model.User) bool { return x.IPID < y.IPID }
+			if diff := cmp.Diff(tt.want, got, cmpopts.SortSlices(sortStr), cmpopts.SortSlices(sortUsers)); diff != "" {
 				t.Errorf("GetUsersByGroupsMembers() (-want +got):\n%s", diff)
 			}
 		})
 	}
+}
+
+// TestGetUsersByGroupsMembers_NoGoroutineLeaks verifies that the concurrent
+// GetUsersByGroupsMembers implementation does not leak goroutines.
+// synctest.Test waits for all goroutines in the bubble to exit; if any
+// goroutine leaks, the test deadlocks and fails.
+func TestGetUsersByGroupsMembers_NoGoroutineLeaks(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		mockCtrl := gomock.NewController(t)
+		mockDS := mocks.NewMockGoogleProviderService(mockCtrl)
+
+		user1 := &admin.User{
+			Id: "1", PrimaryEmail: "u1@test.com", Suspended: false,
+			Name: &admin.UserName{GivenName: "U", FamilyName: "One", FullName: "U One"},
+		}
+		user2 := &admin.User{
+			Id: "2", PrimaryEmail: "u2@test.com", Suspended: false,
+			Name: &admin.UserName{GivenName: "U", FamilyName: "Two", FullName: "U Two"},
+		}
+
+		mockDS.EXPECT().GetUser(gomock.Any(), "u1@test.com").Return(user1, nil)
+		mockDS.EXPECT().GetUser(gomock.Any(), "u2@test.com").Return(user2, nil)
+
+		ip := &IdentityProvider{ps: mockDS}
+
+		m1 := model.MemberBuilder().WithIPID("1").WithEmail("u1@test.com").WithStatus("ACTIVE").Build()
+		m2 := model.MemberBuilder().WithIPID("2").WithEmail("u2@test.com").WithStatus("ACTIVE").Build()
+		group := model.GroupBuilder().WithIPID("g1").WithName("TestGroup").Build()
+
+		gmr := &model.GroupsMembersResult{
+			Items: 1,
+			Resources: []*model.GroupMembers{
+				model.GroupMembersBuilder().WithGroup(group).WithResources([]*model.Member{m1, m2}).Build(),
+			},
+		}
+
+		got, err := ip.GetUsersByGroupsMembers(context.Background(), gmr)
+		assert.NoError(t, err)
+		assert.NotNil(t, got)
+		assert.Equal(t, 2, got.Items)
+	})
+}
+
+// TestGetUsersByGroupsMembers_ErrorNoGoroutineLeaks verifies that when one
+// GetUser call fails, goroutines still complete cleanly without leaking.
+func TestGetUsersByGroupsMembers_ErrorNoGoroutineLeaks(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		mockCtrl := gomock.NewController(t)
+		mockDS := mocks.NewMockGoogleProviderService(mockCtrl)
+
+		mockDS.EXPECT().GetUser(gomock.Any(), gomock.Any()).Return(nil, errors.New("API error")).AnyTimes()
+
+		ip := &IdentityProvider{ps: mockDS}
+
+		m1 := model.MemberBuilder().WithIPID("1").WithEmail("u1@test.com").WithStatus("ACTIVE").Build()
+		m2 := model.MemberBuilder().WithIPID("2").WithEmail("u2@test.com").WithStatus("ACTIVE").Build()
+		group := model.GroupBuilder().WithIPID("g1").WithName("TestGroup").Build()
+
+		gmr := &model.GroupsMembersResult{
+			Items: 1,
+			Resources: []*model.GroupMembers{
+				model.GroupMembersBuilder().WithGroup(group).WithResources([]*model.Member{m1, m2}).Build(),
+			},
+		}
+
+		got, err := ip.GetUsersByGroupsMembers(context.Background(), gmr)
+		assert.Error(t, err)
+		assert.Nil(t, got)
+	})
 }
 
 func TestGetGroupsMembers(t *testing.T) {

@@ -210,14 +210,28 @@ func MergeUsersResult(urs ...*UsersResult) (merged *UsersResult) {
 	return
 }
 
-// MergeGroupsMembersResult merges n GroupMembers result
-// NOTE: this function does not check the content of the GroupMembers, so
-// the return could have duplicated groupsMembers
+// MergeGroupsMembersResult merges n GroupMembers results.
+// When the same group appears in multiple results (e.g., from "created" and "equal"
+// sets), their members are combined into a single GroupMembers entry to prevent
+// duplicate group entries in the state file.
 func MergeGroupsMembersResult(gms ...*GroupsMembersResult) (merged *GroupsMembersResult) {
+	// Use group name as key to merge members from the same group
+	groupIndex := make(map[string]int) // group name -> index in result slice
 	groupsMembers := make([]*GroupMembers, 0)
 
 	for _, gm := range gms {
-		groupsMembers = append(groupsMembers, gm.Resources...)
+		for _, entry := range gm.Resources {
+			if idx, exists := groupIndex[entry.Group.Name]; exists {
+				// Group already seen: merge members into existing entry
+				groupsMembers[idx].Resources = append(groupsMembers[idx].Resources, entry.Resources...)
+				groupsMembers[idx].Items = len(groupsMembers[idx].Resources)
+				groupsMembers[idx].SetHashCode()
+			} else {
+				// New group: add to result and track index
+				groupIndex[entry.Group.Name] = len(groupsMembers)
+				groupsMembers = append(groupsMembers, entry)
+			}
+		}
 	}
 
 	merged = GroupsMembersResultBuilder().WithResources(groupsMembers).Build()
@@ -328,17 +342,12 @@ func membersDataSets(idp, scim []*GroupMembers) (create, equal, remove []*GroupM
 		}
 
 		for _, member := range grpMembers.Resources {
-			if _, ok := scimMemberSet[grpMembers.Group.Name][member.Email]; !ok {
+			scimMember, exists := scimMemberSet[grpMembers.Group.Name][member.Email]
+			if !exists {
 				toC[grpMembers.Group.Name] = append(toC[grpMembers.Group.Name], member)
 			} else {
-				// check if the groups has the same members before adding to equal
-				// TODO: check if the groups has the same members before adding to equal, what happens if some members are different?
-				for grpMemberEmail := range scimMemberSet[grpMembers.Group.Name] {
-					if grpMemberEmail == member.Email {
-						member.SCIMID = scimMemberSet[grpMembers.Group.Name][member.Email].SCIMID
-						toE[grpMembers.Group.Name] = append(toE[grpMembers.Group.Name], member)
-					}
-				}
+				member.SCIMID = scimMember.SCIMID
+				toE[grpMembers.Group.Name] = append(toE[grpMembers.Group.Name], member)
 			}
 		}
 

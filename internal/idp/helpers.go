@@ -9,8 +9,10 @@ import (
 	admin "google.golang.org/api/admin/directory/v1"
 )
 
-// buildUser builds a User model from a User coming from the IDP API
-func buildUser(usr *admin.User) *model.User {
+// buildUser builds a User model from a User coming from the IDP API.
+// The fields parameter controls which optional user attributes are included.
+// When fields is nil or empty, all attributes are included (backward compatible).
+func buildUser(usr *admin.User, fields *model.SyncFieldSet) *model.User {
 	if usr == nil {
 		return nil
 	}
@@ -37,6 +39,7 @@ func buildUser(usr *admin.User) *model.User {
 		return nil
 	}
 
+	// Emails are always synced (required by AWS SCIM)
 	var emails []model.Email
 	if usr.Emails != nil {
 		e, err := toEmails(usr.Emails)
@@ -58,9 +61,9 @@ func buildUser(usr *admin.User) *model.User {
 		)
 	}
 
-	// get the first language from the list of languages
+	// Optional fields: only process when included in the field set
 	var preferredLanguage string
-	if usr.Languages != nil {
+	if fields.Includes(model.SyncUserFieldPreferredLanguage) && usr.Languages != nil {
 		l, err := toLanguages(usr.Languages)
 		if err != nil {
 			slog.Error("idp: error converting languages", "error", err)
@@ -69,9 +72,8 @@ func buildUser(usr *admin.User) *model.User {
 		}
 	}
 
-	// get the Addresses
 	var addresses []model.Address
-	if usr.Addresses != nil {
+	if fields.Includes(model.SyncUserFieldAddresses) && usr.Addresses != nil {
 		a, err := toAddresses(usr.Addresses)
 		if err != nil {
 			slog.Error("idp: error converting addresses", "error", err)
@@ -80,9 +82,8 @@ func buildUser(usr *admin.User) *model.User {
 		}
 	}
 
-	// get the phones
 	var phoneNumbers []model.PhoneNumber
-	if usr.Phones != nil {
+	if fields.Includes(model.SyncUserFieldPhoneNumbers) && usr.Phones != nil {
 		p, err := toPhones(usr.Phones)
 		if err != nil {
 			slog.Error("idp: error converting phones", "error", err)
@@ -91,9 +92,8 @@ func buildUser(usr *admin.User) *model.User {
 		}
 	}
 
-	// get the relations (manager)
 	var manager *model.Manager
-	if usr.Relations != nil {
+	if fields.Includes(model.SyncUserFieldEnterpriseData) && usr.Relations != nil {
 		m, err := toRelations(usr.Relations)
 		if err != nil {
 			slog.Error("idp: error converting relations", "error", err)
@@ -102,16 +102,24 @@ func buildUser(usr *admin.User) *model.User {
 		}
 	}
 
-	// get the organizations
 	var mainOrganization *model.EnterpriseData
 	var title string
 	if usr.Organizations != nil {
-		o, t, err := toOrganizations(usr.Organizations, manager)
-		if err != nil {
-			slog.Error("idp: error converting organizations", "error", err)
-		} else {
-			mainOrganization = o
-			title = t
+		needsTitle := fields.Includes(model.SyncUserFieldTitle)
+		needsEnterprise := fields.Includes(model.SyncUserFieldEnterpriseData)
+
+		if needsTitle || needsEnterprise {
+			o, t, err := toOrganizations(usr.Organizations, manager)
+			if err != nil {
+				slog.Error("idp: error converting organizations", "error", err)
+			} else {
+				if needsEnterprise {
+					mainOrganization = o
+				}
+				if needsTitle {
+					title = t
+				}
+			}
 		}
 	}
 
@@ -122,6 +130,7 @@ func buildUser(usr *admin.User) *model.User {
 		displayName = fmt.Sprintf("%s %s", usr.Name.GivenName, usr.Name.FamilyName)
 	}
 
+	// Name is always synced (required by AWS SCIM)
 	var name *model.Name
 	if usr.Name != nil {
 		name = model.NameBuilder().
@@ -131,22 +140,34 @@ func buildUser(usr *admin.User) *model.User {
 			Build()
 	}
 
-	userModel := model.UserBuilder().
+	ub := model.UserBuilder().
 		WithIPID(strings.TrimSpace(usr.Id)).
 		WithUserName(strings.TrimSpace(usr.PrimaryEmail)).
 		WithDisplayName(strings.TrimSpace(displayName)).
-		WithTitle(title).
-		WithUserType(strings.TrimSpace(usr.Kind)).
-		WithPreferredLanguage(preferredLanguage).
 		WithActive(!usr.Suspended).
 		WithEmails(emails).
-		WithAddresses(addresses).
-		WithPhoneNumbers(phoneNumbers).
-		WithName(name).
-		WithEnterpriseData(mainOrganization).
-		Build()
+		WithName(name)
 
-	return userModel
+	if fields.Includes(model.SyncUserFieldTitle) {
+		ub = ub.WithTitle(title)
+	}
+	if fields.Includes(model.SyncUserFieldUserType) {
+		ub = ub.WithUserType(strings.TrimSpace(usr.Kind))
+	}
+	if fields.Includes(model.SyncUserFieldPreferredLanguage) {
+		ub = ub.WithPreferredLanguage(preferredLanguage)
+	}
+	if fields.Includes(model.SyncUserFieldAddresses) {
+		ub = ub.WithAddresses(addresses)
+	}
+	if fields.Includes(model.SyncUserFieldPhoneNumbers) {
+		ub = ub.WithPhoneNumbers(phoneNumbers)
+	}
+	if fields.Includes(model.SyncUserFieldEnterpriseData) {
+		ub = ub.WithEnterpriseData(mainOrganization)
+	}
+
+	return ub.Build()
 }
 
 func toEmails(e any) ([]model.Email, error) {
