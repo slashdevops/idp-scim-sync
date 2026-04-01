@@ -877,4 +877,107 @@ func TestUser_String(t *testing.T) {
 		assert.Contains(t, str, "testuser")
 		assert.Contains(t, str, "Test User")
 	})
+
+	t.Run("should include all populated fields in JSON", func(t *testing.T) {
+		user := &User{
+			ID:          "user-id-123",
+			UserName:    "jdoe",
+			DisplayName: "Jane Doe",
+			Active:      true,
+			Name: &Name{
+				GivenName:  "Jane",
+				FamilyName: "Doe",
+			},
+			Emails: []Email{
+				{Value: "jdoe@example.com", Type: "work", Primary: true},
+			},
+		}
+		str := user.String()
+		assert.Contains(t, str, "user-id-123")
+		assert.Contains(t, str, "jdoe")
+		assert.Contains(t, str, "Jane Doe")
+		assert.Contains(t, str, "jdoe@example.com")
+	})
+}
+
+func TestUser_GetPrimaryAddress(t *testing.T) {
+	t.Run("should return first address when addresses exist", func(t *testing.T) {
+		user := &User{
+			Addresses: []Address{
+				{Formatted: "123 Main St, NY", Country: "US"},
+				{Formatted: "456 Oak Ave, LA", Country: "US"},
+			},
+		}
+		addr := user.GetPrimaryAddress()
+		assert.NotNil(t, addr)
+		assert.Equal(t, "123 Main St, NY", addr.Formatted)
+		assert.Equal(t, "US", addr.Country)
+	})
+
+	t.Run("should return nil when no addresses", func(t *testing.T) {
+		user := &User{
+			Addresses: []Address{},
+		}
+		addr := user.GetPrimaryAddress()
+		assert.Nil(t, addr)
+	})
+
+	t.Run("should return nil when addresses is nil", func(t *testing.T) {
+		user := &User{}
+		addr := user.GetPrimaryAddress()
+		assert.Nil(t, addr)
+	})
+}
+
+func TestUser_GetPrimaryEmailAddress(t *testing.T) {
+	t.Run("should return primary email address string", func(t *testing.T) {
+		user := &User{
+			Emails: []Email{
+				{Value: "secondary@example.com", Primary: false},
+				{Value: "primary@example.com", Primary: true},
+			},
+		}
+		got := user.GetPrimaryEmailAddress()
+		assert.Equal(t, "primary@example.com", got)
+	})
+
+	t.Run("should return empty when no primary", func(t *testing.T) {
+		user := &User{
+			Emails: []Email{
+				{Value: "noprimary@example.com", Primary: false},
+			},
+		}
+		got := user.GetPrimaryEmailAddress()
+		assert.Equal(t, "", got)
+	})
+
+	t.Run("should return empty when no emails", func(t *testing.T) {
+		user := &User{}
+		got := user.GetPrimaryEmailAddress()
+		assert.Equal(t, "", got)
+	})
+}
+
+func TestGroup_String(t *testing.T) {
+	t.Run("should return JSON string representation", func(t *testing.T) {
+		group := &Group{
+			ID:          "group-id-456",
+			DisplayName: "Engineering",
+		}
+		str := group.String()
+		assert.Contains(t, str, "group-id-456")
+		assert.Contains(t, str, "Engineering")
+	})
+
+	t.Run("should include members in JSON", func(t *testing.T) {
+		group := &Group{
+			DisplayName: "Team",
+			Members: []*Member{
+				{Value: "user-1"},
+			},
+		}
+		str := group.String()
+		assert.Contains(t, str, "Team")
+		assert.Contains(t, str, "user-1")
+	})
 }
