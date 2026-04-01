@@ -7,7 +7,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/p2p-b2b/httpretrier"
+	"github.com/slashdevops/httpx"
 	"github.com/slashdevops/idp-scim-sync/internal/config"
 	"github.com/slashdevops/idp-scim-sync/internal/version"
 	"github.com/slashdevops/idp-scim-sync/pkg/google"
@@ -126,11 +126,12 @@ func getGWSDirectoryService(ctx context.Context) *google.DirectoryService {
 		"https://www.googleapis.com/auth/admin.directory.user.readonly",
 	}
 
-	httpRetryClient := httpretrier.NewClient(
-		3, // Max Retries
-		httpretrier.ExponentialBackoff(10*time.Millisecond, 100*time.Millisecond),
-		nil, // Use http.DefaultTransport
-	)
+	httpRetryClient := httpx.NewClientBuilder().
+		WithMaxRetries(3).
+		WithRetryStrategy(httpx.ExponentialBackoffStrategy).
+		WithRetryBaseDelay(500 * time.Millisecond).
+		WithRetryMaxDelay(10 * time.Second).
+		Build()
 
 	gServiceConfig := google.DirectoryServiceConfig{
 		UserEmail:      cfg.GWSUserEmail,

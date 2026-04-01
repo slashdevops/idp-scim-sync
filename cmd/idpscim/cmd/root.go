@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/aws/aws-lambda-go/lambda"
-	"github.com/pkg/errors"
 	"github.com/slashdevops/idp-scim-sync/internal/config"
 	"github.com/slashdevops/idp-scim-sync/internal/setup"
 	"github.com/slashdevops/idp-scim-sync/internal/version"
@@ -92,13 +91,13 @@ func run(ctx context.Context) error {
 
 	ss, err := setup.SyncService(ctx, &cfg)
 	if err != nil {
-		return errors.Wrap(err, "cannot create sync service")
+		return fmt.Errorf("cannot create sync service: %w", err)
 	}
 
 	slog.Debug("app config", "config", cfg)
 
 	if err := ss.SyncGroupsAndTheirMembers(ctx); err != nil {
-		return errors.Wrap(err, "cannot sync groups and their members")
+		return fmt.Errorf("cannot sync groups and their members: %w", err)
 	}
 
 	slog.Info("sync groups completed", "duration", time.Since(timeStart).String())

@@ -101,10 +101,10 @@ func (ss *SyncService) SyncGroupsAndTheirMembers(ctx context.Context) error {
 	slog.Info("getting state data")
 	state, err := ss.repo.GetState(ctx)
 	if err != nil {
-		var nsk *types.NoSuchKey
-		var StateFileEmpty *repository.ErrStateFileEmpty
-
-		if errors.As(err, &nsk) || errors.As(err, &StateFileEmpty) {
+		if _, ok := errors.AsType[*types.NoSuchKey](err); ok {
+			slog.Warn("no state file found in the state repository, creating a new one")
+			state = model.StateBuilder().Build()
+		} else if _, ok := errors.AsType[*repository.ErrStateFileEmpty](err); ok {
 			slog.Warn("no state file found in the state repository, creating a new one")
 			state = model.StateBuilder().Build()
 		} else {

@@ -4,16 +4,13 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log/slog"
 	"net/http"
 	"net/url"
 	"path"
-	"reflect"
-	"strings"
-
-	"github.com/pkg/errors"
 )
 
 // AWS SSO SCIM API
@@ -32,40 +29,40 @@ const (
 
 var (
 	// ErrURLEmpty is returned when the URL is empty.
-	ErrURLEmpty = errors.Errorf("aws: url may not be empty")
+	ErrURLEmpty = errors.New("aws: url may not be empty")
 
 	// ErrCreateGroupRequestEmpty is returned when the create group request is empty.
-	ErrCreateGroupRequestEmpty = errors.Errorf("aws: create group request may not be empty")
+	ErrCreateGroupRequestEmpty = errors.New("aws: create group request may not be empty")
 
 	// ErrCreateUserRequestEmpty is returned when the create user request is empty.
-	ErrCreateUserRequestEmpty = errors.Errorf("aws: create user request may not be empty")
+	ErrCreateUserRequestEmpty = errors.New("aws: create user request may not be empty")
 
 	// ErrPatchGroupRequestEmpty is returned when the patch group request is empty.
-	ErrPatchGroupRequestEmpty = errors.Errorf("aws: patch group request may not be empty")
+	ErrPatchGroupRequestEmpty = errors.New("aws: patch group request may not be empty")
 
 	// ErrGroupIDEmpty is returned when the group id is empty.
-	ErrGroupIDEmpty = errors.Errorf("aws: group id may not be empty")
+	ErrGroupIDEmpty = errors.New("aws: group id may not be empty")
 
 	// ErrPatchUserRequestEmpty is returned when the patch user request is empty.
-	ErrPatchUserRequestEmpty = errors.Errorf("aws: patch user request may not be empty")
+	ErrPatchUserRequestEmpty = errors.New("aws: patch user request may not be empty")
 
 	// ErrPutUserRequestEmpty is returned when the put user request is empty.
-	ErrPutUserRequestEmpty = errors.Errorf("aws: put user request may not be empty")
+	ErrPutUserRequestEmpty = errors.New("aws: put user request may not be empty")
 
 	// ErrUserExternalIDEmpty is returned when the user externalId is empty.
-	ErrUserExternalIDEmpty = errors.Errorf("aws: externalId may not be empty")
+	ErrUserExternalIDEmpty = errors.New("aws: externalId may not be empty")
 
 	// ErrGroupDisplayNameEmpty is returned when the userName is empty.
-	ErrGroupDisplayNameEmpty = errors.Errorf("aws: displayName may not be empty")
+	ErrGroupDisplayNameEmpty = errors.New("aws: displayName may not be empty")
 
 	// ErrGroupExternalIDEmpty is returned when the userName is empty.
-	ErrGroupExternalIDEmpty = errors.Errorf("aws: externalId may not be empty")
+	ErrGroupExternalIDEmpty = errors.New("aws: externalId may not be empty")
 
 	// ErrBearerTokenEmpty is returned when the bearer token is empty.
-	ErrBearerTokenEmpty = errors.Errorf("aws: bearer token may not be empty")
+	ErrBearerTokenEmpty = errors.New("aws: bearer token may not be empty")
 
 	// ErrServiceProviderConfigEmpty is returned when the service provider config is empty.
-	ErrServiceProviderConfigEmpty = errors.Errorf("aws: service provider config may not be empty")
+	ErrServiceProviderConfigEmpty = errors.New("aws: service provider config may not be empty")
 )
 
 //go:generate go tool mockgen -package=mocks -destination=../../mocks/aws/scim_mocks.go -source=scim.go HTTPClient
@@ -144,13 +141,9 @@ func (s *SCIMService) newRequest(ctx context.Context, method string, u *url.URL,
 // do sends an HTTP request and returns an HTTP response, following policy (e.g. redirects, cookies, auth) as configured on the client.
 func (s *SCIMService) do(ctx context.Context, req *http.Request) (*http.Response, error) {
 	// Check if context is already cancelled
-	select {
-	case <-ctx.Done():
-		return nil, ctx.Err()
-	default:
+	if err := ctx.Err(); err != nil {
+		return nil, err
 	}
-
-	req = req.WithContext(ctx)
 
 	// Set bearer token
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", s.bearerToken))
@@ -269,10 +262,8 @@ func (s *SCIMService) CreateOrGetUser(ctx context.Context, cur *CreateUserReques
 	defer resp.Body.Close()
 
 	if e := s.checkHTTPResponse(resp); e != nil {
-		httpErr := new(HTTPResponseError)
-
 		// http.StatusConflict is 409
-		if errors.As(e, &httpErr) && httpErr.StatusCode == http.StatusConflict {
+		if httpErr, ok := errors.AsType[*HTTPResponseError](e); ok && httpErr.StatusCode == http.StatusConflict {
 			slog.Warn(
 				"aws CreateOrGetUser: user already exists with same name or externalId, trying to get the user information",
 				"user", cur.UserName,
@@ -297,13 +288,13 @@ func (s *SCIMService) CreateOrGetUser(ctx context.Context, cur *CreateUserReques
 			// when response.ID is empty, the user does not exists, so this is the case when the new user is a existing user
 			// with a different email same externalId.
 			if response.ID == "" {
-				slog.Warn("aws CreateOrGetUser: group already exists, but with a different name, same id",
+				slog.Warn("aws CreateOrGetUser: user already exists, but with a different name, same id",
 					"user", cur.UserName,
 					"name", cur.DisplayName,
 				)
 
 				// remove the ExternalID from the user request, and call itself again to create the new user
-				slog.Warn("aws CreateOrGetUser: removing ExternalID from the group request, calling itself again to create the new group name",
+				slog.Warn("aws CreateOrGetUser: removing ExternalID from the user request, calling itself again to create the new user",
 					"user", cur.UserName,
 					"name", cur.DisplayName,
 				)
@@ -312,77 +303,35 @@ func (s *SCIMService) CreateOrGetUser(ctx context.Context, cur *CreateUserReques
 				return s.CreateOrGetUser(ctx, cur)
 			}
 
-			curesp := &CreateUserResponse{
-				ID:                   response.ID,
-				ExternalID:           response.ExternalID,
-				Meta:                 response.Meta,
-				Schemas:              response.Schemas,
-				UserName:             response.UserName,
-				DisplayName:          response.DisplayName,
-				Title:                response.Title,
-				UserType:             response.UserType,
-				PreferredLanguage:    response.PreferredLanguage,
-				Active:               response.Active,
-				Emails:               response.Emails,
-				Addresses:            response.Addresses,
-				PhoneNumbers:         response.PhoneNumbers,
-				Name:                 response.Name,
-				SchemaEnterpriseUser: response.SchemaEnterpriseUser,
-			}
+			curesp := CreateUserResponse(*(*User)(response))
 
 			// check if the user attributes are the same
 			// maybe the user in the SCIM side was changed, so we need to update the user in the SCIM Side
 			// according to the create user request
-			if !reflect.DeepEqual(cur, response) {
+			existingUser := (*User)(response)
+			requestedUser := (*User)(cur)
+			if !usersEqual(requestedUser, existingUser) {
 				slog.Warn("aws CreateOrGetUser: user already exists, but attributes are different, updating the user",
 					"user", response.UserName,
 					"id", response.ID,
 					"externalId", response.ExternalID,
 					"active", response.Active,
 					"displayName", response.DisplayName,
-					"email", (*User)(response).GetPrimaryEmailAddress(),
+					"email", existingUser.GetPrimaryEmailAddress(),
 				)
 
-				pur := &PutUserRequest{
-					ID:                   response.ID,
-					ExternalID:           cur.ExternalID,
-					UserName:             cur.UserName,
-					DisplayName:          cur.DisplayName,
-					Title:                cur.Title,
-					UserType:             cur.UserType,
-					PreferredLanguage:    cur.PreferredLanguage,
-					Active:               cur.Active,
-					Emails:               cur.Emails,
-					Addresses:            cur.Addresses,
-					PhoneNumbers:         cur.PhoneNumbers,
-					Name:                 cur.Name,
-					SchemaEnterpriseUser: cur.SchemaEnterpriseUser,
-				}
+				pur := PutUserRequest(*requestedUser)
+				pur.ID = response.ID
 
-				resp, err := s.PutUser(ctx, pur)
+				resp, err := s.PutUser(ctx, &pur)
 				if err != nil {
 					return nil, fmt.Errorf("aws CreateOrGetUser: error updating user: %w", err)
 				}
 
-				// update the user information
-				curesp.ID = resp.ID
-				curesp.ExternalID = resp.ExternalID
-				curesp.Meta = resp.Meta
-				curesp.Schemas = resp.Schemas
-				curesp.UserName = resp.UserName
-				curesp.DisplayName = resp.DisplayName
-				curesp.Title = resp.Title
-				curesp.UserType = resp.UserType
-				curesp.PreferredLanguage = resp.PreferredLanguage
-				curesp.Active = resp.Active
-				curesp.Emails = resp.Emails
-				curesp.Addresses = resp.Addresses
-				curesp.PhoneNumbers = resp.PhoneNumbers
-				curesp.Name = resp.Name
-				curesp.SchemaEnterpriseUser = resp.SchemaEnterpriseUser
+				curesp = CreateUserResponse(*(*User)(resp))
 			}
 
-			return curesp, nil
+			return &curesp, nil
 		}
 		return nil, e
 	}
@@ -393,6 +342,38 @@ func (s *SCIMService) CreateOrGetUser(ctx context.Context, cur *CreateUserReques
 	}
 
 	return &response, nil
+}
+
+// usersEqual compares two users by their sync-relevant attributes,
+// ignoring server-assigned fields (ID, Meta, Schemas).
+func usersEqual(a, b *User) bool {
+	if a.UserName != b.UserName || a.DisplayName != b.DisplayName || a.Active != b.Active {
+		return false
+	}
+	if a.ExternalID != b.ExternalID || a.Title != b.Title || a.UserType != b.UserType {
+		return false
+	}
+	if a.PreferredLanguage != b.PreferredLanguage || a.NickName != b.NickName {
+		return false
+	}
+	if a.ProfileURL != b.ProfileURL || a.Locale != b.Locale || a.Timezone != b.Timezone {
+		return false
+	}
+	if (a.Name == nil) != (b.Name == nil) {
+		return false
+	}
+	if a.Name != nil && (a.Name.GivenName != b.Name.GivenName || a.Name.FamilyName != b.Name.FamilyName || a.Name.Formatted != b.Name.Formatted || a.Name.MiddleName != b.Name.MiddleName) {
+		return false
+	}
+	if len(a.Emails) != len(b.Emails) {
+		return false
+	}
+	for i := range a.Emails {
+		if a.Emails[i] != b.Emails[i] {
+			return false
+		}
+	}
+	return true
 }
 
 // DeleteUser deletes a user in the AWS SSO Using the API.
@@ -420,16 +401,12 @@ func (s *SCIMService) DeleteUser(ctx context.Context, id string) error {
 	defer resp.Body.Close()
 
 	if e := s.checkHTTPResponse(resp); e != nil {
-		httpErr := new(HTTPResponseError)
-
 		// http.StatusNotFound is 404
 		// in this case, the user was already deleted manually, so we can ignore the error
-		if errors.As(e, &httpErr) && httpErr.StatusCode == http.StatusNotFound {
+		if httpErr, ok := errors.AsType[*HTTPResponseError](e); ok && httpErr.StatusCode == http.StatusNotFound {
 			slog.Warn("aws DeleteUser: user id does not exist, maybe it was already deleted because the username changed", "id", id)
-
 			return nil
 		}
-		// different error not handled yet
 		return e
 	}
 	return nil
@@ -473,17 +450,12 @@ func (s *SCIMService) GetUserByUserName(ctx context.Context, userName string) (*
 		return nil, fmt.Errorf("aws GetUserByUserName: userName: %s, error decoding response body: %w", userName, err)
 	}
 
-	var response GetUserResponse
-
 	if len(lur.Resources) > 0 {
-		dataJSON := lur.Resources[0].String()
-		data := strings.NewReader(dataJSON)
-		if err = json.NewDecoder(data).Decode(&response); err != nil {
-			return nil, fmt.Errorf("aws GetUserByUserName: userName: %s, error decoding response body: %w", userName, err)
-		}
+		response := GetUserResponse(*lur.Resources[0])
+		return &response, nil
 	}
 
-	return &response, nil
+	return &GetUserResponse{}, nil
 }
 
 // GetUser returns an user from the AWS SSO Using the API
@@ -672,18 +644,12 @@ func (s *SCIMService) GetGroupByDisplayName(ctx context.Context, displayName str
 		return nil, fmt.Errorf("aws GetGroupByDisplayName: displayName: %s, error decoding response body: %w", displayName, err)
 	}
 
-	var response GetGroupResponse
-
 	if len(lgr.Resources) > 0 {
-		dataJSON := lgr.Resources[0].String()
-
-		data := strings.NewReader(dataJSON)
-		if err = json.NewDecoder(data).Decode(&response); err != nil {
-			return nil, fmt.Errorf("aws GetGroupByDisplayName: displayName: %s, error decoding response body: %w", displayName, err)
-		}
+		response := GetGroupResponse(*lgr.Resources[0])
+		return &response, nil
 	}
 
-	return &response, nil
+	return &GetGroupResponse{}, nil
 }
 
 // ListGroups returns a list of groups from the AWS SSO Using the API
@@ -759,12 +725,7 @@ func (s *SCIMService) CreateGroup(ctx context.Context, cgr *CreateGroupRequest) 
 
 	var response CreateGroupResponse
 	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
-		b, err := io.ReadAll(resp.Body)
-		if err != nil {
-			return nil, fmt.Errorf("aws CreateGroup: error reading response body: %w", err)
-		}
-
-		return nil, fmt.Errorf("aws CreateGroup: error decoding response body: %w, body: %s", err, string(b))
+		return nil, fmt.Errorf("aws CreateGroup: error decoding response body: %w", err)
 	}
 
 	return &response, nil
@@ -807,10 +768,8 @@ func (s *SCIMService) CreateOrGetGroup(ctx context.Context, cgr *CreateGroupRequ
 	defer resp.Body.Close()
 
 	if e := s.checkHTTPResponse(resp); e != nil {
-		httpErr := new(HTTPResponseError)
-
 		// http.StatusConflict is 409
-		if errors.As(e, &httpErr) && httpErr.StatusCode == http.StatusConflict {
+		if httpErr, ok := errors.AsType[*HTTPResponseError](e); ok && httpErr.StatusCode == http.StatusConflict {
 			slog.Warn("aws CreateOrGetGroup: groups already exists with same name or externalId, trying to get the group information", "name", cgr.DisplayName)
 
 			// This is because the group already exists, but exists with the same name
@@ -834,12 +793,8 @@ func (s *SCIMService) CreateOrGetGroup(ctx context.Context, cgr *CreateGroupRequ
 				return s.CreateOrGetGroup(ctx, cgr)
 			}
 
-			return &CreateGroupResponse{
-				ID:          response.ID,
-				Meta:        response.Meta,
-				Schemas:     response.Schemas,
-				DisplayName: response.DisplayName,
-			}, nil
+			cgresp := CreateGroupResponse(*(*Group)(response))
+			return &cgresp, nil
 		}
 
 		return nil, e
@@ -847,12 +802,7 @@ func (s *SCIMService) CreateOrGetGroup(ctx context.Context, cgr *CreateGroupRequ
 
 	var response CreateGroupResponse
 	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
-		b, err := io.ReadAll(resp.Body)
-		if err != nil {
-			return nil, fmt.Errorf("aws CreateOrGetGroup: group: %s, error reading response body: %w", cgr.DisplayName, err)
-		}
-
-		return nil, fmt.Errorf("aws CreateOrGetGroup: group: %s, error decoding response body: %w, body: %s", cgr.DisplayName, err, string(b))
+		return nil, fmt.Errorf("aws CreateOrGetGroup: group: %s, error decoding response body: %w", cgr.DisplayName, err)
 	}
 
 	return &response, nil
@@ -883,10 +833,8 @@ func (s *SCIMService) DeleteGroup(ctx context.Context, id string) error {
 	defer resp.Body.Close()
 
 	if e := s.checkHTTPResponse(resp); e != nil {
-		httpErr := new(HTTPResponseError)
-
 		// http.StatusNotFound is 404
-		if errors.As(e, &httpErr) && httpErr.StatusCode == http.StatusNotFound {
+		if httpErr, ok := errors.AsType[*HTTPResponseError](e); ok && httpErr.StatusCode == http.StatusNotFound {
 			slog.Warn("aws DeleteGroup: group id does not exists, maybe it was already deleted because the name changed", "id", id)
 			return nil
 		}

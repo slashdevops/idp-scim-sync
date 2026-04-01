@@ -2,54 +2,52 @@ package aws
 
 import (
 	"encoding/json"
-	"log/slog"
-	"os"
-
-	"github.com/pkg/errors"
+	"errors"
+	"fmt"
 )
 
 var (
 	// ErrUserIDEmpty is returned when the user id is empty.
-	ErrUserIDEmpty = errors.Errorf("aws: user id may not be empty")
+	ErrUserIDEmpty = errors.New("aws: user id may not be empty")
 
 	// ErrEmailsTooMany is returned when the emails has more than one entity.
-	ErrEmailsTooMany = errors.Errorf("aws: emails may not be more than 1")
+	ErrEmailsTooMany = errors.New("aws: emails may not be more than 1")
 
 	// ErrEmailsEmpty
-	ErrEmailsEmpty = errors.Errorf("aws: emails may not be empty")
+	ErrEmailsEmpty = errors.New("aws: emails may not be empty")
 
 	// ErrFamilyNameEmpty is returned when the family name is empty.
-	ErrFamilyNameEmpty = errors.Errorf("aws: family name may not be empty")
+	ErrFamilyNameEmpty = errors.New("aws: family name may not be empty")
 
 	// ErrDisplayNameEmpty is returned when the display name is empty.
-	ErrDisplayNameEmpty = errors.Errorf("aws: display name may not be empty")
+	ErrDisplayNameEmpty = errors.New("aws: display name may not be empty")
 
 	// ErrGivenNameEmpty is returned when the given name is empty.
-	ErrGivenNameEmpty = errors.Errorf("aws: given name may not be empty")
+	ErrGivenNameEmpty = errors.New("aws: given name may not be empty")
 
 	// ErrUserNameEmpty is returned when the user name is empty.
-	ErrUserNameEmpty = errors.Errorf("aws: user name may not be empty")
+	ErrUserNameEmpty = errors.New("aws: user name may not be empty")
 
 	// ErrUserUserNameEmpty is returned when the userName is empty.
-	ErrUserUserNameEmpty = errors.Errorf("aws: userName may not be empty")
+	ErrUserUserNameEmpty = errors.New("aws: userName may not be empty")
 
 	// ErrPrimaryEmailEmpty is returned when the primary email is empty.
-	ErrPrimaryEmailEmpty = errors.Errorf("aws: primary email may not be empty")
+	ErrPrimaryEmailEmpty = errors.New("aws: primary email may not be empty")
 
 	// ErrAddressesTooMany is returned when the addresses has more than one entity.
-	ErrAddressesTooMany = errors.Errorf("aws: addresses may not be more than 1")
+	ErrAddressesTooMany = errors.New("aws: addresses may not be more than 1")
 
 	// ErrPhoneNumbersTooMany is returned when the phone numbers has more than one entity.
-	ErrPhoneNumbersTooMany = errors.Errorf("aws: phone numbers may not be more than 1")
+	ErrPhoneNumbersTooMany = errors.New("aws: phone numbers may not be more than 1")
 
 	// ErrTooManyPrimaryEmails when there are more than one primary email
-	ErrTooManyPrimaryEmails = errors.Errorf("aws: there can only be one primary email")
+	ErrTooManyPrimaryEmails = errors.New("aws: there can only be one primary email")
 
 	// ErrNameEmpty is returned when the name is nil.
-	ErrNameEmpty = errors.Errorf("aws: name may not be nil")
+	ErrNameEmpty = errors.New("aws: name may not be nil")
 
 	// ErrEmailValueEmpty is returned when the email value is empty.
-	ErrEmailValueEmpty = errors.Errorf("aws: email value may not be empty")
+	ErrEmailValueEmpty = errors.New("aws: email value may not be empty")
 )
 
 // Name represent a name entity
@@ -203,12 +201,11 @@ func (u *User) Validate() error {
 
 // String is the implementation of Stringer interface
 func (u *User) String() string {
-	JSON, err := json.Marshal(u)
+	b, err := json.Marshal(u)
 	if err != nil {
-		slog.Error("Error in marshalling user", "error", err)
-		os.Exit(1)
+		return fmt.Sprintf("User{UserName: %q, ID: %q}", u.UserName, u.ID)
 	}
-	return string(JSON)
+	return string(b)
 }
 
 // GetPrimaryEmail returns the primary email of the user
@@ -313,12 +310,11 @@ func (g *Group) Validate() error {
 
 // String is the implementation of Stringer interface
 func (g *Group) String() string {
-	JSON, err := json.Marshal(g)
+	b, err := json.Marshal(g)
 	if err != nil {
-		slog.Error("Error in marshalling group", "error", err)
-		os.Exit(1)
+		return fmt.Sprintf("Group{DisplayName: %q, ID: %q}", g.DisplayName, g.ID)
 	}
-	return string(JSON)
+	return string(b)
 }
 
 // GetGroupResponse represent a group user response entity

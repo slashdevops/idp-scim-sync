@@ -3,11 +3,11 @@ package aws
 import (
 	"context"
 	"encoding/base64"
+	"errors"
 	"fmt"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/secretsmanager"
-	"github.com/pkg/errors"
 )
 
 // consume secretsmanager.Client
