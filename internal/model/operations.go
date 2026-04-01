@@ -342,17 +342,12 @@ func membersDataSets(idp, scim []*GroupMembers) (create, equal, remove []*GroupM
 		}
 
 		for _, member := range grpMembers.Resources {
-			if _, ok := scimMemberSet[grpMembers.Group.Name][member.Email]; !ok {
+			scimMember, exists := scimMemberSet[grpMembers.Group.Name][member.Email]
+			if !exists {
 				toC[grpMembers.Group.Name] = append(toC[grpMembers.Group.Name], member)
 			} else {
-				// check if the groups has the same members before adding to equal
-				// TODO: check if the groups has the same members before adding to equal, what happens if some members are different?
-				for grpMemberEmail := range scimMemberSet[grpMembers.Group.Name] {
-					if grpMemberEmail == member.Email {
-						member.SCIMID = scimMemberSet[grpMembers.Group.Name][member.Email].SCIMID
-						toE[grpMembers.Group.Name] = append(toE[grpMembers.Group.Name], member)
-					}
-				}
+				member.SCIMID = scimMember.SCIMID
+				toE[grpMembers.Group.Name] = append(toE[grpMembers.Group.Name], member)
 			}
 		}
 
