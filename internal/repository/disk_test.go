@@ -145,3 +145,24 @@ func TestStateRepository_SetState(t *testing.T) {
 		stateFile.Close()
 	})
 }
+
+func TestErrStateFileEmpty(t *testing.T) {
+	err := &ErrStateFileEmpty{Message: "file is empty"}
+	assert.Equal(t, "ErrStateFileEmpty", err.ErrorCode())
+	assert.Equal(t, "file is empty", err.ErrorMessage())
+	assert.Equal(t, "ErrStateFileEmpty: file is empty", err.Error())
+}
+
+func TestErrReadingStateFile(t *testing.T) {
+	err := &ErrReadingStateFile{Message: "read error"}
+	assert.Equal(t, "ErrReadingStateFile", err.ErrorCode())
+	assert.Equal(t, "read error", err.ErrorMessage())
+	assert.Equal(t, "ErrReadingStateFile: read error", err.Error())
+}
+
+func TestErrStateFileNil(t *testing.T) {
+	err := &ErrStateFileNil{Message: "file is nil"}
+	assert.Equal(t, "ErrStateFileNil", err.ErrorCode())
+	assert.Equal(t, "file is nil", err.ErrorMessage())
+	assert.Equal(t, "ErrStateFileNil: file is nil", err.Error())
+}
