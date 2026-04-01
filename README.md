@@ -22,6 +22,11 @@ Keep your [AWS IAM Identity Center](https://aws.amazon.com/iam/identity-center/)
 * ✅ **Multiple Deployment Options**: Can be deployed via the `AWS Serverless Application Repository`, as a `Container Image`, or as a `CLI`.
 * ✅ **Incremental Sync**: Drastically reduces the number of requests to the AWS SSO SCIM API by using a [state file](docs/State-File-example.md) to track changes.
 
+## 🆕 What's New in v0.44.0
+
+* **Configurable User Fields (`--sync-user-fields`)**: You can now choose which optional user attributes are synced from Google Workspace to AWS SSO SCIM. For example, sync only phone numbers and enterprise data while excluding addresses, locale, or timezone. When not configured, all fields are synced as before (fully backward compatible). See [Configurable User Fields](#configurable-user-fields) for usage details.
+* **Bug Fix: Unnecessary member re-syncs**: Fixed a bug where group members were re-synced on every execution even when nothing changed. The root cause was duplicate group entries in the state file caused by `MergeGroupsMembersResult` not consolidating entries for the same group. After upgrading, the first sync will reconcile the state file automatically.
+
 ## Compatibility
 
 This project is compatible with the latest AWS Lambda runtimes. Since version `v0.0.19`, it uses the `provided.al2` runtime and `arm64` architecture.
