@@ -117,13 +117,6 @@ make build-dist
 * **Docker Image**
   * Pull the image from one of the public repositories.
 
-## 📦 Repositories
-
-* 📦 [AWS Serverless Application Repository](https://serverlessrepo.aws.amazon.com/applications/us-east-1/889836709304/idp-scim-sync)
-* 📦 [AWS ECR Public Gallery](https://gallery.ecr.aws/l2n7y5s7/slashdevops/idp-scim-sync)
-* 📦 [GitHub Packages](https://github.com/slashdevops/idp-scim-sync/pkgs/container/idp-scim-sync)
-* 📦 [Docker Hub](https://hub.docker.com/r/slashdevops/idp-scim-sync)
-
 ## Configurable User Fields
 
 By default, all optional user attributes are synced from Google Workspace to AWS SSO SCIM. You can control which optional fields are included using the `sync_user_fields` configuration option.
@@ -184,10 +177,17 @@ sam deploy --parameter-overrides SyncUserFields=phoneNumbers,addresses,enterpris
 * **Invalid field names:** If an invalid field name is provided, the application will fail at startup with a clear error message listing the unrecognized field.
 * **Changing on an existing deployment:** The first sync after modifying this configuration will detect all users as "changed" (due to hash differences) and update them in AWS SSO. This is expected behavior — it will clear the excluded fields from SCIM.
 
+## 📦 Repositories
+
+* 📦 [AWS Serverless Application Repository](https://serverlessrepo.aws.amazon.com/applications/us-east-1/889836709304/idp-scim-sync)
+* 📦 [AWS ECR Public Gallery](https://gallery.ecr.aws/l2n7y5s7/slashdevops/idp-scim-sync)
+* 📦 [GitHub Packages](https://github.com/slashdevops/idp-scim-sync/pkgs/container/idp-scim-sync)
+* 📦 [Docker Hub](https://hub.docker.com/r/slashdevops/idp-scim-sync)
+
 ## ⚠️ Limitations
 
 * **Group Limit**: The AWS SSO SCIM API has a limit of 50 groups per request. Please support the feature request on the [AWS Support site](https://repost.aws/questions/QUqqnVkIo_SYyF_SlX5LcUjg/aws-sso-scim-api-pagination-for-methods) to help get this limit increased.
-* **Throttling**: With a large number of users and groups, you may encounter a `ThrottlingException` from the AWS SSO SCIM API. This project uses a [retryable HTTP client](https://github.com/hashicorp/go-retryablehttp) to mitigate this, but it's still a possibility.
+* **Throttling**: With a large number of users and groups, you may encounter a `ThrottlingException` from the AWS SSO SCIM API. This project uses a [retryable HTTP client](https://github.com/p2p-b2b/httpretrier) to mitigate this, but it's still a possibility.
 * **User Status**: The Google Workspace API doesn't differentiate between normal and guest users except for their status. This project only syncs `ACTIVE` users.
 
 ## For `ssosync` Users
@@ -195,7 +195,7 @@ sam deploy --parameter-overrides SyncUserFields=phoneNumbers,addresses,enterpris
 If you are coming from the [awslabs/ssosync](https://github.com/awslabs/ssosync) project, please note the following:
 
 * This project only implements the `--sync-method groups`.
-* This project only implements filtering for Google Workspace Groups, not Users.
+* This project implements filtering for Google Workspace Groups and configurable user field selection via `--sync-user-fields`.
 * The flag names are different.
 * Not all features of `ssosync` are implemented here, and they may not be in the future.
 
