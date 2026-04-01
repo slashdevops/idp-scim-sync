@@ -68,7 +68,11 @@ $(if $(filter $(MAKE_DEBUG),true),\
 	${1} \
 , \
 	$(if $(filter $(MAKE_STOP_ON_ERRORS),true),\
-		@${1}  > /dev/null && printf "  🤞 ${1} ✅\n" || (printf "  ${1} ❌ 🖕\n"; exit 1) \
+		$(if $(findstring >, $1),\
+			@${1} 2>/dev/null && printf "  🤞 ${1} ✅\n" || (printf "  ${1} ❌ 🖕\n"; exit 1) \
+		, \
+			@${1}  > /dev/null && printf "  🤞 ${1} ✅\n" || (printf "  ${1} ❌ 🖕\n"; exit 1) \
+		) \
 	, \
 		$(if $(findstring >, $1),\
 			@${1} 2>/dev/null; _exit_code=$$?; if [ $$_exit_code -eq 0 ]; then printf "  🤞 ${1} ✅\n"; else printf "  ${1} ❌ 🖕\n"; fi; exit $$_exit_code \
