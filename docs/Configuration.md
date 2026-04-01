@@ -36,7 +36,7 @@ __NOTES:__
 create a `.idpscim.yaml` file in the `$HOME/` directory or in the same path where the `idpscim` program is.
 
 ```yaml
-log_level: trace
+log_level: debug
 log_format: text
 
 gws_service_account_file: /path/to/gws_service_account.json
@@ -81,7 +81,7 @@ or create a `<any filename on whenever place>.yaml` then run the `idpscim` progr
   --gws-groups-filter 'name:AWS* email:aws*' \
   --gws-groups-filter 'email:administrators*' \
   --sync-method 'groups'
-  --log-level trace
+  --log-level debug
 ```
 
 ## Environment variables
@@ -96,7 +96,7 @@ export IDPSCIM_GWS_SERVICE_ACCOUNT_FILE="/path/to/gws_service_account.json"
 export IDPSCIM_GWS_USER_EMAIL="my.user@gws-email.com"
 export IDPSCIM_GWS_GROUPS_FILTER='name:AWS* email:aws*','email:administrators*'
 export IDPSCIM_SYNC_METHOD="groups"
-export IDPSCIM_LOG_LEVEL="trace"
+export IDPSCIM_LOG_LEVEL="debug"
 
 # then execute the program
 ./idpscim
