@@ -5,9 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
-	"time"
 
-	"github.com/slashdevops/httpx"
 	"github.com/slashdevops/idp-scim-sync/internal/config"
 	"github.com/slashdevops/idp-scim-sync/internal/version"
 	"github.com/slashdevops/idp-scim-sync/pkg/google"
@@ -36,7 +34,7 @@ var (
 		Use:     "list",
 		Aliases: []string{"ls"},
 		Short:   "list Groups",
-		Long:    `This command is used to list the groups from Google Workspace Directory Servive`,
+		Long:    `This command is used to list the groups from Google Workspace Directory Service`,
 		RunE:    execGWSGroupsList,
 	}
 
@@ -47,12 +45,12 @@ var (
 		Long:  `available commands to validate Google Workspace Directory Groups Members API.`,
 	}
 
-	// groups list command
+	// groups members list command
 	gwsGroupsMembersListCmd = &cobra.Command{
 		Use:     "list",
 		Aliases: []string{"ls"},
 		Short:   "list Members",
-		Long:    `This command is used to list the groups members from Google Workspace Directory Servive`,
+		Long:    `This command is used to list the groups members from Google Workspace Directory Service`,
 		RunE:    execGWSGroupsMembersList,
 	}
 
@@ -68,7 +66,7 @@ var (
 		Use:     "list",
 		Aliases: []string{"ls"},
 		Short:   "list Users",
-		Long:    `This command is used to list the users from Google Workspace Directory Servive`,
+		Long:    `This command is used to list the users from Google Workspace Directory Service`,
 		RunE:    execGWSUsersList,
 	}
 )
@@ -113,11 +111,10 @@ func init() {
 	)
 }
 
-func getGWSDirectoryService(ctx context.Context) *google.DirectoryService {
+func getGWSDirectoryService(ctx context.Context) (*google.DirectoryService, error) {
 	gCreds, err := os.ReadFile(cfg.GWSServiceAccountFile)
 	if err != nil {
-		slog.Error("error reading the credentials", "error", err)
-		os.Exit(1)
+		return nil, fmt.Errorf("error reading the credentials: %w", err)
 	}
 
 	gScopes := []string{
@@ -126,70 +123,61 @@ func getGWSDirectoryService(ctx context.Context) *google.DirectoryService {
 		"https://www.googleapis.com/auth/admin.directory.user.readonly",
 	}
 
-	httpRetryClient := httpx.NewClientBuilder().
-		WithMaxRetries(3).
-		WithRetryStrategy(httpx.ExponentialBackoffStrategy).
-		WithRetryBaseDelay(500 * time.Millisecond).
-		WithRetryMaxDelay(10 * time.Second).
-		Build()
-
 	gServiceConfig := google.DirectoryServiceConfig{
 		UserEmail:      cfg.GWSUserEmail,
 		ServiceAccount: gCreds,
 		Scopes:         gScopes,
-		Client:         httpRetryClient,
+		Client:         newGWSHTTPClient(),
 		UserAgent:      fmt.Sprintf("idp-scim-sync/%s", version.Version),
 	}
 
 	gService, err := google.NewService(ctx, gServiceConfig)
 	if err != nil {
-		slog.Error("error creating service", "error", err)
-		os.Exit(1)
+		return nil, fmt.Errorf("error creating google service: %w", err)
 	}
 
 	gDirService, err := google.NewDirectoryService(gService)
 	if err != nil {
-		slog.Error("error creating directory service", "error", err)
-		os.Exit(1)
+		return nil, fmt.Errorf("error creating google directory service: %w", err)
 	}
 
-	return gDirService
+	return gDirService, nil
 }
 
 func execGWSGroupsList(_ *cobra.Command, _ []string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), reqTimeout)
 	defer cancel()
 
-	gDirService := getGWSDirectoryService(ctx)
+	gDirService, err := getGWSDirectoryService(ctx)
+	if err != nil {
+		return err
+	}
 
 	gGroups, err := gDirService.ListGroups(ctx, cfg.GWSGroupsFilter)
 	if err != nil {
-		slog.Error("error listing groups", "error", err)
-		return err
+		return fmt.Errorf("error listing groups: %w", err)
 	}
 	slog.Info("groups found", "groups", len(gGroups))
 
-	show(outFormat, gGroups)
-
-	return nil
+	return show(outFormat, gGroups)
 }
 
 func execGWSUsersList(_ *cobra.Command, _ []string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), reqTimeout)
 	defer cancel()
 
-	gDirService := getGWSDirectoryService(ctx)
+	gDirService, err := getGWSDirectoryService(ctx)
+	if err != nil {
+		return err
+	}
 
 	gUsers, err := gDirService.ListUsers(ctx, cfg.GWSUsersFilter)
 	if err != nil {
-		slog.Error("error listing users", "error", err)
-		return err
+		return fmt.Errorf("error listing users: %w", err)
 	}
 	slog.Info("users found", "users", len(gUsers))
 
-	show(outFormat, gUsers)
-
-	return nil
+	return show(outFormat, gUsers)
 }
 
 type gwsGroupMembers struct {
@@ -201,31 +189,28 @@ func execGWSGroupsMembersList(_ *cobra.Command, _ []string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), reqTimeout)
 	defer cancel()
 
-	gDirService := getGWSDirectoryService(ctx)
+	gDirService, err := getGWSDirectoryService(ctx)
+	if err != nil {
+		return err
+	}
 
 	gGroups, err := gDirService.ListGroups(ctx, cfg.GWSGroupsFilter)
 	if err != nil {
-		slog.Error("error listing groups", "error", err)
-		return err
+		return fmt.Errorf("error listing groups: %w", err)
 	}
 	slog.Info("groups found", "groups", len(gGroups))
 
-	gMembers := make([]gwsGroupMembers, 0)
-
+	gMembers := make([]gwsGroupMembers, 0, len(gGroups))
 	for _, group := range gGroups {
 		members, err := gDirService.ListGroupMembers(ctx, group.Id)
 		if err != nil {
-			slog.Error("error listing group members", "error", err)
-			return err
+			return fmt.Errorf("error listing members for group %s: %w", group.Email, err)
 		}
-		e := gwsGroupMembers{
+		gMembers = append(gMembers, gwsGroupMembers{
 			Group:   group,
 			Members: members,
-		}
-		gMembers = append(gMembers, e)
+		})
 	}
 
-	show(outFormat, gMembers)
-
-	return nil
+	return show(outFormat, gMembers)
 }

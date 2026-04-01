@@ -3,9 +3,7 @@ package cmd
 import (
 	"context"
 	"log/slog"
-	"time"
 
-	"github.com/slashdevops/httpx"
 	"github.com/slashdevops/idp-scim-sync/internal/version"
 	"github.com/slashdevops/idp-scim-sync/pkg/aws"
 	"github.com/spf13/cobra"
@@ -66,7 +64,7 @@ var (
 		Use:     "list",
 		Aliases: []string{"l"},
 		Short:   "return available users",
-		Long:    `list available usrs in AWS SSO SCIM`,
+		Long:    `list available users in AWS SSO SCIM`,
 		RunE:    runAWSUsersList,
 	}
 )
@@ -87,95 +85,65 @@ func init() {
 	awsUsersCmd.Flags().StringVarP(&filter, "filter", "q", "", "AWS SSO SCIM API Filter, example: --filter 'displayName eq \"User Bar\" and id eq \"12324\"'")
 }
 
+// newAWSSCIMService creates an AWS SCIM service with the configured HTTP client.
+func newAWSSCIMService() (*aws.SCIMService, error) {
+	svc, err := aws.NewSCIMService(newSCIMHTTPClient(), cfg.AWSSCIMEndpoint, cfg.AWSSCIMAccessToken)
+	if err != nil {
+		return nil, err
+	}
+	svc.UserAgent = "idp-scim-sync/" + version.Version
+	return svc, nil
+}
+
 func runAWSServiceConfig(_ *cobra.Command, _ []string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), reqTimeout)
 	defer cancel()
 
-	httpRetryClient := httpx.NewClientBuilder().
-		WithMaxRetries(10).
-		WithRetryStrategy(httpx.JitterBackoffStrategy).
-		WithRetryBaseDelay(500 * time.Millisecond).
-		WithRetryMaxDelay(10 * time.Second).
-		Build()
-
-	awsSCIMService, err := aws.NewSCIMService(httpRetryClient, cfg.AWSSCIMEndpoint, cfg.AWSSCIMAccessToken)
+	svc, err := newAWSSCIMService()
 	if err != nil {
-		slog.Error("error creating SCIM service", "error", err.Error())
-		return err
-	}
-	awsSCIMService.UserAgent = "idp-scim-sync/" + version.Version
-
-	awsServiceConfig, err := awsSCIMService.ServiceProviderConfig(ctx)
-	if err != nil {
-		slog.Error("error getting service provider config", "error", err.Error())
 		return err
 	}
 
-	show(outFormat, awsServiceConfig)
+	result, err := svc.ServiceProviderConfig(ctx)
+	if err != nil {
+		return err
+	}
 
-	return nil
+	return show(outFormat, result)
 }
 
 func runAWSGroupsList(_ *cobra.Command, _ []string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), reqTimeout)
 	defer cancel()
 
-	httpClient := httpx.NewClientBuilder().
-		WithMaxRetries(10).
-		WithRetryStrategy(httpx.JitterBackoffStrategy).
-		WithRetryBaseDelay(500 * time.Millisecond).
-		WithRetryMaxDelay(10 * time.Second).
-		WithMaxIdleConns(100).
-		WithMaxIdleConnsPerHost(100).
-		Build()
-
-	awsSCIMService, err := aws.NewSCIMService(httpClient, cfg.AWSSCIMEndpoint, cfg.AWSSCIMAccessToken)
+	svc, err := newAWSSCIMService()
 	if err != nil {
-		slog.Error("error creating SCIM service", "error", err.Error())
 		return err
 	}
-	awsSCIMService.UserAgent = "idp-scim-sync/" + version.Version
 
-	awsGroupsResponse, err := awsSCIMService.ListGroups(ctx, filter)
+	result, err := svc.ListGroups(ctx, filter)
 	if err != nil {
-		slog.Error("error listing groups", "error", err.Error())
 		return err
 	}
-	slog.Info("groups found", "groups", awsGroupsResponse.TotalResults)
+	slog.Info("groups found", "groups", result.TotalResults)
 
-	show(outFormat, awsGroupsResponse)
-
-	return nil
+	return show(outFormat, result)
 }
 
 func runAWSUsersList(_ *cobra.Command, _ []string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), reqTimeout)
 	defer cancel()
 
-	httpClient := httpx.NewClientBuilder().
-		WithMaxRetries(10).
-		WithRetryStrategy(httpx.JitterBackoffStrategy).
-		WithRetryBaseDelay(500 * time.Millisecond).
-		WithRetryMaxDelay(10 * time.Second).
-		WithMaxIdleConns(100).
-		WithMaxIdleConnsPerHost(100).
-		Build()
-
-	awsSCIMService, err := aws.NewSCIMService(httpClient, cfg.AWSSCIMEndpoint, cfg.AWSSCIMAccessToken)
+	svc, err := newAWSSCIMService()
 	if err != nil {
-		slog.Error("error creating SCIM service", "error", err.Error())
 		return err
 	}
-	awsSCIMService.UserAgent = "idp-scim-sync/" + version.Version
 
-	awsUsersResponse, err := awsSCIMService.ListUsers(ctx, filter)
+	result, err := svc.ListUsers(ctx, filter)
 	if err != nil {
-		slog.Error("error listing users", "error", err.Error())
 		return err
 	}
-	slog.Info("users found", "users", awsUsersResponse.TotalResults)
+	slog.Info("users found", "users", result.TotalResults)
 
-	show(outFormat, awsUsersResponse)
-
-	return nil
+	return show(outFormat, result)
 }
