@@ -10,7 +10,6 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.98.0
 	github.com/aws/aws-sdk-go-v2/service/secretsmanager v1.41.5
 	github.com/google/go-cmp v0.7.0
-	github.com/pkg/errors v0.9.1
 	github.com/slashdevops/httpx v0.0.4
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/viper v1.21.0
