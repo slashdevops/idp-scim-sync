@@ -3,11 +3,13 @@ package cmd
 
 import (
 	"log/slog"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
 
+	"github.com/slashdevops/httpx"
 	"github.com/slashdevops/idp-scim-sync/internal/config"
 	"github.com/slashdevops/idp-scim-sync/internal/version"
 	"github.com/spf13/cobra"
@@ -19,17 +21,13 @@ var (
 	reqTimeout time.Duration
 	maxTimeout time.Duration
 	outFormat  string
-
-	logHandler        slog.Handler
-	logHandlerOptions *slog.HandlerOptions
-	logger            *slog.Logger
 )
 
 // commands root
 var rootCmd = &cobra.Command{
 	Use:     "idpscimcli",
 	Version: version.Version,
-	Short:   "Check your  AWS Single Sign-On (SSO) / Google Workspace Groups/Users",
+	Short:   "Check your AWS Single Sign-On (SSO) / Google Workspace Groups/Users",
 	Long: `
 This is a Command-Line Interfaced (CLI) to help you validate and check your source and target Single Sign-On endpoints.
 Check your AWS Single Sign-On (SSO) / Google Workspace Groups users and groups and validate your filters over Google Workspace users and groups.`,
@@ -58,10 +56,6 @@ func init() {
 
 // initConfig reads in config file and ENV variables if set.
 func initConfig() {
-	// Set the default logger
-	logger = slog.New(logHandler)
-	slog.SetDefault(logger)
-
 	viper.SetEnvPrefix("idpscim") // allow to read in from environment
 
 	envVars := []string{
@@ -92,13 +86,12 @@ func initConfig() {
 	fileDir := filepath.Dir(cfg.ConfigFile)
 	viper.AddConfigPath(fileDir)
 
-	// Search config in home directory with name "downloader" (without extension).
 	fileExtension := filepath.Ext(cfg.ConfigFile)
 	fileExtensionName := fileExtension[1:]
 	viper.SetConfigType(fileExtensionName)
 
 	fileNameExt := filepath.Base(cfg.ConfigFile)
-	fileName := fileNameExt[0 : len(fileNameExt)-len(fileExtension)]
+	fileName := strings.TrimSuffix(fileNameExt, fileExtension)
 	viper.SetConfigName(fileName)
 
 	slog.Debug("configuration file", "dir", fileDir, "name", fileName, "ext", fileExtension)
@@ -112,16 +105,12 @@ func initConfig() {
 		os.Exit(1)
 	}
 
-	switch strings.ToLower(cfg.LogFormat) {
-	case "json":
-		logHandler = slog.NewJSONHandler(os.Stdout, logHandlerOptions)
-	case "text":
-		logHandler = slog.NewTextHandler(os.Stdout, logHandlerOptions)
-	default:
-		slog.Warn("unknown log format, using text", "format", cfg.LogFormat)
-		logHandler = slog.NewTextHandler(os.Stdout, logHandlerOptions)
+	if cfg.Debug {
+		cfg.LogLevel = "debug"
 	}
 
+	// Configure logger after config is parsed so log level and format are known
+	var logHandlerOptions *slog.HandlerOptions
 	switch strings.ToLower(cfg.LogLevel) {
 	case "debug":
 		logHandlerOptions = &slog.HandlerOptions{Level: slog.LevelDebug, AddSource: true}
@@ -133,9 +122,43 @@ func initConfig() {
 		logHandlerOptions = &slog.HandlerOptions{Level: slog.LevelError, AddSource: true}
 	default:
 		slog.Warn("unknown log level, setting it to info", "level", cfg.LogLevel)
+		logHandlerOptions = &slog.HandlerOptions{Level: slog.LevelInfo}
 	}
 
-	if cfg.Debug {
-		cfg.LogLevel = "debug"
+	var logHandler slog.Handler
+	switch strings.ToLower(cfg.LogFormat) {
+	case "json":
+		logHandler = slog.NewJSONHandler(os.Stdout, logHandlerOptions)
+	case "text":
+		logHandler = slog.NewTextHandler(os.Stdout, logHandlerOptions)
+	default:
+		slog.Warn("unknown log format, using text", "format", cfg.LogFormat)
+		logHandler = slog.NewTextHandler(os.Stdout, logHandlerOptions)
 	}
+
+	slog.SetDefault(slog.New(logHandler))
+}
+
+// newSCIMHTTPClient creates an HTTP client configured for AWS SCIM API calls
+// with jitter backoff and connection pooling.
+func newSCIMHTTPClient() *http.Client {
+	return httpx.NewClientBuilder().
+		WithMaxRetries(10).
+		WithRetryStrategy(httpx.JitterBackoffStrategy).
+		WithRetryBaseDelay(500 * time.Millisecond).
+		WithRetryMaxDelay(10 * time.Second).
+		WithMaxIdleConns(100).
+		WithMaxIdleConnsPerHost(100).
+		Build()
+}
+
+// newGWSHTTPClient creates an HTTP client configured for Google Workspace API calls
+// with exponential backoff.
+func newGWSHTTPClient() *http.Client {
+	return httpx.NewClientBuilder().
+		WithMaxRetries(3).
+		WithRetryStrategy(httpx.ExponentialBackoffStrategy).
+		WithRetryBaseDelay(500 * time.Millisecond).
+		WithRetryMaxDelay(10 * time.Second).
+		Build()
 }
