@@ -177,7 +177,12 @@ Set the `SyncUserFields` parameter when deploying:
 sam deploy --parameter-overrides SyncUserFields=phoneNumbers,addresses,enterpriseData
 ```
 
-> **Note:** When changing this configuration on an existing deployment, the first sync will detect all users as "changed" (due to hash differences) and update them in AWS SSO. This is expected behavior and will clear excluded fields from SCIM.
+### Behavior Notes
+
+* **Default (empty or not set):** When `sync_user_fields` is empty or not configured, all optional fields are synced. This preserves backward compatibility with existing deployments.
+* **Specifying fields:** Only the listed fields will be synced. For example, setting `sync_user_fields: [phoneNumbers]` will sync only phone numbers; addresses, enterprise data, and other optional attributes will not be sent to AWS SSO SCIM.
+* **Invalid field names:** If an invalid field name is provided, the application will fail at startup with a clear error message listing the unrecognized field.
+* **Changing on an existing deployment:** The first sync after modifying this configuration will detect all users as "changed" (due to hash differences) and update them in AWS SSO. This is expected behavior — it will clear the excluded fields from SCIM.
 
 ## ⚠️ Limitations
 
