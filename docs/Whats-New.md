@@ -30,6 +30,14 @@ Several code quality improvements and bug fixes in the AWS SCIM client:
 * **Removed redundant context set:** `do()` no longer calls `req.WithContext(ctx)` since the request is already created with `http.NewRequestWithContext`.
 * **Simplified type conversions:** `CreateOrGetUser` and `CreateOrGetGroup` use type conversions instead of manual field-by-field struct copies.
 
+### Go 1.26 Modernization
+
+Applied Go 1.26 best practices across the codebase:
+
+* **Removed `github.com/pkg/errors` dependency:** Replaced all `errors.Wrap` and `errors.Errorf` with stdlib `fmt.Errorf` (with `%w`) and `errors.New` in `internal/setup`, `internal/repository`, and `pkg/aws`.
+* **`errors.AsType[T]`:** Migrated `errors.As` calls to the generic `errors.AsType[T]` in `internal/core/sync.go` for type safety and performance.
+* **Fixed `os.Exit` in `Hash()`:** `internal/model.Hash()` no longer calls `os.Exit(1)` on nil input or encoding failure. It panics instead (appropriate for programming errors, recoverable, produces stack trace).
+
 ## v0.44.0
 
 ### Configurable User Fields

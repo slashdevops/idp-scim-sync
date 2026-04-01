@@ -11,7 +11,6 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/secretsmanager"
-	"github.com/pkg/errors"
 	"github.com/slashdevops/httpx"
 	"github.com/slashdevops/idp-scim-sync/internal/config"
 	"github.com/slashdevops/idp-scim-sync/internal/core"
@@ -83,7 +82,7 @@ func Configuration(cfg *config.Config) error {
 	}
 	for _, e := range envVars {
 		if err := viper.BindEnv(e); err != nil {
-			return errors.Wrap(err, "cannot bind environment variable")
+			return fmt.Errorf("cannot bind environment variable: %w", err)
 		}
 	}
 
@@ -92,13 +91,13 @@ func Configuration(cfg *config.Config) error {
 	if !cfg.IsLambda {
 		home, err := os.UserHomeDir()
 		if err != nil {
-			return errors.Wrap(err, "cannot get user home directory")
+			return fmt.Errorf("cannot get user home directory: %w", err)
 		}
 		viper.AddConfigPath(home)
 
 		currentDir, err := os.Getwd()
 		if err != nil {
-			return errors.Wrap(err, "cannot get current directory")
+			return fmt.Errorf("cannot get current directory: %w", err)
 		}
 		viper.AddConfigPath(currentDir)
 
@@ -122,7 +121,7 @@ func Configuration(cfg *config.Config) error {
 	}
 
 	if err := viper.Unmarshal(cfg); err != nil {
-		return errors.Wrap(err, "cannot unmarshal config")
+		return fmt.Errorf("cannot unmarshal config: %w", err)
 	}
 
 	if cfg.Debug {
@@ -138,14 +137,14 @@ func Secrets(cfg *config.Config) error {
 
 	awsConf, err := aws.NewDefaultConf(context.Background())
 	if err != nil {
-		return errors.Wrap(err, "cannot load aws config")
+		return fmt.Errorf("cannot load aws config: %w", err)
 	}
 
 	svc := secretsmanager.NewFromConfig(awsConf)
 
 	secrets, err := aws.NewSecretsManagerService(svc)
 	if err != nil {
-		return errors.Wrap(err, "cannot create aws secrets manager service")
+		return fmt.Errorf("cannot create aws secrets manager service: %w", err)
 	}
 
 	// create a channel to receive the results
@@ -155,7 +154,7 @@ func Secrets(cfg *config.Config) error {
 		slog.Debug("reading secret", "name", cfg.GWSUserEmailSecretName)
 		unwrap, err := secrets.GetSecretValue(context.Background(), cfg.GWSUserEmailSecretName)
 		if err != nil {
-			results <- errors.Wrap(err, "cannot get secretmanager value")
+			results <- fmt.Errorf("cannot get secretmanager value: %w", err)
 			return
 		}
 		cfg.GWSUserEmail = unwrap
@@ -166,7 +165,7 @@ func Secrets(cfg *config.Config) error {
 		slog.Debug("reading secret", "name", cfg.GWSServiceAccountFileSecretName)
 		unwrap, err := secrets.GetSecretValue(context.Background(), cfg.GWSServiceAccountFileSecretName)
 		if err != nil {
-			results <- errors.Wrap(err, "cannot get secretmanager value")
+			results <- fmt.Errorf("cannot get secretmanager value: %w", err)
 			return
 		}
 		cfg.GWSServiceAccountFile = unwrap
@@ -177,7 +176,7 @@ func Secrets(cfg *config.Config) error {
 		slog.Debug("reading secret", "name", cfg.AWSSCIMAccessTokenSecretName)
 		unwrap, err := secrets.GetSecretValue(context.Background(), cfg.AWSSCIMAccessTokenSecretName)
 		if err != nil {
-			results <- errors.Wrap(err, "cannot get secretmanager value")
+			results <- fmt.Errorf("cannot get secretmanager value: %w", err)
 			return
 		}
 		cfg.AWSSCIMAccessToken = unwrap
@@ -188,7 +187,7 @@ func Secrets(cfg *config.Config) error {
 		slog.Debug("reading secret", "name", cfg.AWSSCIMEndpointSecretName)
 		unwrap, err := secrets.GetSecretValue(context.Background(), cfg.AWSSCIMEndpointSecretName)
 		if err != nil {
-			results <- errors.Wrap(err, "cannot get secretmanager value")
+			results <- fmt.Errorf("cannot get secretmanager value: %w", err)
 			return
 		}
 		cfg.AWSSCIMEndpoint = unwrap
@@ -213,7 +212,7 @@ func SyncService(ctx context.Context, cfg *config.Config) (*core.SyncService, er
 	if !cfg.IsLambda {
 		gwsServiceAccount, err := os.ReadFile(cfg.GWSServiceAccountFile)
 		if err != nil {
-			return nil, errors.Wrap(err, "cannot read google workspace service account file")
+			return nil, fmt.Errorf("cannot read google workspace service account file: %w", err)
 		}
 		gwsServiceAccountContent = gwsServiceAccount
 	}
@@ -238,7 +237,7 @@ func SyncService(ctx context.Context, cfg *config.Config) (*core.SyncService, er
 	// Google Client Service
 	gwsService, err := google.NewService(ctx, gServiceConfig)
 	if err != nil {
-		return nil, errors.Wrap(err, "cannot create google service")
+		return nil, fmt.Errorf("cannot create google service: %w", err)
 	}
 
 	// Build the sync field set from configuration
@@ -247,13 +246,13 @@ func SyncService(ctx context.Context, cfg *config.Config) (*core.SyncService, er
 	// Google Directory Service
 	gwsDS, err := google.NewDirectoryService(gwsService, google.WithSyncFieldSet(syncFieldSet))
 	if err != nil {
-		return nil, errors.Wrap(err, "cannot create google directory service")
+		return nil, fmt.Errorf("cannot create google directory service: %w", err)
 	}
 
 	// Identity Provider Service
 	idpService, err := idp.NewIdentityProvider(gwsDS, idp.WithSyncFieldSet(syncFieldSet))
 	if err != nil {
-		return nil, errors.Wrap(err, "cannot create identity provider service")
+		return nil, fmt.Errorf("cannot create identity provider service: %w", err)
 	}
 
 	// AWS SCIM Service
@@ -268,29 +267,29 @@ func SyncService(ctx context.Context, cfg *config.Config) (*core.SyncService, er
 
 	awsSCIM, err := aws.NewSCIMService(scimClient, cfg.AWSSCIMEndpoint, cfg.AWSSCIMAccessToken)
 	if err != nil {
-		return nil, errors.Wrap(err, "cannot create aws scim service")
+		return nil, fmt.Errorf("cannot create aws scim service: %w", err)
 	}
 	awsSCIM.UserAgent = userAgent
 
 	scimService, err := scim.NewProvider(awsSCIM)
 	if err != nil {
-		return nil, errors.Wrap(err, "cannot create scim provider")
+		return nil, fmt.Errorf("cannot create scim provider: %w", err)
 	}
 
 	awsConf, err := aws.NewDefaultConf(context.Background())
 	if err != nil {
-		return nil, errors.Wrap(err, "cannot load aws config")
+		return nil, fmt.Errorf("cannot load aws config: %w", err)
 	}
 
 	s3Client := s3.NewFromConfig(awsConf)
 	repo, err := repository.NewS3Repository(s3Client, repository.WithBucket(cfg.AWSS3BucketName), repository.WithKey(cfg.AWSS3BucketKey))
 	if err != nil {
-		return nil, errors.Wrap(err, "cannot create s3 repository")
+		return nil, fmt.Errorf("cannot create s3 repository: %w", err)
 	}
 
 	ss, err := core.NewSyncService(idpService, scimService, repo, core.WithIdentityProviderGroupsFilter(cfg.GWSGroupsFilter))
 	if err != nil {
-		return nil, errors.Wrap(err, "cannot create sync service")
+		return nil, fmt.Errorf("cannot create sync service: %w", err)
 	}
 
 	return ss, nil
