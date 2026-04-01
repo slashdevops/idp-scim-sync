@@ -115,6 +115,7 @@ jobs:
           #   See the file: CHANGELOG.md
           draft: false
           prerelease: false
+          generate_release_notes: true
           token: ${{ secrets.GITHUB_TOKEN }}
           files: |
             dist/assets/**
