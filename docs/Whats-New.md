@@ -34,9 +34,20 @@ Several code quality improvements and bug fixes in the AWS SCIM client:
 
 Applied Go 1.26 best practices across the codebase:
 
-* **Removed `github.com/pkg/errors` dependency:** Replaced all `errors.Wrap` and `errors.Errorf` with stdlib `fmt.Errorf` (with `%w`) and `errors.New` in `internal/setup`, `internal/repository`, and `pkg/aws`.
+* **Removed `github.com/pkg/errors` dependency:** Replaced all `errors.Wrap` and `errors.Errorf` with stdlib `fmt.Errorf` (with `%w`) and `errors.New` in `internal/setup`, `internal/repository`, `pkg/aws`, and `cmd/idpscim`.
 * **`errors.AsType[T]`:** Migrated `errors.As` calls to the generic `errors.AsType[T]` in `internal/core/sync.go` for type safety and performance.
 * **Fixed `os.Exit` in `Hash()`:** `internal/model.Hash()` no longer calls `os.Exit(1)` on nil input or encoding failure. It panics instead (appropriate for programming errors, recoverable, produces stack trace).
+
+### CLI Modernization (`idpscimcli`)
+
+Improved the `idpscimcli` command-line tool for code quality and testability:
+
+* **Fixed logger initialization bug:** Log handler options were applied after the handler was created, so log level and format from config had no effect. Fixed by configuring options before creating the handler.
+* **Testable error handling:** `getGWSDirectoryService` now returns errors instead of calling `os.Exit(1)`, allowing proper error propagation and unit testing.
+* **`show()` error handling:** The output function now returns errors instead of silently discarding marshal failures.
+* **Reduced code duplication:** Extracted `newSCIMHTTPClient()`, `newGWSHTTPClient()`, and `newAWSSCIMService()` helpers, eliminating 6 duplicated builder blocks.
+* **Added unit tests:** New tests for `show()` covering JSON, YAML, default format, marshal errors, and empty structs.
+* **Fixed typos:** "usrs" → "users", "Servive" → "Service" in command help text.
 
 ## v0.44.0
 

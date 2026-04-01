@@ -1,8 +1,8 @@
 # idpscimcli
 
-This is is a `command-line tool` to check and validate some functionalities implemented in idpscim.
+This is a `command-line tool` to check and validate some functionalities implemented in idpscim.
 
-The Idea of this tools is check the configuration you will implement in the [idpscim](idpscim.md) program, like the `filter` used for `Google Workspace Groups` and `Users` and the inventory of users and goups in both sides.
+The idea of this tool is to check the configuration you will implement in the [idpscim](idpscim.md) program, like the `filter` used for `Google Workspace Groups` and `Users` and the inventory of users and groups in both sides.
 
 ## idpscimcli --help
 
@@ -48,7 +48,7 @@ Use "idpscimcli [command] --help" for more information about a command.
 
 ## Building the project
 
-To build the project in local, you will need to have installed and configured at least the following:
+To build the project locally, you will need to have installed and configured at least the following:
 
 1. [git](https://git-scm.com/)
 2. [Go](https://go.dev/learn/)
