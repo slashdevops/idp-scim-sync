@@ -195,7 +195,8 @@ sam deploy --parameter-overrides SyncUserFields=phoneNumbers,addresses,enterpris
 If you are coming from the [awslabs/ssosync](https://github.com/awslabs/ssosync) project, please note the following:
 
 * This project only implements the `--sync-method groups`.
-* This project implements filtering for Google Workspace Groups and configurable user field selection via `--sync-user-fields`.
+* This project only implements filtering for Google Workspace Groups, not Users.
+* This project supports selecting which optional user attributes to sync via `--sync-user-fields` (e.g., phone numbers, addresses, enterprise data).
 * The flag names are different.
 * Not all features of `ssosync` are implemented here, and they may not be in the future.
 
