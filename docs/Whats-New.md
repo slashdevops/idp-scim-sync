@@ -21,3 +21,11 @@ Fixed a bug where group members were re-synced on every Lambda execution even wh
 **Root cause:** `MergeGroupsMembersResult` was not consolidating entries for the same group when merging "created" and "equal" member sets. This produced duplicate group entries in the state file, causing the groups-members hash to never match the IDP data on subsequent syncs.
 
 **Impact:** After upgrading, the first sync will reconcile the state file automatically. Subsequent syncs will correctly skip member reconciliation when no changes are detected.
+
+### Performance Improvements
+
+* **Concurrent user fetching:** `GetUsersByGroupsMembers` now fetches user details from the Google Workspace API concurrently (up to 10 parallel requests) instead of sequentially. For deployments with 100+ users, this reduces the user retrieval phase from minutes to seconds.
+
+* **Optimized member comparison:** Removed a redundant O(m) inner loop in `membersDataSets` that iterated over the entire SCIM member set to find an email already confirmed by a direct map lookup. Benchmarks show ~16-19% improvement for large groups.
+
+* **Goroutine leak safety:** Concurrent operations are verified with `synctest.Test` (Go 1.26) to ensure no goroutine leaks in both success and error paths.
