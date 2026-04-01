@@ -161,6 +161,9 @@ func (c *Config) Validate() error {
 	}
 
 	for _, field := range c.SyncUserFields {
+		if field == "" {
+			continue
+		}
 		if err := model.ValidateSyncUserField(field); err != nil {
 			return fmt.Errorf("invalid sync_user_fields configuration: %w", err)
 		}

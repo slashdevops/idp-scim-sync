@@ -77,12 +77,16 @@ type SyncFieldSet struct {
 
 // NewSyncFieldSet creates a SyncFieldSet from a list of field names.
 // An empty or nil slice means "include all fields".
+// Empty strings in the input are silently ignored to handle cases where
+// environment variables are set to "" (e.g., from CloudFormation defaults).
 func NewSyncFieldSet(fields []string) *SyncFieldSet {
 	s := &SyncFieldSet{
 		fields: make(map[SyncUserField]bool, len(fields)),
 	}
 	for _, f := range fields {
-		s.fields[SyncUserField(f)] = true
+		if f != "" {
+			s.fields[SyncUserField(f)] = true
+		}
 	}
 	return s
 }

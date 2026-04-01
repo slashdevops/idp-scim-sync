@@ -23,6 +23,30 @@ func TestNewSyncFieldSet(t *testing.T) {
 			t.Error("expected non-empty field set")
 		}
 	})
+
+	t.Run("slice with only empty strings creates empty set", func(t *testing.T) {
+		s := NewSyncFieldSet([]string{""})
+		if !s.IsEmpty() {
+			t.Error("expected empty field set when input contains only empty strings")
+		}
+		// Should behave as 'all fields included'
+		if !s.Includes(SyncUserFieldPhoneNumbers) {
+			t.Error("empty-string-only set should include all fields")
+		}
+	})
+
+	t.Run("empty strings are filtered from mixed input", func(t *testing.T) {
+		s := NewSyncFieldSet([]string{"", "phoneNumbers", ""})
+		if s.IsEmpty() {
+			t.Error("expected non-empty field set")
+		}
+		if !s.Includes(SyncUserFieldPhoneNumbers) {
+			t.Error("expected phoneNumbers to be included")
+		}
+		if s.Includes(SyncUserFieldAddresses) {
+			t.Error("expected addresses to be excluded")
+		}
+	})
 }
 
 func TestSyncFieldSet_Includes(t *testing.T) {
