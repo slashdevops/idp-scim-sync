@@ -11,8 +11,8 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/secretsmanager"
-	"github.com/p2p-b2b/httpretrier"
 	"github.com/pkg/errors"
+	"github.com/slashdevops/httpx"
 	"github.com/slashdevops/idp-scim-sync/internal/config"
 	"github.com/slashdevops/idp-scim-sync/internal/core"
 	"github.com/slashdevops/idp-scim-sync/internal/idp"
@@ -218,11 +218,12 @@ func SyncService(ctx context.Context, cfg *config.Config) (*core.SyncService, er
 		gwsServiceAccountContent = gwsServiceAccount
 	}
 
-	idpClient := httpretrier.NewClient(
-		10, // Max Retries
-		httpretrier.ExponentialBackoff(10*time.Millisecond, 500*time.Millisecond),
-		nil, // Use http.DefaultTransport
-	)
+	idpClient := httpx.NewClientBuilder().
+		WithMaxRetries(10).
+		WithRetryStrategy(httpx.ExponentialBackoffStrategy).
+		WithRetryBaseDelay(500 * time.Millisecond).
+		WithRetryMaxDelay(10 * time.Second).
+		Build()
 
 	userAgent := fmt.Sprintf("idp-scim-sync/%s", version.Version)
 
@@ -257,12 +258,13 @@ func SyncService(ctx context.Context, cfg *config.Config) (*core.SyncService, er
 
 	// AWS SCIM Service
 
-	// httpClient
-	scimClient := httpretrier.NewClient(
-		10, // Max Retries
-		httpretrier.ExponentialBackoff(10*time.Millisecond, 500*time.Millisecond),
-		nil, // Use http.DefaultTransport
-	)
+	// httpClient with jitter backoff to avoid thundering herd on 429 rate limits
+	scimClient := httpx.NewClientBuilder().
+		WithMaxRetries(10).
+		WithRetryStrategy(httpx.JitterBackoffStrategy).
+		WithRetryBaseDelay(500 * time.Millisecond).
+		WithRetryMaxDelay(10 * time.Second).
+		Build()
 
 	awsSCIM, err := aws.NewSCIMService(scimClient, cfg.AWSSCIMEndpoint, cfg.AWSSCIMAccessToken)
 	if err != nil {

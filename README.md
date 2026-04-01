@@ -191,7 +191,7 @@ sam deploy --parameter-overrides SyncUserFields=phoneNumbers,addresses,enterpris
 ## ⚠️ Limitations
 
 * **Group Limit**: The AWS SSO SCIM API has a limit of 50 groups per request. Please support the feature request on the [AWS Support site](https://repost.aws/questions/QUqqnVkIo_SYyF_SlX5LcUjg/aws-sso-scim-api-pagination-for-methods) to help get this limit increased.
-* **Throttling**: With a large number of users and groups, you may encounter a `ThrottlingException` from the AWS SSO SCIM API. This project uses a [retryable HTTP client](https://github.com/p2p-b2b/httpretrier) to mitigate this, but it's still a possibility.
+* **Throttling**: With a large number of users and groups, you may encounter a `ThrottlingException` from the AWS SSO SCIM API. This project uses the [httpx](https://github.com/slashdevops/httpx) library with automatic retry and jitter backoff to mitigate this, but it's still a possibility.
 * **User Status**: The Google Workspace API doesn't differentiate between normal and guest users except for their status. This project only syncs `ACTIVE` users.
 
 ## For `ssosync` Users

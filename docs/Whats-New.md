@@ -2,6 +2,21 @@
 
 This document tracks notable changes, new features, and bug fixes across releases.
 
+## v0.40.1
+
+### Improved HTTP Retry Library
+
+Replaced the `httpretrier` library with [httpx](https://github.com/slashdevops/httpx), a zero-dependency HTTP client with built-in retry support.
+
+**Why:** The previous library did not properly handle HTTP `429 Too Many Requests` responses, which caused issues with AWS SSO SCIM API throttling under high load.
+
+**What changed:**
+
+* The `httpx` library automatically retries on `429` and `5xx` responses with configurable backoff strategies.
+* AWS SCIM API calls now use **jitter backoff** instead of simple exponential backoff, reducing the chance of thundering herd effects during rate limiting.
+* Google Workspace API calls use **exponential backoff** for reliable retries.
+* The `httpx` library has zero external dependencies and integrates with Go's `slog` logging.
+
 ## v0.44.0
 
 ### Configurable User Fields

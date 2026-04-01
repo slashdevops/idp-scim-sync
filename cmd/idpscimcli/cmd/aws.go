@@ -3,10 +3,9 @@ package cmd
 import (
 	"context"
 	"log/slog"
-	"net/http"
 	"time"
 
-	"github.com/p2p-b2b/httpretrier"
+	"github.com/slashdevops/httpx"
 	"github.com/slashdevops/idp-scim-sync/internal/version"
 	"github.com/slashdevops/idp-scim-sync/pkg/aws"
 	"github.com/spf13/cobra"
@@ -92,11 +91,12 @@ func runAWSServiceConfig(_ *cobra.Command, _ []string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), reqTimeout)
 	defer cancel()
 
-	httpRetryClient := httpretrier.NewClient(
-		10, // Max Retries
-		httpretrier.ExponentialBackoff(10*time.Millisecond, 500*time.Millisecond),
-		nil, // Use http.DefaultTransport
-	)
+	httpRetryClient := httpx.NewClientBuilder().
+		WithMaxRetries(10).
+		WithRetryStrategy(httpx.JitterBackoffStrategy).
+		WithRetryBaseDelay(500 * time.Millisecond).
+		WithRetryMaxDelay(10 * time.Second).
+		Build()
 
 	awsSCIMService, err := aws.NewSCIMService(httpRetryClient, cfg.AWSSCIMEndpoint, cfg.AWSSCIMAccessToken)
 	if err != nil {
@@ -120,16 +120,14 @@ func runAWSGroupsList(_ *cobra.Command, _ []string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), reqTimeout)
 	defer cancel()
 
-	httpTransport := http.DefaultTransport.(*http.Transport).Clone()
-	httpTransport.MaxIdleConns = 100
-	httpTransport.MaxConnsPerHost = 100
-	httpTransport.MaxIdleConnsPerHost = 100
-
-	httpClient := httpretrier.NewClient(
-		10, // Max Retries
-		httpretrier.ExponentialBackoff(10*time.Millisecond, 500*time.Millisecond),
-		httpTransport,
-	)
+	httpClient := httpx.NewClientBuilder().
+		WithMaxRetries(10).
+		WithRetryStrategy(httpx.JitterBackoffStrategy).
+		WithRetryBaseDelay(500 * time.Millisecond).
+		WithRetryMaxDelay(10 * time.Second).
+		WithMaxIdleConns(100).
+		WithMaxIdleConnsPerHost(100).
+		Build()
 
 	awsSCIMService, err := aws.NewSCIMService(httpClient, cfg.AWSSCIMEndpoint, cfg.AWSSCIMAccessToken)
 	if err != nil {
@@ -154,16 +152,14 @@ func runAWSUsersList(_ *cobra.Command, _ []string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), reqTimeout)
 	defer cancel()
 
-	httpTransport := http.DefaultTransport.(*http.Transport).Clone()
-	httpTransport.MaxIdleConns = 100
-	httpTransport.MaxConnsPerHost = 100
-	httpTransport.MaxIdleConnsPerHost = 100
-
-	httpClient := httpretrier.NewClient(
-		10, // Max Retries
-		httpretrier.ExponentialBackoff(10*time.Millisecond, 500*time.Millisecond),
-		httpTransport,
-	)
+	httpClient := httpx.NewClientBuilder().
+		WithMaxRetries(10).
+		WithRetryStrategy(httpx.JitterBackoffStrategy).
+		WithRetryBaseDelay(500 * time.Millisecond).
+		WithRetryMaxDelay(10 * time.Second).
+		WithMaxIdleConns(100).
+		WithMaxIdleConnsPerHost(100).
+		Build()
 
 	awsSCIMService, err := aws.NewSCIMService(httpClient, cfg.AWSSCIMEndpoint, cfg.AWSSCIMAccessToken)
 	if err != nil {
