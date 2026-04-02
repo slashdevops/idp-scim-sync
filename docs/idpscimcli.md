@@ -90,19 +90,17 @@ then the binaries are in `dist/` folder.
 ./idpscimcli --help
 ```
 
-## Using the Docker image
+## Using the container image
 
-this is a __WIP__
-
-Test and build the Docker image
+Build and test the container image locally (requires [podman](https://podman.io/)):
 
 ```bash
-make test
-make container-build
+make build-dist
+GIT_VERSION=test make container-build
 ```
 
-Execute
+Execute:
 
 ```bash
-docker run -it -v $HOME/tmp/idpscim.yaml:/app/.idpscim.yaml ghcr.io/slashdevops/idp-scim-sync-linux-arm64v8 idpscimcli --debug
+podman run -it -v $HOME/tmp/idpscim.yaml:/app/.idpscim.yaml ghcr.io/slashdevops/idp-scim-sync:latest idpscimcli --debug
 ```

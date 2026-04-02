@@ -2,19 +2,27 @@
 
 ## Container Registry
 
-## AWS ECR
+Container images are published to [GitHub Container Registry](https://github.com/slashdevops/idp-scim-sync/pkgs/container/idp-scim-sync) (ghcr.io) using [podman](https://podman.io/).
+
+### Build locally
 
 ```bash
-aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws/l2n7y5s7
-docker build -t slashdevops/idp-scim-sync .
-docker tag slashdevops/idp-scim-sync:latest public.ecr.aws/l2n7y5s7/slashdevops/idp-scim-sync:latest
-docker push public.ecr.aws/l2n7y5s7/slashdevops/idp-scim-sync:latest
+# Build cross-platform binaries
+make build-dist
+
+# Build container images (requires podman)
+GIT_VERSION=test make container-build
+
+# Verify
+podman images | grep idp-scim-sync
 ```
 
-## Github Container Registry
+### Publish to ghcr.io
 
 ```bash
-echo $CR_PAT | docker login ghcr.io -u USERNAME --password-stdin
-docker build -t ghcr.io/slashdevops/idp-scim-sync .
-docker push ghcr.io/slashdevops/idp-scim-sync:latest
+# Login
+REPOSITORY_REGISTRY_TOKEN=<your-token> REPOSITORY_REGISTRY_USERNAME=<your-username> make container-login
+
+# Publish
+GIT_VERSION=<version> make container-publish
 ```

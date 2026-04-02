@@ -7,7 +7,7 @@ on:
       - v[0-9].[0-9]+.[0-9]*
 
 env:
-  AWS_REGION: us-east-1
+  MAKE_STOP_ON_ERRORS: true
 
 permissions:
   id-token: write
@@ -15,6 +15,7 @@ permissions:
   actions: write
   contents: write
   pull-requests: read
+  packages: write
 
 jobs:
   test:
@@ -55,55 +56,36 @@ jobs:
         run: |
           go version
 
-      - name: Git Current branch name (Version)
-        run: |
-          echo ${{ github.ref_name }}
-
       - name: Build Distribution Cross-Platform
         run: |
           GIT_VERSION=${{ github.ref_name }} make build-dist
+
+      - name: Build Distribution zip Assets
+        run: |
+          GIT_VERSION=${{ github.ref_name }} make build-dist-zip
 
       - name: Upload Distribution files
         uses: actions/upload-artifact@v6
         with:
           name: dist
           path: ./dist/
+          retention-days: 1
+
+  container_image:
+    name: Publish Container Images
+    needs: build
+    uses: slashdevops/idp-scim-sync/.github/workflows/container-image.yml@main
 
   create-github-release:
     name: Create Github Release
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - name: Check out code
-        uses: actions/checkout@v6
-
-      - name: Set up Go 1.x
-        id: go
-        uses: actions/setup-go@v6
-        with:
-          go-version-file: ./go.mod
-
-      - name: Go version
-        run: |
-          go version
-
-      - name: Docker Version
-        run: |
-          docker version
-
-      - name: Git Current branch name (Version)
-        run: |
-          echo ${{ github.ref_name }}
-
       - name: Download Distribution files
         uses: actions/download-artifact@v7
         with:
           name: dist
           path: ./dist/
-
-      - name: Build Distribution zip Assets
-        run: |
-          GIT_VERSION=${{ github.ref_name }} make build-dist-zip
 
       - name: Create Release
         id: create-github-release
@@ -111,25 +93,13 @@ jobs:
         with:
           tag_name: ${{ github.ref_name }}
           name: ${{ github.ref_name }}
-          # body: |
-          #   See the file: CHANGELOG.md
           draft: false
           prerelease: false
           generate_release_notes: true
+          make_latest: true
           token: ${{ secrets.GITHUB_TOKEN }}
           files: |
             dist/assets/**
-
-  container_image:
-    name: Create and Publish Container Image
-    needs: create-github-release
-    uses: slashdevops/idp-scim-sync/.github/workflows/container-image.yml@main
-    secrets:
-      GH_PAT: ${{ secrets.GH_PAT }}
-      GH_USER: ${{ secrets.GH_USER }}
-      DOCKER_HUB_TOKEN: ${{ secrets.DOCKER_HUB_TOKEN }}
-      DOCKER_HUB_USER: ${{ secrets.DOCKER_HUB_USER }}
-      AWS_OIDC_ROLE_TO_ASSUME: ${{ secrets.AWS_OIDC_ROLE_TO_ASSUME }}
 
   aws_sam:
     name: Create and Publish AWS SAM Serverless Application

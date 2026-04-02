@@ -118,8 +118,8 @@ make build-dist
 * **Pre-built Binaries**
   * Download the binaries from the [GitHub Releases](https://github.com/slashdevops/idp-scim-sync/releases).
 
-* **Docker Image**
-  * Pull the image from one of the public repositories.
+* **Container Image**
+  * Pull the image from the [GitHub Container Registry](https://github.com/slashdevops/idp-scim-sync/pkgs/container/idp-scim-sync).
 
 ## Configurable User Fields
 
@@ -184,9 +184,7 @@ sam deploy --parameter-overrides SyncUserFields=phoneNumbers,addresses,enterpris
 ## 📦 Repositories
 
 * 📦 [AWS Serverless Application Repository](https://serverlessrepo.aws.amazon.com/applications/us-east-1/889836709304/idp-scim-sync)
-* 📦 [AWS ECR Public Gallery](https://gallery.ecr.aws/l2n7y5s7/slashdevops/idp-scim-sync)
-* 📦 [GitHub Packages](https://github.com/slashdevops/idp-scim-sync/pkgs/container/idp-scim-sync)
-* 📦 [Docker Hub](https://hub.docker.com/r/slashdevops/idp-scim-sync)
+* 📦 [GitHub Container Registry](https://github.com/slashdevops/idp-scim-sync/pkgs/container/idp-scim-sync)
 
 ## ⚠️ Limitations
 

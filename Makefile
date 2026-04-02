@@ -41,14 +41,12 @@ GO_ARCH        ?= arm64 amd64
 GO_FILES       := $(shell go list ./... | grep -v /mocks/)
 GO_GRAPH_FILE  := $(BUILD_DIR)/go-mod-graph.txt
 
-CONTAINER_OS   ?= linux
-CONTAINER_ARCH ?= arm64v8 amd64
-CONTAINER_NAMESPACE ?= $(PROJECT_NAMESPACE)
-CONTAINER_IMAGE_NAME ?= $(PROJECT_NAME)
-
-DOCKER_CONTAINER_REPO  ?= docker.io
-GITHUB_CONTAINER_REPO  ?= ghcr.io
-AWS_ECR_CONTAINER_REPO ?= public.ecr.aws/l2n7y5s7
+CONTAINER_OS           ?= linux
+CONTAINER_ARCH         ?= arm64 amd64
+CONTAINER_NAMESPACE    ?= $(PROJECT_NAMESPACE)
+CONTAINER_IMAGE_NAME   ?= $(PROJECT_NAME)
+CONTAINER_SERVICE_NAME ?= idpscim
+CONTAINER_REPOS        ?= ghcr.io
 
 AWS_SAM_LAMBDA_BINARY_NAME ?= bootstrap
 AWS_SAM_PROJECT_APP_NAME   ?= idpscim
@@ -222,130 +220,59 @@ build-LambdaFunction: ## Build the application for AWS Lambda, this target is us
 ###############################################################################
 ##@ Container commands
 .PHONY: container-build
-container-build: build-dist ## Build the container image
-	@printf "👉 Building container image...\n"
+container-build: ## Build the container image, requires make build-dist
+	@printf "👉 Building container images...\n"
 	$(foreach OS, $(CONTAINER_OS), \
 		$(foreach ARCH, $(CONTAINER_ARCH), \
-			$(if $(findstring v, $(ARCH)), $(eval BIN_ARCH = arm64), $(eval BIN_ARCH = $(ARCH)) ) \
-			$(call exec_cmd, docker build \
-													--build-arg ARCH=$(ARCH) \
-													--build-arg BIN_ARCH=$(BIN_ARCH) \
-													--build-arg OS=$(OS) \
-													--build-arg PROJECT_NAME=$(AWS_SAM_PROJECT_APP_NAME) \
-													--tag $(DOCKER_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME):$(GIT_VERSION)-$(OS)-$(ARCH) \
-													--tag $(DOCKER_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME):latest-$(OS)-$(ARCH) \
-													--tag $(GITHUB_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME):$(GIT_VERSION)-$(OS)-$(ARCH) \
-													--tag $(GITHUB_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME):latest-$(OS)-$(ARCH) \
-													--tag $(AWS_ECR_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME):$(GIT_VERSION)-$(OS)-$(ARCH) \
-													--tag $(AWS_ECR_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME):latest-$(OS)-$(ARCH) \
-													./. \
+			$(call exec_cmd, podman build \
+				--platform $(OS)/$(ARCH) \
+				--tag $(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME):$(GIT_VERSION)-$(OS)-$(ARCH) \
+				--build-arg SERVICE_NAME=$(CONTAINER_SERVICE_NAME) \
+				--build-arg GOOS=$(OS) \
+				--build-arg GOARCH=$(ARCH) \
+				--build-arg BUILD_DATE=$(BUILD_DATE) \
+				--build-arg BUILD_VERSION=$(GIT_VERSION) \
+				--build-arg DESCRIPTION="Container image for $(PROJECT_NAME)" \
+				--build-arg REPO_URL="https://github.com/$(PROJECT_NAMESPACE)/$(PROJECT_NAME)" \
+				--file ./Containerfile . \
 			) \
 		) \
 	)
 
-.PHONY: container-publish-docker
-container-publish-docker: ## Publish the container image to docker hub
-	@printf "👉 Publishing container image to docker hub...\n"
-	$(foreach OS, $(CONTAINER_OS), \
-		$(foreach ARCH, $(CONTAINER_ARCH), \
-			$(if $(findstring v, $(ARCH)), $(eval BIN_ARCH = arm64), $(eval BIN_ARCH = $(ARCH)) ) \
-			\
-			$(call exec_cmd, docker push "$(DOCKER_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME):$(GIT_VERSION)-$(OS)-$(ARCH)" ) \
-			$(call exec_cmd, docker push "$(DOCKER_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME):latest-$(OS)-$(ARCH)" ) \
-			\
-			$(call exec_cmd, docker manifest create --amend \
-									"$(DOCKER_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME):$(GIT_VERSION)" \
-									"$(DOCKER_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME):$(GIT_VERSION)-$(OS)-$(ARCH)" \
-				) \
-			$(call exec_cmd, docker manifest annotate \
-									"$(DOCKER_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME):$(GIT_VERSION)" \
-									"$(DOCKER_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME):$(GIT_VERSION)-$(OS)-$(ARCH)" \
-									--os $(OS) --arch $(BIN_ARCH) $(if $(findstring v, $(ARCH)), --variant "v8", ) \
-				) \
-			\
-			$(call exec_cmd, docker manifest create --amend \
-									"$(DOCKER_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME):latest" \
-									"$(DOCKER_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME):latest-$(OS)-$(ARCH)" \
-				) \
-			$(call exec_cmd, docker manifest annotate \
-									"$(DOCKER_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME):latest" \
-									"$(DOCKER_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME):latest-$(OS)-$(ARCH)" \
-									--os $(OS) --arch $(BIN_ARCH) $(if $(findstring v, $(ARCH)), --variant "v8", ) \
-				) \
-			\
-			$(call exec_cmd, docker manifest push "$(DOCKER_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME):latest" ) \
-			$(call exec_cmd, docker manifest push "$(DOCKER_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME):$(GIT_VERSION)" ) \
-		) \
+.PHONY: container-login
+container-login: ## Login to the container registry. Requires REPOSITORY_REGISTRY_TOKEN and REPOSITORY_REGISTRY_USERNAME env vars
+	@printf "👉 Logging in to container registry...\n"
+	$(foreach REPO, $(CONTAINER_REPOS), \
+		$(call exec_cmd, echo $(REPOSITORY_REGISTRY_TOKEN) | podman login $(REPO) --username $(REPOSITORY_REGISTRY_USERNAME) --password-stdin ) \
 	)
 
-.PHONY: container-publish-github
-container-publish-github: ## Publish the container image to github container registry
-	@printf "👉 Publishing container image to github container registry...\n"
-	$(foreach OS, $(CONTAINER_OS), \
-		$(foreach ARCH, $(CONTAINER_ARCH), \
-			$(if $(findstring v, $(ARCH)), $(eval BIN_ARCH = arm64), $(eval BIN_ARCH = $(ARCH)) ) \
-			\
-			$(call exec_cmd, docker push "$(GITHUB_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME):$(GIT_VERSION)-$(OS)-$(ARCH)" ) \
-			$(call exec_cmd, docker push "$(GITHUB_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME):latest-$(OS)-$(ARCH)" ) \
-			\
-			$(call exec_cmd, docker manifest create --amend \
-										"$(GITHUB_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME):$(GIT_VERSION)" \
-										"$(GITHUB_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME):$(GIT_VERSION)-$(OS)-$(ARCH)" \
+.PHONY: container-publish
+container-publish: ## Publish the container image to the container registry
+	@printf "👉 Creating container manifest...\n"
+	$(foreach REPO, $(CONTAINER_REPOS), \
+		$(if $(shell podman manifest exists $(REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME):$(GIT_VERSION) || echo "exists" ), \
+		, \
+			$(call exec_cmd, podman manifest rm $(REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME):$(GIT_VERSION) ) \
+		) \
+		$(call exec_cmd, podman manifest create $(REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME):$(GIT_VERSION) \
+		) \
+		$(foreach OS, $(CONTAINER_OS), \
+			$(foreach ARCH, $(CONTAINER_ARCH), \
+				$(call exec_cmd, podman manifest add --os=$(OS) --arch=$(ARCH) \
+					$(REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME):$(GIT_VERSION) \
+					containers-storage:localhost/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME):$(GIT_VERSION)-$(OS)-$(ARCH) \
 				) \
-			$(call exec_cmd, docker manifest annotate \
-										"$(GITHUB_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME):$(GIT_VERSION)" \
-										"$(GITHUB_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME):$(GIT_VERSION)-$(OS)-$(ARCH)" \
-										--os $(OS) --arch $(BIN_ARCH) $(if $(findstring v, $(ARCH)), --variant "v8", ) \
-				) \
-			\
-			$(call exec_cmd, docker manifest create --amend \
-										"$(GITHUB_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME):latest" \
-										"$(GITHUB_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME):latest-$(OS)-$(ARCH)" \
-				) \
-			$(call exec_cmd, docker manifest annotate \
-										"$(GITHUB_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME):latest" \
-										"$(GITHUB_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME):latest-$(OS)-$(ARCH)" \
-										--os $(OS) --arch $(BIN_ARCH) $(if $(findstring v, $(ARCH)), --variant "v8", ) \
-				) \
-			\
-			$(call exec_cmd, docker manifest push "$(GITHUB_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME):latest" ) \
-			$(call exec_cmd, docker manifest push "$(GITHUB_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME):$(GIT_VERSION)" ) \
+			) \
 		) \
 	)
-
-.PHONY: container-publish-aws-ecr
-container-publish-aws-ecr: ## Publish the container image to AWS ECR
-	@printf "👉 Publishing container image to AWS ECR...\n"
-	$(foreach OS, $(CONTAINER_OS), \
-		$(foreach ARCH, $(CONTAINER_ARCH), \
-			$(if $(findstring v, $(ARCH)), $(eval BIN_ARCH = arm64), $(eval BIN_ARCH = $(ARCH)) ) \
-			\
-			$(call exec_cmd, docker push "$(AWS_ECR_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME):$(GIT_VERSION)-$(OS)-$(ARCH)" ) \
-			$(call exec_cmd, docker push "$(AWS_ECR_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME):latest-$(OS)-$(ARCH)" ) \
-			\
-			$(call exec_cmd, docker manifest create --amend \
-										"$(AWS_ECR_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME):$(GIT_VERSION)" \
-										"$(AWS_ECR_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME):$(GIT_VERSION)-$(OS)-$(ARCH)" \
-				) \
-			$(call exec_cmd, docker manifest annotate \
-										"$(AWS_ECR_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME):$(GIT_VERSION)" \
-										"$(AWS_ECR_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME):$(GIT_VERSION)-$(OS)-$(ARCH)" \
-										--os $(OS) --arch $(BIN_ARCH) $(if $(findstring v, $(ARCH)), --variant "v8", ) \
-				) \
-			\
-			$(call exec_cmd, docker manifest create --amend \
-				"$(AWS_ECR_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME):latest" \
-				"$(AWS_ECR_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME):latest-$(OS)-$(ARCH)" \
-				) \
-			$(call exec_cmd, docker manifest annotate \
-				"$(AWS_ECR_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME):latest" \
-				"$(AWS_ECR_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME):latest-$(OS)-$(ARCH)" \
-				--os $(OS) --arch $(BIN_ARCH) $(if $(findstring v, $(ARCH)), --variant "v8", ) \
-				) \
-			\
-			$(call exec_cmd, docker manifest push "$(AWS_ECR_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME):latest" ) \
-			$(call exec_cmd, docker manifest push "$(AWS_ECR_CONTAINER_REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME):$(GIT_VERSION)" ) \
-		) \
+	@printf "👉 Publishing container images...\n"
+	$(foreach REPO, $(CONTAINER_REPOS), \
+		$(call exec_cmd, podman manifest push --all \
+			$(REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME):$(GIT_VERSION) \
+			docker://$(REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME):$(GIT_VERSION) ) \
+		$(call exec_cmd, podman manifest push --all \
+			$(REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME):$(GIT_VERSION) \
+			docker://$(REPO)/$(CONTAINER_NAMESPACE)/$(CONTAINER_IMAGE_NAME):latest ) \
 	)
 
 ###############################################################################

@@ -2,95 +2,66 @@ name: "Container Image"
 
 on:
   workflow_call:
-    secrets:
-      DOCKER_HUB_TOKEN:
-        required: true
-      DOCKER_HUB_USER:
-        required: true
-      GH_PAT:
-        required: true
-      GH_USER:
-        required: true
-      AWS_OIDC_ROLE_TO_ASSUME:
-        required: true
   workflow_dispatch:
 
 env:
-  AWS_REGION: us-east-1
+  MAKE_STOP_ON_ERRORS: true
+  MAKE_DEBUG: true
 
 permissions:
   id-token: write
-  contents: read
+  contents: write
+  packages: write
 
 jobs:
-  build_publish_container_images:
+  build:
     name: Build and Publish Container Images
     runs-on: ubuntu-latest
     steps:
       - name: Check out code
         uses: actions/checkout@v6
 
-      - name: Set up Go 1.x
-        id: go
-        uses: actions/setup-go@v6
+      - name: Install Podman
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y podman
+
+      - name: Tools and versions
+        run: |
+          echo "# Container Image Summary" > $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Tools and versions" >> $GITHUB_STEP_SUMMARY
+
+          podman_version=$(podman --version | awk '{print $3}')
+          echo "Podman version: $podman_version"
+          echo "**Podman Version:** $podman_version" >> $GITHUB_STEP_SUMMARY
+
+          make_version=$(make --version | head -n 1)
+          echo "Make version: $make_version"
+          echo "**Make Version:** $make_version" >> $GITHUB_STEP_SUMMARY
+
+      - name: Download Distribution files
+        uses: actions/download-artifact@v7
         with:
-          go-version-file: ./go.mod
+          name: dist
+          path: ./dist/
 
-      - name: Go version
+      - name: Make container-build
         run: |
-          go version
-
-      - name: Git Current branch name (Version)
-        run: |
-          echo ${{ github.ref_name }}
-
-      - name: Docker Version
-        run: |
-          docker version
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v4
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v4
-
-      - name: Build container images
-        run: |
-          GIT_VERSION=${{ github.ref_name }} make container-build
+          echo "## Make container-build" >> $GITHUB_STEP_SUMMARY
+          GIT_VERSION=${{ github.ref_name }} make container-build | tee -a $GITHUB_STEP_SUMMARY
 
       - name: Show container images
         run: |
-          docker images
+          echo "## Show container images" >> $GITHUB_STEP_SUMMARY
+          podman images | tee -a $GITHUB_STEP_SUMMARY
 
-      - name: Logging in Docker Hub
+      - name: Make container-login
         run: |
-          echo ${{ secrets.DOCKER_HUB_TOKEN }} | docker login -u ${{ secrets.DOCKER_HUB_USER }} --password-stdin
+          echo "## Make container-login" >> $GITHUB_STEP_SUMMARY
+          GIT_VERSION=${{ github.ref_name }} REPOSITORY_REGISTRY_TOKEN=${{ secrets.GITHUB_TOKEN }} REPOSITORY_REGISTRY_USERNAME=${{ github.actor }} make container-login | tee -a $GITHUB_STEP_SUMMARY
 
-      - name: Publish Images in Docker Hub
+      - name: Make container-publish
         run: |
-          GIT_VERSION=${{ github.ref_name }} make container-publish-docker
-
-      - name: Logging in GitHub Registry
-        run: |
-          echo ${{ secrets.GH_PAT }} | docker login ghcr.io -u ${{ secrets.GH_USER }} --password-stdin
-
-      - name: Publish Images in GitHub Registry
-        run: |
-          GIT_VERSION=${{ github.ref_name }} make container-publish-github
-
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v5
-        with:
-          role-to-assume: ${{ secrets.AWS_OIDC_ROLE_TO_ASSUME }}
-          role-session-name: publish-ecr-public-images
-          aws-region: ${{ env.AWS_REGION }}
-
-      - name: Logging in AWS ECR Public Repository
-        env:
-          AWS_REGION: ${{ env.AWS_REGION }}
-        run: |
-          aws ecr-public get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin public.ecr.aws
-
-      - name: Publish Images in GitHub Packages
-        run: |
-          GIT_VERSION=${{ github.ref_name }} make container-publish-aws-ecr
+          echo "## Make container-publish" >> $GITHUB_STEP_SUMMARY
+          GIT_VERSION=${{ github.ref_name }} make container-publish | tee -a $GITHUB_STEP_SUMMARY
