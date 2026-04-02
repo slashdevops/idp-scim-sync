@@ -74,7 +74,7 @@ jobs:
   container_image:
     name: Publish Container Images
     needs: build
-    uses: slashdevops/idp-scim-sync/.github/workflows/container-image.yml@main
+    uses: ./.github/workflows/container-image.yml
 
   create-github-release:
     name: Create Github Release
