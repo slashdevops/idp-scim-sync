@@ -30,11 +30,11 @@ For a detailed list of new features, improvements, and bug fixes in each release
 
 This project is compatible with the latest AWS Lambda runtimes. Since version `v0.0.19`, it uses the `provided.al2` runtime and `arm64` architecture.
 
-| Version Range        | AWS Lambda Runtime | Architecture       | Deprecation Date |
-| -------------------- | ------------------ | ------------------ | ---------------- |
-| `<= v0.0.18`         | Go 1.x             | amd64 (Intel)      | 2023-12-31       |
+| Version Range          | AWS Lambda Runtime | Architecture       | Deprecation Date |
+| ---------------------- | ------------------ | ------------------ | ---------------- |
+| `<= v0.0.18`           | Go 1.x             | amd64 (Intel)      | 2023-12-31       |
 | `>= v0.0.19 < v0.31.0` | provided.al2       | arm64 (Graviton 2) | 2026-06-30       |
-| `>= v0.31.0`         | provided.al2023    | arm64 (Graviton 2) | 2029-06-30       |
+| `>= v0.31.0`           | provided.al2023    | arm64 (Graviton 2) | 2029-06-30       |
 
 ## ⚙️ How It Works
 
@@ -47,6 +47,40 @@ This project is developed using the [Go language](https://go.dev/) and [AWS SAM]
 For more details on the resources created by the CloudFormation template, please check the [AWS SAM Template documentation](docs/AWS-SAM-Template.md).
 
 > **Note:** If this is your first time implementing AWS IAM Identity Center, please read [Using SSO](docs/Using-SSO.md).
+
+## Programs
+
+This repository builds two binaries from the `cmd/` directory:
+
+| Program | Source | Purpose |
+| ------- | ------ | ------- |
+| `idpscim` | `cmd/idpscim` | Main synchronization program that runs as the Lambda function, a local CLI, or a container command |
+| `idpscimcli` | `cmd/idpscimcli` | Helper CLI used to inspect AWS SCIM and Google Workspace data while validating configuration |
+
+After `make build`, the binaries are available in `build/`:
+
+```bash
+./build/idpscim --help
+./build/idpscimcli --help
+```
+
+## Documentation Map
+
+The repository documentation is organized as follows:
+
+| Document | Purpose |
+| ------- | ------- |
+| [docs/idpscim.md](docs/idpscim.md) | Main program reference for the `idpscim` sync executable |
+| [docs/idpscimcli.md](docs/idpscimcli.md) | Command reference for the `idpscimcli` validation and inspection CLI |
+| [docs/Configuration.md](docs/Configuration.md) | Configuration sources, examples, and environment variable usage |
+| [docs/AWS-SAM.md](docs/AWS-SAM.md) | Source deployment, Serverless Application Repository update flow, and maintainer publishing workflow |
+| [docs/AWS-SAM-Template.md](docs/AWS-SAM-Template.md) | Template parameters, generated resources, and Lambda environment mapping |
+| [docs/Development.md](docs/Development.md) | Local development workflow, build steps, tests, and SAM-based cloud testing |
+| [docs/Using-SSO.md](docs/Using-SSO.md) | Practical rollout guidance for AWS IAM Identity Center and Google Workspace group design |
+| [docs/State-File-example.md](docs/State-File-example.md) | Example state file structure and notes about how sync state is stored |
+| [docs/Demo.md](docs/Demo.md) | Visual walkthrough screenshots of the sync process and resulting AWS and Google Workspace data |
+| [docs/Release.md](docs/Release.md) | Maintainer release flow based on semantic version tags and GitHub Actions |
+| [docs/Whats-New.md](docs/Whats-New.md) | Release notes and notable changes across versions |
 
 ## 🚀 Getting Started
 
@@ -74,112 +108,53 @@ You have several options to use this project:
 
 * **AWS Serverless Application Repository (Recommended)**
   * Deploy the application directly from the [AWS Serverless Application Repository](https://serverlessrepo.aws.amazon.com/applications/us-east-1/889836709304/idp-scim-sync).
+  * To update an existing deployment to a newer published version, reuse the same original application name that you entered when you first deployed it. Do not use the generated `serverlessrepo-...` stack name. See [docs/AWS-SAM.md](docs/AWS-SAM.md) for the full update flow.
 
 * **AWS SAM**
   * Build and deploy the Lambda function from your local machine.
-  * **Requirements:**
-    * [Git](https://git-scm.com/)
-    * [Go](https://go.dev/learn/)
-    * [AWS SAM CLI](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-sam-cli-install.html)
-  * **Commands:**
+  * Quick start:
 
 ```bash
-# Set your AWS CLI profile and region
 export AWS_PROFILE=<profile_name>
 export AWS_REGION=<region>
-
-# Validate the template
-sam validate
-
-# Build the project
-sam build
-
-# Deploy with a guided process
-sam deploy --guided --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM
+GIT_VERSION=dev sam build
+sam deploy --guided --stack-name idp-scim-sync --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM
 ```
+
+* For full validation, source deployment, publish, and update guidance, see [docs/AWS-SAM.md](docs/AWS-SAM.md) and [docs/AWS-SAM-Template.md](docs/AWS-SAM-Template.md).
 
 ### Locally
 
 * **Build from Source**
-  * **Requirements:**
-    * [Git](https://git-scm.com/)
-    * [Go](https://go.dev/learn/)
-    * [Make](https://www.gnu.org/software/make/)
-  * **Commands:**
+  * Quick start:
 
 ```bash
-# Compile for your operating system
 make
-
-# Cross-compile for Windows, macOS, and Linux
-make build-dist
+./build/idpscim --help
+./build/idpscimcli --help
 ```
+
+* **Run the programs**
+  * **idpscim** runs the actual synchronization logic.
+  * **idpscimcli** helps you validate your AWS SCIM and Google Workspace configuration before enabling automated sync.
+  * See [docs/idpscim.md](docs/idpscim.md), [docs/idpscimcli.md](docs/idpscimcli.md), [docs/Configuration.md](docs/Configuration.md), and [docs/Development.md](docs/Development.md) for examples, flags, and the full local workflow.
 
 * **Pre-built Binaries**
   * Download the binaries from the [GitHub Releases](https://github.com/slashdevops/idp-scim-sync/releases).
 
 * **Container Image**
   * Pull the image from the [GitHub Container Registry](https://github.com/slashdevops/idp-scim-sync/pkgs/container/idp-scim-sync).
+  * Container build and execution details are documented in [docs/idpscim.md](docs/idpscim.md), [docs/idpscimcli.md](docs/idpscimcli.md), and [docs/Development.md](docs/Development.md).
 
 ## Configurable User Fields
 
 By default, all optional user attributes are synced from Google Workspace to AWS SSO SCIM. You can control which optional fields are included using the `sync_user_fields` configuration option.
 
-**Available fields:**
+Supported optional fields include `phoneNumbers`, `addresses`, `title`, `preferredLanguage`, `locale`, `timezone`, `nickName`, `profileURL`, `userType`, and `enterpriseData`.
 
-| Field               | Description                                                                 |
-| ------------------- | --------------------------------------------------------------------------- |
-| `phoneNumbers`      | User's phone numbers                                                        |
-| `addresses`         | User's addresses (street, city, region, postal code, country)               |
-| `title`             | User's job title                                                            |
-| `preferredLanguage` | User's preferred language                                                   |
-| `locale`            | User's locale                                                               |
-| `timezone`          | User's timezone                                                             |
-| `nickName`          | User's nickname                                                             |
-| `profileURL`        | User's profile URL                                                          |
-| `userType`          | User type attribute                                                         |
-| `enterpriseData`    | Enterprise extension (employeeNumber, costCenter, organization, department, division, manager) |
+Required fields are always synchronized: `name`, `userName`, `displayName`, `emails`, and `active`.
 
-**Required fields** (always synced, not configurable): `name`, `userName`, `displayName`, `emails`, `active`.
-
-### Configuration Examples
-
-**Config file (.idpscim.yaml):**
-
-```yaml
-# Sync only phone numbers, addresses, and enterprise data
-sync_user_fields:
-  - phoneNumbers
-  - addresses
-  - enterpriseData
-```
-
-**Environment variable (Lambda / SAM):**
-
-```bash
-IDPSCIM_SYNC_USER_FIELDS=phoneNumbers,addresses,enterpriseData
-```
-
-**CLI flag:**
-
-```bash
-idpscim --sync-user-fields phoneNumbers,addresses,enterpriseData
-```
-
-**SAM template parameter:**
-
-Set the `SyncUserFields` parameter when deploying:
-
-```bash
-sam deploy --parameter-overrides SyncUserFields=phoneNumbers,addresses,enterpriseData
-```
-
-### Behavior Notes
-
-* **Default (empty or not set):** When `sync_user_fields` is empty or not configured, all optional fields are synced. This preserves backward compatibility with existing deployments.
-* **Specifying fields:** Only the listed fields will be synced. For example, setting `sync_user_fields: [phoneNumbers]` will sync only phone numbers; addresses, enterprise data, and other optional attributes will not be sent to AWS SSO SCIM.
-* **Invalid field names:** If an invalid field name is provided, the application will fail at startup with a clear error message listing the unrecognized field.
-* **Changing on an existing deployment:** The first sync after modifying this configuration will detect all users as "changed" (due to hash differences) and update them in AWS SSO. This is expected behavior — it will clear the excluded fields from SCIM.
+For config file examples, environment variable usage, CLI flags, SAM parameter usage, and behavior notes, see [docs/Configuration.md](docs/Configuration.md) and [docs/idpscim.md](docs/idpscim.md).
 
 ## 📦 Repositories
 
@@ -200,12 +175,6 @@ If you are coming from the [awslabs/ssosync](https://github.com/awslabs/ssosync)
 * This project only implements filtering for Google Workspace Groups, not Users.
 * This project supports selecting which optional user attributes to sync via `--sync-user-fields` (e.g., phone numbers, addresses, enterprise data).
 * The flag names are different.
-* Not all features of `ssosync` are implemented here, and they may not be in the future.
-
-## 🧩 Components
-
-* **idpscim**: A program for keeping AWS IAM Identity Center groups and users synced with your Google Workspace directory. See the [idpscim documentation](docs/idpscim.md) for more details.
-* **idpscimcli**: A command-line tool to check and validate some of the functionalities implemented in `idpscim`. See the [idpscimcli documentation](docs/idpscimcli.md) for more details.
 
 ## 📄 License
 

@@ -1,68 +1,125 @@
 # idpscim
 
-This is in charge of keeping Google Workspace Groups and Users sync with AWS Single Sign-On service using SCIM protocol, to do that in an efficient way it stores the last sync data into an `AWS S3 Bucket` and periodically it will check if there are changes.
+`idpscim` is the main synchronization program in this repository. It reads Google Workspace groups and members, compares them with AWS IAM Identity Center through the SCIM API, and stores synchronization state in S3 so later runs can avoid unnecessary updates.
 
-This program could work in three ways:
+This is the program executed by the deployed Lambda function.
 
-1. As an [AWS Lambda function](https://aws.amazon.com/lambda/?nc1=h_ls) deployed via [AWS SAM](https://aws.amazon.com/serverless/sam/) or consumed directly from the [AWS Serverless Application Repository](https://aws.amazon.com/serverless/serverlessrepo/?nc1=h_ls)
-2. As a command line tool
-3. As a Docker container
+## Source And Build Output
 
-To understand how to configure the program, please read the [Configuration](Configuration.md) file.
+| Item | Location |
+| --- | --- |
+| Source entry point | [cmd/idpscim/main.go](../cmd/idpscim/main.go) |
+| Local binary | `build/idpscim` |
+| Lambda build artifact | `.aws-sam/build/LambdaFunction/bootstrap` |
 
-## idpscim --help
+## Supported Run Modes
+
+`idpscim` can run in three ways:
+
+1. As an AWS Lambda function deployed with AWS SAM or consumed from the AWS Serverless Application Repository.
+2. As a local command-line program.
+3. As a container image.
+
+For the full configuration model, see [Configuration.md](Configuration.md).
+
+## Key Flags
+
+The current `idpscim --help` surface is summarized below.
+
+### General And Logging
+
+| Flag | Purpose |
+| --- | --- |
+| `--config-file`, `-c` | Path to the configuration file |
+| `--debug`, `-d` | Shortcut to force debug logging |
+| `--log-format`, `-f` | Log output format |
+| `--log-level`, `-l` | Log verbosity |
+| `--version`, `-v` | Show version information |
+
+### Google Workspace Input
+
+| Flag | Purpose |
+| --- | --- |
+| `--gws-service-account-file`, `-s` | Path to the Google Workspace service account JSON |
+| `--gws-user-email`, `-u` | Delegated Google Workspace user email |
+| `--gws-groups-filter`, `-q` | One or more filters that restrict which groups are synchronized |
+| `--gws-service-account-file-secret-name`, `-o` | Secret name used when resolving the service account JSON from AWS Secrets Manager |
+| `--gws-user-email-secret-name`, `-p` | Secret name used when resolving the delegated user email from AWS Secrets Manager |
+
+### AWS SCIM And State Storage
+
+| Flag | Purpose |
+| --- | --- |
+| `--aws-scim-endpoint`, `-e` | AWS IAM Identity Center SCIM endpoint |
+| `--aws-scim-access-token`, `-t` | AWS IAM Identity Center SCIM access token |
+| `--aws-scim-endpoint-secret-name`, `-n` | Secret name used when resolving the SCIM endpoint from AWS Secrets Manager |
+| `--aws-scim-access-token-secret-name`, `-j` | Secret name used when resolving the SCIM token from AWS Secrets Manager |
+| `--aws-s3-bucket-name`, `-b` | S3 bucket used to store the sync state |
+| `--aws-s3-bucket-key`, `-k` | S3 object key used for the sync state |
+| `--use-secrets-manager`, `-g` | Tell the program to load values from AWS Secrets Manager |
+
+### Sync Behavior
+
+| Flag | Purpose |
+| --- | --- |
+| `--sync-method`, `-m` | Sync strategy. The implemented value is `groups` |
+| `--sync-user-fields` | Optional user fields to synchronize |
+
+## Example Local Run
+
+Build the binary:
 
 ```bash
-./build/idpscim --help
-
-Sync your Google Workspace Groups and Users to AWS Single Sign-On using
-AWS SSO SCIM API (https://docs.aws.amazon.com/singlesignon/latest/developerguide/what-is-scim.html).
-
-Usage:
-  idpscim [flags]
-
-Flags:
-  -k, --aws-s3-bucket-key string                      AWS S3 Bucket key to store the state (default "state.json")
-  -b, --aws-s3-bucket-name string                     AWS S3 Bucket name to store the state
-  -t, --aws-scim-access-token string                  AWS SSO SCIM API Access Token
-  -j, --aws-scim-access-token-secret-name string      AWS Secrets Manager secret name for AWS SSO SCIM API Access Token (default "IDPSCIM_SCIMAccessToken")
-  -e, --aws-scim-endpoint string                      AWS SSO SCIM API Endpoint
-  -n, --aws-scim-endpoint-secret-name string          AWS Secrets Manager secret name for AWS SSO SCIM API Endpoint (default "IDPSCIM_SCIMEndpoint")
-  -c, --config-file string                            configuration file (default ".idpscim.yaml")
-  -d, --debug                                         fast way to set the log-level to debug
-  -q, --gws-groups-filter strings                     GWS Groups query parameter, example: --gws-groups-filter 'name:Admin* email:admin*' --gws-groups-filter 'name:Power* email:power*'
-  -s, --gws-service-account-file string               Google Workspace service account file (default "credentials.json")
-  -o, --gws-service-account-file-secret-name string   AWS Secrets Manager secret name for Google Workspace service account file (default "IDPSCIM_GWSServiceAccountFile")
-  -u, --gws-user-email string                         GWS user email with allowed access to the Google Workspace Service Account
-  -p, --gws-user-email-secret-name string             AWS Secrets Manager secret name for GWS user email with allowed access to the Google Workspace Service Account (default "IDPSCIM_GWSUserEmail")
-  -h, --help                                          help for idpscim
-  -f, --log-format string                             set the log format (default "text")
-  -l, --log-level string                              set the log level [panic|fatal|error|warn|info|debug|trace] (default "info")
-  -m, --sync-method string                            Sync method to use [groups] (default "groups")
-      --sync-user-fields strings                      optional user fields to sync (e.g., phoneNumbers,addresses,enterpriseData); default: all fields
-  -g, --use-secrets-manager                           use AWS Secrets Manager content or not
-  -v, --version                                       version for idpscim
+make build
 ```
 
-## Using the AWS Lambda function
+Run the program with direct credentials and a state bucket:
 
-This could be deployed using the [official AWS Serverless public repository]() or using the method explained in the [AWS SAM](docs/AWS-SAM.md) section.
+```bash
+./build/idpscim \
+  --gws-service-account-file credentials.json \
+  --gws-user-email admin@example.com \
+  --gws-groups-filter 'name:AWS*' \
+  --aws-scim-endpoint https://example.awsapps.com/scim/v2/ \
+  --aws-scim-access-token "$SCIM_ACCESS_TOKEN" \
+  --aws-s3-bucket-name idp-scim-sync-state-123456789012-us-east-1 \
+  --aws-s3-bucket-key data/state.json \
+  --sync-method groups \
+  --sync-user-fields phoneNumbers,addresses,enterpriseData
+```
 
-## Using the command line tool
+If you prefer to resolve secrets at runtime, provide the secret names and add `--use-secrets-manager`.
 
-This could be used following the instructions in the main [README.md](docs/README.md) file.
+## Deploy As Lambda
 
-## Using the container image
+You can deploy the Lambda version in either of these ways:
 
-Build and test the container image locally (requires [podman](https://podman.io/)):
+* Public application page: [AWS Serverless Application Repository](https://serverlessrepo.aws.amazon.com/applications/us-east-1/889836709304/idp-scim-sync)
+* From source using the workflow described in [AWS-SAM.md](AWS-SAM.md)
+
+For most users, the public AWS Serverless Application Repository page is the simplest option. For contributors and private deployments, use the source-based SAM workflow.
+
+## Run As A Container
+
+Build the image locally:
 
 ```bash
 make build-dist
 GIT_VERSION=test make container-build
 ```
 
-Execute:
+Run the container:
 
 ```bash
-podman run -it -v $HOME/tmp/idpscim.yaml:/app/.idpscim.yaml ghcr.io/slashdevops/idp-scim-sync:latest idpscim --debug
+podman run --rm -it \
+  -v "$PWD/.idpscim.yaml:/app/.idpscim.yaml:ro" \
+  ghcr.io/slashdevops/idp-scim-sync:latest \
+  idpscim --config-file .idpscim.yaml
 ```
+
+## Related Documentation
+
+* [Configuration.md](Configuration.md)
+* [AWS-SAM.md](AWS-SAM.md)
+* [Development.md](Development.md)
+* [README.md](../README.md)

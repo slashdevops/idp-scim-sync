@@ -46,6 +46,13 @@ make build               # Verify build
 make test                # Run tests
 ```
 
-If you are intentionally modernizing syntax or APIs for Go 1.26+, run `go fix ./...` manually as a separate step.
+## Pre-PR Checklist
 
-Always keep `README.md` and `docs/` updated for any architectural changes, new commands/flags, removed flags, new packages, or changes to the development workflow. This includes command usage examples, flag tables, and CLI reference sections.
+- never use the `main` branch for development. Always create a new feature branch from `main` for your changes.
+- ensure your branch is up to date with `main` before creating a pull request
+- write clear and descriptive commit messages that explain the purpose of each change
+- ensure all tests pass locally before pushing your changes
+- ask the version is going to be released as a patch, minor, or major update and ensure the change log reflects this
+- update the `docs/Whats-New.md` file with a summary of the change, including the motivation and impact and the version it will be released in
+- ensure the PR description is clear and concise, providing context for reviewers and linking to any relevant issues or documentation
+- update the `README.md` file if the change affects usage instructions, configuration, or any other user-facing documentation

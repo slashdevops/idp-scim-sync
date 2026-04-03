@@ -1,75 +1,104 @@
-# Using SSO
+# Using AWS IAM Identity Center
 
-**Warning:** Comments here are [IMHO](https://en.wiktionary.org/wiki/IMHO)
+This document is a practical rollout guide for using `idp-scim-sync` with [AWS IAM Identity Center](https://aws.amazon.com/iam/identity-center/) and Google Workspace.
 
-Start using [Single Sign-On (SSO)](https://en.wikipedia.org/wiki/Single_sign-on) in your AWS Accounts is hard to achieve, you must need to read a lot of documentation and of course, you need to know how to use the [AWS SSO service](https://aws.amazon.com/blogs/security/how-to-create-and-manage-users-within-aws-sso/).
+It is intentionally opinionated in one area: stable group design matters more than short-term convenience.
 
->For me, __technical things__ are just things that are going to work sooner or later or as soon you understand how to use these.  But __non-technical things__ are just things that most of the time you will improve according to __your time__ implementing __technical things__ and this could we call __"experience"__.
+## Before You Deploy
 
-So, said that, let me help you with my `"experience"` using SSO.
+Before enabling automatic synchronization, make sure you have all of the following:
 
-## Recommendations
+* AWS IAM Identity Center enabled in the target AWS account or organization
+* SCIM automatic provisioning enabled so you have a SCIM endpoint and access token
+* A Google Workspace service account with domain-wide delegation
+* Agreement on which Google Workspace groups should be synchronized
 
-Before start
+For the actual deployment mechanics, see [AWS-SAM.md](AWS-SAM.md). For command-level validation, see [idpscimcli.md](idpscimcli.md).
 
-* Do a planning of `how many services` you will need to integrate with your `Identity Provider using SSO`, and `how many users and Groups you will need to create`.
-* Use `Groups and their Members` to create `Users` in your SSO integration, `avoid the integration directly with Users`.
-* Establish a `Naming Convention` for your `SSO Groups`.
-* Use prefixes for your `SSO Groups name`.
+## Recommended Operating Model
 
-A little bit more
+The project works best when you synchronize groups and let users be derived from those groups.
 
-* Google Workspace Groups and AWS Single Sign-On are free of charge, so take advantage of this
-* Filter the data in the `source` is always better than in the `process`
-* [WYSIWYG](https://dictionary.cambridge.org/es/diccionario/ingles/wysiwyg) is better than `opaque or shadowed process`, I mean, if you have 1 group called `My Group` with `2 members`, `user.1@mydomain.com` and `user.2@mydomain.com` in the `Google Workspace`, everybody is expecting to see the same in `AWS SSO side` regardless of what this program does
-* A process that scales independently of the `source` is better than a `process that needs too many changes during its escalation`
+Recommended practices:
 
-### Example
+* Use groups and group membership as the source of truth
+* Avoid managing individual users separately when group membership already defines access
+* Keep the synchronized scope narrow with explicit Google Workspace group filters
+* Establish naming conventions before the first production sync
+* Prefer predictable group names over ad hoc per-team naming
 
-Given Google Workspace Groups with these conditions:
+## Why Group Naming Matters
 
-| Group Name         | Group Email                    | Members                  |
-| ------------------ | ------------------------------ | ------------------------ |
-| AWS Administrators | aws-administrator@mydomain.com | [a,b,c,d]@mydomain.com   |
-| AWS DevOps         | aws-devops@mydomain.com        | [f,g,h]@mydomain.com     |
-| AWS Developers     | aws-developers@mydomain.com    | [k,j,z,a,g]@mydomain.com |
-| ...                | ...                            | ...                      |
+After the first successful sync, your AWS IAM Identity Center groups will typically receive permission set assignments. At that point, renaming groups becomes operationally expensive.
 
-your [idpscim](https://github.com/slashdevops/idp-scim-sync/blob/main/docs/idpscim.md) `[AWS Lambda function|container image|cli]` could use `--gws-groups-filter 'name=AWS* email:aws-*'`
+For this project, the most important stable identifiers are:
 
-This is easy and it is in compliance with the previous recommendations, but I think the most important ones are:
-> You can `increase or decrease` the number of `groups and their members` in __Google Workspace__ and never need to `change the parameters` of the __idpscim__ `[AWS Lambda function|container image|cli]`
+| Entity | Attribute you should keep stable |
+| --- | --- |
+| Groups | Display name |
+| Users | Email address |
 
-## TL;DR
+If a group name changes in the identity provider, AWS IAM Identity Center can no longer match it to the previous synchronized object in the way you expect for access governance. That can translate into lost permission set associations and manual cleanup.
 
-__NOTES:__
+The safest rule is simple:
 
-* This is a `WIP`, keep calm and don't panic
-* [TL;DR means: Too Long Didn't Read](https://en.wikipedia.org/wiki/TL;DR)
+* Finalize your group naming convention before the first production sync
 
-### Planning
+## Start With A Filter Strategy
 
-### Groups and members
+Filtering at the source is usually safer than synchronizing everything and trying to narrow the result later.
 
-### Use Naming Conventions
+Example approach:
 
-The most important part of implementing SSO is the planning of the things you need to do before that, but for me the most important one is `Groups name and Naming convention`,
+| Group Name | Group Email |
+| --- | --- |
+| AWS Administrators | `aws-administrators@example.com` |
+| AWS DevOps | `aws-devops@example.com` |
+| AWS Developers | `aws-developers@example.com` |
 
-__Why?__
+With a naming pattern like that, `idpscim` can use filters such as:
 
-Because one you `sync the groups and users` the first time with [AWS SSO](https://aws.amazon.com/single-sign-on) and assign to them the [Permission sets](https://docs.aws.amazon.com/singlesignon/latest/userguide/permissionsetsconcept.html) you should not change the `Groups and Users main attributes`, with in case of this program are:
+```bash
+--gws-groups-filter 'name:AWS*'
+```
 
-| Entity | Main Attribute |
-| ------ | -------------- |
-| Groups | Name           |
-| Users  | Email          |
+That gives you a stable boundary for future growth. You can add or remove members and even create new `AWS...` groups without needing to rework the deployment parameters every time.
 
-Of course, you can change the `Groups and Users main attributes` but after that you will lose the `Permission sets` assigned to them, so __you should not change these__.
+## Rollout Sequence
 
-__Again, Why?__
+Recommended rollout order:
 
->Imagine you have __40 Groups__ and __1,000 Users__ and some of these __Groups__ has __50 Users__ and you have assigned some [Permission sets](https://docs.aws.amazon.com/singlesignon/latest/userguide/permissionsetsconcept.html) to this `Group`, so if you __change the Name__ of __this Group__ in your Identity Provider, our case __Google Workspace Directory Service__, __50 users of your company will be lost their permissions__ to your __AWS Accounts in just one moment__, and this could be __hard to fix__ is you don't have implemented any [IaC](https://en.wikipedia.org/wiki/Infrastructure_as_code) practice to match the __Groups__ and __Users__ with the __Permission sets__ assigned to them.
+1. Plan the target group naming convention.
+2. Create or clean up the Google Workspace groups you want to synchronize.
+3. Validate filters and credentials with `idpscimcli`.
+4. Deploy the application in a non-production AWS account first.
+5. Verify synchronized groups, users, and permission assignments.
+6. Move to production once the naming and filter strategy is stable.
 
-So, to avoid this scenario you should: __Plan your Groups Naming Convention First__
+## Validation Commands
 
-### Use Name Prefixes
+Before enabling scheduled synchronization, run explicit validation commands.
+
+Check Google Workspace groups:
+
+```bash
+./build/idpscimcli gws groups list \
+  --gws-service-account-file credentials.json \
+  --gws-user-email admin@example.com \
+  --gws-groups-filter 'name=AWS*'
+```
+
+Check AWS IAM Identity Center SCIM connectivity:
+
+```bash
+./build/idpscimcli aws service config \
+  --aws-scim-endpoint https://example.awsapps.com/scim/v2/ \
+  --aws-scim-access-token "$SCIM_ACCESS_TOKEN"
+```
+
+## Related Documentation
+
+* [Configuration.md](Configuration.md)
+* [AWS-SAM.md](AWS-SAM.md)
+* [idpscim.md](idpscim.md)
+* [idpscimcli.md](idpscimcli.md)
