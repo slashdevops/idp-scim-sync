@@ -10,8 +10,14 @@ Since this project is always in development and updated to the last release of `
 | Version | Supported          |
 | ------- | ------------------ |
 | 0.44.x  | :white_check_mark: |
-| 0.1.x   | :x: |
-| 0.0.x   | :x: |
+| 0.43.x  | :x:                |
+| 0.42.x  | :x:                |
+| 0.32.x  | :x:                |
+| 0.31.x  | :x:                |
+| 0.30.x  | :x:                |
+| 0.2.x   | :x:                |
+| 0.1.x   | :x:                |
+| 0.0.x   | :x:                |
 
 ## Reporting a Vulnerability
 
