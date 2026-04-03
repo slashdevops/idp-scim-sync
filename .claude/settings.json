@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git checkout:*)",
+      "Bash(git reset:*)",
+      "Bash(./build/idpscimcli --help)",
+      "Bash(./build/idpscim --help)"
+    ]
+  }
+}
