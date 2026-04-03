@@ -1,106 +1,198 @@
 # idpscimcli
 
-This is a `command-line tool` to check and validate some functionalities implemented in idpscim.
+`idpscimcli` is the helper command-line program used to validate and inspect the same systems that `idpscim` synchronizes.
 
-The idea of this tool is to check the configuration you will implement in the [idpscim](idpscim.md) program, like the `filter` used for `Google Workspace Groups` and `Users` and the inventory of users and groups in both sides.
+Use it when you want to answer questions such as:
 
-## idpscimcli --help
+- Can I reach the AWS IAM Identity Center SCIM endpoint?
+- Which groups or users currently exist in AWS SCIM?
+- Which Google Workspace groups match my filters?
+- Which members are inside those groups?
 
-```bash
-./idpscimcli --help
+## Source And Build Output
 
-This is a Command-Line Interfaced (CLI) to help you validate and check your source and target Single Sign-On endpoints.
-Check your AWS Single Sign-On (SSO) / Google Workspace Groups users and groups and validate your filters over Google Workspace users and groups.
+| Item | Location |
+| --- | --- |
+| Source entry point | [cmd/idpscimcli/main.go](../cmd/idpscimcli/main.go) |
+| Local binary | `build/idpscimcli` |
 
-Usage:
-  idpscimcli [command]
+## Command Tree
 
-Available Commands:
-  aws         AWS SSO SCIM commands
-  completion  Generate the autocompletion script for the specified shell
-  gws         Google Workspace commands
-  help        Help about any command
+The current command surface is:
 
-Flags:
-  -c, --config-file string     configuration file (default ".idpscim.yaml")
-  -d, --debug                  enable log debug level
-  -h, --help                   help for idpscimcli
-  -f, --log-format string      set the log format (default "text")
-  -l, --log-level string       set the log level (default "info")
-      --output-format string   output format (json|yaml) (default "json")
-      --timeout duration       requests timeout (default 10s)
-  -v, --version                version for idpscimcli
-
-Use "idpscimcli [command] --help" for more information about a command.
+```text
+idpscimcli
+|- aws
+|  |- service config
+|  |- groups list
+|  `- users list
+`- gws
+   |- groups list
+   |- groups members list
+   `- users list
 ```
 
-## Example of usage
+## Root Flags
+
+These flags apply to the whole CLI:
+
+| Flag | Purpose |
+| --- | --- |
+| `--config-file`, `-c` | Path to the configuration file |
+| `--debug`, `-d` | Enable debug logging |
+| `--log-format`, `-f` | Log output format |
+| `--log-level`, `-l` | Log verbosity |
+| `--output-format` | Output format: `json` or `yaml` |
+| `--timeout` | Request timeout for API calls |
+| `--version`, `-v` | Show version information |
+
+## AWS Commands
+
+Use the `aws` command group to inspect the AWS IAM Identity Center SCIM API.
+
+### Shared AWS Flags
+
+| Flag | Purpose |
+| --- | --- |
+| `--aws-scim-endpoint`, `-e` | AWS IAM Identity Center SCIM endpoint |
+| `--aws-scim-access-token`, `-t` | AWS IAM Identity Center SCIM access token |
+
+### Available AWS Subcommands
+
+| Command | Purpose |
+| --- | --- |
+| `idpscimcli aws service config` | Show SCIM service provider configuration |
+| `idpscimcli aws groups list` | List groups from the AWS SCIM API |
+| `idpscimcli aws users list` | List users from the AWS SCIM API |
+
+### AWS Examples
+
+Show SCIM service configuration:
 
 ```bash
-./idpscimcli gws groups list \
+./build/idpscimcli aws service config \
+  --aws-scim-endpoint https://example.awsapps.com/scim/v2/ \
+  --aws-scim-access-token "$SCIM_ACCESS_TOKEN"
+```
+
+List groups with a SCIM filter:
+
+```bash
+./build/idpscimcli aws groups list \
+  --aws-scim-endpoint https://example.awsapps.com/scim/v2/ \
+  --aws-scim-access-token "$SCIM_ACCESS_TOKEN" \
+  --filter 'displayName eq "Engineering"'
+```
+
+List users:
+
+```bash
+./build/idpscimcli aws users list \
+  --aws-scim-endpoint https://example.awsapps.com/scim/v2/ \
+  --aws-scim-access-token "$SCIM_ACCESS_TOKEN"
+```
+
+## Google Workspace Commands
+
+Use the `gws` command group to inspect Google Workspace objects with the same credentials model used by the main sync program.
+
+### Shared Google Workspace Flags
+
+| Flag | Purpose |
+| --- | --- |
+| `--gws-service-account-file`, `-s` | Path to the Google Workspace service account JSON |
+| `--gws-user-email`, `-u` | Delegated Google Workspace user email |
+
+### Available Google Workspace Subcommands
+
+| Command | Purpose |
+| --- | --- |
+| `idpscimcli gws groups list` | List groups that match the provided group filters |
+| `idpscimcli gws groups members list` | List the members of the groups that match the filters |
+| `idpscimcli gws users list` | List users that match the provided user filters |
+
+### Google Workspace Filter Flags
+
+| Command | Flag |
+| --- | --- |
+| `gws groups list` | `--gws-groups-filter`, `-q` |
+| `gws groups members list` | `--gws-groups-filter`, `-q` |
+| `gws users list` | `--gws-users-filter`, `-r` |
+
+### Google Workspace Examples
+
+List groups:
+
+```bash
+./build/idpscimcli gws groups list \
   --gws-service-account-file credentials.json \
-  --gws-user-email my-service-account-user@my-company-email.com \
-  --gws-groups-filter "name='My Team - Support'" \
-  --gws-groups-filter "name='My Tool' email=my-tool@my-company-email.com" \
-  --gws-groups-filter 'email=other-group' \
-  --gws-groups-filter 'email="this is other group name"'
+  --gws-user-email admin@example.com \
+  --gws-groups-filter 'name=AWS*'
 ```
 
-## Building the project
-
-To build the project locally, you will need to have installed and configured at least the following:
-
-1. [git](https://git-scm.com/)
-2. [Go](https://go.dev/learn/)
-3. [make](https://www.gnu.org/software/make/)
-
-Then you will need to clone the repository in your local machine, and execute the following commands:
-
-* Compile for your Operating System:
+List members of matching groups:
 
 ```bash
-make
+./build/idpscimcli gws groups members list \
+  --gws-service-account-file credentials.json \
+  --gws-user-email admin@example.com \
+  --gws-groups-filter 'email=aws-admins@example.com'
 ```
 
-then the binaries are in `build/` folder.
-
-* `Cross-compiling` the project for `Windows`, `MacOS` and `Linux` (default)
+List users:
 
 ```bash
-make clean
-make test # optional
+./build/idpscimcli gws users list \
+  --gws-service-account-file credentials.json \
+  --gws-user-email admin@example.com \
+  --gws-users-filter 'email=alice@example.com'
+```
+
+Return YAML instead of JSON:
+
+```bash
+./build/idpscimcli gws groups list \
+  --gws-service-account-file credentials.json \
+  --gws-user-email admin@example.com \
+  --gws-groups-filter 'name=AWS*' \
+  --output-format yaml
+```
+
+## Build And Run
+
+Build the binary locally:
+
+```bash
+make build
+./build/idpscimcli --help
+```
+
+Cross-compile for distribution:
+
+```bash
 make build-dist
 ```
 
-then the binaries are in `dist/` folder.
+## Run From The Container Image
 
-* Others Operating Systems, see the list of supported platforms in the [syslist.go](https://github.com/golang/go/blob/master/src/go/build/syslist.go)
-
-```bash
-make clean
-GO_OS=<something from goosList in syslist.go> GO_ARCH=<something from goarchList in syslist.go> make test # optional
-GO_OS=<something from goosList in syslist.go> GO_ARCH=<something from goarchList in syslist.go> make build-dist
-```
-
-then the binaries are in `dist/` folder.
-
-* Execute
-
-```bash
-./idpscimcli --help
-```
-
-## Using the container image
-
-Build and test the container image locally (requires [podman](https://podman.io/)):
+Build the image locally:
 
 ```bash
 make build-dist
 GIT_VERSION=test make container-build
 ```
 
-Execute:
+Run the CLI from the image:
 
 ```bash
-podman run -it -v $HOME/tmp/idpscim.yaml:/app/.idpscim.yaml ghcr.io/slashdevops/idp-scim-sync:latest idpscimcli --debug
+podman run --rm -it \
+  -v "$PWD/.idpscim.yaml:/app/.idpscim.yaml:ro" \
+  ghcr.io/slashdevops/idp-scim-sync:latest \
+  idpscimcli --config-file .idpscim.yaml
 ```
+
+## Related Documentation
+
+- [idpscim.md](idpscim.md)
+- [Configuration.md](Configuration.md)
+- [Development.md](Development.md)

@@ -1,4 +1,8 @@
-# Demo images
+# Demo
+
+This page contains screenshots of a typical synchronization workflow and the resulting objects in Google Workspace, AWS IAM Identity Center, and the S3 state repository.
+
+Use it as a visual companion to the deployment and configuration guides.
 
 ## First time sync
 
@@ -18,30 +22,36 @@
 
 ![AWS Bucket file](images/demo/state-file.png)
 
-## Google Workspace data
+## Google Workspace Data
 
-### Users
+### Google Workspace Users
 
 ![Google Workspace users](images/demo/gws-users.png)
 
-### Groups
+### Google Workspace Groups
 
 ![Google Workspace groups](images/demo/gws-groups.png)
 
-### Group Developers
+### Google Workspace Group Developers
 
 ![Google Workspace groups](images/demo/gws-groups-developers.png)
 
-## AWS SSO data
+## AWS IAM Identity Center Data
 
-### Users
+### AWS IAM Identity Center Users
 
 ![AWS SSO users](images/demo/aws-users.png)
 
-### Groups
+### AWS IAM Identity Center Groups
 
 ![AWS SSO groups](images/demo/aws-groups.png)
 
-### Group Developers
+### AWS IAM Identity Center Group Developers
 
 ![AWS SSO groups](images/demo/aws-groups-developers.png)
+
+## Related Documentation
+
+* [README.md](../README.md)
+* [AWS-SAM.md](AWS-SAM.md)
+* [State-File-example.md](State-File-example.md)

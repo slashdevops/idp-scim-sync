@@ -2,6 +2,14 @@
 
 This document tracks notable changes, new features, and bug fixes across releases.
 
+## Unreleased
+
+### Documentation Refresh
+
+Refreshed the project documentation to align it with the current Go, AWS SAM, and AWS Serverless Application Repository workflows.
+
+This update expands the README documentation map, clarifies how to deploy and update the serverless application, documents the two binaries built from `cmd/`, and modernizes the remaining docs in the `docs/` folder so they are linked and project-valid.
+
 ## v0.40.1
 
 ### Improved HTTP Retry Library

@@ -1,37 +1,46 @@
-# State File example
+# State File Example
 
-This is an example of the `state file` the program will store in `AWS S3 Bucket`.
+This document shows an example of the sync state file stored in S3.
 
-As you see this use `JSON` serialization to save the data and the data is about:
+The state file is an implementation detail used to make repeated synchronizations faster and to avoid unnecessary SCIM updates. It is useful for understanding how the project works, but it should not be treated as a stable external contract.
 
-* Groups --> `groups` field
-* Users --> `users` field
-* Groups Members --> `groupsMembers` field
+## What The State File Contains
 
-Also the `State file` contains some `metadata`:
+The JSON representation contains:
 
-* schemaVersion --> this could change if the `fields` of the `state file` change
-* codeVersion --> this inform you about the version of the code that generated the `state file`
-* lastSync --> this is the date and time when the `state file` was generated
+* `groups`: synchronized group data
+* `users`: synchronized user data
+* `groupsMembers`: group membership data used for reconciliation
+* `schemaVersion`: state schema version
+* `codeVersion`: application version that produced the state
+* `lastSync`: timestamp of the last successful synchronization
+* `hashCode`: top-level hash used to detect changes efficiently
 
-and the `most important feature here` is the `hashCode` field, this is a `SHA256` hash of the each element of the `state file` content, and it is used to `save time in the operations` when we want to `detect changes`, also we can use that to checks `data integrity`.
+The current schema version in the codebase is `1.0.0`.
+
+## Storage Location
+
+The exact object key depends on how you deploy the application:
+
+* The code default is `state.json`
+* The AWS SAM template default is `data/state.json`
+
+In both cases, the object is stored in the configured S3 state bucket.
+
+## Example
 
 ```json
 {
-  "schemaVersion": "1.0.0",
-  "codeVersion": "v0.1.0",
-  "lastSync": "2023-10-21T18:48:49+02:00",
-  "hashCode": "e72d58ac523af315fa6f3ed3329b8a174f2938c9e67a573ed45217f4a1a7b4e2",
   "resources": {
     "groups": {
       "items": 1,
       "hashCode": "15cf5de941f6eb2d96e037675ac6f85401911889e12651f58990573c9f1f84ba",
       "resources": [
         {
-          "ipid": "00xvir7l2tu59gn",
+          "ipid": "00examplegroup",
           "scimid": "b295b414-e091-70f6-3981-df556957e68a",
-          "name": "AWS-SSO-Administrators",
-          "email": "aws-sso-administrators@slashdevops.com",
+          "name": "AWS-Administrators",
+          "email": "aws-administrators@example.com",
           "hashCode": "bcc54ec742946488860ec5f11eac4c958a178393a837abc878749fc0c40fefea"
         }
       ]
@@ -41,41 +50,41 @@ and the `most important feature here` is the `hashCode` field, this is a `SHA256
       "hashCode": "bbbcf7f0ba3e94c811c03962ff986dcceffd97b1c95b0f6a50304df4d182380c",
       "resources": [
         {
-          "hashCode": "4945a50f8b93337f5632dca20b49870f4507f0da28ee5d6d66add1f4b6df9045",
-          "ipid": "100439965050892133351",
+          "ipid": "100000000000000000001",
           "scimid": "2275b4a4-d031-70b1-1bb0-e5049d0a0689",
-          "userName": "christian.gonzalez@slashdevops.com",
-          "displayName": "Christian González Di Antonio",
-          "title": "Chief Technology Officer",
+          "userName": "alice@example.com",
+          "displayName": "Alice Example",
+          "title": "Platform Engineer",
           "userType": "admin#directory#user",
-          "preferredLanguage": "en-GB",
+          "preferredLanguage": "en-US",
           "emails": [
             {
-              "value": "christian.gonzalez@slashdevops.com",
+              "value": "alice@example.com",
               "primary": true
             }
           ],
           "addresses": [
             {
-              "formatted": "private address here",
+              "formatted": "123 Example Street"
             }
           ],
           "phoneNumbers": [
             {
-              "value": "+55 555 555 555",
+              "value": "+1 555 0100",
               "type": "work"
             }
           ],
           "name": {
-            "formatted": "Christian González Di Antonio",
-            "familyName": "González Di Antonio",
-            "givenName": "Christian"
+            "formatted": "Alice Example",
+            "familyName": "Example",
+            "givenName": "Alice"
           },
           "enterpriseData": {
-            "costCenter": "123654",
-            "department": "IT"
+            "costCenter": "ENG-001",
+            "department": "Engineering"
           },
-          "active": true
+          "active": true,
+          "hashCode": "4945a50f8b93337f5632dca20b49870f4507f0da28ee5d6d66add1f4b6df9045"
         }
       ]
     },
@@ -87,17 +96,17 @@ and the `most important feature here` is the `hashCode` field, this is a `SHA256
           "items": 1,
           "hashCode": "2b691179255bef46299eb3359433b5d019c6623904b90bf6fd032f4856ff7ded",
           "group": {
-            "ipid": "00xvir7l2tu59gn",
+            "ipid": "00examplegroup",
             "scimid": "b295b414-e091-70f6-3981-df556957e68a",
-            "name": "AWS-SSO-Administrators",
-            "email": "aws-sso-administrators@slashdevops.com",
+            "name": "AWS-Administrators",
+            "email": "aws-administrators@example.com",
             "hashCode": "bcc54ec742946488860ec5f11eac4c958a178393a837abc878749fc0c40fefea"
           },
           "resources": [
             {
-              "ipid": "100439965050892133351",
+              "ipid": "100000000000000000001",
               "scimid": "2275b4a4-d031-70b1-1bb0-e5049d0a0689",
-              "email": "christian.gonzalez@slashdevops.com",
+              "email": "alice@example.com",
               "status": "ACTIVE",
               "hashCode": "f78efeb7e034db070cf78c804174f8de32a6a823d80674bae4d012f0fbecaf1f"
             }
@@ -105,6 +114,17 @@ and the `most important feature here` is the `hashCode` field, this is a `SHA256
         }
       ]
     }
-  }
+  },
+  "schemaVersion": "1.0.0",
+  "codeVersion": "v0.44.0",
+  "lastSync": "2026-04-03T10:15:00Z",
+  "hashCode": "e72d58ac523af315fa6f3ed3329b8a174f2938c9e67a573ed45217f4a1a7b4e2"
 }
 ```
+
+## Related Documentation
+
+* [README.md](../README.md)
+* [Configuration.md](Configuration.md)
+* [AWS-SAM.md](AWS-SAM.md)
+* [Demo.md](Demo.md)
