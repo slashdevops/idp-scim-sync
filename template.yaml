@@ -342,7 +342,7 @@ Resources:
                   - !Ref AWSGWSUserEmailSecret
                   - !Ref AWSSCIMEndpointSecret
                   - !Ref AWSSCIMAccessTokenSecret
-              - Sid: S3Policy
+              - Sid: S3ObjectPolicy
                 Effect: Allow
                 Action:
                   - s3:GetObject
@@ -350,16 +350,28 @@ Resources:
                   - s3:GetObjectVersion
                   - s3:PutObject
                   - s3:PutObjectAcl
+                Resource:
+                  - !Sub "arn:${AWS::Partition}:s3:::${BucketNamePrefix}-${AWS::AccountId}-${AWS::Region}/${BucketKey}"
+              - Sid: S3ListBucketPolicy
+                Effect: Allow
+                Action:
                   - s3:ListBucket
                 Resource:
-                  - !Sub "arn:aws:s3:::${BucketNamePrefix}-${AWS::AccountId}-${AWS::Region}"
-                  - !Sub "arn:aws:s3:::${BucketNamePrefix}-${AWS::AccountId}-${AWS::Region}/*"
+                  - !Sub "arn:${AWS::Partition}:s3:::${BucketNamePrefix}-${AWS::AccountId}-${AWS::Region}"
+                Condition:
+                  StringLike:
+                    s3:prefix:
+                      - !Ref BucketKey
               - Sid: KMSGetDataPolicy
                 Effect: Allow
                 Action:
                   - kms:GenerateDataKeyPair
                 Resource:
                   - !GetAtt KMSKey.Arn
+                Condition:
+                  StringEquals:
+                    kms:ViaService: !Sub "s3.${AWS::Region}.amazonaws.com"
+                    kms:EncryptionContext:aws:s3:arn: !Sub "arn:${AWS::Partition}:s3:::${BucketNamePrefix}-${AWS::AccountId}-${AWS::Region}/${BucketKey}"
               - Sid: KMSDecryptPolicy
                 Effect: Allow
                 Action:
@@ -368,6 +380,10 @@ Resources:
                   - kms:GenerateDataKey
                 Resource:
                   - !GetAtt KMSKey.Arn
+                Condition:
+                  StringEquals:
+                    kms:ViaService: !Sub "s3.${AWS::Region}.amazonaws.com"
+                    kms:EncryptionContext:aws:s3:arn: !Sub "arn:${AWS::Partition}:s3:::${BucketNamePrefix}-${AWS::AccountId}-${AWS::Region}/${BucketKey}"
 
   AWSGWSServiceAccountFileSecret:
     Type: AWS::SecretsManager::Secret

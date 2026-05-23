@@ -4,6 +4,26 @@ This document tracks notable changes, new features, and bug fixes across release
 
 ## Unreleased
 
+### IAM least-privilege hardening for the state-file Lambda role
+
+Tightens the Lambda execution role in `template.yaml` so it can only touch the single state object via the single intended path. No behavior change for normal operation; the role is now strictly scoped.
+
+**S3 statement (split in two):**
+
+* `S3ObjectPolicy` — `s3:GetObject*` / `s3:PutObject*` are now scoped to the exact state object (`arn:${Partition}:s3:::<bucket>/<BucketKey>`) instead of `<bucket>/*`.
+* `S3ListBucketPolicy` — `s3:ListBucket` stays on the bucket ARN (required by S3) but is now gated by a `s3:prefix` condition matching `BucketKey`.
+
+**KMS statements (`KMSGetDataPolicy` and `KMSDecryptPolicy`):**
+
+Both now carry the AWS-recommended SSE-KMS scoping conditions:
+
+* `kms:ViaService = s3.<region>.amazonaws.com` — the CMK can only be used through requests S3 forwards on the role's behalf, not via direct `kms:Decrypt` / `kms:Encrypt` calls.
+* `kms:EncryptionContext:aws:s3:arn = arn:${Partition}:s3:::<bucket>/<BucketKey>` — the KMS grant only applies when S3 passes that exact object ARN as encryption context. S3 always populates this context for SSE-KMS objects, so legitimate reads/writes of the state file continue to work; any other object path is rejected by KMS.
+
+These are belt-and-braces additions on top of the existing bucket policy, public-access block, `aws:SecureTransport` deny, and SSE-KMS-with-bucket-key configuration.
+
+References: [AWS docs — kms:ViaService](https://docs.aws.amazon.com/kms/latest/developerguide/policy-conditions.html#conditions-kms-via-service), [AWS docs — SSE-KMS encryption context](https://docs.aws.amazon.com/AmazonS3/latest/userguide/specifying-kms-encryption.html).
+
 ### OpenSSF Scorecard Hardening (Phase 4) — Fuzzing
 
 Closes the **Fuzzing** Scorecard check by adding native Go fuzz targets and a CI workflow that exercises them.
