@@ -67,3 +67,30 @@ jobs:
         run: |
           echo "## Make container-publish" >> $GITHUB_STEP_SUMMARY
           GIT_VERSION=${{ github.ref_name }} make container-publish | tee -a $GITHUB_STEP_SUMMARY
+
+      - name: Install cosign
+        uses: sigstore/cosign-installer@d58896d6a1865668819e1d91763c7751a165e159  # v3.9.2
+
+      - name: Cosign sign published container manifest (keyless / Sigstore)
+        env:
+          GIT_VERSION: ${{ github.ref_name }}
+          COSIGN_YES: "true"
+        run: |
+          echo "## Cosign sign container manifest" >> $GITHUB_STEP_SUMMARY
+          # Reuse the same GHCR credentials that podman used in the publish step.
+          echo "${{ secrets.GITHUB_TOKEN }}" \
+            | cosign login ghcr.io --username "${{ github.actor }}" --password-stdin
+          IMAGE="ghcr.io/${{ github.repository }}"
+          # podman manifest inspect → resolve the multi-arch manifest tag we just
+          # pushed to its content digest, then sign by digest. Cosign best-practice:
+          # signing by tag races with subsequent pushes; signing by digest does not.
+          # --recursive covers the manifest and every per-platform image under it.
+          for TAG in "${GIT_VERSION}" "latest"; do
+            DIGEST=$(podman manifest inspect "${IMAGE}:${TAG}" | jq -r '.digest // .manifests[0].digest')
+            if [ -z "${DIGEST}" ] || [ "${DIGEST}" = "null" ]; then
+              echo "::error::Could not resolve digest for ${IMAGE}:${TAG}"
+              exit 1
+            fi
+            cosign sign --recursive "${IMAGE}@${DIGEST}" | tee -a $GITHUB_STEP_SUMMARY
+            echo "**Signed:** \`${IMAGE}@${DIGEST}\` (tag: ${TAG})" >> $GITHUB_STEP_SUMMARY
+          done
