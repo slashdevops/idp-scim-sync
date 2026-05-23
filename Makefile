@@ -167,6 +167,27 @@ test: $(PROJECT_COVERAGE_FILE) go-mod-tidy go-fmt go-vet go-generate ## Run test
 		./... \
 	)
 
+# Default duration each individual fuzz target runs for. Override on the
+# command line, e.g. `FUZZ_TIME=5m make fuzz`. Go's -fuzz flag only accepts
+# one target per invocation, so the loop below iterates over every Fuzz*
+# function discovered by `go test -list`.
+FUZZ_TIME ?= 60s
+
+.PHONY: fuzz
+fuzz: ## Run every Go fuzz target for $$FUZZ_TIME each (default 60s)
+	@printf "👉 Running fuzz tests (FUZZ_TIME=$(FUZZ_TIME))...\n"
+	@set -e; \
+	any=0; \
+	for pkg in $$(go list ./... | grep -v /mocks/); do \
+	  fuzzes=$$(go test -list '^Fuzz' $$pkg 2>/dev/null | grep -E '^Fuzz' || true); \
+	  for fz in $$fuzzes; do \
+	    any=1; \
+	    printf "  🤞 %s :: %s for %s\n" $$pkg $$fz $(FUZZ_TIME); \
+	    go test -run='^$$' -fuzz="^$$fz$$" -fuzztime=$(FUZZ_TIME) $$pkg; \
+	  done; \
+	done; \
+	if [ $$any -eq 0 ]; then printf "  ⚠️  no fuzz targets found\n"; fi
+
 ###############################################################################
 ##@ Build commands
 .PHONY: build
