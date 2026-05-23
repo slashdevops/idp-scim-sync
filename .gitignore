@@ -37,3 +37,6 @@ credentials.json
 run.sh
 idpscim
 idpscimcli
+
+# OpenSSF Scorecard hardening — local-only tracking folder
+.openssf/

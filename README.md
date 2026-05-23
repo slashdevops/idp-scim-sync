@@ -1,6 +1,7 @@
 # 🆔 idp-scim-sync
 
 [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/5348/badge)](https://bestpractices.coreinfrastructure.org/projects/5348)
+[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/slashdevops/idp-scim-sync/badge)](https://securityscorecards.dev/viewer/?uri=github.com/slashdevops/idp-scim-sync)
 [![Build](https://github.com/slashdevops/idp-scim-sync/actions/workflows/build.yml/badge.svg)](https://github.com/slashdevops/idp-scim-sync/actions/workflows/build.yml)
 ![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/slashdevops/idp-scim-sync?style=plastic)
 [![Go Report Card](https://goreportcard.com/badge/github.com/slashdevops/idp-scim-sync)](https://goreportcard.com/report/github.com/slashdevops/idp-scim-sync)
