@@ -4,6 +4,18 @@ This document tracks notable changes, new features, and bug fixes across release
 
 ## Unreleased
 
+### OpenSSF Scorecard Hardening (Phase 3) — Signed releases + SLSA provenance
+
+Closes the **Signed-Releases** Scorecard check (0/10 → 10/10) by adopting two complementary supply-chain primitives:
+
+* **SLSA Level 3 provenance for binary release zips.** A new `provenance` job in `.github/workflows/release.yml` calls the official `slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v2.1.0` reusable workflow. It binds every release zip's `sha256` to a Sigstore-signed in-toto attestation (`multiple.intoto.jsonl`) and uploads it to the GitHub release. Anyone can verify the link between artifact ↔ source ↔ build with [`slsa-verifier`](https://github.com/slsa-framework/slsa-verifier).
+* **Cosign keyless signing for container images.** After `podman manifest push`, `.github/workflows/container-image.yml` resolves the multi-arch manifest to its content digest and signs by digest with `cosign sign --recursive` (keyless via Sigstore Fulcio + Rekor). Both the tagged image and `latest` are signed.
+
+Also added a `Verifying release artifacts` section to `SECURITY.md` with copy-pasteable verification commands. Fixed a stale `codeql-analysis.yml` reference in the same file.
+
+> [!NOTE]
+> The `slsa-github-generator` reusable workflow is intentionally pinned by tag (not by SHA). The SLSA verifier validates the workflow ref against its own allow-list of signed releases — SHA-pinning would break verification. This is the only documented exception to the project's SHA-pinning rule.
+
 ### OpenSSF Scorecard Hardening (Phase 2) — Vulnerability remediation
 
 Closed the **Vulnerabilities** Scorecard check (0/10 → 10/10). The previous baseline reported 19 known vulnerabilities, all tracing to two indirect dependencies:
