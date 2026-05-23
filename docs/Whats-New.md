@@ -4,6 +4,25 @@ This document tracks notable changes, new features, and bug fixes across release
 
 ## Unreleased
 
+### OpenSSF Scorecard Hardening (Phase 4) — Fuzzing
+
+Closes the **Fuzzing** Scorecard check by adding native Go fuzz targets and a CI workflow that exercises them.
+
+**Targets added:**
+
+* `internal/repository.FuzzDiskRepositoryGetState` — fuzzes JSON state-file loading, the primary untrusted-input surface in the project (state files can be persisted to disk or S3 and re-read).
+* `internal/model.FuzzGroupsResultUnmarshalBinary` — fuzzes gob deserialization, which loops `Items` times calling `dec.Decode`. An attacker who controls the encoded blob can request an enormous number of items; the fuzzer ensures this fails safely rather than panicking or hanging.
+
+**Tooling:**
+
+* New `make fuzz` target enumerates every `Fuzz*` function via `go test -list` and runs each one for `FUZZ_TIME` (default `60s`, override per-invocation).
+* New `.github/workflows/fuzz.yml`:
+  * Runs every PR with a **60s budget per target** (fast enough to not block merges).
+  * Runs weekly on Wednesdays at 06:00 UTC with a **10-minute budget per target** to actually find bugs.
+  * `workflow_dispatch` lets a maintainer pick any duration on demand.
+
+When a fuzz target finds a crashing input, Go saves it under `testdata/fuzz/<FuzzName>/<hash>`. Commit those files: they become permanent regression tests that run as part of `go test ./...`.
+
 ### OpenSSF Scorecard Hardening (Phase 3) — Signed releases + SLSA provenance
 
 Closes the **Signed-Releases** Scorecard check (0/10 → 10/10) by adopting two complementary supply-chain primitives:
