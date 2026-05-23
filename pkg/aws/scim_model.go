@@ -116,8 +116,17 @@ type Patch struct {
 	Operations []*Operation `json:"Operations"`
 }
 
-// ListResponse represent a general response entity
+// ListResponse represent a general response entity.
+//
+// AWS IAM Identity Center SCIM supports two response formats for ListGroups:
+//   - Non-paginated (default): includes TotalResults, ItemsPerPage and StartIndex.
+//   - Cursor-paginated: includes ItemsPerPage and NextCursor; TotalResults and StartIndex are omitted.
+//
+// NextCursor is empty when the current page is the last page of results.
+//
+// Reference: https://docs.aws.amazon.com/singlesignon/latest/developerguide/listgroups.html
 type ListResponse struct {
+	NextCursor   string   `json:"nextCursor,omitempty"`
 	Schemas      []string `json:"schemas"`
 	TotalResults int      `json:"totalResults"`
 	ItemsPerPage int      `json:"itemsPerPage"`

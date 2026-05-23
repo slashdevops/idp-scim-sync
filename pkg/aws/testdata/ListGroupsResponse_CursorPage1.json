@@ -1,0 +1,37 @@
+{
+    "itemsPerPage": 2,
+    "nextCursor": "Q3Vyc29yUGFnZTI=",
+    "schemas": [
+        "urn:ietf:params:scim:api:messages:2.0:ListResponse"
+    ],
+    "Resources": [
+        {
+            "id": "d468e4d8-c051-703d-dd84-28caf445f15e",
+            "externalId": "eid_1",
+            "meta": {
+                "resourceType": "Group",
+                "created": "2025-08-08T17:28:12Z",
+                "lastModified": "2025-08-08T17:28:12Z"
+            },
+            "schemas": [
+                "urn:ietf:params:scim:schemas:core:2.0:Group"
+            ],
+            "displayName": "Group Page 1 A",
+            "members": []
+        },
+        {
+            "id": "d468e4d8-c051-703d-dd84-28caf445f15f",
+            "externalId": "eid_2",
+            "meta": {
+                "resourceType": "Group",
+                "created": "2025-08-08T17:28:12Z",
+                "lastModified": "2025-08-08T17:28:12Z"
+            },
+            "schemas": [
+                "urn:ietf:params:scim:schemas:core:2.0:Group"
+            ],
+            "displayName": "Group Page 1 B",
+            "members": []
+        }
+    ]
+}

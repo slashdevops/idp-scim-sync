@@ -4,9 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"math/rand"
 	"sync"
-	"time"
 
 	"github.com/slashdevops/idp-scim-sync/internal/model"
 	"github.com/slashdevops/idp-scim-sync/pkg/aws"
@@ -39,6 +37,10 @@ type AWSSCIMProvider interface {
 
 	// ListGroups lists groups in SCIM Provider
 	ListGroups(ctx context.Context, filter string) (*aws.ListGroupsResponse, error)
+
+	// ListGroupsWithCursor lists a single page of groups using AWS SCIM
+	// cursor-based pagination. Pass an empty cursor for the first page.
+	ListGroupsWithCursor(ctx context.Context, filter, cursor string) (*aws.ListGroupsResponse, error)
 
 	// CreateOrGetGroup creates a group in SCIM Provider
 	CreateOrGetGroup(ctx context.Context, g *aws.CreateGroupRequest) (*aws.CreateGroupResponse, error)
@@ -411,53 +413,6 @@ func (s *Provider) DeleteGroupsMembers(ctx context.Context, gmr *model.GroupsMem
 	return nil
 }
 
-// GetGroupsMembers returns a list of groups and their members from the SCIM Provider
-// NOTE: this method doesn't work because unfortunately the SCIM API doesn't support
-// list the members of a group, or get a group and their members at the same time
-// reference: https://docs.aws.amazon.com/singlesignon/latest/developerguide/listgroups.html
-func (s *Provider) GetGroupsMembers(ctx context.Context, gr *model.GroupsResult) (*model.GroupsMembersResult, error) {
-	groupMembers := make([]*model.GroupMembers, 0)
-
-	for _, group := range gr.Resources {
-		// https://docs.aws.amazon.com/singlesignon/latest/developerguide/listgroups.html
-		f := fmt.Sprintf("displayName eq %q", group.Name)
-		lgr, err := s.scim.ListGroups(ctx, f)
-		if err != nil {
-			return nil, fmt.Errorf("scim: error listing groups: %w", err)
-		}
-
-		for _, gr := range lgr.Resources {
-			members := make([]*model.Member, len(gr.Members))
-
-			for j, member := range gr.Members {
-				u, err := s.scim.GetUser(ctx, member.Value)
-				if err != nil {
-					return nil, fmt.Errorf("scim: error getting user: %s, error %w", member.Value, err)
-				}
-
-				m := model.MemberBuilder().
-					WithSCIMID(member.Value).
-					WithEmail(u.Emails[0].Value).
-					Build()
-
-				members[j] = m
-			}
-
-			gms := model.GroupMembersBuilder().
-				WithGroup(group).
-				WithResources(members).
-				Build()
-
-			groupMembers = append(groupMembers, gms)
-		}
-	}
-
-	slog.Debug("scim: GetGroupsMembers()", "groups_members", len(groupMembers))
-	groupsMembersResult := model.GroupsMembersResultBuilder().WithResources(groupMembers).Build()
-
-	return groupsMembersResult, nil
-}
-
 // patchGroupOperations assembles the operations for patch groups
 // bases in the limits of operations we can execute in a single request.
 func (s *Provider) patchGroupOperations(op, path string, pvs []patchValue, gms *model.GroupMembers) []*aws.PatchGroupRequest {
@@ -502,54 +457,63 @@ func (s *Provider) patchGroupOperations(op, path string, pvs []patchValue, gms *
 	return patchOperations
 }
 
-// GetGroupsMembersBruteForce returns a list of groups and their members from the SCIM Provider
-// NOTE: this is an bad alternative to the method GetGroupsMembers,  because read the note in the method.
-func (s *Provider) GetGroupsMembersBruteForce(ctx context.Context, gr *model.GroupsResult, ur *model.UsersResult) (*model.GroupsMembersResult, error) {
-	// a map of group SCIM IDs to a slice of members
-	membersByGroup := make(map[string][]*model.Member)
+// getGroupsMembersConcurrency caps the number of in-flight ListGroupsWithCursor
+// calls in GetGroupsMembers. Five was the historical limit used by the old
+// O(groups * users) brute-force implementation; the new path issues at most
+// one paginated query per user, so the same cap continues to be conservative.
+const getGroupsMembersConcurrency = 5
 
-	// pre-initialize all map entries before launching goroutines to avoid
-	// concurrent map writes between the outer loop and goroutine appends
+// GetGroupsMembers returns the SCIM-side groups-to-members mapping for the
+// groups in gr, inferred by querying which AWS groups contain each user in ur.
+//
+// AWS IAM Identity Center SCIM does not populate the members array on either
+// ListGroups or GetGroup responses (see "Not supported" in
+// https://docs.aws.amazon.com/singlesignon/latest/developerguide/listgroups.html).
+// The supported workaround is the members.value filter: for each user we ask
+// AWS which groups contain them and invert the result. Pagination is handled
+// via the cursor-based mode of ListGroups, so each user contributes one
+// initial request plus one extra request per additional page of group
+// memberships.
+//
+// Only groups present in gr are written into the result; memberships pointing
+// at groups outside that set (e.g. AWS-managed groups not in scope) are
+// discarded. The result preserves the order of gr.Resources.
+func (s *Provider) GetGroupsMembers(ctx context.Context, gr *model.GroupsResult, ur *model.UsersResult) (*model.GroupsMembersResult, error) {
+	// Index in-scope groups by SCIM ID so the per-user inversion below only
+	// records memberships the caller actually asked about.
+	groupBySCIMID := make(map[string]*model.Group, len(gr.Resources))
 	for _, group := range gr.Resources {
-		membersByGroup[group.SCIMID] = make([]*model.Member, 0, 10)
+		groupBySCIMID[group.SCIMID] = group
 	}
 
-	// use an errgroup to manage the goroutines
-	g, ctx := errgroup.WithContext(ctx)
+	membersByGroup := make(map[string][]*model.Member, len(gr.Resources))
+	for _, group := range gr.Resources {
+		membersByGroup[group.SCIMID] = make([]*model.Member, 0)
+	}
 
-	// set a limit to the number of concurrent goroutines
-	// to avoid hitting the API rate limit
-	g.SetLimit(5)
-	// protect concurrent access to membersByGroup
+	g, ctx := errgroup.WithContext(ctx)
+	g.SetLimit(getGroupsMembersConcurrency)
 	var mu sync.Mutex
 
-	// brute force implemented here thanks to the fxxckin' aws sso scim api
-	// iterate over each group and user and check if the user is a member of the group
-	for _, group := range gr.Resources {
-		for _, user := range ur.Resources {
+	for _, user := range ur.Resources {
+		user := user
 
-			// create a new variable for the group and user to avoid data races
-			group := group
-			user := user
+		g.Go(func() error {
+			filter := fmt.Sprintf("members.value eq %q", user.SCIMID)
 
-			g.Go(func() error {
-				// add random delay between 10-150 milliseconds to gap API calls
-				delay := time.Duration(rand.Intn(140)+10) * time.Millisecond
-				time.Sleep(delay)
-
-				// https://docs.aws.amazon.com/singlesignon/latest/developerguide/listgroups.html
-				filter := fmt.Sprintf("id eq %q and members eq %q", group.SCIMID, user.SCIMID)
-
-				lgr, err := s.scim.ListGroups(ctx, filter)
+			cursor := ""
+			for {
+				lgr, err := s.scim.ListGroupsWithCursor(ctx, filter, cursor)
 				if err != nil {
-					return fmt.Errorf("scim: error listing groups: %w", err)
+					return fmt.Errorf("scim: error listing groups for user %q: %w", user.SCIMID, err)
 				}
 
-				// slog.Debug("checking group membership", "group_name", group.Name, "user_email", user.Emails[0].Value, "results", lgr.TotalResults)
+				for _, awsGroup := range lgr.Resources {
+					group, inScope := groupBySCIMID[awsGroup.ID]
+					if !inScope {
+						continue
+					}
 
-				// AWS SSO SCIM API, it doesn't return the member into the Resources array
-				if lgr.TotalResults > 0 {
-					// build member and append to group map
 					m := model.MemberBuilder().
 						WithIPID(user.IPID).
 						WithSCIMID(user.SCIMID).
@@ -565,17 +529,18 @@ func (s *Provider) GetGroupsMembersBruteForce(ctx context.Context, gr *model.Gro
 					mu.Unlock()
 				}
 
-				return nil
-			})
-		}
+				if lgr.NextCursor == "" {
+					return nil
+				}
+				cursor = lgr.NextCursor
+			}
+		})
 	}
 
-	// wait for all goroutines to finish
 	if err := g.Wait(); err != nil {
 		return nil, err
 	}
 
-	// build the final result
 	groupMembers := make([]*model.GroupMembers, len(gr.Resources))
 	for i, group := range gr.Resources {
 		gms := model.GroupMembersBuilder().
@@ -585,8 +550,6 @@ func (s *Provider) GetGroupsMembersBruteForce(ctx context.Context, gr *model.Gro
 		groupMembers[i] = gms
 	}
 
-	slog.Debug("scim: GetGroupsMembersBruteForce()", "groups_members", len(groupMembers))
-	groupsMembersResult := model.GroupsMembersResultBuilder().WithResources(groupMembers).Build()
-
-	return groupsMembersResult, nil
+	slog.Debug("scim: GetGroupsMembers()", "groups_members", len(groupMembers))
+	return model.GroupsMembersResultBuilder().WithResources(groupMembers).Build(), nil
 }

@@ -144,6 +144,21 @@ func (mr *MockAWSSCIMProviderMockRecorder) ListGroups(ctx, filter any) *gomock.C
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListGroups", reflect.TypeOf((*MockAWSSCIMProvider)(nil).ListGroups), ctx, filter)
 }
 
+// ListGroupsWithCursor mocks base method.
+func (m *MockAWSSCIMProvider) ListGroupsWithCursor(ctx context.Context, filter, cursor string) (*aws.ListGroupsResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListGroupsWithCursor", ctx, filter, cursor)
+	ret0, _ := ret[0].(*aws.ListGroupsResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListGroupsWithCursor indicates an expected call of ListGroupsWithCursor.
+func (mr *MockAWSSCIMProviderMockRecorder) ListGroupsWithCursor(ctx, filter, cursor any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListGroupsWithCursor", reflect.TypeOf((*MockAWSSCIMProvider)(nil).ListGroupsWithCursor), ctx, filter, cursor)
+}
+
 // ListUsers mocks base method.
 func (m *MockAWSSCIMProvider) ListUsers(ctx context.Context, filter string) (*aws.ListUsersResponse, error) {
 	m.ctrl.T.Helper()

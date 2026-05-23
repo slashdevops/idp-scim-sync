@@ -164,8 +164,8 @@ For config file examples, environment variable usage, CLI flags, SAM parameter u
 
 ## ⚠️ Limitations
 
-* **Group Limit**: The AWS SSO SCIM API has a limit of 50 groups per request. Please support the feature request on the [AWS Support site](https://repost.aws/questions/QUqqnVkIo_SYyF_SlX5LcUjg/aws-sso-scim-api-pagination-for-methods) to help get this limit increased.
-* **Throttling**: With a large number of users and groups, you may encounter a `ThrottlingException` from the AWS SSO SCIM API. This project uses the [httpx](https://github.com/slashdevops/httpx) library with automatic retry and jitter backoff to mitigate this, but it's still a possibility.
+* **Group Page Size**: The AWS IAM Identity Center SCIM `ListGroups` endpoint returns at most 100 groups per page. Since v0.45.0 this project walks every page via cursor-based pagination, so a larger directory no longer requires manual configuration.
+* **Throttling**: With a very large number of users and groups, you may still encounter a `ThrottlingException` from the AWS IAM Identity Center SCIM API. The new member-resolution algorithm (one `members.value` query per user, see [docs/Whats-New.md](docs/Whats-New.md)) is roughly two orders of magnitude lighter than the old brute-force path, but the underlying SCIM endpoint is still rate-limited. This project uses the [httpx](https://github.com/slashdevops/httpx) library with automatic retry and jitter backoff to mitigate this.
 * **User Status**: The Google Workspace API doesn't differentiate between normal and guest users except for their status. This project only syncs `ACTIVE` users.
 
 ## For `ssosync` Users

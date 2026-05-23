@@ -309,15 +309,15 @@ func TestSyncService_SyncGroupsAndTheirMembers(t *testing.T) {
 		createUser2ResponseJSONBytes, err := json.Marshal(createUser2Response)
 		assert.NoError(t, err)
 
-		listGroupsResponseGroup1User1 := &aws.ListGroupsResponse{
-			ListResponse: aws.ListResponse{
-				StartIndex:   1,
-				ItemsPerPage: 1,
-				TotalResults: 1,
-				Schemas:      []string{"urn:ietf:params:scim:schemas:core:2.0:ListResponse"},
-			},
-			Resources: []*aws.Group{
-				{
+		// listGroupsByMember returns the AWS ListGroups response for a
+		// `members.value eq "<user-id>"` cursor query. The test scenario is:
+		// group-1 contains user-1; group-2 contains user-2.
+		listGroupsByMember := func(userSCIMID string) []byte {
+			schemas := []string{"urn:ietf:params:scim:api:messages:2.0:ListResponse"}
+			groups := []*aws.Group{}
+			switch userSCIMID {
+			case "user-1":
+				groups = append(groups, &aws.Group{
 					ID: "group-1",
 					Meta: aws.Meta{
 						ResourceType: "Group",
@@ -326,46 +326,10 @@ func TestSyncService_SyncGroupsAndTheirMembers(t *testing.T) {
 					},
 					Schemas:     []string{"urn:ietf:params:scim:schemas:core:2.0:Group"},
 					DisplayName: "group 1",
-					Members:     []*aws.Member{}, // AWS SSO SCIM API don't return members for list groups only TotalResults is returned
-				},
-			},
-		}
-		listGroupsResponseGroup1User1JSONBytes, err := json.Marshal(listGroupsResponseGroup1User1)
-		assert.NoError(t, err)
-
-		listGroupsResponseGroup1User2 := &aws.ListGroupsResponse{
-			ListResponse: aws.ListResponse{
-				StartIndex:   1,
-				ItemsPerPage: 1,
-				TotalResults: 0,
-				Schemas:      []string{"urn:ietf:params:scim:schemas:core:2.0:ListResponse"},
-			},
-			Resources: []*aws.Group{
-				{
-					ID: "group-1",
-					Meta: aws.Meta{
-						ResourceType: "Group",
-						Created:      "2020-01-01T00:00:00Z",
-						LastModified: "2020-01-01T00:00:00Z",
-					},
-					Schemas:     []string{"urn:ietf:params:scim:schemas:core:2.0:Group"},
-					DisplayName: "group 1",
-					Members:     []*aws.Member{}, // AWS SSO SCIM API don't return members for list groups only TotalResults is returned
-				},
-			},
-		}
-		listGroupsResponseGroup1User2JSONBytes, err := json.Marshal(listGroupsResponseGroup1User2)
-		assert.NoError(t, err)
-
-		listGroupsResponseGroup2User1 := &aws.ListGroupsResponse{
-			ListResponse: aws.ListResponse{
-				StartIndex:   1,
-				ItemsPerPage: 1,
-				TotalResults: 0,
-				Schemas:      []string{"urn:ietf:params:scim:schemas:core:2.0:ListResponse"},
-			},
-			Resources: []*aws.Group{
-				{
+					Members:     []*aws.Member{},
+				})
+			case "user-2":
+				groups = append(groups, &aws.Group{
 					ID: "group-2",
 					Meta: aws.Meta{
 						ResourceType: "Group",
@@ -374,36 +338,20 @@ func TestSyncService_SyncGroupsAndTheirMembers(t *testing.T) {
 					},
 					Schemas:     []string{"urn:ietf:params:scim:schemas:core:2.0:Group"},
 					DisplayName: "group 2",
-					Members:     []*aws.Member{}, // AWS SSO SCIM API don't return members for list groups only TotalResults is returned
+					Members:     []*aws.Member{},
+				})
+			}
+			resp := &aws.ListGroupsResponse{
+				ListResponse: aws.ListResponse{
+					ItemsPerPage: len(groups),
+					Schemas:      schemas,
 				},
-			},
+				Resources: groups,
+			}
+			body, err := json.Marshal(resp)
+			assert.NoError(t, err)
+			return body
 		}
-		listGroupsResponseGroup2User1JSONBytes, err := json.Marshal(listGroupsResponseGroup2User1)
-		assert.NoError(t, err)
-
-		listGroupsResponseGroup2User2 := &aws.ListGroupsResponse{
-			ListResponse: aws.ListResponse{
-				StartIndex:   1,
-				ItemsPerPage: 1,
-				TotalResults: 1,
-				Schemas:      []string{"urn:ietf:params:scim:schemas:core:2.0:ListResponse"},
-			},
-			Resources: []*aws.Group{
-				{
-					ID: "group-2",
-					Meta: aws.Meta{
-						ResourceType: "Group",
-						Created:      "2020-01-01T00:00:00Z",
-						LastModified: "2020-01-01T00:00:00Z",
-					},
-					Schemas:     []string{"urn:ietf:params:scim:schemas:core:2.0:Group"},
-					DisplayName: "group 2",
-					Members:     []*aws.Member{}, // AWS SSO SCIM API don't return members for list groups only TotalResults is returned
-				},
-			},
-		}
-		listGroupsResponseGroup2User2JSONBytes, err := json.Marshal(listGroupsResponseGroup2User2)
-		assert.NoError(t, err)
 
 		// mock Google Workspace API calls
 		svrIDP := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -456,21 +404,20 @@ func TestSyncService_SyncGroupsAndTheirMembers(t *testing.T) {
 				switch r.URL.Path {
 				case "/Groups":
 					filter := r.URL.Query().Get("filter")
-
-					switch filter {
-					case "": // first time getting groups
-						_, _ = w.Write([]byte(`{}`))
-					case "id eq \"group-1\" and members eq \"user-1\"":
-						_, _ = w.Write(listGroupsResponseGroup1User1JSONBytes)
-					case "id eq \"group-1\" and members eq \"user-2\"":
-						_, _ = w.Write(listGroupsResponseGroup1User2JSONBytes) // user 2 is not in group 1
-					case "id eq \"group-2\" and members eq \"user-1\"":
-						_, _ = w.Write(listGroupsResponseGroup2User1JSONBytes) // user 1 is not in group 2
-					case "id eq \"group-2\" and members eq \"user-2\"":
-						_, _ = w.Write(listGroupsResponseGroup2User2JSONBytes)
-					default:
-						w.WriteHeader(http.StatusBadRequest)
+					// AWS SCIM cursor-paginated calls include a bare "cursor"
+					// param; the new GetGroupsMembers algorithm queries one
+					// `members.value eq "<user-id>"` page per user.
+					const prefix = `members.value eq "`
+					if strings.HasPrefix(filter, prefix) && strings.HasSuffix(filter, `"`) {
+						userSCIMID := filter[len(prefix) : len(filter)-1]
+						_, _ = w.Write(listGroupsByMember(userSCIMID))
+						return
 					}
+					if filter == "" {
+						_, _ = w.Write([]byte(`{}`))
+						return
+					}
+					w.WriteHeader(http.StatusBadRequest)
 				case "/Users":
 					_, _ = w.Write([]byte(`{}`))
 				}

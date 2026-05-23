@@ -1,0 +1,22 @@
+{
+    "itemsPerPage": 1,
+    "schemas": [
+        "urn:ietf:params:scim:api:messages:2.0:ListResponse"
+    ],
+    "Resources": [
+        {
+            "id": "d468e4d8-c051-703d-dd84-28caf445f160",
+            "externalId": "eid_3",
+            "meta": {
+                "resourceType": "Group",
+                "created": "2025-08-08T17:28:12Z",
+                "lastModified": "2025-08-08T17:28:12Z"
+            },
+            "schemas": [
+                "urn:ietf:params:scim:schemas:core:2.0:Group"
+            ],
+            "displayName": "Group Page 2",
+            "members": []
+        }
+    ]
+}

@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"sync"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/google/go-cmp/cmp"
@@ -26,14 +27,6 @@ func patchValueGenerator(from, numValues int) []patchValue {
 		}
 	}
 	return values
-}
-
-// newTestProvider creates a Provider with fast settings for testing
-func newTestProvider(scim AWSSCIMProvider) *Provider {
-	return &Provider{
-		scim:                 scim,
-		maxMembersPerRequest: 100,
-	}
 }
 
 func TestProvider_patchGroupOperations(t *testing.T) {
@@ -1345,405 +1338,369 @@ func TestProvider_DeleteGroupsMembers(t *testing.T) {
 	}
 }
 
-func TestProvider_GetGroupsMembers(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+// memberSortOpt provides a stable ordering for *model.Member slices in cmp diffs.
+// The implementation builds membership lists from concurrent goroutines, so the
+// observed order is non-deterministic.
+var memberSortOpt = cmpopts.SortSlices(func(a, b *model.Member) bool {
+	return a.SCIMID < b.SCIMID
+})
 
-	mockScimProvider := mock_scim.NewMockAWSSCIMProvider(ctrl)
-
-	type fields struct {
-		scim AWSSCIMProvider
+// groupsMembersDiffOpts collects the cmp options used by GetGroupsMembers tests.
+func groupsMembersDiffOpts() []cmp.Option {
+	return []cmp.Option{
+		cmpopts.IgnoreFields(model.GroupsMembersResult{}, "HashCode", "Items"),
+		cmpopts.IgnoreFields(model.GroupMembers{}, "HashCode", "Items"),
+		cmpopts.IgnoreFields(model.Member{}, "HashCode"),
+		memberSortOpt,
 	}
+}
+
+func TestProvider_GetGroupsMembers(t *testing.T) {
 	type args struct {
-		ctx context.Context
-		gr  *model.GroupsResult
+		gr *model.GroupsResult
+		ur *model.UsersResult
 	}
 	tests := []struct {
 		name    string
-		fields  fields
 		args    args
 		prepare func(m *mock_scim.MockAWSSCIMProvider)
 		want    *model.GroupsMembersResult
 		wantErr bool
 	}{
 		{
-			name: "should get groups members",
-			fields: fields{
-				scim: mockScimProvider,
-			},
+			name: "single user belongs to a single in-scope group",
 			args: args{
-				ctx: context.Background(),
 				gr: &model.GroupsResult{
 					Resources: []*model.Group{
+						{SCIMID: "g1", Name: "group1"},
+					},
+				},
+				ur: &model.UsersResult{
+					Resources: []*model.User{
 						{
-							SCIMID: "1",
-							Name:   "group1",
+							SCIMID: "u1",
+							Active: true,
+							Emails: []model.Email{{Value: "user1@email.com"}},
 						},
 					},
 				},
 			},
 			prepare: func(m *mock_scim.MockAWSSCIMProvider) {
-				m.EXPECT().ListGroups(gomock.Any(), gomock.Any()).Return(&aws.ListGroupsResponse{
-					Resources: []*aws.Group{
-						{
-							Members: []*aws.Member{
-								{
-									Value: "1",
-								},
-							},
-						},
-					},
-				}, nil)
-				m.EXPECT().GetUser(gomock.Any(), gomock.Any()).Return(&aws.GetUserResponse{
-					Emails: []aws.Email{
-						{
-							Value: "user1@email.com",
-						},
-					},
-				}, nil)
+				m.EXPECT().
+					ListGroupsWithCursor(gomock.Any(), `members.value eq "u1"`, "").
+					Return(&aws.ListGroupsResponse{
+						Resources: []*aws.Group{{ID: "g1", DisplayName: "group1"}},
+					}, nil)
 			},
 			want: &model.GroupsMembersResult{
 				Resources: []*model.GroupMembers{
 					{
-						Group: &model.Group{
-							SCIMID: "1",
-							Name:   "group1",
-						},
+						Group: &model.Group{SCIMID: "g1", Name: "group1"},
 						Resources: []*model.Member{
-							{
-								SCIMID: "1",
-								Email:  "user1@email.com",
-							},
+							{SCIMID: "u1", Email: "user1@email.com", Status: "ACTIVE"},
 						},
 					},
 				},
 			},
-			wantErr: false,
 		},
 		{
-			name: "should return an error when listing groups",
-			fields: fields{
-				scim: mockScimProvider,
-			},
+			name: "user with no group memberships yields empty members list",
 			args: args{
-				ctx: context.Background(),
 				gr: &model.GroupsResult{
 					Resources: []*model.Group{
+						{SCIMID: "g1", Name: "group1"},
+					},
+				},
+				ur: &model.UsersResult{
+					Resources: []*model.User{
 						{
-							SCIMID: "1",
-							Name:   "group1",
+							SCIMID: "u1",
+							Active: true,
+							Emails: []model.Email{{Value: "user1@email.com"}},
 						},
 					},
 				},
 			},
 			prepare: func(m *mock_scim.MockAWSSCIMProvider) {
-				m.EXPECT().ListGroups(gomock.Any(), gomock.Any()).Return(nil, errors.New("error"))
+				m.EXPECT().
+					ListGroupsWithCursor(gomock.Any(), `members.value eq "u1"`, "").
+					Return(&aws.ListGroupsResponse{
+						Resources: []*aws.Group{},
+					}, nil)
 			},
-			wantErr: true,
+			want: &model.GroupsMembersResult{
+				Resources: []*model.GroupMembers{
+					{
+						Group:     &model.Group{SCIMID: "g1", Name: "group1"},
+						Resources: []*model.Member{},
+					},
+				},
+			},
 		},
 		{
-			name: "should return an error when getting user",
-			fields: fields{
-				scim: mockScimProvider,
-			},
+			name: "memberships in out-of-scope groups are ignored",
 			args: args{
-				ctx: context.Background(),
 				gr: &model.GroupsResult{
 					Resources: []*model.Group{
+						{SCIMID: "g1", Name: "group1"},
+					},
+				},
+				ur: &model.UsersResult{
+					Resources: []*model.User{
 						{
-							SCIMID: "1",
-							Name:   "group1",
+							SCIMID: "u1",
+							Active: true,
+							Emails: []model.Email{{Value: "user1@email.com"}},
 						},
 					},
 				},
 			},
 			prepare: func(m *mock_scim.MockAWSSCIMProvider) {
-				m.EXPECT().ListGroups(gomock.Any(), gomock.Any()).Return(&aws.ListGroupsResponse{
-					Resources: []*aws.Group{
-						{
-							Members: []*aws.Member{
-								{
-									Value: "1",
-								},
-							},
+				m.EXPECT().
+					ListGroupsWithCursor(gomock.Any(), `members.value eq "u1"`, "").
+					Return(&aws.ListGroupsResponse{
+						Resources: []*aws.Group{
+							{ID: "g1", DisplayName: "group1"},
+							{ID: "g-out-of-scope", DisplayName: "aws-managed-group"},
+						},
+					}, nil)
+			},
+			want: &model.GroupsMembersResult{
+				Resources: []*model.GroupMembers{
+					{
+						Group: &model.Group{SCIMID: "g1", Name: "group1"},
+						Resources: []*model.Member{
+							{SCIMID: "u1", Email: "user1@email.com", Status: "ACTIVE"},
 						},
 					},
-				}, nil)
-				m.EXPECT().GetUser(gomock.Any(), gomock.Any()).Return(nil, errors.New("error"))
+				},
+			},
+		},
+		{
+			name: "inactive users do not get ACTIVE status",
+			args: args{
+				gr: &model.GroupsResult{
+					Resources: []*model.Group{
+						{SCIMID: "g1", Name: "group1"},
+					},
+				},
+				ur: &model.UsersResult{
+					Resources: []*model.User{
+						{
+							SCIMID: "u1",
+							Active: false,
+							Emails: []model.Email{{Value: "user1@email.com"}},
+						},
+					},
+				},
+			},
+			prepare: func(m *mock_scim.MockAWSSCIMProvider) {
+				m.EXPECT().
+					ListGroupsWithCursor(gomock.Any(), `members.value eq "u1"`, "").
+					Return(&aws.ListGroupsResponse{
+						Resources: []*aws.Group{{ID: "g1", DisplayName: "group1"}},
+					}, nil)
+			},
+			want: &model.GroupsMembersResult{
+				Resources: []*model.GroupMembers{
+					{
+						Group: &model.Group{SCIMID: "g1", Name: "group1"},
+						Resources: []*model.Member{
+							{SCIMID: "u1", Email: "user1@email.com"},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "pagination walks every cursor and aggregates groups",
+			args: args{
+				gr: &model.GroupsResult{
+					Resources: []*model.Group{
+						{SCIMID: "g1", Name: "group1"},
+						{SCIMID: "g2", Name: "group2"},
+					},
+				},
+				ur: &model.UsersResult{
+					Resources: []*model.User{
+						{
+							SCIMID: "u1",
+							Active: true,
+							Emails: []model.Email{{Value: "user1@email.com"}},
+						},
+					},
+				},
+			},
+			prepare: func(m *mock_scim.MockAWSSCIMProvider) {
+				gomock.InOrder(
+					m.EXPECT().
+						ListGroupsWithCursor(gomock.Any(), `members.value eq "u1"`, "").
+						Return(&aws.ListGroupsResponse{
+							ListResponse: aws.ListResponse{NextCursor: "cursor-2"},
+							Resources:    []*aws.Group{{ID: "g1", DisplayName: "group1"}},
+						}, nil),
+					m.EXPECT().
+						ListGroupsWithCursor(gomock.Any(), `members.value eq "u1"`, "cursor-2").
+						Return(&aws.ListGroupsResponse{
+							Resources: []*aws.Group{{ID: "g2", DisplayName: "group2"}},
+						}, nil),
+				)
+			},
+			want: &model.GroupsMembersResult{
+				Resources: []*model.GroupMembers{
+					{
+						Group: &model.Group{SCIMID: "g1", Name: "group1"},
+						Resources: []*model.Member{
+							{SCIMID: "u1", Email: "user1@email.com", Status: "ACTIVE"},
+						},
+					},
+					{
+						Group: &model.Group{SCIMID: "g2", Name: "group2"},
+						Resources: []*model.Member{
+							{SCIMID: "u1", Email: "user1@email.com", Status: "ACTIVE"},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "error from AWS is propagated",
+			args: args{
+				gr: &model.GroupsResult{
+					Resources: []*model.Group{{SCIMID: "g1", Name: "group1"}},
+				},
+				ur: &model.UsersResult{
+					Resources: []*model.User{
+						{
+							SCIMID: "u1",
+							Emails: []model.Email{{Value: "user1@email.com"}},
+						},
+					},
+				},
+			},
+			prepare: func(m *mock_scim.MockAWSSCIMProvider) {
+				m.EXPECT().
+					ListGroupsWithCursor(gomock.Any(), gomock.Any(), gomock.Any()).
+					Return(nil, errors.New("aws boom"))
 			},
 			wantErr: true,
 		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			mockScimProvider := mock_scim.NewMockAWSSCIMProvider(ctrl)
 			tt.prepare(mockScimProvider)
+
 			p := &Provider{
-				scim: tt.fields.scim,
+				scim:                 mockScimProvider,
+				maxMembersPerRequest: 100,
 			}
-			got, err := p.GetGroupsMembers(tt.args.ctx, tt.args.gr)
+
+			got, err := p.GetGroupsMembers(context.Background(), tt.args.gr, tt.args.ur)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("Provider.GetGroupsMembers() error = %v, wantErr %v", err, tt.wantErr)
+				t.Fatalf("GetGroupsMembers() error = %v, wantErr %v", err, tt.wantErr)
+			}
+			if tt.wantErr {
 				return
 			}
-			if diff := cmp.Diff(tt.want, got, cmpopts.IgnoreFields(model.GroupsMembersResult{}, "HashCode", "Items"), cmpopts.IgnoreFields(model.GroupMembers{}, "HashCode", "Items"), cmpopts.IgnoreFields(model.Member{}, "HashCode")); diff != "" {
-				t.Errorf("Provider.GetGroupsMembers() (-want +got):\n%s", diff)
+			if diff := cmp.Diff(tt.want, got, groupsMembersDiffOpts()...); diff != "" {
+				t.Errorf("GetGroupsMembers() (-want +got):\n%s", diff)
 			}
 		})
 	}
 }
 
-func TestProvider_GetGroupsMembersBruteForce(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+// TestProvider_GetGroupsMembers_ConcurrencyLimit exercises the errgroup
+// concurrency cap using testing/synctest from the Go 1.26 standard library.
+// synctest.Test runs every goroutine in an isolated "bubble" with a fake
+// clock, so time.Sleep below advances virtual time only after the runtime has
+// proven no other goroutine in the bubble can make progress. That gives us
+// deterministic observation of the maximum number of in-flight calls without
+// relying on wall-clock races.
+//
+// Reference: https://go.dev/blog/testing-time
+func TestProvider_GetGroupsMembers_ConcurrencyLimit(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
 
-	mockScimProvider := mock_scim.NewMockAWSSCIMProvider(ctrl)
+		mockScimProvider := mock_scim.NewMockAWSSCIMProvider(ctrl)
 
-	type fields struct {
-		scim                 AWSSCIMProvider
-		maxMembersPerRequest int
-	}
-	type args struct {
-		ctx context.Context
-		gr  *model.GroupsResult
-		ur  *model.UsersResult
-	}
-	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		prepare func(m *mock_scim.MockAWSSCIMProvider)
-		want    *model.GroupsMembersResult
-		wantErr bool
-	}{
-		{
-			name: "should get groups members",
-			fields: fields{
-				scim: mockScimProvider,
-			},
-			args: args{
-				ctx: context.Background(),
-				gr: &model.GroupsResult{
-					Resources: []*model.Group{
-						{
-							SCIMID: "1",
-							Name:   "group1",
-						},
-					},
-				},
-				ur: &model.UsersResult{
-					Resources: []*model.User{
-						{
-							SCIMID: "1",
-							Active: true,
-							Emails: []model.Email{
-								{
-									Value: "user1@email.com",
-								},
-							},
-						},
-					},
-				},
-			},
-			prepare: func(m *mock_scim.MockAWSSCIMProvider) {
-				m.EXPECT().ListGroups(gomock.Any(), gomock.Any()).Return(&aws.ListGroupsResponse{
-					ListResponse: aws.ListResponse{
-						TotalResults: 1,
-					},
-					Resources: []*aws.Group{},
-				}, nil)
-			},
-			want: &model.GroupsMembersResult{
-				Resources: []*model.GroupMembers{
-					{
-						Group: &model.Group{
-							SCIMID: "1",
-							Name:   "group1",
-						},
-						Resources: []*model.Member{
-							{
-								SCIMID: "1",
-								Email:  "user1@email.com",
-								Status: "ACTIVE",
-							},
-						},
-					},
-				},
-			},
-		},
-		{
-			name: "should get groups members with concurrency",
-			fields: fields{
-				scim: mockScimProvider,
-			},
-			args: args{
-				ctx: context.Background(),
-				gr: &model.GroupsResult{
-					Resources: []*model.Group{
-						{
-							SCIMID: "1",
-							Name:   "group1",
-						},
-						{
-							SCIMID: "2",
-							Name:   "group2",
-						},
-					},
-				},
-				ur: &model.UsersResult{
-					Resources: []*model.User{
-						{
-							SCIMID: "1",
-							Active: true,
-							Emails: []model.Email{
-								{
-									Value: "user1@email.com",
-								},
-							},
-						},
-						{
-							SCIMID: "2",
-							Active: true,
-							Emails: []model.Email{
-								{
-									Value: "user2@email.com",
-								},
-							},
-						},
-					},
-				},
-			},
-			prepare: func(m *mock_scim.MockAWSSCIMProvider) {
-				var wg sync.WaitGroup
-				var mu sync.Mutex
-				var currentConcurrent int
-				var maxConcurrent int
-
-				calls := 4
-				wg.Add(calls)
-
-				for range calls {
-					m.EXPECT().ListGroups(gomock.Any(), gomock.Any()).DoAndReturn(func(_ context.Context, _ string) (*aws.ListGroupsResponse, error) {
-						mu.Lock()
-						currentConcurrent++
-						if currentConcurrent > maxConcurrent {
-							maxConcurrent = currentConcurrent
-						}
-						mu.Unlock()
-
-						time.Sleep(100 * time.Millisecond)
-
-						mu.Lock()
-						currentConcurrent--
-						mu.Unlock()
-
-						wg.Done()
-
-						return &aws.ListGroupsResponse{
-							ListResponse: aws.ListResponse{
-								TotalResults: 1,
-							},
-							Resources: []*aws.Group{},
-						}, nil
-					})
-				}
-
-				go func() {
-					wg.Wait()
-					if maxConcurrent > 20 {
-						t.Errorf("max concurrent calls should be less than 20, got %d", maxConcurrent)
-					}
-				}()
-			},
-			want: &model.GroupsMembersResult{
-				Resources: []*model.GroupMembers{
-					{
-						Group: &model.Group{
-							SCIMID: "1",
-							Name:   "group1",
-						},
-						Resources: []*model.Member{
-							{
-								SCIMID: "1",
-								Email:  "user1@email.com",
-								Status: "ACTIVE",
-							},
-							{
-								SCIMID: "2",
-								Email:  "user2@email.com",
-								Status: "ACTIVE",
-							},
-						},
-					},
-					{
-						Group: &model.Group{
-							SCIMID: "2",
-							Name:   "group2",
-						},
-						Resources: []*model.Member{
-							{
-								SCIMID: "1",
-								Email:  "user1@email.com",
-								Status: "ACTIVE",
-							},
-							{
-								SCIMID: "2",
-								Email:  "user2@email.com",
-								Status: "ACTIVE",
-							},
-						},
-					},
-				},
-			},
-		},
-		{
-			name: "should return an error when listing groups",
-			fields: fields{
-				scim: mockScimProvider,
-			},
-			args: args{
-				ctx: context.Background(),
-				gr: &model.GroupsResult{
-					Resources: []*model.Group{
-						{
-							SCIMID: "1",
-							Name:   "group1",
-						},
-					},
-				},
-				ur: &model.UsersResult{
-					Resources: []*model.User{
-						{
-							SCIMID: "1",
-						},
-					},
-				},
-			},
-			prepare: func(m *mock_scim.MockAWSSCIMProvider) {
-				m.EXPECT().ListGroups(gomock.Any(), gomock.Any()).Return(nil, errors.New("error"))
-			},
-			wantErr: true,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			tt.prepare(mockScimProvider)
-			p := &Provider{
-				scim:                 tt.fields.scim,
-				maxMembersPerRequest: 100,
-			}
-			got, err := p.GetGroupsMembersBruteForce(tt.args.ctx, tt.args.gr, tt.args.ur)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("Provider.GetGroupsMembersBruteForce() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			// sort members by SCIMID to avoid order issues in the test
-			opt := cmpopts.SortSlices(func(a, b *model.Member) bool {
-				return a.SCIMID < b.SCIMID
+		const userCount = 20
+		groups := make([]*model.Group, 0, userCount)
+		users := make([]*model.User, 0, userCount)
+		for i := range userCount {
+			id := strconv.Itoa(i)
+			groups = append(groups, &model.Group{SCIMID: "g-" + id, Name: "group-" + id})
+			users = append(users, &model.User{
+				SCIMID: "u-" + id,
+				Active: true,
+				Emails: []model.Email{{Value: "user-" + id + "@email.com"}},
 			})
+		}
 
-			if diff := cmp.Diff(tt.want, got, cmpopts.IgnoreFields(model.GroupsMembersResult{}, "HashCode", "Items"), cmpopts.IgnoreFields(model.GroupMembers{}, "HashCode", "Items"), cmpopts.IgnoreFields(model.Member{}, "HashCode"), opt); diff != "" {
-				t.Errorf("Provider.GetGroupsMembersBruteForce() (-want +got):\n%s", diff)
-			}
-		})
-	}
+		var (
+			mu             sync.Mutex
+			inFlight       int
+			maxInFlight    int
+			observedSerial int
+		)
+
+		mockScimProvider.EXPECT().
+			ListGroupsWithCursor(gomock.Any(), gomock.Any(), gomock.Any()).
+			DoAndReturn(func(_ context.Context, filter, _ string) (*aws.ListGroupsResponse, error) {
+				mu.Lock()
+				inFlight++
+				if inFlight > maxInFlight {
+					maxInFlight = inFlight
+				}
+				observedSerial++
+				mu.Unlock()
+
+				// Virtual sleep — synctest advances the fake clock only when
+				// every other goroutine in the bubble is blocked, which lets us
+				// observe the true concurrency cap rather than a flaky lower bound.
+				time.Sleep(50 * time.Millisecond)
+
+				mu.Lock()
+				inFlight--
+				mu.Unlock()
+
+				// The filter encodes the user ID, so we can derive a deterministic
+				// "user belongs to its matching group" result without juggling extra
+				// state in the test fixture.
+				userSCIMID := filter[len(`members.value eq "`) : len(filter)-1]
+				groupSCIMID := "g-" + userSCIMID[len("u-"):]
+				return &aws.ListGroupsResponse{
+					Resources: []*aws.Group{{ID: groupSCIMID}},
+				}, nil
+			}).Times(userCount)
+
+		p := &Provider{
+			scim:                 mockScimProvider,
+			maxMembersPerRequest: 100,
+		}
+
+		got, err := p.GetGroupsMembers(context.Background(), &model.GroupsResult{Resources: groups}, &model.UsersResult{Resources: users})
+		if err != nil {
+			t.Fatalf("GetGroupsMembers() error = %v", err)
+		}
+
+		if observedSerial != userCount {
+			t.Errorf("expected exactly one ListGroupsWithCursor per user (got %d, want %d)", observedSerial, userCount)
+		}
+		if maxInFlight > getGroupsMembersConcurrency {
+			t.Errorf("max in-flight calls = %d, exceeds cap %d", maxInFlight, getGroupsMembersConcurrency)
+		}
+		if maxInFlight < 2 {
+			t.Errorf("expected concurrent calls (>=2), only observed %d in flight at peak", maxInFlight)
+		}
+		if len(got.Resources) != userCount {
+			t.Errorf("expected %d group-members entries, got %d", userCount, len(got.Resources))
+		}
+	})
 }

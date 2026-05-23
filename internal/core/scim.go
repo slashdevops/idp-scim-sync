@@ -35,11 +35,11 @@ type SCIMService interface {
 	// DeleteUsers deletes users in the SCIM Service given a list of users.
 	DeleteUsers(ctx context.Context, ur *model.UsersResult) error
 
-	// GetGroupsMembers get the Groups and their Members from the SCIM service.
-	GetGroupsMembers(ctx context.Context, gr *model.GroupsResult) (*model.GroupsMembersResult, error)
-
-	// GetGroupsMembersBruteForce get the Groups and their Members from the SCIM service using brute force.
-	GetGroupsMembersBruteForce(ctx context.Context, gr *model.GroupsResult, ur *model.UsersResult) (*model.GroupsMembersResult, error)
+	// GetGroupsMembers gets the in-scope Groups and their Members from the
+	// SCIM service. The implementation queries AWS with the members.value
+	// filter for each user in ur and assigns memberships back to groups in
+	// gr; memberships pointing at groups outside gr are ignored.
+	GetGroupsMembers(ctx context.Context, gr *model.GroupsResult, ur *model.UsersResult) (*model.GroupsMembersResult, error)
 
 	// CreateGroupsMembers create groups members in the SCIM Service given a list of groups members.
 	CreateGroupsMembers(ctx context.Context, gmr *model.GroupsMembersResult) (*model.GroupsMembersResult, error)

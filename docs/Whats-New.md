@@ -4,6 +4,28 @@ This document tracks notable changes, new features, and bug fixes across release
 
 ## Unreleased
 
+### SCIM members sync no longer scales with `groups × users` (closes #520)
+
+Replaces the per-pair brute-force algorithm used to reconstruct group memberships on the AWS IAM Identity Center side with a single paginated query per user.
+
+**Before:** `internal/scim.GetGroupsMembersBruteForce` issued one `ListGroups` call for *every* (group, user) combination — `O(N_groups × N_users)` requests per sync, throttled with a hand-rolled 10–150ms random sleep and a concurrency cap of 5. For an org with 200 groups and 500 users that is 100,000 calls per sync run.
+
+**Now:** `internal/scim.GetGroupsMembers(ctx, groups, users)` issues one cursor-paginated `?cursor&filter=members.value eq "<user-id>"` request per user (plus one extra request per additional page of memberships, when a single user belongs to more than 100 groups). The result is then inverted into the group → members map the rest of the pipeline expects. For the same 200-group / 500-user org this is ~500 calls per sync — **roughly two orders of magnitude fewer requests** — and the random sleep is gone since the call volume no longer needs artificial gapping.
+
+This is enabled by two AWS IAM Identity Center SCIM features documented at <https://docs.aws.amazon.com/singlesignon/latest/developerguide/listgroups.html>:
+
+* The `members.value eq "<user-id>"` filter, which returns every group containing a given user.
+* Cursor-based pagination (`?cursor` + `nextCursor`), which lifts the historical 50-result page cap to 100 results per page and supports walking the full result set deterministically.
+
+**API changes (internal-only — no user-facing CLI/config change):**
+
+* `pkg/aws.SCIMService` gained `ListGroupsWithCursor(ctx, filter, cursor) (*ListGroupsResponse, error)`. `ListGroups` is unchanged and remains the non-paginated single-page call.
+* `pkg/aws.ListResponse` gained a `NextCursor string` field.
+* `internal/core.SCIMService.GetGroupsMembers` now takes `(ctx, *model.GroupsResult, *model.UsersResult)`. The previous `GetGroupsMembers(ctx, gr)` and `GetGroupsMembersBruteForce(ctx, gr, ur)` methods, plus their AWS-side brute-force scaffolding, have been removed entirely — there is no compatibility shim.
+* Memberships pointing at AWS-side groups that are *not* part of the in-scope `gr` (for example AWS-managed groups created outside the sync) are silently ignored, matching prior behavior.
+
+**Tests:** the concurrency cap is now exercised under `testing/synctest` (graduated to the standard library in Go 1.26 — see <https://go.dev/blog/testing-time>) so the test asserts the true peak in-flight count using virtual time, instead of waiting on a wall-clock sleep race.
+
 ### IAM least-privilege hardening for the state-file Lambda role
 
 Tightens the Lambda execution role in `template.yaml` so it can only touch the single state object via the single intended path. No behavior change for normal operation; the role is now strictly scoped.
