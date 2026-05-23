@@ -4,6 +4,15 @@ This document tracks notable changes, new features, and bug fixes across release
 
 ## Unreleased
 
+### OpenSSF Scorecard Hardening (Phase 2) — Vulnerability remediation
+
+Closed the **Vulnerabilities** Scorecard check (0/10 → 10/10). The previous baseline reported 19 known vulnerabilities, all tracing to two indirect dependencies:
+
+* `golang.org/x/crypto` v0.51.0 → v0.52.0 (closes 12 advisories)
+* `golang.org/x/net` v0.54.0 → v0.55.0 (closes 7 advisories, including `GO-2026-5026` — the only one actually reachable from project code via `idna.ToASCII` in `pkg/aws/scim.go`)
+
+Also added a **`govulncheck` step to the `Build` workflow** so future regressions block CI before merge. The step uses `golang/govulncheck-action@v1.0.4` (SHA-pinned).
+
 ### OpenSSF Scorecard Hardening (Phase 1)
 
 Started hardening the project against the [OpenSSF Scorecard](https://github.com/ossf/scorecard) checks. This first phase targets the `Token-Permissions` and `Pinned-Dependencies` checks and adds continuous Scorecard analysis to CI. No behavior change — CI security posture only.
