@@ -4,6 +4,19 @@ This document tracks notable changes, new features, and bug fixes across release
 
 ## Unreleased
 
+### OpenSSF Scorecard Hardening (Phase 1)
+
+Started hardening the project against the [OpenSSF Scorecard](https://github.com/ossf/scorecard) checks. This first phase targets the `Token-Permissions` and `Pinned-Dependencies` checks and adds continuous Scorecard analysis to CI. No behavior change — CI security posture only.
+
+**What changed:**
+
+* **Workflow tokens scoped to minimum.** All `.github/workflows/*.yml` now declare `permissions: contents: read` at the top level. Elevated permissions (`packages: write`, `id-token: write`, `contents: write`) are granted only to the specific jobs that need them — release publishing, container image push, AWS SAM OIDC auth.
+* **Every GitHub Action pinned by full commit SHA**, with the human-readable tag preserved as a trailing comment. Covers `actions/checkout`, `actions/setup-go`, `actions/upload-artifact`, `actions/download-artifact`, `actions/setup-python`, `codecov/codecov-action`, `softprops/action-gh-release`, `github/codeql-action/*`, `aws-actions/setup-sam`, and `aws-actions/configure-aws-credentials`.
+* **Container base image pinned by digest.** `Containerfile` now uses `alpine:3.21@sha256:…` instead of the floating `alpine` tag.
+* **Dependabot now watches GitHub Actions and Docker** in addition to Go modules, so the SHA pins above stay current.
+* **New `OpenSSF Scorecard` workflow** runs on push to `main` and weekly, publishing SARIF results to GitHub code scanning.
+* **Dropped unused `security-events: write` permission** from the build workflow.
+
 ### Documentation Refresh
 
 Refreshed the project documentation to align it with the current Go, AWS SAM, and AWS Serverless Application Repository workflows.
