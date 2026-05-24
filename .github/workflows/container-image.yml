@@ -90,16 +90,20 @@ jobs:
           echo "${{ secrets.GITHUB_TOKEN }}" \
             | cosign login ghcr.io --username "${{ github.actor }}" --password-stdin
           IMAGE="ghcr.io/${{ github.repository }}"
-          # podman manifest inspect → resolve the multi-arch manifest tag we just
-          # pushed to its content digest, then sign by digest. Cosign best-practice:
-          # signing by tag races with subsequent pushes; signing by digest does not.
-          # --recursive covers the manifest and every per-platform image under it.
+          # Sign by tag — cosign internally HEADs the registry to resolve the
+          # tag to its authoritative on-registry digest and signs that digest;
+          # the signature is stored under that digest, not under the tag. We
+          # previously resolved the digest locally with `podman manifest
+          # inspect`, but (a) that JSON has no top-level `.digest` for a
+          # manifest list and the `.manifests[0].digest` fallback returns the
+          # *first per-arch* image's digest, not the list's, and (b) podman
+          # re-serializes during push, so the local digest does not exist on
+          # GHCR. Result: cosign got MANIFEST_UNKNOWN.
+          # --recursive covers the manifest and every per-platform image
+          # under it. The classic "signing by tag races with concurrent
+          # pushes" caveat doesn't apply here: this job exclusively owns
+          # these tags and has just pushed them.
           for TAG in "${GIT_VERSION}" "latest"; do
-            DIGEST=$(podman manifest inspect "${IMAGE}:${TAG}" | jq -r '.digest // .manifests[0].digest')
-            if [ -z "${DIGEST}" ] || [ "${DIGEST}" = "null" ]; then
-              echo "::error::Could not resolve digest for ${IMAGE}:${TAG}"
-              exit 1
-            fi
-            cosign sign --recursive "${IMAGE}@${DIGEST}" | tee -a $GITHUB_STEP_SUMMARY
-            echo "**Signed:** \`${IMAGE}@${DIGEST}\` (tag: ${TAG})" >> $GITHUB_STEP_SUMMARY
+            cosign sign --recursive "${IMAGE}:${TAG}" | tee -a $GITHUB_STEP_SUMMARY
+            echo "**Signed:** \`${IMAGE}:${TAG}\`" >> $GITHUB_STEP_SUMMARY
           done

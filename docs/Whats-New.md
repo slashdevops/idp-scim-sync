@@ -4,6 +4,21 @@ This document tracks notable changes, new features, and bug fixes across release
 
 ## Unreleased
 
+### CI fix: cosign now signs the published container manifest by tag (closes the v0.45.0 signing failure)
+
+Fixes the `Cosign sign published container manifest (keyless / Sigstore)` step of the release workflow, which failed with **`MANIFEST_UNKNOWN: manifest unknown`** on every release attempt after the multi-arch build was restored (see ["CI fix: restore multi-arch container builds"](#ci-fix-restore-multi-arch-container-builds-in-the-release-workflow)).
+
+**Root cause.** The step resolved the digest to sign by piping `podman manifest inspect` into `jq -r '.digest // .manifests[0].digest'`. Two compounding problems:
+
+1. **A manifest list's own JSON has no top-level `.digest`** (its digest is computed by hashing the JSON, not stored inside it). So the `//` fallback always wins and returns `.manifests[0].digest` — the digest of the **first per-arch image** (arm64), not the manifest list.
+2. **Podman re-serializes manifests when pushing** (media-type conversion between Docker `vnd.docker.distribution.manifest.v2+json` and OCI `vnd.oci.image.manifest.v1+json`). The locally computed digest therefore does not match what GHCR stores, so cosign's lookup of `ghcr.io/…@sha256:<local-digest>` returns 404.
+
+Result: cosign was asked to sign a digest that exists nowhere on the registry.
+
+**Fix.** Sign by tag (`cosign sign --recursive ghcr.io/…:TAG`). Cosign internally HEAD-resolves the tag to its authoritative on-registry digest and signs that digest — the signature is still stored *by digest*, so the resulting artifact is identical to what the previous (broken) code intended to produce. The classic "signing-by-tag races with concurrent pushes" caveat does not apply here: this job exclusively owns the `v<x.y.z>` and `latest` tags and has just pushed them sequentially in the previous step.
+
+No code or release-artifact changes.
+
 ### CI fix: restore multi-arch container builds in the release workflow
 
 Fixes the `Publish Container Images` job (failing since v0.44.1, surfaced again on the v0.45.0 release as ["Could not resolve digest for ghcr.io/slashdevops/idp-scim-sync:v0.45.0"](https://github.com/slashdevops/idp-scim-sync/actions/runs/26356807875/job/77585211704)).
