@@ -4,6 +4,19 @@ This document tracks notable changes, new features, and bug fixes across release
 
 ## Unreleased
 
+### CI fix: restore multi-arch container builds in the release workflow
+
+Fixes the `Publish Container Images` job (failing since v0.44.1, surfaced again on the v0.45.0 release as ["Could not resolve digest for ghcr.io/slashdevops/idp-scim-sync:v0.45.0"](https://github.com/slashdevops/idp-scim-sync/actions/runs/26356807875/job/77585211704)).
+
+**Root cause.** When the workflow was migrated from Docker to Podman in `ab22744`, the `docker/setup-qemu-action` step was removed on the assumption that pre-built binaries no longer required cross-compilation. They don't — but every `RUN` line in `Containerfile` (notably `apk add ca-certificates`) still has to execute under the target architecture. On the `amd64` runner, building the `arm64` variant therefore needs QEMU user-mode emulation registered with `binfmt_misc`. Without it, `podman build --platform linux/arm64` died with `exec /bin/sh: Exec format error`, the `arm64` image was never created, `podman manifest add` then failed, no manifest was pushed, and `cosign sign` finally failed with "Could not resolve digest". The two upstream `make` failures were not surfaced as red steps because `make ... | tee $GITHUB_STEP_SUMMARY` runs under bash without `pipefail`, so `tee`'s exit 0 masked the make exit 1.
+
+**Changes in `.github/workflows/container-image.yml`:**
+
+* Install `qemu-user-static` and `binfmt-support` alongside `podman` so the kernel can run arm64 binaries during the build.
+* Set `defaults.run.shell: bash -eo pipefail {0}` at the job level so future `cmd | tee` failures fail the step instead of being silently swallowed.
+
+No code changes; release artifacts and signing flow are unchanged.
+
 ### SCIM members sync — major security & performance improvement (closes [#520](https://github.com/slashdevops/idp-scim-sync/issues/520))
 
 > [!IMPORTANT]

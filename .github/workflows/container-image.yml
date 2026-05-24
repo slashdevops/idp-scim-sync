@@ -15,6 +15,11 @@ jobs:
   build:
     name: Build and Publish Container Images
     runs-on: ubuntu-latest
+    defaults:
+      # pipefail so `make ... | tee $GITHUB_STEP_SUMMARY` propagates the
+      # upstream make exit code instead of being swallowed by tee's exit 0.
+      run:
+        shell: bash -eo pipefail {0}
     permissions:
       contents: read
       packages: write
@@ -23,10 +28,14 @@ jobs:
       - name: Check out code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
 
-      - name: Install Podman
+      - name: Install Podman and cross-arch emulation
+        # qemu-user-static + binfmt-support register QEMU user-mode handlers
+        # in /proc/sys/fs/binfmt_misc so podman can RUN steps inside arm64
+        # images on this amd64 runner (the Containerfile's `apk add` step
+        # otherwise dies with "exec /bin/sh: Exec format error").
         run: |
           sudo apt-get update
-          sudo apt-get install -y podman
+          sudo apt-get install -y podman qemu-user-static binfmt-support
 
       - name: Tools and versions
         run: |
