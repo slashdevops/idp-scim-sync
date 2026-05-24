@@ -2066,6 +2066,111 @@ func TestListGroups(t *testing.T) {
 	})
 }
 
+func TestListGroupsWithCursor(t *testing.T) {
+	t.Run("first page request sends bare cursor parameter and parses NextCursor", func(t *testing.T) {
+		page1 := ReadJSONFileAsString(t, "testdata/ListGroupsResponse_CursorPage1.json")
+
+		var capturedRawQuery string
+		var capturedPath string
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			capturedRawQuery = r.URL.RawQuery
+			capturedPath = r.URL.Path
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = fmt.Fprint(w, page1)
+		}))
+		defer server.Close()
+
+		service, err := NewSCIMService(http.DefaultClient, server.URL, "MyToken")
+		assert.NoError(t, err)
+
+		got, err := service.ListGroupsWithCursor(context.Background(), `members.value eq "u1"`, "")
+		assert.NoError(t, err)
+		assert.NotNil(t, got)
+
+		assert.Equal(t, "/Groups", capturedPath)
+		// AWS requires the bare "cursor" parameter (no value) on the first
+		// paginated request to switch ListGroups into cursor mode.
+		assert.Equal(t, `cursor&filter=members.value+eq+%22u1%22`, capturedRawQuery)
+		assert.Equal(t, "Q3Vyc29yUGFnZTI=", got.NextCursor)
+		assert.Len(t, got.Resources, 2)
+		assert.Equal(t, "d468e4d8-c051-703d-dd84-28caf445f15e", got.Resources[0].ID)
+	})
+
+	t.Run("subsequent page sends cursor value and returns final page when NextCursor is empty", func(t *testing.T) {
+		page2 := ReadJSONFileAsString(t, "testdata/ListGroupsResponse_CursorPage2.json")
+
+		var capturedRawQuery string
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			capturedRawQuery = r.URL.RawQuery
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = fmt.Fprint(w, page2)
+		}))
+		defer server.Close()
+
+		service, err := NewSCIMService(http.DefaultClient, server.URL, "MyToken")
+		assert.NoError(t, err)
+
+		got, err := service.ListGroupsWithCursor(context.Background(), `members.value eq "u1"`, "Q3Vyc29yUGFnZTI=")
+		assert.NoError(t, err)
+
+		assert.Equal(t, `cursor=Q3Vyc29yUGFnZTI%3D&filter=members.value+eq+%22u1%22`, capturedRawQuery)
+		assert.Empty(t, got.NextCursor, "final page must report no nextCursor")
+		assert.Len(t, got.Resources, 1)
+	})
+
+	t.Run("empty filter still sends bare cursor", func(t *testing.T) {
+		var capturedRawQuery string
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			capturedRawQuery = r.URL.RawQuery
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = fmt.Fprint(w, `{"itemsPerPage":0,"schemas":["urn:ietf:params:scim:api:messages:2.0:ListResponse"],"Resources":[]}`)
+		}))
+		defer server.Close()
+
+		service, err := NewSCIMService(http.DefaultClient, server.URL, "MyToken")
+		assert.NoError(t, err)
+
+		_, err = service.ListGroupsWithCursor(context.Background(), "", "")
+		assert.NoError(t, err)
+		assert.Equal(t, "cursor", capturedRawQuery)
+	})
+
+	t.Run("propagates non-2xx responses as HTTPResponseError", func(t *testing.T) {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			w.WriteHeader(http.StatusTooManyRequests)
+			_, _ = fmt.Fprint(w, `{"detail":"rate limited"}`)
+		}))
+		defer server.Close()
+
+		service, err := NewSCIMService(http.DefaultClient, server.URL, "MyToken")
+		assert.NoError(t, err)
+
+		_, err = service.ListGroupsWithCursor(context.Background(), `members.value eq "u1"`, "")
+		assert.Error(t, err)
+
+		var httpErr *HTTPResponseError
+		assert.True(t, errors.As(err, &httpErr))
+		assert.Equal(t, http.StatusTooManyRequests, httpErr.StatusCode)
+	})
+
+	t.Run("propagates context cancellation", func(t *testing.T) {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = fmt.Fprint(w, `{"itemsPerPage":0,"schemas":[],"Resources":[]}`)
+		}))
+		defer server.Close()
+
+		service, err := NewSCIMService(http.DefaultClient, server.URL, "MyToken")
+		assert.NoError(t, err)
+
+		ctx, cancel := context.WithCancel(context.Background())
+		cancel()
+
+		_, err = service.ListGroupsWithCursor(ctx, "", "")
+		assert.Error(t, err)
+	})
+}
+
 // Enhanced test cases for improved coverage
 
 func TestSCIMService_ContextCancellation(t *testing.T) {

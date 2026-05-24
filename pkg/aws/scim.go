@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"net/url"
 	"path"
+	"strings"
 )
 
 // AWS SSO SCIM API
@@ -652,7 +653,14 @@ func (s *SCIMService) GetGroupByDisplayName(ctx context.Context, displayName str
 	return &GetGroupResponse{}, nil
 }
 
-// ListGroups returns a list of groups from the AWS SSO Using the API
+// ListGroups returns a list of groups from the AWS SSO using the API.
+//
+// This is a non-paginated call: the response contains TotalResults, ItemsPerPage
+// and StartIndex but no NextCursor. The AWS SCIM endpoint caps the result at
+// 100 groups per page when no cursor is supplied, so callers that need to walk
+// every group should use ListGroupsWithCursor instead.
+//
+// Reference: https://docs.aws.amazon.com/singlesignon/latest/developerguide/listgroups.html
 func (s *SCIMService) ListGroups(ctx context.Context, filter string) (*ListGroupsResponse, error) {
 	reqURL, err := url.Parse(s.url.String())
 	if err != nil {
@@ -685,6 +693,71 @@ func (s *SCIMService) ListGroups(ctx context.Context, filter string) (*ListGroup
 	var response ListGroupsResponse
 	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
 		return nil, fmt.Errorf("aws ListGroups: error decoding response body: %w", err)
+	}
+
+	return &response, nil
+}
+
+// ListGroupsPageSize is the maximum number of groups returned per page by the
+// AWS IAM Identity Center SCIM ListGroups endpoint. Cursor-based pagination
+// uses this limit implicitly when no count is supplied.
+//
+// Reference: https://docs.aws.amazon.com/singlesignon/latest/developerguide/listgroups.html
+const ListGroupsPageSize = 100
+
+// ListGroupsWithCursor returns one page of groups using AWS IAM Identity
+// Center SCIM cursor-based pagination.
+//
+// Pass an empty cursor on the first call: the bare "?cursor" parameter is
+// required by AWS to switch the endpoint into cursor mode. For each subsequent
+// page, pass the NextCursor returned by the previous response. The response is
+// the final page when NextCursor is empty.
+//
+// The filter argument is forwarded verbatim and, when non-empty, must follow
+// the AWS-supported filter combinations (for example: members.value eq "<id>").
+//
+// Reference: https://docs.aws.amazon.com/singlesignon/latest/developerguide/listgroups.html
+func (s *SCIMService) ListGroupsWithCursor(ctx context.Context, filter, cursor string) (*ListGroupsResponse, error) {
+	reqURL, err := url.Parse(s.url.String())
+	if err != nil {
+		return nil, fmt.Errorf("aws ListGroupsWithCursor: error parsing url: %w", err)
+	}
+
+	reqURL.Path = path.Join(reqURL.Path, "/Groups")
+
+	// AWS requires the "cursor" parameter to be present (even when empty) to
+	// switch the endpoint into cursor-paginated mode. url.Values omits empty
+	// values, so build the query string manually to preserve the bare "cursor"
+	// form for the first page request.
+	var parts []string
+	if cursor == "" {
+		parts = append(parts, "cursor")
+	} else {
+		parts = append(parts, "cursor="+url.QueryEscape(cursor))
+	}
+	if filter != "" {
+		parts = append(parts, "filter="+url.QueryEscape(filter))
+	}
+	reqURL.RawQuery = strings.Join(parts, "&")
+
+	req, err := s.newRequest(ctx, http.MethodGet, reqURL, nil)
+	if err != nil {
+		return nil, fmt.Errorf("aws ListGroupsWithCursor: error creating request, http method: %s, url: %v, error: %w", http.MethodGet, reqURL.String(), err)
+	}
+
+	resp, err := s.do(ctx, req)
+	if err != nil {
+		return nil, fmt.Errorf("aws ListGroupsWithCursor: error sending request, http method: %s, url: %v, error: %w", http.MethodGet, reqURL.String(), err)
+	}
+	defer resp.Body.Close()
+
+	if e := s.checkHTTPResponse(resp); e != nil {
+		return nil, e
+	}
+
+	var response ListGroupsResponse
+	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
+		return nil, fmt.Errorf("aws ListGroupsWithCursor: error decoding response body: %w", err)
 	}
 
 	return &response, nil

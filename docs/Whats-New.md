@@ -4,6 +4,38 @@ This document tracks notable changes, new features, and bug fixes across release
 
 ## Unreleased
 
+### SCIM members sync — major security & performance improvement (closes [#520](https://github.com/slashdevops/idp-scim-sync/issues/520))
+
+> [!IMPORTANT]
+> This release replaces the brute-force algorithm that reconstructed group memberships on the AWS IAM Identity Center side. The change is **internal-only** (no CLI/config change) but materially improves both the **security posture** and the **runtime cost** of every sync.
+
+#### Security improvements
+
+* **Drastically smaller attack & failure surface per sync.** The number of authenticated SCIM requests issued per sync drops by ~2 orders of magnitude (see *Performance* below). Each request is a credential-bearing call to AWS IAM Identity Center — fewer requests means fewer opportunities for a credential leak, log capture, in-flight tampering, or partial-failure half-state to be observed.
+* **Shorter sync window = smaller inconsistency window.** Previously, a sync of a few hundred users could run for many minutes while ~100k requests trickled out behind a hand-rolled 10–150 ms random sleep. During that window, group membership in AWS could be partially reconciled — an externally-observable inconsistent state. The new path completes in a fraction of the time, shrinking that window proportionally.
+* **No more time-based throttling band-aid.** The previous `time.Sleep(rand.Intn(...))` jitter existed solely to avoid tripping AWS SCIM throttles under the brute-force call volume. It has been removed: the new call profile is light enough that artificial gapping is no longer required. This eliminates a source of non-determinism in the sync path and removes timing-dependent behavior from a security-sensitive code path.
+* **Deterministic pagination.** Cursor-based pagination (`?cursor` + `nextCursor`) walks the full result set deterministically, so memberships can no longer be silently truncated by hitting an undocumented page cap mid-sync.
+
+#### Performance improvements
+
+* **Before:** `internal/scim.GetGroupsMembersBruteForce` issued one `ListGroups` call for *every* (group, user) combination — `O(N_groups × N_users)` requests per sync, throttled by a 10–150 ms random sleep and capped at concurrency 5. For an org with 200 groups and 500 users this is **~100,000 calls per sync run**.
+* **Now:** `internal/scim.GetGroupsMembers(ctx, groups, users)` issues one cursor-paginated `?cursor&filter=members.value eq "<user-id>"` request per user (plus one extra request per additional page of memberships, when a single user belongs to more than 100 groups). The result is then inverted into the group → members map the rest of the pipeline expects. For the same 200-group / 500-user org this is **~500 calls per sync — roughly two orders of magnitude fewer requests**.
+* **Lower Lambda execution time and cost.** Fewer requests + no random sleeps directly reduces billable Lambda duration on every scheduled invocation.
+
+This is enabled by two AWS IAM Identity Center SCIM features documented at <https://docs.aws.amazon.com/singlesignon/latest/developerguide/listgroups.html>:
+
+* The `members.value eq "<user-id>"` filter, which returns every group containing a given user.
+* Cursor-based pagination (`?cursor` + `nextCursor`), which lifts the historical 50-result page cap to 100 results per page and supports walking the full result set deterministically.
+
+**API changes (internal-only — no user-facing CLI/config change):**
+
+* `pkg/aws.SCIMService` gained `ListGroupsWithCursor(ctx, filter, cursor) (*ListGroupsResponse, error)`. `ListGroups` is unchanged and remains the non-paginated single-page call.
+* `pkg/aws.ListResponse` gained a `NextCursor string` field.
+* `internal/core.SCIMService.GetGroupsMembers` now takes `(ctx, *model.GroupsResult, *model.UsersResult)`. The previous `GetGroupsMembers(ctx, gr)` and `GetGroupsMembersBruteForce(ctx, gr, ur)` methods, plus their AWS-side brute-force scaffolding, have been removed entirely — there is no compatibility shim.
+* Memberships pointing at AWS-side groups that are *not* part of the in-scope `gr` (for example AWS-managed groups created outside the sync) are silently ignored, matching prior behavior.
+
+**Tests:** the concurrency cap is now exercised under `testing/synctest` (graduated to the standard library in Go 1.26 — see <https://go.dev/blog/testing-time>) so the test asserts the true peak in-flight count using virtual time, instead of waiting on a wall-clock sleep race.
+
 ### IAM least-privilege hardening for the state-file Lambda role
 
 Tightens the Lambda execution role in `template.yaml` so it can only touch the single state object via the single intended path. No behavior change for normal operation; the role is now strictly scoped.

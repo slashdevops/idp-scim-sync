@@ -72,10 +72,7 @@ func scimSync(
 	totalUsersResult = model.MergeUsersResult(usersCreated, usersUpdated, usersEqual)
 
 	slog.Info("getting SCIM Groups Members")
-	// unfortunately, the SCIM service does not support the getGroupsMembers method in and efficient way
-	// see: "Nor Supported" section in: https://docs.aws.amazon.com/singlesignon/latest/developerguide/listgroups.html
-	// scimGroupsMembersResult, err := scim.GetGroupsMembers(ctx, &totalGroupsResult) // not supported yet
-	scimGroupsMembersResult, err := scim.GetGroupsMembersBruteForce(ctx, totalGroupsResult, totalUsersResult)
+	scimGroupsMembersResult, err := scim.GetGroupsMembers(ctx, totalGroupsResult, totalUsersResult)
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("error getting groups members from the SCIM service: %w", err)
 	}
