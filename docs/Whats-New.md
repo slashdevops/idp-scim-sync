@@ -4,13 +4,23 @@ This document tracks notable changes, new features, and bug fixes across release
 
 ## Unreleased
 
-### SCIM members sync no longer scales with `groups × users` (closes #520)
+### SCIM members sync — major security & performance improvement (closes [#520](https://github.com/slashdevops/idp-scim-sync/issues/520))
 
-Replaces the per-pair brute-force algorithm used to reconstruct group memberships on the AWS IAM Identity Center side with a single paginated query per user.
+> [!IMPORTANT]
+> This release replaces the brute-force algorithm that reconstructed group memberships on the AWS IAM Identity Center side. The change is **internal-only** (no CLI/config change) but materially improves both the **security posture** and the **runtime cost** of every sync.
 
-**Before:** `internal/scim.GetGroupsMembersBruteForce` issued one `ListGroups` call for *every* (group, user) combination — `O(N_groups × N_users)` requests per sync, throttled with a hand-rolled 10–150ms random sleep and a concurrency cap of 5. For an org with 200 groups and 500 users that is 100,000 calls per sync run.
+#### Security improvements
 
-**Now:** `internal/scim.GetGroupsMembers(ctx, groups, users)` issues one cursor-paginated `?cursor&filter=members.value eq "<user-id>"` request per user (plus one extra request per additional page of memberships, when a single user belongs to more than 100 groups). The result is then inverted into the group → members map the rest of the pipeline expects. For the same 200-group / 500-user org this is ~500 calls per sync — **roughly two orders of magnitude fewer requests** — and the random sleep is gone since the call volume no longer needs artificial gapping.
+* **Drastically smaller attack & failure surface per sync.** The number of authenticated SCIM requests issued per sync drops by ~2 orders of magnitude (see *Performance* below). Each request is a credential-bearing call to AWS IAM Identity Center — fewer requests means fewer opportunities for a credential leak, log capture, in-flight tampering, or partial-failure half-state to be observed.
+* **Shorter sync window = smaller inconsistency window.** Previously, a sync of a few hundred users could run for many minutes while ~100k requests trickled out behind a hand-rolled 10–150 ms random sleep. During that window, group membership in AWS could be partially reconciled — an externally-observable inconsistent state. The new path completes in a fraction of the time, shrinking that window proportionally.
+* **No more time-based throttling band-aid.** The previous `time.Sleep(rand.Intn(...))` jitter existed solely to avoid tripping AWS SCIM throttles under the brute-force call volume. It has been removed: the new call profile is light enough that artificial gapping is no longer required. This eliminates a source of non-determinism in the sync path and removes timing-dependent behavior from a security-sensitive code path.
+* **Deterministic pagination.** Cursor-based pagination (`?cursor` + `nextCursor`) walks the full result set deterministically, so memberships can no longer be silently truncated by hitting an undocumented page cap mid-sync.
+
+#### Performance improvements
+
+* **Before:** `internal/scim.GetGroupsMembersBruteForce` issued one `ListGroups` call for *every* (group, user) combination — `O(N_groups × N_users)` requests per sync, throttled by a 10–150 ms random sleep and capped at concurrency 5. For an org with 200 groups and 500 users this is **~100,000 calls per sync run**.
+* **Now:** `internal/scim.GetGroupsMembers(ctx, groups, users)` issues one cursor-paginated `?cursor&filter=members.value eq "<user-id>"` request per user (plus one extra request per additional page of memberships, when a single user belongs to more than 100 groups). The result is then inverted into the group → members map the rest of the pipeline expects. For the same 200-group / 500-user org this is **~500 calls per sync — roughly two orders of magnitude fewer requests**.
+* **Lower Lambda execution time and cost.** Fewer requests + no random sleeps directly reduces billable Lambda duration on every scheduled invocation.
 
 This is enabled by two AWS IAM Identity Center SCIM features documented at <https://docs.aws.amazon.com/singlesignon/latest/developerguide/listgroups.html>:
 
