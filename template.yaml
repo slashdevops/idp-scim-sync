@@ -371,7 +371,7 @@ Resources:
                 Condition:
                   StringEquals:
                     kms:ViaService: !Sub "s3.${AWS::Region}.amazonaws.com"
-                    kms:EncryptionContext:aws:s3:arn: !Sub "arn:${AWS::Partition}:s3:::${BucketNamePrefix}-${AWS::AccountId}-${AWS::Region}/${BucketKey}"
+                    kms:EncryptionContext:aws:s3:arn: !Sub "arn:${AWS::Partition}:s3:::${BucketNamePrefix}-${AWS::AccountId}-${AWS::Region}"
               - Sid: KMSDecryptPolicy
                 Effect: Allow
                 Action:
@@ -383,7 +383,7 @@ Resources:
                 Condition:
                   StringEquals:
                     kms:ViaService: !Sub "s3.${AWS::Region}.amazonaws.com"
-                    kms:EncryptionContext:aws:s3:arn: !Sub "arn:${AWS::Partition}:s3:::${BucketNamePrefix}-${AWS::AccountId}-${AWS::Region}/${BucketKey}"
+                    kms:EncryptionContext:aws:s3:arn: !Sub "arn:${AWS::Partition}:s3:::${BucketNamePrefix}-${AWS::AccountId}-${AWS::Region}"
 
   AWSGWSServiceAccountFileSecret:
     Type: AWS::SecretsManager::Secret

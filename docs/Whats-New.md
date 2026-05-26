@@ -78,11 +78,11 @@ Tightens the Lambda execution role in `template.yaml` so it can only touch the s
 Both now carry the AWS-recommended SSE-KMS scoping conditions:
 
 * `kms:ViaService = s3.<region>.amazonaws.com` — the CMK can only be used through requests S3 forwards on the role's behalf, not via direct `kms:Decrypt` / `kms:Encrypt` calls.
-* `kms:EncryptionContext:aws:s3:arn = arn:${Partition}:s3:::<bucket>/<BucketKey>` — the KMS grant only applies when S3 passes that exact object ARN as encryption context. S3 always populates this context for SSE-KMS objects, so legitimate reads/writes of the state file continue to work; any other object path is rejected by KMS.
+* `kms:EncryptionContext:aws:s3:arn = arn:${Partition}:s3:::<bucket>` — the KMS grant only applies when S3 passes that exact **bucket** ARN as encryption context. The bucket ARN (not the object ARN) is the correct value here because the state bucket has `BucketKeyEnabled: true`: S3 generates a short-lived bucket-level data key once and derives per-object keys locally from it, so the encryption context S3 forwards to KMS is the bucket ARN. The role can still only reach the single state object through the `S3ObjectPolicy` ARN scoping. See [AWS docs — S3 Bucket Keys](https://docs.aws.amazon.com/AmazonS3/latest/userguide/bucket-key.html).
 
 These are belt-and-braces additions on top of the existing bucket policy, public-access block, `aws:SecureTransport` deny, and SSE-KMS-with-bucket-key configuration.
 
-References: [AWS docs — kms:ViaService](https://docs.aws.amazon.com/kms/latest/developerguide/policy-conditions.html#conditions-kms-via-service), [AWS docs — SSE-KMS encryption context](https://docs.aws.amazon.com/AmazonS3/latest/userguide/specifying-kms-encryption.html).
+References: [AWS docs — kms:ViaService](https://docs.aws.amazon.com/kms/latest/developerguide/policy-conditions.html#conditions-kms-via-service), [AWS docs — SSE-KMS encryption context](https://docs.aws.amazon.com/AmazonS3/latest/userguide/specifying-kms-encryption.html), [AWS docs — S3 Bucket Keys](https://docs.aws.amazon.com/AmazonS3/latest/userguide/bucket-key.html).
 
 ### OpenSSF Scorecard Hardening (Phase 4) — Fuzzing
 
