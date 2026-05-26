@@ -332,10 +332,9 @@ Resources:
           PolicyDocument:
             Version: "2012-10-17"
             Statement:
-              - Sid: SSMGetParameterPolicy
+              - Sid: SecretsManagerGetSecretValuePolicy
                 Effect: Allow
                 Action:
-                  - secretsmanager:GetResourcePolicy
                   - secretsmanager:GetSecretValue
                 Resource:
                   - !Ref AWSGWSServiceAccountFileSecret
@@ -352,27 +351,7 @@ Resources:
                   - s3:PutObjectAcl
                 Resource:
                   - !Sub "arn:${AWS::Partition}:s3:::${BucketNamePrefix}-${AWS::AccountId}-${AWS::Region}/${BucketKey}"
-              - Sid: S3ListBucketPolicy
-                Effect: Allow
-                Action:
-                  - s3:ListBucket
-                Resource:
-                  - !Sub "arn:${AWS::Partition}:s3:::${BucketNamePrefix}-${AWS::AccountId}-${AWS::Region}"
-                Condition:
-                  StringLike:
-                    s3:prefix:
-                      - !Ref BucketKey
-              - Sid: KMSGetDataPolicy
-                Effect: Allow
-                Action:
-                  - kms:GenerateDataKeyPair
-                Resource:
-                  - !GetAtt KMSKey.Arn
-                Condition:
-                  StringEquals:
-                    kms:ViaService: !Sub "s3.${AWS::Region}.amazonaws.com"
-                    kms:EncryptionContext:aws:s3:arn: !Sub "arn:${AWS::Partition}:s3:::${BucketNamePrefix}-${AWS::AccountId}-${AWS::Region}"
-              - Sid: KMSDecryptPolicy
+              - Sid: KMSStateObjectPolicy
                 Effect: Allow
                 Action:
                   - kms:Decrypt
@@ -420,25 +399,9 @@ Resources:
           - Sid: AllowIAMThisAccount
             Effect: Allow
             Principal:
-              AWS: !Sub "arn:aws:iam::${AWS::AccountId}:root"
+              AWS: !Sub "arn:${AWS::Partition}:iam::${AWS::AccountId}:root"
             Action: "kms:*"
             Resource: "*"
-          - Sid: AllowAWSLambdaToRetrieveKMSKey
-            Effect: Allow
-            Principal:
-              Service: "lambda.amazonaws.com"
-              #AWS: !GetAtt LambdaFunctionRole.Arn # Fails because circular reference
-              #AWS: !Sub "arn:aws:iam::${AWS::AccountId}:role/serverless-idp-scim-sync-${AWS::AccountId}-${AWS::Region}" # Fails in runtime because the roles is not created yet
-            Action:
-              - kms:Encrypt
-              - kms:Decrypt
-              - kms:ReEncrypt*
-              - kms:GenerateDataKey*
-              - kms:DescribeKey
-            Resource: "*"
-            Condition:
-              StringEquals:
-                kms:CallerAccount: !Ref "AWS::AccountId"
 
   KMSKeyAlias:
     Type: AWS::KMS::Alias
@@ -461,7 +424,7 @@ Resources:
       BucketEncryption:
         ServerSideEncryptionConfiguration:
           - ServerSideEncryptionByDefault:
-              KMSMasterKeyID: !Sub "arn:aws:kms:${AWS::Region}:${AWS::AccountId}:${KMSKeyAlias}"
+              KMSMasterKeyID: !Sub "arn:${AWS::Partition}:kms:${AWS::Region}:${AWS::AccountId}:${KMSKeyAlias}"
               SSEAlgorithm: "aws:kms"
             BucketKeyEnabled: true # https://docs.aws.amazon.com/AmazonS3/latest/userguide/bucket-key.html
 
@@ -475,7 +438,7 @@ Resources:
           - Sid: AllowAWSLambdaFunction
             Principal:
               AWS:
-                - !Sub "arn:aws:iam::${AWS::AccountId}:role/serverless-idp-scim-sync-${AWS::AccountId}-${AWS::Region}${RoleNameSuffix}"
+                - !Sub "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/serverless-idp-scim-sync-${AWS::AccountId}-${AWS::Region}${RoleNameSuffix}"
             Effect: Allow
             Action:
               - s3:GetObject

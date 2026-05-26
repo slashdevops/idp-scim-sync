@@ -4,6 +4,28 @@ This document tracks notable changes, new features, and bug fixes across release
 
 ## Unreleased
 
+### Template housekeeping: remove dead/misleading IAM grants and standardize on `${AWS::Partition}`
+
+Cleans up the Lambda execution role, the KMS key policy, and a few hardcoded partition strings in `template.yaml`. No runtime behavior change — every removal is a permission or grant that was never reached or never matched at runtime.
+
+**Lambda role (`CustomLambdaPolicy`):**
+
+* **Removed `s3:ListBucket` statement** (`S3ListBucketPolicy`). The runtime code only calls `s3:GetObject` and `s3:PutObject` on the single state object ([`internal/repository/s3.go`](../internal/repository/s3.go)) — `ListBucket` / `ListObjectsV2` / `HeadObject` are never issued, so the statement and its `s3:prefix` condition were unreachable.
+* **Removed `kms:GenerateDataKeyPair` statement** (`KMSGetDataPolicy`). `GenerateDataKeyPair` is an asymmetric-key API; the state-bucket CMK is the default symmetric KMS key, so this action could never be called against it. The remaining symmetric action `kms:GenerateDataKey` (needed by S3 for SSE-KMS with bucket keys) is already granted by the renamed `KMSStateObjectPolicy` statement.
+* **Removed `secretsmanager:GetResourcePolicy` action.** The code only calls `GetSecretValue` ([`pkg/aws/secretsmanager.go`](../pkg/aws/secretsmanager.go)). `GetResourcePolicy` reads the secret's resource-policy JSON — nothing in this Lambda needs it. Renamed the surviving statement to `SecretsManagerGetSecretValuePolicy` (the old name `SSMGetParameterPolicy` was a copy-paste from a different service).
+
+**KMS key policy:**
+
+* **Removed `AllowAWSLambdaToRetrieveKMSKey` statement.** Its principal was `Service: lambda.amazonaws.com`, but at runtime KMS sees the Lambda's **assumed-role** ARN (not the Lambda service) when S3 forwards the `kms:Decrypt` / `kms:GenerateDataKey` calls. The statement therefore granted nothing at runtime — the real grant comes from `AllowIAMThisAccount` (the standard "delegate to IAM" pattern), combined with the role's identity-based policy. Removing the dead statement makes the grant model unambiguous.
+
+**Partition portability:**
+
+* Replaced four hardcoded `arn:aws:…` ARNs with `arn:${AWS::Partition}:…`:
+  * `KMSKey` key-policy principal (`AllowIAMThisAccount`)
+  * `Bucket` `BucketEncryption.KMSMasterKeyID`
+  * `BucketPolicy` `AllowAWSLambdaFunction` principal
+* The rest of the template already used `${AWS::Partition}`; these were the last holdouts. The template is now deployable in non-commercial AWS partitions (GovCloud, China) without manual edits.
+
 ### CI fix: cosign now signs the published container manifest by tag (closes the v0.45.0 signing failure)
 
 Fixes the `Cosign sign published container manifest (keyless / Sigstore)` step of the release workflow, which failed with **`MANIFEST_UNKNOWN: manifest unknown`** on every release attempt after the multi-arch build was restored (see ["CI fix: restore multi-arch container builds"](#ci-fix-restore-multi-arch-container-builds-in-the-release-workflow)).
