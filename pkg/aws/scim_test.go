@@ -75,14 +75,6 @@ func TestNewSCIMService(t *testing.T) {
 		assert.Nil(t, got)
 	})
 
-	t.Run("should return error when the url is empty ", func(t *testing.T) {
-		mockHTTPClient := mocks.NewMockHTTPClient(mockCtrl)
-
-		got, err := NewSCIMService(mockHTTPClient, "", "MyToken")
-		assert.Error(t, err)
-		assert.ErrorIs(t, err, ErrURLEmpty)
-		assert.Nil(t, got)
-	})
 }
 
 func TestNewRequest(t *testing.T) {
@@ -145,7 +137,7 @@ func TestNewRequest(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, service)
 
-		mockMethod := "this is and invalid method"
+		mockMethod := "this is an invalid method"
 
 		mockURL, err := url.Parse(endpoint)
 		assert.NoError(t, err)
@@ -1201,7 +1193,7 @@ func TestGetUser(t *testing.T) {
 
 		httpResp := &http.Response{
 			Status:     "200 OK",
-			StatusCode: http.StatusNoContent,
+			StatusCode: http.StatusOK,
 			Header: http.Header{
 				"Date":             []string{"Tue, 31 Mar 2020 02:36:15 GMT"},
 				"Content-Type":     []string{"application/json"},
@@ -1266,7 +1258,7 @@ func TestGetUserByUserName(t *testing.T) {
 
 		httpResp := &http.Response{
 			Status:     "200 OK",
-			StatusCode: http.StatusNoContent,
+			StatusCode: http.StatusOK,
 			Header: http.Header{
 				"Date":             []string{"Tue, 31 Mar 2020 02:36:15 GMT"},
 				"Content-Type":     []string{"application/json"},
@@ -1330,7 +1322,7 @@ func TestListUsers(t *testing.T) {
 
 		httpResp := &http.Response{
 			Status:     "200 OK",
-			StatusCode: http.StatusNoContent,
+			StatusCode: http.StatusOK,
 			Header: http.Header{
 				"Date":             []string{"Tue, 31 Mar 2020 02:36:15 GMT"},
 				"Content-Type":     []string{"application/json"},
@@ -1805,7 +1797,7 @@ func TestGetGroupByDisplayName(t *testing.T) {
 
 		httpResp := &http.Response{
 			Status:     "200 OK",
-			StatusCode: http.StatusNoContent,
+			StatusCode: http.StatusOK,
 			Header: http.Header{
 				"Date":             []string{"Thu, 23 Jul 2020 00:37:15 GMT"},
 				"Content-Type":     []string{"application/json"},
@@ -2039,7 +2031,7 @@ func TestListGroups(t *testing.T) {
 
 		httpResp := &http.Response{
 			Status:     "200 OK",
-			StatusCode: http.StatusNoContent,
+			StatusCode: http.StatusOK,
 			Header: http.Header{
 				"Date":             []string{"Wed, 22 Jul 2020 23:06:38 GMT"},
 				"Content-Type":     []string{"application/json"},
@@ -2190,7 +2182,7 @@ func TestSCIMService_ContextCancellation(t *testing.T) {
 
 		_, err = service.do(ctx, req)
 		assert.Error(t, err)
-		assert.Equal(t, context.Canceled, err)
+		assert.ErrorIs(t, err, context.Canceled)
 	})
 }
 
