@@ -8,7 +8,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/config v1.32.20
 	github.com/aws/aws-sdk-go-v2/credentials v1.19.19
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.101.0
-	github.com/aws/aws-sdk-go-v2/service/secretsmanager v1.41.7
+	github.com/aws/aws-sdk-go-v2/service/secretsmanager v1.41.9
 	github.com/google/go-cmp v0.7.0
 	github.com/slashdevops/httpx v0.0.4
 	github.com/spf13/cobra v1.10.2
