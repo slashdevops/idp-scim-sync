@@ -63,7 +63,7 @@ jobs:
           echo ${{ github.ref_name }}
 
       - name: Set up Python 3.x
-        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405  # v6.2.0
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1  # v6.3.0
 
       - name: Set up AWS SAM
         uses: aws-actions/setup-sam@89ddb14d60e682855e3fea4be85b3c56485de310  # v3
