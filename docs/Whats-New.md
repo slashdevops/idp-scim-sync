@@ -4,6 +4,178 @@ This document tracks notable changes, new features, and bug fixes across release
 
 ## Unreleased
 
+### Go 1.27, dependency refresh, three crash fixes, and new architecture documentation (targeting `v0.46.0`, minor)
+
+> [!IMPORTANT]
+> This release fixes three crash paths that could **permanently stall the sync**, and changes the
+> element ordering inside the state file. Expect one larger-than-usual set of updates on the first run
+> after deploying, then a return to normal. No configuration change is required.
+
+#### 🐛 Crash fixes (the important part)
+
+Three code paths panicked on data that Google Workspace and AWS IAM Identity Center legitimately
+return. Because the state file is only written after a *successful* run, a panic meant the next
+scheduled invocation re-read the same record and panicked again — so a single malformed directory
+entry could block all synchronization indefinitely, with no self-recovery.
+
+* **A SCIM user with no email address crashed membership resolution.**
+  `internal/scim.GetGroupsMembers` indexed `user.Emails[0]` without a guard. `buildUser` only keeps
+  addresses flagged primary, so an AWS SCIM user with `"emails": []` — or with addresses but none
+  marked primary — produced a nil slice and `index out of range [0] with length 0`. AWS does return
+  that shape for users created without an email. Now resolved through a helper that prefers the
+  primary address and falls back to the first, so no address is ever silently dropped.
+
+* **A Google user without a family name crashed hashing.**
+  `idp.buildUser` and `scim.buildUser` return `nil` to reject a record that AWS SCIM would refuse
+  (missing name, given name, family name, primary email, or SCIM id), logging the reason as they do.
+  Three callers stored that `nil` instead of honouring it, and it then reached `SetHashCode`, whose
+  sort comparator dereferences every element. All three now skip and warn, matching the behaviour
+  `GetGroups` already had for duplicate group names — one unusable record can no longer stop every
+  other user from syncing.
+
+  As defence in depth, `SetHashCode` now also drops `nil` elements from its hash input. A nil-safe
+  comparator alone would not have been enough: `gob` panics outright on a nil pointer, so the failure
+  would simply have moved into `MarshalBinary`.
+
+* **A persistent 409 Conflict could exhaust the stack.**
+  `pkg/aws.CreateOrGetUser` and `CreateOrGetGroup` cleared `externalId` and called themselves with no
+  attempt limit. If AWS kept answering 409 while the follow-up lookup kept returning nothing, the
+  recursion was unbounded. Both now retry exactly once — which is what their comments always
+  described — and return the new `ErrConflictUnresolved` afterwards.
+
+#### ⬆️ Go 1.27
+
+The `go` directive moves from `1.26.5` to `1.27.0`. No workflow changes were needed: every CI job
+already resolves the toolchain from `go.mod`.
+
+Applied the Go 1.27 modernizers via `go fix ./...`: dropped a redundant loop-variable
+re-declaration, and adopted the new **struct-literal field selectors** language feature in two
+composite literals.
+
+Every Go 1.27 behavioural change was checked against this codebase, and none affects it:
+
+| Change | Assessment |
+| --- | --- |
+| `encoding/json` now backed by v2 | The v1 API still sorts map keys (verified empirically). The state file contains no map fields, and hashing uses `gob`, not JSON. |
+| Timer channels always unbuffered | No `time.After`, `time.NewTimer`, `time.NewTicker` or `time.Tick` anywhere. |
+| `http.Response.Body` drains on `Close` | Beneficial — improves connection reuse in `pkg/aws`. Nothing aborts a body early. |
+| Stricter `//go:linkname` validation | No `linkname` and no `unsafe` import. |
+| HTTP/2 server priorities | Server-side only; this is a client. |
+| `SSL_CERT_FILE` / `SSL_CERT_DIR` on macOS | Affects local development only; noted in [Development.md](Development.md). |
+
+Free wins with no code change: Go 1.27's size-specialized allocator cuts the cost of objects under
+80 bytes by up to 30 %, which suits a codebase that allocates very large numbers of small `Member`,
+`Group` and `Email` values.
+
+The `omitzero` modernizer was **deliberately not applied**: `omitempty` and `omitzero` differ for
+`false`, `0` and empty-but-non-nil slices, and `internal/model` uses `omitempty` on around 40 fields
+that are serialized into the state file.
+
+#### 📦 Dependencies
+
+All 8 direct dependencies with updates available moved forward; no majors, no module-path changes.
+`aws-lambda-go` v1.55.0, `aws-sdk-go-v2` v1.45.1 (with `config` v1.33.1, `credentials` v1.20.1, `s3`
+v1.109.1, `secretsmanager` v1.46.1), `testify` v1.12.1, `google.golang.org/api` v0.294.0. Verified
+with `go mod verify`, `govulncheck` (0 vulnerabilities called), regenerated mocks, and the full
+`-race` suite.
+
+#### ⚡ Concurrency and cancellation
+
+Three fan-outs used the same hand-rolled `sync.WaitGroup` + channel-semaphore + buffered-error-channel
+shape. It had no cancellation — one failure left every sibling running, spending upstream API quota on
+results that were then discarded — and it silently dropped every error after the first.
+
+`pkg/google.ListGroupMembersBatch`, `internal/idp.GetUsersByGroupsMembers` and
+`internal/setup.Secrets` now use `errgroup.WithContext` with explicit limits, matching the idiom
+`internal/scim` already used. The first failure cancels the rest.
+
+`internal/setup.Secrets` additionally takes a `context.Context` instead of calling
+`context.Background()` internally, so the four Secrets Manager reads can actually be abandoned when a
+Lambda approaches its deadline rather than running until the runtime freezes the environment.
+
+#### 🔀 State-file element ordering (one-off diff)
+
+`GetUsersByGroupsMembers` assembled its result by ranging a map, so the order changed on every run.
+The hash was unaffected — container hashes sort a copy before hashing — but the state file preserves
+slice order, so **every** sync wrote a large spurious diff against the previous S3 object. The result
+is now sorted by primary email.
+
+Relatedly, the six `sort.Slice` calls in `internal/model` became `slices.SortStableFunc`. `sort.Slice`
+is unstable, and four of these sort by a key that is not guaranteed unique (`HashCode`, `IPID`), which
+left the order of tied elements — and therefore the hash of a set containing ties — unspecified.
+
+Both changes ship together so there is only one reordering diff, not two.
+
+A new [`golden_hash_test.go`](../internal/model/golden_hash_test.go) pins ten hash values against a
+fully-populated fixture and round-trips it through both `gob` and JSON. **All ten are unchanged by
+this release** — the hashing scheme itself did not move, only the order elements appear in the file.
+
+#### 🔧 Correctness and style
+
+* `err.Error() != "EOF"` string comparisons in the state-file decode path (8 sites) became
+  `errors.Is(err, io.EOF)`. `gob` can return both `io.EOF` and `io.ErrUnexpectedEOF`; the string
+  comparison caught only the first, so a genuinely truncated state file could be reported as a decode
+  failure while a wrapped EOF was mistaken for one.
+* Errors wrapped with `%v` instead of `%w` in `pkg/google` and `pkg/aws/secretsmanager` (6 sites) —
+  which severed the chain that `internal/core` relies on via `errors.AsType`.
+* **Log levels `fatal` and `panic` now work.** `config.Validate` has always accepted them — `logrus`
+  leftovers predating the move to `log/slog`, which has no equivalent — but the logger handled
+  neither, so they fell through to `info` while emitting a misleading "unknown log level" warning.
+  They now map to `slog.LevelError`. The `--log-level` help text also advertised a `trace` level that
+  was never valid.
+* `buildCreateUserRequest` and `buildPutUserRequest` were ~150 lines of near-identical mapping
+  differing only in `ID`, so adding a synced attribute meant editing both and forgetting one would
+  make creates and updates disagree. Now one shared mapping.
+* `cmd/idpscimcli` carried a 35-line copy of the logger setup; it now shares `setup.Logger`.
+* 22 sentinel errors declared with `fmt.Errorf` and no format verbs became `errors.New`; naked
+  returns removed from `internal/core/reconciling.go` and `internal/model/operations.go`; a parameter
+  shadowing the `max` builtin renamed; `pkg/aws`'s path constants now actually used at all 18 call
+  sites, via `path.Join` (which also means an id containing a slash can no longer forge extra path
+  segments).
+
+#### 🧪 CI and tooling
+
+* **Codecov has been receiving nothing.** `build.yml` uploaded `./coverage.out`, but the Makefile
+  writes coverage to `build/coverage.txt`. That path never existed in CI, so the badge has been
+  reporting stale data. Fixed and verified from a clean tree.
+* Added a committed [`.golangci.yml`](../.golangci.yml) and a **Lint job** to CI. The contributor
+  checklist already required `golangci-lint`, but with no config each runner used its own defaults, so
+  results were not reproducible. **The lint baseline is now 0 issues**, down from 18, against a
+  stricter configuration.
+* Closed 21 missing doc comments on exported symbols, as the Google style guide requires.
+* `internal/setup` had no tests at all despite wiring everything together; it now has four.
+* Fixed two tests that called `os.Remove(os.TempDir())` — attempting to delete the shared system temp
+  directory, failing silently only because `/tmp` is never empty — and three subtests in
+  `pkg/aws/config_test.go` that passed only because `os.Setenv` leaked credentials between them. All
+  now use `t.Setenv` / `t.TempDir()` and pass individually as well as in file order.
+
+#### 📚 Documentation
+
+Three new guides, with 10 mermaid diagrams so architecture is reviewable in a diff rather than as
+binary exports:
+
+* **[Architecture.md](Architecture.md)** — system context, package topology, the sync algorithm, the
+  reconciliation model, the hashing scheme, state-file lifecycle, how SCIM membership is inferred,
+  concurrency limits, and failure modes.
+* **[Implementation-Guide.md](Implementation-Guide.md)** — the invariants that are easy to break, a
+  step-by-step for adding a synced user attribute, testing conventions, and state-file compatibility
+  rules.
+* **[User-Manual.md](User-Manual.md)** — end-to-end deployment and operations, with troubleshooting.
+
+Also: every package comment expanded (`internal/core`'s described `internal/deepcopy`);
+[State-File-example.md](State-File-example.md) now explains what is hashed and why, and that deleting
+the state file is safe; [Development.md](Development.md) updated for Go 1.27 and the lint gate;
+[Configuration.md](Configuration.md) documents the log levels; and the README gains a Quick Start, an
+architecture diagram, a Contributing section, and links to all 14 docs instead of 5.
+
+#### 🔜 Known follow-up
+
+`golang.org/x/oauth2/google.CredentialsFromJSONWithParams` is deprecated for a security reason — it
+does not validate the credential configuration, and here the service-account JSON arrives from
+Secrets Manager unvalidated. It carries a documented `TODO` and is deliberately deferred to its own
+change: it is the Lambda's authentication path and needs separate tests plus a manual run against a
+real Google Workspace tenant.
+
 ### Template housekeeping: remove dead/misleading IAM grants and standardize on `${AWS::Partition}`
 
 Cleans up the Lambda execution role, the KMS key policy, and a few hardcoded partition strings in `template.yaml`. No runtime behavior change — every removal is a permission or grant that was never reached or never matched at runtime.
