@@ -8,10 +8,11 @@ import (
 	"os"
 	"testing"
 
-	"github.com/slashdevops/idp-scim-sync/internal/model"
 	"github.com/stretchr/testify/assert"
 	admin "google.golang.org/api/admin/directory/v1"
 	"google.golang.org/api/option"
+
+	"github.com/slashdevops/idp-scim-sync/internal/model"
 )
 
 func TestNewService(t *testing.T) {

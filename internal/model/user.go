@@ -180,6 +180,10 @@ func (a *Address) UnmarshalBinary(data []byte) error {
 	return nil
 }
 
+// PhoneNumber represents a phone number entity.
+//
+// Only the work or home number is carried; see idp.toPhones for the selection
+// rule applied on the way in.
 type PhoneNumber struct {
 	Value string `json:"value,omitempty"`
 	Type  string `json:"type,omitempty"`
@@ -214,6 +218,8 @@ func (pn *PhoneNumber) UnmarshalBinary(data []byte) error {
 	return nil
 }
 
+// Manager represents the manager reference of the SCIM enterprise user
+// extension. Value holds the manager's identifier and Ref the "$ref" link.
 type Manager struct {
 	Value string `json:"value,omitempty"`
 	Ref   string `json:"$ref,omitempty"`
@@ -248,6 +254,12 @@ func (m *Manager) UnmarshalBinary(data []byte) error {
 	return nil
 }
 
+// EnterpriseData represents the SCIM enterprise user extension
+// (urn:ietf:params:scim:schemas:extension:enterprise:2.0:User).
+//
+// It is populated from the user's primary Google Workspace organization, and is
+// synced only when the enterpriseData sync field is enabled. See
+// model.SyncUserFieldEnterpriseData.
 type EnterpriseData struct {
 	Manager        *Manager `json:"manager,omitempty"`
 	EmployeeNumber string   `json:"employeeNumber,omitempty"`

@@ -9,11 +9,12 @@ import (
 	"time"
 
 	"github.com/aws/aws-lambda-go/lambda"
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+
 	"github.com/slashdevops/idp-scim-sync/internal/config"
 	"github.com/slashdevops/idp-scim-sync/internal/setup"
 	"github.com/slashdevops/idp-scim-sync/internal/version"
-	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 var cfg config.Config

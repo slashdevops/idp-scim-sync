@@ -78,7 +78,6 @@ func buildUser(user *aws.User) *model.User {
 
 	var enterpriseData *model.EnterpriseData
 	if user.SchemaEnterpriseUser != nil {
-
 		var manager *model.Manager
 		if user.SchemaEnterpriseUser.Manager != nil {
 			manager = model.ManagerBuilder().
@@ -95,7 +94,6 @@ func buildUser(user *aws.User) *model.User {
 			WithDepartment(strings.TrimSpace(user.SchemaEnterpriseUser.Department)).
 			WithManager(manager).
 			Build()
-
 	}
 
 	var name *model.Name

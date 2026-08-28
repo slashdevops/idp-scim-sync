@@ -4,10 +4,11 @@ import (
 	"context"
 	"testing"
 
+	"go.uber.org/mock/gomock"
+
 	"github.com/slashdevops/idp-scim-sync/internal/model"
 	mock_scim "github.com/slashdevops/idp-scim-sync/mocks/scim"
 	"github.com/slashdevops/idp-scim-sync/pkg/aws"
-	"go.uber.org/mock/gomock"
 )
 
 // GetGroupsMembers indexed user.Emails[0] directly. buildUser only keeps emails

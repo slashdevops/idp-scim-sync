@@ -244,7 +244,6 @@ func (s *State) SetHashCode() {
 			Build()
 
 		users = append(users, e)
-
 	}
 	usersResult := UsersResultBuilder().WithResources(users).Build()
 

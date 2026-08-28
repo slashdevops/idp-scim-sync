@@ -10,11 +10,12 @@ import (
 	"time"
 
 	"github.com/slashdevops/httpx"
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+
 	"github.com/slashdevops/idp-scim-sync/internal/config"
 	"github.com/slashdevops/idp-scim-sync/internal/setup"
 	"github.com/slashdevops/idp-scim-sync/internal/version"
-	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 var (

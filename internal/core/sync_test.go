@@ -10,6 +10,11 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"go.uber.org/mock/gomock"
+	admin "google.golang.org/api/admin/directory/v1"
+	"google.golang.org/api/option"
+
 	"github.com/slashdevops/idp-scim-sync/internal/idp"
 	"github.com/slashdevops/idp-scim-sync/internal/model"
 	"github.com/slashdevops/idp-scim-sync/internal/repository"
@@ -17,10 +22,6 @@ import (
 	mocks "github.com/slashdevops/idp-scim-sync/mocks/core"
 	"github.com/slashdevops/idp-scim-sync/pkg/aws"
 	"github.com/slashdevops/idp-scim-sync/pkg/google"
-	"github.com/stretchr/testify/assert"
-	"go.uber.org/mock/gomock"
-	admin "google.golang.org/api/admin/directory/v1"
-	"google.golang.org/api/option"
 )
 
 func TestSyncService_NewSyncService(t *testing.T) {
@@ -396,7 +397,7 @@ func TestSyncService_SyncGroupsAndTheirMembers(t *testing.T) {
 		svrSCIM := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			t.Logf("Calling SCIM API with method: %s, path: %s, query: %s", r.Method, r.URL.Path, r.URL.RawQuery)
 			switch r.Method {
-			case "GET":
+			case http.MethodGet:
 				switch r.URL.Path {
 				case "/Groups":
 					filter := r.URL.Query().Get("filter")
@@ -417,7 +418,7 @@ func TestSyncService_SyncGroupsAndTheirMembers(t *testing.T) {
 				case "/Users":
 					_, _ = w.Write([]byte(`{}`))
 				}
-			case "POST":
+			case http.MethodPost:
 				var bodyData map[string]any
 				if err := json.NewDecoder(r.Body).Decode(&bodyData); err != nil {
 					t.Errorf("Error decoding body: %s", err)

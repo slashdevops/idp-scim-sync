@@ -17,15 +17,27 @@ import (
 // AWS SSO SCIM API
 // reference: https://docs.aws.amazon.com/singlesignon/latest/developerguide/what-is-scim.html
 
+// Resource paths of the AWS SSO SCIM API, appended to the tenant endpoint.
 const (
-	// SCIM API paths
-	UsersPath                 = "/Users"
-	GroupsPath                = "/Groups"
-	ServiceProviderConfigPath = "/ServiceProviderConfig"
+	// UsersPath is the path of the Users resource collection.
+	UsersPath = "/Users"
 
-	// Content types
+	// GroupsPath is the path of the Groups resource collection.
+	GroupsPath = "/Groups"
+
+	// ServiceProviderConfigPath is the path of the service provider
+	// configuration resource.
+	ServiceProviderConfigPath = "/ServiceProviderConfig"
+)
+
+// Content types used by the AWS SSO SCIM API.
+const (
+	// ContentTypeSCIMJSON is the media type sent on request bodies, per
+	// RFC 7644 section 3.1.
 	ContentTypeSCIMJSON = "application/scim+json"
-	ContentTypeJSON     = "application/json"
+
+	// ContentTypeJSON is the media type this client accepts in responses.
+	ContentTypeJSON = "application/json"
 )
 
 var (

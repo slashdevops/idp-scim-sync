@@ -12,6 +12,9 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/secretsmanager"
 	"github.com/slashdevops/httpx"
+	"github.com/spf13/viper"
+	"golang.org/x/sync/errgroup"
+
 	"github.com/slashdevops/idp-scim-sync/internal/config"
 	"github.com/slashdevops/idp-scim-sync/internal/core"
 	"github.com/slashdevops/idp-scim-sync/internal/idp"
@@ -21,8 +24,6 @@ import (
 	"github.com/slashdevops/idp-scim-sync/internal/version"
 	"github.com/slashdevops/idp-scim-sync/pkg/aws"
 	"github.com/slashdevops/idp-scim-sync/pkg/google"
-	"github.com/spf13/viper"
-	"golang.org/x/sync/errgroup"
 )
 
 // Logger builds a slog.Logger for the given level and format, installs it as

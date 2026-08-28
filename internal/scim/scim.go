@@ -7,9 +7,10 @@ import (
 	"log/slog"
 	"sync"
 
+	"golang.org/x/sync/errgroup"
+
 	"github.com/slashdevops/idp-scim-sync/internal/model"
 	"github.com/slashdevops/idp-scim-sync/pkg/aws"
-	"golang.org/x/sync/errgroup"
 )
 
 // This implement core.SCIMService interface
@@ -126,7 +127,6 @@ func (s *Provider) GetGroups(ctx context.Context) (*model.GroupsResult, error) {
 			Build()
 
 		groups[i] = g
-
 	}
 
 	groupsResult := model.GroupsResultBuilder().WithResources(groups).Build()
@@ -540,7 +540,6 @@ func (s *Provider) GetGroupsMembers(ctx context.Context, gr *model.GroupsResult,
 	var mu sync.Mutex
 
 	for _, user := range ur.Resources {
-
 		g.Go(func() error {
 			filter := fmt.Sprintf("members.value eq %q", user.SCIMID)
 

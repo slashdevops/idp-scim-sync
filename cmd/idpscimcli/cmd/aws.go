@@ -4,9 +4,10 @@ import (
 	"context"
 	"log/slog"
 
+	"github.com/spf13/cobra"
+
 	"github.com/slashdevops/idp-scim-sync/internal/version"
 	"github.com/slashdevops/idp-scim-sync/pkg/aws"
-	"github.com/spf13/cobra"
 )
 
 var filter string

@@ -16,6 +16,9 @@ DIST_ASSEST_DIR := $(DIST_DIR)/assets
 
 PROJECT_COVERAGE_FILE ?= $(BUILD_DIR)/coverage.txt
 PROJECT_COVERAGE_MODE	?= atomic
+# NOTE: no file in the tree carries a //go:build tag, so this currently selects
+# nothing and `-tags=unit` below is a no-op. Kept as the hook for a future
+# unit/integration split; if you add tagged tests, tag them with this value.
 PROJECT_COVERAGE_TAGS ?= unit
 
 GIT_VERSION  ?= $(shell git rev-parse --abbrev-ref HEAD | cut -d "/" -f 2)

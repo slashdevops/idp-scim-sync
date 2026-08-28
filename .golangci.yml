@@ -1,0 +1,96 @@
+# golangci-lint configuration for idp-scim-sync.
+#
+# Committed deliberately: the contributor checklist in
+# .github/copilot-instructions.md tells everyone to run `golangci-lint run ./...`,
+# and without a config every contributor and CI runner uses whatever defaults
+# their own golangci-lint version happens to ship. Pinning it here makes local
+# and CI results agree.
+#
+# Requires golangci-lint v2.x (schema version 2).
+version: "2"
+
+linters:
+  # Start from the default set (errcheck, govet, ineffassign, staticcheck,
+  # unused) and add the ones this codebase benefits from.
+  default: standard
+  enable:
+    - bodyclose      # HTTP response bodies must be closed; this package makes many requests
+    - copyloopvar    # redundant loop-variable copies, obsolete since Go 1.22
+    - errorlint      # %v instead of %w, and errors compared with == instead of errors.Is
+    - misspell
+    - nilerr         # returning nil after a non-nil error check
+    - revive         # golint successor, for exported-symbol documentation
+    - unconvert      # redundant type conversions
+    - usestdlibvars  # http.StatusOK instead of the literal 200
+    - wastedassign
+    - whitespace
+
+  settings:
+    errcheck:
+      # `defer resp.Body.Close()` on an HTTP response body. The Close error is
+      # not actionable — the request has already been made and the response
+      # already read — and under Go 1.27 Close also drains the body, so failing
+      # to check it cannot leak a connection. Excluded rather than papered over
+      # with `_ =` at 17 call sites, which would obscure the idiom without
+      # adding information.
+      #
+      # bodyclose (enabled above) still enforces that bodies ARE closed, which
+      # is the part that matters.
+      exclude-functions:
+        - (io.ReadCloser).Close
+        - (io.Closer).Close
+
+    govet:
+      enable-all: true
+      disable:
+        # betteralign already governs struct layout via `make go-betteralign`;
+        # fieldalignment would fight it and flood the output.
+        - fieldalignment
+        # `shadow` is off in govet's own default set for good reason: the
+        # idiomatic `if err := f(); err != nil` shadows any outer err and trips
+        # it every time. Every hit in this tree was that pattern in a test.
+        - shadow
+
+    revive:
+      rules:
+        - name: exported
+          # Exported identifiers need doc comments. Warning-only so it reports
+          # without failing the build on pre-existing gaps.
+          severity: warning
+          disabled: false
+
+  exclusions:
+    generated: lax
+    rules:
+      # Generated mocks are not hand-maintained; regenerate with `make go-generate`.
+      - path: ^mocks/
+        linters:
+          - errcheck
+          - revive
+          - staticcheck
+          - unused
+      # Test files legitimately do things production code should not: build
+      # deliberately malformed fixtures, ignore cleanup errors, and shadow.
+      - path: _test\.go$
+        linters:
+          - errcheck
+          - unconvert
+          - wastedassign
+          # Responses in tests come from mocked http.Client implementations
+          # backed by strings.Reader, so they hold no connection to leak.
+          # bodyclose stays enabled for production code, which is the point.
+          - bodyclose
+
+formatters:
+  enable:
+    - gofmt
+    - goimports
+  settings:
+    goimports:
+      local-prefixes:
+        - github.com/slashdevops/idp-scim-sync
+
+issues:
+  # Report everything, not just new issues, and do not cap per-linter output.
+  max-issues-per-linter: 0
+  max-same-issues: 0

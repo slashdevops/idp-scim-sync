@@ -5,8 +5,9 @@ import (
 	"os"
 	"testing"
 
-	"github.com/slashdevops/idp-scim-sync/internal/model"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/slashdevops/idp-scim-sync/internal/model"
 )
 
 const stateFileName = "state.json"
@@ -141,7 +142,6 @@ func TestStateRepository_SetState(t *testing.T) {
 		assert.Equal(t, 1, len(state.Resources.Users.Resources))
 		assert.Equal(t, "1", state.Resources.Users.Resources[0].IPID)
 		assert.Equal(t, "user 1", state.Resources.Users.Resources[0].DisplayName)
-
 	})
 }
 

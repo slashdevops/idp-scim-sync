@@ -8,12 +8,14 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	"github.com/slashdevops/idp-scim-sync/internal/model"
 	"go.uber.org/mock/gomock"
 
-	mocks "github.com/slashdevops/idp-scim-sync/mocks/idp"
+	"github.com/slashdevops/idp-scim-sync/internal/model"
+
 	"github.com/stretchr/testify/assert"
 	admin "google.golang.org/api/admin/directory/v1"
+
+	mocks "github.com/slashdevops/idp-scim-sync/mocks/idp"
 )
 
 func TestNewGoogleIdentityProvider(t *testing.T) {

@@ -13,6 +13,28 @@ permissions:
   contents: read
 
 jobs:
+  lint:
+    name: "Lint"
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Check out code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+
+      - name: Set up Go
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e  # v7.0.0
+        with:
+          go-version-file: ./go.mod
+
+      # The contributor checklist requires golangci-lint, so enforce it here.
+      # Configuration lives in .golangci.yml so local and CI runs agree.
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@ba0d7d2ec06a0ea1cb5fa41b2e4a3ab91d21278a  # v9.3.0
+        with:
+          version: v2.13.1
+          args: --timeout=5m
+
   test:
     name: "Test and Build"
     runs-on: ubuntu-latest
@@ -41,7 +63,10 @@ jobs:
       - name: codecov coverage report
         uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f  # v7.0.0
         with:
-          files: ./coverage.out
+          # Must match PROJECT_COVERAGE_FILE in the Makefile. This previously
+          # pointed at ./coverage.out, a path `make test` never writes, so
+          # codecov received nothing on every run.
+          files: ./build/coverage.txt
 
       - name: govulncheck
         uses: golang/govulncheck-action@032d45514ae346b1db93c04b0c90b841c370344f  # v1.1.0

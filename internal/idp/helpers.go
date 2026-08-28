@@ -5,8 +5,9 @@ import (
 	"log/slog"
 	"strings"
 
-	"github.com/slashdevops/idp-scim-sync/internal/model"
 	admin "google.golang.org/api/admin/directory/v1"
+
+	"github.com/slashdevops/idp-scim-sync/internal/model"
 )
 
 // buildUser builds a User model from a User coming from the IDP API.

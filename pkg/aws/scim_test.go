@@ -13,9 +13,10 @@ import (
 	"strings"
 	"testing"
 
-	mocks "github.com/slashdevops/idp-scim-sync/mocks/aws"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
+
+	mocks "github.com/slashdevops/idp-scim-sync/mocks/aws"
 )
 
 type mockErrReader int
@@ -74,7 +75,6 @@ func TestNewSCIMService(t *testing.T) {
 		assert.Error(t, err)
 		assert.Nil(t, got)
 	})
-
 }
 
 func TestNewRequest(t *testing.T) {
@@ -1139,7 +1139,7 @@ func TestDeleteUser(t *testing.T) {
 		userID := "1"
 		reqURL.Path = path.Join(reqURL.Path, fmt.Sprintf("/Users/%s", userID))
 
-		httpReq, err := http.NewRequestWithContext(context.Background(), "DELETE", reqURL.String(), nil)
+		httpReq, err := http.NewRequestWithContext(context.Background(), http.MethodDelete, reqURL.String(), nil)
 		assert.NoError(t, err)
 
 		httpReq.Header.Set("Accept", "application/json")
@@ -1185,7 +1185,7 @@ func TestGetUser(t *testing.T) {
 		userID := "90677c608a-7afcdc23-0bd4-4fb7-b2ff-10ccffdff447"
 		reqURL.Path = path.Join(reqURL.Path, fmt.Sprintf("/Users/%s", userID))
 
-		httpReq, err := http.NewRequestWithContext(context.Background(), "GET", reqURL.String(), nil)
+		httpReq, err := http.NewRequestWithContext(context.Background(), http.MethodGet, reqURL.String(), nil)
 		assert.NoError(t, err)
 
 		httpReq.Header.Set("Accept", "application/json")
@@ -1250,7 +1250,7 @@ func TestGetUserByUserName(t *testing.T) {
 		q.Add("filter", filter)
 		reqURL.RawQuery = q.Encode()
 
-		httpReq, err := http.NewRequestWithContext(context.Background(), "GET", reqURL.String(), nil)
+		httpReq, err := http.NewRequestWithContext(context.Background(), http.MethodGet, reqURL.String(), nil)
 		assert.NoError(t, err)
 
 		httpReq.Header.Set("Accept", "application/json")
@@ -1314,7 +1314,7 @@ func TestListUsers(t *testing.T) {
 		q.Add("filter", filter)
 		reqURL.RawQuery = q.Encode()
 
-		httpReq, err := http.NewRequestWithContext(context.Background(), "GET", reqURL.String(), nil)
+		httpReq, err := http.NewRequestWithContext(context.Background(), http.MethodGet, reqURL.String(), nil)
 		assert.NoError(t, err)
 
 		httpReq.Header.Set("Accept", "application/json")
@@ -1736,7 +1736,7 @@ func TestDeleteGroup(t *testing.T) {
 		groupID := "1"
 		reqURL.Path = path.Join(reqURL.Path, fmt.Sprintf("/Groups/%s", groupID))
 
-		httpReq, err := http.NewRequestWithContext(context.Background(), "DELETE", reqURL.String(), nil)
+		httpReq, err := http.NewRequestWithContext(context.Background(), http.MethodDelete, reqURL.String(), nil)
 		assert.NoError(t, err)
 
 		httpReq.Header.Set("Accept", "application/json")
@@ -1789,7 +1789,7 @@ func TestGetGroupByDisplayName(t *testing.T) {
 		q.Add("filter", filter)
 		reqURL.RawQuery = q.Encode()
 
-		httpReq, err := http.NewRequestWithContext(context.Background(), "GET", reqURL.String(), nil)
+		httpReq, err := http.NewRequestWithContext(context.Background(), http.MethodGet, reqURL.String(), nil)
 		assert.NoError(t, err)
 
 		httpReq.Header.Set("Accept", "application/json")
@@ -2023,7 +2023,7 @@ func TestListGroups(t *testing.T) {
 		q.Add("filter", filter)
 		reqURL.RawQuery = q.Encode()
 
-		httpReq, err := http.NewRequestWithContext(context.Background(), "GET", reqURL.String(), nil)
+		httpReq, err := http.NewRequestWithContext(context.Background(), http.MethodGet, reqURL.String(), nil)
 		assert.NoError(t, err)
 
 		httpReq.Header.Set("Accept", "application/json")

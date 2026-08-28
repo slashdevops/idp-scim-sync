@@ -9,13 +9,14 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/slashdevops/idp-scim-sync/internal/model"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 	"golang.org/x/sync/errgroup"
 	admin "google.golang.org/api/admin/directory/v1"
 	"google.golang.org/api/googleapi"
 	"google.golang.org/api/option"
+
+	"github.com/slashdevops/idp-scim-sync/internal/model"
 )
 
 const (
@@ -64,6 +65,12 @@ type DirectoryService struct {
 	getUsersRequiredFields  googleapi.Field
 }
 
+// DirectoryServiceConfig carries everything NewService needs to build an
+// authenticated Google Directory API client.
+//
+// All fields are required. ServiceAccount holds the raw service-account JSON
+// (not a path), and UserEmail is the Workspace admin the service account
+// impersonates via domain-wide delegation.
 type DirectoryServiceConfig struct {
 	Client         *http.Client
 	UserEmail      string
@@ -100,6 +107,21 @@ func NewService(ctx context.Context, config DirectoryServiceConfig) (*admin.Serv
 		return nil, ErrUserAgentNil
 	}
 
+	// TODO(#go-1.27-modernization): migrate off CredentialsFromJSONWithParams.
+	//
+	// It is deprecated for a security reason — it does not validate the
+	// credential configuration — and here the service-account JSON arrives at
+	// runtime from AWS Secrets Manager (or a file on disk for local runs) and is
+	// never validated before use. The replacement is
+	// cloud.google.com/go/auth/credentials.DetectDefault with CredentialsOptions,
+	// or CredentialsFromJSON plus explicit up-front validation of type,
+	// client_email and private_key.
+	//
+	// Deliberately not changed in this pass: this is the authentication path of
+	// a production Lambda, so it needs its own change, its own tests, and a
+	// manual run against a real Google Workspace tenant. Tracked as finding D1.
+	//
+	//nolint:staticcheck // SA1019: see the TODO above; migration is scheduled separately.
 	creds, err := google.CredentialsFromJSONWithParams(ctx, config.ServiceAccount, google.CredentialsParams{
 		Scopes:  config.Scopes,
 		Subject: config.UserEmail,

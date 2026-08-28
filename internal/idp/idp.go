@@ -9,10 +9,11 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/slashdevops/idp-scim-sync/internal/model"
-	"github.com/slashdevops/idp-scim-sync/pkg/google"
 	"golang.org/x/sync/errgroup"
 	admin "google.golang.org/api/admin/directory/v1"
+
+	"github.com/slashdevops/idp-scim-sync/internal/model"
+	"github.com/slashdevops/idp-scim-sync/pkg/google"
 )
 
 // This implement core.IdentityProviderService interface

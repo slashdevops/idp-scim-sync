@@ -7,9 +7,10 @@ import (
 	"strings"
 	"testing"
 
-	mocks "github.com/slashdevops/idp-scim-sync/mocks/aws"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
+
+	mocks "github.com/slashdevops/idp-scim-sync/mocks/aws"
 )
 
 // conflictThenEmptyLookup replies 409 to every POST and returns an empty

@@ -8,10 +8,11 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/slashdevops/idp-scim-sync/internal/model"
-	mocks "github.com/slashdevops/idp-scim-sync/mocks/idp"
 	"go.uber.org/mock/gomock"
 	admin "google.golang.org/api/admin/directory/v1"
+
+	"github.com/slashdevops/idp-scim-sync/internal/model"
+	mocks "github.com/slashdevops/idp-scim-sync/mocks/idp"
 )
 
 // groupsMembersWithEmails builds a single-group GroupsMembersResult whose
