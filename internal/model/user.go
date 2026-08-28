@@ -4,7 +4,10 @@ import (
 	"bytes"
 	"encoding/gob"
 	"encoding/json"
-	"sort"
+	"errors"
+	"io"
+	"slices"
+	"strings"
 
 	"github.com/slashdevops/idp-scim-sync/internal/deepcopy"
 )
@@ -305,7 +308,11 @@ func (ed *EnterpriseData) UnmarshalBinary(data []byte) error {
 	}
 
 	if err := dec.Decode(&ed.Manager); err != nil {
-		if err.Error() != "EOF" {
+		// gob signals "no further value was encoded" with io.EOF, which is the
+		// expected outcome for a value whose optional pointer field was nil at
+		// encode time. Matching on err.Error() == "EOF" missed wrapped errors
+		// and io.ErrUnexpectedEOF.
+		if !errors.Is(err, io.EOF) {
 			return err
 		}
 	}
@@ -458,14 +465,22 @@ func (u *User) UnmarshalBinary(data []byte) error {
 
 	// when the user has pointer to Name, but the Name is nil, the gob decoder returns an error
 	if err := dec.Decode(&u.Name); err != nil {
-		if err.Error() != "EOF" {
+		// gob signals "no further value was encoded" with io.EOF, which is the
+		// expected outcome for a value whose optional pointer field was nil at
+		// encode time. Matching on err.Error() == "EOF" missed wrapped errors
+		// and io.ErrUnexpectedEOF.
+		if !errors.Is(err, io.EOF) {
 			return err
 		}
 	}
 
 	// when the user has pointer to EnterpriseData, but the Name is nil, the gob decoder returns an error
 	if err := dec.Decode(&u.EnterpriseData); err != nil {
-		if err.Error() != "EOF" {
+		// gob signals "no further value was encoded" with io.EOF, which is the
+		// expected outcome for a value whose optional pointer field was nil at
+		// encode time. Matching on err.Error() == "EOF" missed wrapped errors
+		// and io.ErrUnexpectedEOF.
+		if !errors.Is(err, io.EOF) {
 			return err
 		}
 	}
@@ -494,8 +509,8 @@ func (u *User) GetPrimaryEmailAddress() string {
 		return ""
 	}
 
-	sort.Slice(u.Emails, func(i, j int) bool {
-		return u.Emails[i].Value < u.Emails[j].Value
+	slices.SortStableFunc(u.Emails, func(a, b Email) int {
+		return strings.Compare(a.Value, b.Value)
 	})
 
 	for _, email := range u.Emails {
@@ -575,10 +590,13 @@ func (ur *UsersResult) SetHashCode() {
 		Resources: c,
 	}
 
-	// order the resources by their hash code to be consistency always
-	// NOTE: review this, it may be a performance issue and may not be necessary
-	sort.Slice(copiedStruct.Resources, func(i, j int) bool {
-		return copiedStruct.Resources[i].HashCode < copiedStruct.Resources[j].HashCode
+	// Order by hash code so the result is consistent regardless of the order in
+	// which resources arrived. SortStableFunc rather than SortFunc: hash codes
+	// are not guaranteed unique across resources, and an unstable sort would
+	// leave tied elements in an unspecified order, making the hash of a set
+	// containing ties non-deterministic.
+	slices.SortStableFunc(copiedStruct.Resources, func(a, b *User) int {
+		return strings.Compare(a.HashCode, b.HashCode)
 	})
 
 	ur.HashCode = Hash(copiedStruct)

@@ -4,7 +4,8 @@ import (
 	"bytes"
 	"encoding/gob"
 	"encoding/json"
-	"sort"
+	"slices"
+	"strings"
 
 	"github.com/slashdevops/idp-scim-sync/internal/deepcopy"
 )
@@ -132,10 +133,13 @@ func (gr *GroupsResult) SetHashCode() {
 		Resources: c,
 	}
 
-	// order the resources by their hash code to be consistency always
-	// NOTE: review this, it may be a performance issue and may not be necessary
-	sort.Slice(copiedStruct.Resources, func(i, j int) bool {
-		return copiedStruct.Resources[i].HashCode < copiedStruct.Resources[j].HashCode
+	// Order by hash code so the result is consistent regardless of the order in
+	// which resources arrived. SortStableFunc rather than SortFunc: hash codes
+	// are not guaranteed unique across resources, and an unstable sort would
+	// leave tied elements in an unspecified order, making the hash of a set
+	// containing ties non-deterministic.
+	slices.SortStableFunc(copiedStruct.Resources, func(a, b *Group) int {
+		return strings.Compare(a.HashCode, b.HashCode)
 	})
 
 	gr.HashCode = Hash(copiedStruct)

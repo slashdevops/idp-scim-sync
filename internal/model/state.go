@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"encoding/gob"
 	"encoding/json"
+	"errors"
+	"io"
 )
 
 const (
@@ -49,19 +51,31 @@ func (s *StateResources) UnmarshalBinary(data []byte) error {
 	dec := gob.NewDecoder(bytes.NewReader(data))
 
 	if err := dec.Decode(&s.Groups); err != nil {
-		if err.Error() != "EOF" {
+		// gob signals "no further value was encoded" with io.EOF, which is the
+		// expected outcome for a value whose optional pointer field was nil at
+		// encode time. Matching on err.Error() == "EOF" missed wrapped errors
+		// and io.ErrUnexpectedEOF.
+		if !errors.Is(err, io.EOF) {
 			return err
 		}
 	}
 
 	if err := dec.Decode(&s.Users); err != nil {
-		if err.Error() != "EOF" {
+		// gob signals "no further value was encoded" with io.EOF, which is the
+		// expected outcome for a value whose optional pointer field was nil at
+		// encode time. Matching on err.Error() == "EOF" missed wrapped errors
+		// and io.ErrUnexpectedEOF.
+		if !errors.Is(err, io.EOF) {
 			return err
 		}
 	}
 
 	if err := dec.Decode(&s.GroupsMembers); err != nil {
-		if err.Error() != "EOF" {
+		// gob signals "no further value was encoded" with io.EOF, which is the
+		// expected outcome for a value whose optional pointer field was nil at
+		// encode time. Matching on err.Error() == "EOF" missed wrapped errors
+		// and io.ErrUnexpectedEOF.
+		if !errors.Is(err, io.EOF) {
 			return err
 		}
 	}
@@ -106,7 +120,11 @@ func (s *State) UnmarshalBinary(data []byte) error {
 	}
 
 	if err := dec.Decode(&s.Resources); err != nil {
-		if err.Error() != "EOF" {
+		// gob signals "no further value was encoded" with io.EOF, which is the
+		// expected outcome for a value whose optional pointer field was nil at
+		// encode time. Matching on err.Error() == "EOF" missed wrapped errors
+		// and io.ErrUnexpectedEOF.
+		if !errors.Is(err, io.EOF) {
 			return err
 		}
 	}

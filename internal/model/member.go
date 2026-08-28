@@ -4,7 +4,10 @@ import (
 	"bytes"
 	"encoding/gob"
 	"encoding/json"
-	"sort"
+	"errors"
+	"io"
+	"slices"
+	"strings"
 
 	"github.com/slashdevops/idp-scim-sync/internal/deepcopy"
 )
@@ -131,10 +134,12 @@ func (mr *MembersResult) SetHashCode() {
 		Resources: c,
 	}
 
-	// order the resources by their hash code to be consistency always
-	// NOTE: review this, it may be a performance issue and may not be necessary
-	sort.Slice(copyStruct.Resources, func(i, j int) bool {
-		return copyStruct.Resources[i].IPID < copyStruct.Resources[j].IPID
+	// Order by IPID so the result is consistent regardless of the order in which
+	// members arrived. SortStableFunc rather than SortFunc: IPIDs are not
+	// guaranteed unique here, and an unstable sort would leave tied elements in
+	// an unspecified order, making the hash non-deterministic.
+	slices.SortStableFunc(copyStruct.Resources, func(a, b *Member) int {
+		return strings.Compare(a.IPID, b.IPID)
 	})
 
 	mr.HashCode = Hash(copyStruct)
@@ -182,7 +187,11 @@ func (gm *GroupMembers) UnmarshalBinary(data []byte) error {
 	}
 
 	if err := dec.Decode(&gm.Group); err != nil {
-		if err.Error() != "EOF" {
+		// gob signals "no further value was encoded" with io.EOF, which is the
+		// expected outcome for a value whose optional pointer field was nil at
+		// encode time. Matching on err.Error() == "EOF" missed wrapped errors
+		// and io.ErrUnexpectedEOF.
+		if !errors.Is(err, io.EOF) {
 			return err
 		}
 	}
@@ -214,11 +223,11 @@ func (gm *GroupMembers) SetHashCode() {
 		Resources: c,
 	}
 
-	// to order the members of the group we used the email of the members
-	// because this never could be empty and it is unique
-	// NOTE: review this, it may be a performance issue and may not be necessary
-	sort.Slice(copiedStruct.Resources, func(i, j int) bool {
-		return copiedStruct.Resources[i].Email < copiedStruct.Resources[j].Email
+	// Members are ordered by email, which is the only member field that can
+	// never be empty. SortStableFunc keeps the order of any duplicates fixed so
+	// the hash stays deterministic.
+	slices.SortStableFunc(copiedStruct.Resources, func(a, b *Member) int {
+		return strings.Compare(a.Email, b.Email)
 	})
 
 	gm.HashCode = Hash(copiedStruct)
@@ -292,11 +301,11 @@ func (gmr *GroupsMembersResult) SetHashCode() {
 		Resources: c,
 	}
 
-	// to order the members of the group we used the email of the members
-	// because this never could be empty and it is unique
-	// NOTE: review this, it may be a performance issue and may not be necessary
-	sort.Slice(copiedStruct.Resources, func(i, j int) bool {
-		return copiedStruct.Resources[i].HashCode < copiedStruct.Resources[j].HashCode
+	// Order by hash code so the result is consistent regardless of the order in
+	// which groups arrived. SortStableFunc keeps tied elements in a fixed order
+	// so the hash stays deterministic.
+	slices.SortStableFunc(copiedStruct.Resources, func(a, b *GroupMembers) int {
+		return strings.Compare(a.HashCode, b.HashCode)
 	})
 
 	gmr.HashCode = Hash(copiedStruct)
