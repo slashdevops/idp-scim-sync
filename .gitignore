@@ -40,3 +40,5 @@ idpscimcli
 
 # OpenSSF Scorecard hardening — local-only tracking folder
 .openssf/
+# Go 1.27 modernization — local-only planning/tracking folder
+.plan/

@@ -342,11 +342,9 @@ func TestSyncService_SyncGroupsAndTheirMembers(t *testing.T) {
 				})
 			}
 			resp := &aws.ListGroupsResponse{
-				ListResponse: aws.ListResponse{
-					ItemsPerPage: len(groups),
-					Schemas:      schemas,
-				},
-				Resources: groups,
+				ItemsPerPage: len(groups),
+				Schemas:      schemas,
+				Resources:    groups,
 			}
 			body, err := json.Marshal(resp)
 			assert.NoError(t, err)

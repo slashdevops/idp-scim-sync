@@ -1536,8 +1536,8 @@ func TestProvider_GetGroupsMembers(t *testing.T) {
 					m.EXPECT().
 						ListGroupsWithCursor(gomock.Any(), `members.value eq "u1"`, "").
 						Return(&aws.ListGroupsResponse{
-							ListResponse: aws.ListResponse{NextCursor: "cursor-2"},
-							Resources:    []*aws.Group{{ID: "g1", DisplayName: "group1"}},
+							NextCursor: "cursor-2",
+							Resources:  []*aws.Group{{ID: "g1", DisplayName: "group1"}},
 						}, nil),
 					m.EXPECT().
 						ListGroupsWithCursor(gomock.Any(), `members.value eq "u1"`, "cursor-2").
