@@ -135,173 +135,122 @@ func buildUser(user *aws.User) *model.User {
 	return userModel
 }
 
-// buildCreateUserRequest builds a CreateUserRequest from a User model
+// buildAWSUser maps a model.User onto the aws.User shape.
+//
+// aws.CreateUserRequest and aws.PutUserRequest are both declared as
+// `type X User`, so one mapping serves both: the create and put payloads are
+// identical apart from ID, which only a put sets because only a put targets an
+// existing resource. Keeping this in one place means a newly synced SCIM
+// attribute cannot be added to one request and forgotten in the other — a
+// divergence that would make creates and updates disagree.
+func buildAWSUser(user *model.User) *aws.User {
+	awsUser := &aws.User{
+		ExternalID:        user.IPID,
+		UserName:          user.UserName,
+		DisplayName:       user.DisplayName,
+		UserType:          user.UserType,
+		Title:             user.Title,
+		PreferredLanguage: user.PreferredLanguage,
+		Locale:            user.Locale,
+		Timezone:          user.Timezone,
+		Active:            user.Active,
+	}
+
+	if user.Name != nil {
+		awsUser.Name = &aws.Name{
+			FamilyName:      user.Name.FamilyName,
+			GivenName:       user.Name.GivenName,
+			Formatted:       user.Name.Formatted,
+			MiddleName:      user.Name.MiddleName,
+			HonorificPrefix: user.Name.HonorificPrefix,
+			HonorificSuffix: user.Name.HonorificSuffix,
+		}
+	}
+
+	// Only the primary address is forwarded, mirroring what buildUser keeps on
+	// the way in.
+	for _, email := range user.Emails {
+		if email.Primary {
+			awsUser.Emails = append(awsUser.Emails, aws.Email{
+				Value:   email.Value,
+				Type:    email.Type,
+				Primary: email.Primary,
+			})
+		}
+	}
+
+	if len(user.Addresses) > 0 {
+		awsUser.Addresses = []aws.Address{
+			{
+				Formatted:     user.Addresses[0].Formatted,
+				StreetAddress: user.Addresses[0].StreetAddress,
+				Locality:      user.Addresses[0].Locality,
+				Region:        user.Addresses[0].Region,
+				PostalCode:    user.Addresses[0].PostalCode,
+				Country:       user.Addresses[0].Country,
+			},
+		}
+	}
+
+	if len(user.PhoneNumbers) > 0 {
+		awsUser.PhoneNumbers = []aws.PhoneNumber{
+			{
+				Value: user.PhoneNumbers[0].Value,
+				Type:  user.PhoneNumbers[0].Type,
+			},
+		}
+	}
+
+	if user.EnterpriseData != nil {
+		awsUser.SchemaEnterpriseUser = &aws.SchemaEnterpriseUser{
+			EmployeeNumber: user.EnterpriseData.EmployeeNumber,
+			CostCenter:     user.EnterpriseData.CostCenter,
+			Organization:   user.EnterpriseData.Organization,
+			Division:       user.EnterpriseData.Division,
+			Department:     user.EnterpriseData.Department,
+		}
+
+		if user.EnterpriseData.Manager != nil {
+			awsUser.SchemaEnterpriseUser.Manager = &aws.Manager{
+				Value: user.EnterpriseData.Manager.Value,
+				Ref:   user.EnterpriseData.Manager.Ref,
+			}
+		}
+	}
+
+	return awsUser
+}
+
+// buildCreateUserRequest builds a CreateUserRequest from a User model.
+//
+// ID is deliberately left unset: a create must not target an existing resource.
 func buildCreateUserRequest(user *model.User) *aws.CreateUserRequest {
 	if user == nil {
 		return nil
 	}
 
-	userRequest := &aws.CreateUserRequest{
-		ExternalID:        user.IPID,
-		UserName:          user.UserName,
-		DisplayName:       user.DisplayName,
-		UserType:          user.UserType,
-		Title:             user.Title,
-		PreferredLanguage: user.PreferredLanguage,
-		Locale:            user.Locale,
-		Timezone:          user.Timezone,
-		Active:            user.Active,
-	}
+	userRequest := aws.CreateUserRequest(*buildAWSUser(user))
 
-	if user.Name != nil {
-		userRequest.Name = &aws.Name{
-			FamilyName:      user.Name.FamilyName,
-			GivenName:       user.Name.GivenName,
-			Formatted:       user.Name.Formatted,
-			MiddleName:      user.Name.MiddleName,
-			HonorificPrefix: user.Name.HonorificPrefix,
-			HonorificSuffix: user.Name.HonorificSuffix,
-		}
-	}
+	slog.Debug("scim: buildCreateUserRequest()", "user", &userRequest)
 
-	if user.Emails != nil {
-		for _, email := range user.Emails {
-			if email.Primary {
-				userRequest.Emails = append(userRequest.Emails, aws.Email{
-					Value:   email.Value,
-					Type:    email.Type,
-					Primary: email.Primary,
-				})
-			}
-		}
-	}
-
-	if len(user.Addresses) > 0 {
-		userRequest.Addresses = []aws.Address{
-			{
-				Formatted:     user.Addresses[0].Formatted,
-				StreetAddress: user.Addresses[0].StreetAddress,
-				Locality:      user.Addresses[0].Locality,
-				Region:        user.Addresses[0].Region,
-				PostalCode:    user.Addresses[0].PostalCode,
-				Country:       user.Addresses[0].Country,
-			},
-		}
-	}
-
-	if len(user.PhoneNumbers) > 0 {
-		userRequest.PhoneNumbers = []aws.PhoneNumber{
-			{
-				Value: user.PhoneNumbers[0].Value,
-				Type:  user.PhoneNumbers[0].Type,
-			},
-		}
-	}
-
-	if user.EnterpriseData != nil {
-		userRequest.SchemaEnterpriseUser = &aws.SchemaEnterpriseUser{
-			EmployeeNumber: user.EnterpriseData.EmployeeNumber,
-			CostCenter:     user.EnterpriseData.CostCenter,
-			Organization:   user.EnterpriseData.Organization,
-			Division:       user.EnterpriseData.Division,
-			Department:     user.EnterpriseData.Department,
-		}
-
-		if user.EnterpriseData.Manager != nil {
-			userRequest.SchemaEnterpriseUser.Manager = &aws.Manager{
-				Value: user.EnterpriseData.Manager.Value,
-				Ref:   user.EnterpriseData.Manager.Ref,
-			}
-		}
-	}
-
-	slog.Debug("scim: buildCreateUserRequest()", "user", userRequest)
-
-	return userRequest
+	return &userRequest
 }
 
-// buildPutUserRequest builds a PutUserRequest from a User model
+// buildPutUserRequest builds a PutUserRequest from a User model.
+//
+// Unlike a create, a put replaces an existing resource, so ID carries the
+// user's SCIM id.
 func buildPutUserRequest(user *model.User) *aws.PutUserRequest {
 	if user == nil {
 		return nil
 	}
 
-	userRequest := &aws.PutUserRequest{
-		ID:                user.SCIMID,
-		ExternalID:        user.IPID,
-		UserName:          user.UserName,
-		DisplayName:       user.DisplayName,
-		UserType:          user.UserType,
-		Title:             user.Title,
-		PreferredLanguage: user.PreferredLanguage,
-		Locale:            user.Locale,
-		Timezone:          user.Timezone,
-		Active:            user.Active,
-	}
+	awsUser := buildAWSUser(user)
+	awsUser.ID = user.SCIMID
 
-	if user.Name != nil {
-		userRequest.Name = &aws.Name{
-			FamilyName:      user.Name.FamilyName,
-			GivenName:       user.Name.GivenName,
-			Formatted:       user.Name.Formatted,
-			MiddleName:      user.Name.MiddleName,
-			HonorificPrefix: user.Name.HonorificPrefix,
-			HonorificSuffix: user.Name.HonorificSuffix,
-		}
-	}
+	userRequest := aws.PutUserRequest(*awsUser)
 
-	if user.Emails != nil {
-		for _, email := range user.Emails {
-			if email.Primary {
-				userRequest.Emails = append(userRequest.Emails, aws.Email{
-					Value:   email.Value,
-					Type:    email.Type,
-					Primary: email.Primary,
-				})
-			}
-		}
-	}
+	slog.Debug("scim: buildPutUserRequest()", "user", &userRequest)
 
-	if len(user.Addresses) > 0 {
-		userRequest.Addresses = []aws.Address{
-			{
-				Formatted:     user.Addresses[0].Formatted,
-				StreetAddress: user.Addresses[0].StreetAddress,
-				Locality:      user.Addresses[0].Locality,
-				Region:        user.Addresses[0].Region,
-				PostalCode:    user.Addresses[0].PostalCode,
-				Country:       user.Addresses[0].Country,
-			},
-		}
-	}
-
-	if len(user.PhoneNumbers) > 0 {
-		userRequest.PhoneNumbers = []aws.PhoneNumber{
-			{
-				Value: user.PhoneNumbers[0].Value,
-				Type:  user.PhoneNumbers[0].Type,
-			},
-		}
-	}
-
-	if user.EnterpriseData != nil {
-		userRequest.SchemaEnterpriseUser = &aws.SchemaEnterpriseUser{
-			EmployeeNumber: user.EnterpriseData.EmployeeNumber,
-			CostCenter:     user.EnterpriseData.CostCenter,
-			Organization:   user.EnterpriseData.Organization,
-			Division:       user.EnterpriseData.Division,
-			Department:     user.EnterpriseData.Department,
-		}
-
-		if user.EnterpriseData.Manager != nil {
-			userRequest.SchemaEnterpriseUser.Manager = &aws.Manager{
-				Value: user.EnterpriseData.Manager.Value,
-				Ref:   user.EnterpriseData.Manager.Ref,
-			}
-		}
-	}
-
-	slog.Debug("scim: buildPutUserRequest()", "user", userRequest)
-
-	return userRequest
+	return &userRequest
 }

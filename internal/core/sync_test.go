@@ -79,14 +79,13 @@ func TestSyncService_SyncGroupsAndTheirMembers(t *testing.T) {
 	ctx := context.TODO()
 
 	t.Run("create empty state file when no date came from idp and scim", func(t *testing.T) {
-		tmpDir := os.TempDir()
-		defer os.Remove(tmpDir)
-
-		stateFile, err := os.CreateTemp(tmpDir, "state.json")
+		// t.TempDir() creates a per-test directory and removes it during
+		// cleanup, so neither the directory nor the file needs manual removal.
+		// The previous code deferred os.Remove on os.TempDir() itself.
+		stateFile, err := os.CreateTemp(t.TempDir(), "state.json")
 		assert.NoError(t, err)
 		assert.NotNil(t, stateFile)
-		defer stateFile.Close()
-		defer os.Remove(stateFile.Name())
+		defer func() { _ = stateFile.Close() }()
 
 		// mock Google Workspace API calls
 		svrIDP := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -117,7 +116,7 @@ func TestSyncService_SyncGroupsAndTheirMembers(t *testing.T) {
 		jsonSate, err := os.Open(stateFile.Name())
 		assert.NoError(t, err)
 		assert.NotNil(t, jsonSate)
-		defer jsonSate.Close()
+		defer func() { _ = jsonSate.Close() }()
 
 		jsonStateBytes, err := io.ReadAll(jsonSate)
 		assert.NoError(t, err)
@@ -138,14 +137,13 @@ func TestSyncService_SyncGroupsAndTheirMembers(t *testing.T) {
 	})
 
 	t.Run("create state file when date came from idp and no data from scim", func(t *testing.T) {
-		tmpDir := os.TempDir()
-		defer os.Remove(tmpDir)
-
-		stateFile, err := os.CreateTemp(tmpDir, "state.json")
+		// t.TempDir() creates a per-test directory and removes it during
+		// cleanup, so neither the directory nor the file needs manual removal.
+		// The previous code deferred os.Remove on os.TempDir() itself.
+		stateFile, err := os.CreateTemp(t.TempDir(), "state.json")
 		assert.NoError(t, err)
 		assert.NotNil(t, stateFile)
-		defer stateFile.Close()
-		defer os.Remove(stateFile.Name())
+		defer func() { _ = stateFile.Close() }()
 
 		groupsList := &admin.Groups{
 			Etag: "etag-groups",
@@ -465,7 +463,7 @@ func TestSyncService_SyncGroupsAndTheirMembers(t *testing.T) {
 		jsonSate, err := os.Open(stateFile.Name())
 		assert.NoError(t, err)
 		assert.NotNil(t, jsonSate)
-		defer jsonSate.Close()
+		defer func() { _ = jsonSate.Close() }()
 
 		jsonStateBytes, err := io.ReadAll(jsonSate)
 		assert.NoError(t, err)

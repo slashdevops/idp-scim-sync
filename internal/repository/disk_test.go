@@ -21,10 +21,11 @@ func TestStateRepository_NewDiskRepository(t *testing.T) {
 
 func TestStateRepository_GetState(t *testing.T) {
 	t.Run("Empty file", func(t *testing.T) {
-		tmpDir := os.TempDir()
-		defer os.Remove(tmpDir)
-
-		stateFile, err := os.CreateTemp(tmpDir, stateFileName)
+		// t.TempDir() creates a per-test directory and removes it during
+		// cleanup. The previous code took os.TempDir() — the shared system temp
+		// directory — and deferred os.Remove on it, which tried (and silently
+		// failed) to delete /tmp itself.
+		stateFile, err := os.CreateTemp(t.TempDir(), stateFileName)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -43,7 +44,7 @@ func TestStateRepository_GetState(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		defer stateFile.Close()
+		defer func() { _ = stateFile.Close() }()
 
 		repo, err := NewDiskRepository(stateFile)
 		assert.NoError(t, err)
@@ -119,7 +120,7 @@ func TestStateRepository_SetState(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		defer stateFileRO.Close()
+		defer func() { _ = stateFileRO.Close() }()
 
 		repoRO, err := NewDiskRepository(stateFileRO)
 		assert.NoError(t, err)
@@ -141,8 +142,6 @@ func TestStateRepository_SetState(t *testing.T) {
 		assert.Equal(t, "1", state.Resources.Users.Resources[0].IPID)
 		assert.Equal(t, "user 1", state.Resources.Users.Resources[0].DisplayName)
 
-		os.Remove(tmpDir)
-		stateFile.Close()
 	})
 }
 
