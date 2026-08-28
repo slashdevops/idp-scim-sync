@@ -124,7 +124,7 @@ func (gr *GroupsResult) SetHashCode() {
 	// this copy is necessary to avoid changing the original data
 	// with the sort.Slice function and always be consistent
 	// when calculating the hash code
-	c := deepcopy.SliceOfPointers(gr.Resources)
+	c := compactNilPointers(deepcopy.SliceOfPointers(gr.Resources))
 
 	// only these fields are used in the hash calculation
 	copiedStruct := &GroupsResult{

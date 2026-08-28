@@ -135,10 +135,17 @@ func (i *IdentityProvider) GetUsers(ctx context.Context, filter []string) (*mode
 		return uResult, nil
 	}
 
-	syncUsers := make([]*model.User, len(pUsers))
-	for idx, usr := range pUsers {
+	syncUsers := make([]*model.User, 0, len(pUsers))
+	for _, usr := range pUsers {
 		gu := buildUser(usr, i.syncFieldSet)
-		syncUsers[idx] = gu
+		if gu == nil {
+			// buildUser rejects records the AWS SCIM API would refuse (no name,
+			// given name, family name or primary email) and logs the reason.
+			// Skip them: a nil element travels on into reconciliation and
+			// hashing, where it is dereferenced.
+			continue
+		}
+		syncUsers = append(syncUsers, gu)
 	}
 	uResult := model.UsersResultBuilder().WithResources(syncUsers).Build()
 	slog.Debug("idp: GetUsers()", "users", len(syncUsers))
@@ -234,6 +241,12 @@ func (i *IdentityProvider) GetUsersByGroupsMembers(ctx context.Context, gmr *mod
 				return
 			}
 			gu := buildUser(u, i.syncFieldSet)
+			if gu == nil {
+				// Rejected by buildUser, which already logged why. Skipping
+				// keeps a single malformed directory record from crashing the
+				// whole sync.
+				return
+			}
 
 			mu.Lock()
 			pUsers = append(pUsers, gu)

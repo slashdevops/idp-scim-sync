@@ -219,10 +219,16 @@ func (s *Provider) GetUsers(ctx context.Context) (*model.UsersResult, error) {
 		return nil, fmt.Errorf("scim: error listing users: %w", err)
 	}
 
-	users := make([]*model.User, len(usersResponse.Resources))
-	for i, user := range usersResponse.Resources {
+	users := make([]*model.User, 0, len(usersResponse.Resources))
+	for _, user := range usersResponse.Resources {
 		u := buildUser(user)
-		users[i] = u
+		if u == nil {
+			// buildUser rejects records the AWS SCIM API would refuse and logs
+			// the reason. Skip them: a nil element travels on into
+			// reconciliation and hashing, where it is dereferenced.
+			continue
+		}
+		users = append(users, u)
 	}
 
 	usersResult := model.UsersResultBuilder().WithResources(users).Build()
@@ -315,6 +321,27 @@ func (s *Provider) deleteUser(ctx context.Context, user *model.User) (*model.Use
 
 type patchValue struct {
 	Value string `json:"value"`
+}
+
+// memberEmail resolves the email to record for a SCIM-side group member.
+//
+// It prefers the address flagged primary, which is the only kind buildUser
+// produces for real AWS responses, and falls back to the first address
+// otherwise so that no data is lost for hand-built or legacy values. It returns
+// the empty string when the user carries no address at all.
+//
+// This replaces a direct user.Emails[0] index, which panicked for AWS SCIM
+// users with "emails": [] — a shape AWS IAM Identity Center does return, and
+// one that permanently wedged the sync because the state file is only written
+// after a successful run.
+func memberEmail(u *model.User) string {
+	if email := u.GetPrimaryEmailAddress(); email != "" {
+		return email
+	}
+	if len(u.Emails) > 0 {
+		return u.Emails[0].Value
+	}
+	return ""
 }
 
 // CreateGroupsMembers creates groups members in SCIM Provider given a list of groups members
@@ -516,7 +543,7 @@ func (s *Provider) GetGroupsMembers(ctx context.Context, gr *model.GroupsResult,
 					m := model.MemberBuilder().
 						WithIPID(user.IPID).
 						WithSCIMID(user.SCIMID).
-						WithEmail(user.Emails[0].Value).
+						WithEmail(memberEmail(user)).
 						Build()
 
 					if user.Active {

@@ -123,7 +123,7 @@ func (mr *MembersResult) SetHashCode() {
 	// this copy is necessary to avoid changing the original data
 	// with the sort.Slice function and always be consistent
 	// when calculating the hash code
-	c := deepcopy.SliceOfPointers(mr.Resources)
+	c := compactNilPointers(deepcopy.SliceOfPointers(mr.Resources))
 
 	// only these fields are used in the hash calculation
 	copyStruct := &MembersResult{
@@ -205,7 +205,7 @@ func (gm *GroupMembers) SetHashCode() {
 	// this copy is necessary to avoid changing the original data
 	// with the sort.Slice function and always be consistent
 	// when calculating the hash code
-	c := deepcopy.SliceOfPointers(gm.Resources)
+	c := compactNilPointers(deepcopy.SliceOfPointers(gm.Resources))
 
 	// only these fields are used in the hash calculation
 	copiedStruct := &GroupMembers{
@@ -284,7 +284,7 @@ func (gmr *GroupsMembersResult) SetHashCode() {
 	// this copy is necessary to avoid changing the original data
 	// with the sort.Slice function and always be consistent
 	// when calculating the hash code
-	c := deepcopy.SliceOfPointers(gmr.Resources)
+	c := compactNilPointers(deepcopy.SliceOfPointers(gmr.Resources))
 
 	// only these fields are used in the hash calculation
 	copiedStruct := GroupsMembersResult{

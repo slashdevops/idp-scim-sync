@@ -64,6 +64,11 @@ var (
 
 	// ErrServiceProviderConfigEmpty is returned when the service provider config is empty.
 	ErrServiceProviderConfigEmpty = errors.New("aws: service provider config may not be empty")
+
+	// ErrConflictUnresolved is returned when the AWS SCIM API keeps answering
+	// 409 Conflict but the follow-up lookup finds nothing, even after the single
+	// permitted retry with externalId cleared.
+	ErrConflictUnresolved = errors.New("aws: conflict could not be resolved after retrying without externalId")
 )
 
 //go:generate go tool mockgen -package=mocks -destination=../../mocks/aws/scim_mocks.go -source=scim.go HTTPClient
@@ -237,6 +242,15 @@ func (s *SCIMService) CreateUser(ctx context.Context, cur *CreateUserRequest) (*
 // + https://docs.aws.amazon.com/singlesignon/latest/developerguide/createuser.html
 // + https://docs.aws.amazon.com/singlesignon/latest/developerguide/getuser.html
 func (s *SCIMService) CreateOrGetUser(ctx context.Context, cur *CreateUserRequest) (*CreateUserResponse, error) {
+	return s.createOrGetUser(ctx, cur, false)
+}
+
+// createOrGetUser carries out CreateOrGetUser, with retried recording whether
+// the externalId-cleared retry has already been spent. The retry is permitted
+// exactly once: without a limit, an AWS SCIM endpoint that keeps answering 409
+// while the follow-up lookup keeps returning nothing would recurse until the
+// goroutine stack was exhausted.
+func (s *SCIMService) createOrGetUser(ctx context.Context, cur *CreateUserRequest, retried bool) (*CreateUserResponse, error) {
 	if cur == nil {
 		return nil, ErrCreateUserRequestEmpty
 	}
@@ -289,19 +303,27 @@ func (s *SCIMService) CreateOrGetUser(ctx context.Context, cur *CreateUserReques
 			// when response.ID is empty, the user does not exists, so this is the case when the new user is a existing user
 			// with a different email same externalId.
 			if response.ID == "" {
+				if retried {
+					slog.Error("aws CreateOrGetUser: user still conflicts after retrying without ExternalID, giving up",
+						"user", cur.UserName,
+						"name", cur.DisplayName,
+					)
+					return nil, fmt.Errorf("aws CreateOrGetUser: user: %s: %w", cur.UserName, ErrConflictUnresolved)
+				}
+
 				slog.Warn("aws CreateOrGetUser: user already exists, but with a different name, same id",
 					"user", cur.UserName,
 					"name", cur.DisplayName,
 				)
 
-				// remove the ExternalID from the user request, and call itself again to create the new user
-				slog.Warn("aws CreateOrGetUser: removing ExternalID from the user request, calling itself again to create the new user",
+				// remove the ExternalID from the user request, and retry once to create the new user
+				slog.Warn("aws CreateOrGetUser: removing ExternalID from the user request, retrying once to create the new user",
 					"user", cur.UserName,
 					"name", cur.DisplayName,
 				)
 
 				cur.ExternalID = ""
-				return s.CreateOrGetUser(ctx, cur)
+				return s.createOrGetUser(ctx, cur, true)
 			}
 
 			curesp := CreateUserResponse(*(*User)(response))
@@ -815,6 +837,14 @@ func (s *SCIMService) CreateGroup(ctx context.Context, cgr *CreateGroupRequest) 
 // + https://docs.aws.amazon.com/singlesignon/latest/developerguide/creategroup.html
 // + https://docs.aws.amazon.com/singlesignon/latest/developerguide/getgroup.html
 func (s *SCIMService) CreateOrGetGroup(ctx context.Context, cgr *CreateGroupRequest) (*CreateGroupResponse, error) {
+	return s.createOrGetGroup(ctx, cgr, false)
+}
+
+// createOrGetGroup carries out CreateOrGetGroup, with retried recording whether
+// the externalId-cleared retry has already been spent. As with createOrGetUser,
+// the retry is permitted exactly once so a persistently conflicting endpoint
+// cannot drive unbounded recursion.
+func (s *SCIMService) createOrGetGroup(ctx context.Context, cgr *CreateGroupRequest, retried bool) (*CreateGroupResponse, error) {
 	if cgr == nil {
 		return nil, ErrCreateGroupRequestEmpty
 	}
@@ -857,13 +887,18 @@ func (s *SCIMService) CreateOrGetGroup(ctx context.Context, cgr *CreateGroupRequ
 			// when response.ID is empty, the group does not exists, so this is the case when the new group is a existing group
 			// with a different name same externalId.
 			if response.ID == "" {
+				if retried {
+					slog.Error("aws CreateOrGetGroup: group still conflicts after retrying without ExternalID, giving up", "group", cgr.DisplayName)
+					return nil, fmt.Errorf("aws CreateOrGetGroup: group: %s: %w", cgr.DisplayName, ErrConflictUnresolved)
+				}
+
 				slog.Warn("aws CreateOrGetGroup: group already exists, but with a different name, same id", "group", cgr.DisplayName)
 
-				// remove the ExternalID from the group request, and call itself again to create the new group name
-				slog.Warn("aws CreateOrGetGroup: removing ExternalID from the group request, calling itself again to create the new group name", "group", cgr.DisplayName)
+				// remove the ExternalID from the group request, and retry once to create the new group name
+				slog.Warn("aws CreateOrGetGroup: removing ExternalID from the group request, retrying once to create the new group name", "group", cgr.DisplayName)
 
 				cgr.ExternalID = ""
-				return s.CreateOrGetGroup(ctx, cgr)
+				return s.createOrGetGroup(ctx, cgr, true)
 			}
 
 			cgresp := CreateGroupResponse(*(*Group)(response))
