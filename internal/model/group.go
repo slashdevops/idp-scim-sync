@@ -98,7 +98,7 @@ func (gr *GroupsResult) UnmarshalBinary(data []byte) error {
 		return err
 	}
 
-	for i := 0; i < gr.Items; i++ {
+	for range gr.Items {
 		var g Group
 		if err := dec.Decode(&g); err != nil {
 			return err

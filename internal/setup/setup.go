@@ -25,22 +25,13 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-// Logger sets up the logger
+// Logger builds a slog.Logger for the given level and format, installs it as
+// the process default, and returns it.
+//
+// Both binaries route through this function so their logging behaviour cannot
+// drift apart.
 func Logger(logLevel, logFormat string) *slog.Logger {
-	var logHandlerOptions *slog.HandlerOptions
-	switch strings.ToLower(logLevel) {
-	case "debug":
-		logHandlerOptions = &slog.HandlerOptions{Level: slog.LevelDebug, AddSource: true}
-	case "info":
-		logHandlerOptions = &slog.HandlerOptions{Level: slog.LevelInfo}
-	case "warn":
-		logHandlerOptions = &slog.HandlerOptions{Level: slog.LevelWarn}
-	case "error":
-		logHandlerOptions = &slog.HandlerOptions{Level: slog.LevelError, AddSource: true}
-	default:
-		slog.Warn("unknown log level, setting it to info", "level", logLevel)
-		logHandlerOptions = &slog.HandlerOptions{Level: slog.LevelInfo}
-	}
+	logHandlerOptions := handlerOptions(logLevel)
 
 	var logHandler slog.Handler
 	switch strings.ToLower(logFormat) {
@@ -57,6 +48,31 @@ func Logger(logLevel, logFormat string) *slog.Logger {
 	slog.SetDefault(logger)
 
 	return logger
+}
+
+// handlerOptions maps a configured log level onto slog handler options.
+//
+// "fatal" and "panic" are accepted because config.Validate has always allowed
+// them — they predate the move from logrus to log/slog, which has no equivalent
+// levels. Rather than silently degrading them to info (which is what the old
+// default branch did, complete with a misleading "unknown log level" warning),
+// they map to slog.LevelError, the closest slog equivalent. Existing
+// deployments configured with either value keep working and now get the
+// severity they asked for.
+func handlerOptions(logLevel string) *slog.HandlerOptions {
+	switch strings.ToLower(logLevel) {
+	case "debug":
+		return &slog.HandlerOptions{Level: slog.LevelDebug, AddSource: true}
+	case "info":
+		return &slog.HandlerOptions{Level: slog.LevelInfo}
+	case "warn":
+		return &slog.HandlerOptions{Level: slog.LevelWarn}
+	case "error", "fatal", "panic":
+		return &slog.HandlerOptions{Level: slog.LevelError, AddSource: true}
+	default:
+		slog.Warn("unknown log level, setting it to info", "level", logLevel)
+		return &slog.HandlerOptions{Level: slog.LevelInfo}
+	}
 }
 
 // Configuration sets up the configuration

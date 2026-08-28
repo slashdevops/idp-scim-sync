@@ -108,7 +108,7 @@ func (mr *MembersResult) UnmarshalBinary(data []byte) error {
 		return err
 	}
 
-	for i := 0; i < mr.Items; i++ {
+	for range mr.Items {
 		var member Member
 		if err := dec.Decode(&member); err != nil {
 			return err
@@ -196,7 +196,7 @@ func (gm *GroupMembers) UnmarshalBinary(data []byte) error {
 		}
 	}
 
-	for i := 0; i < gm.Items; i++ {
+	for range gm.Items {
 		var member Member
 		if err := dec.Decode(&member); err != nil {
 			return err
@@ -267,7 +267,7 @@ func (gmr *GroupsMembersResult) UnmarshalBinary(data []byte) error {
 		return err
 	}
 
-	for i := 0; i < gmr.Items; i++ {
+	for range gmr.Items {
 		var group GroupMembers
 		if err := dec.Decode(&group); err != nil {
 			return err

@@ -263,7 +263,7 @@ func (s *SCIMService) createOrGetUser(ctx context.Context, cur *CreateUserReques
 		return nil, fmt.Errorf("aws CreateUser: error parsing url: %w", err)
 	}
 
-	reqURL.Path = path.Join(reqURL.Path, "/Users")
+	reqURL.Path = path.Join(reqURL.Path, UsersPath)
 
 	req, err := s.newRequest(ctx, http.MethodPost, reqURL, *cur)
 	if err != nil {
@@ -410,7 +410,7 @@ func (s *SCIMService) DeleteUser(ctx context.Context, id string) error {
 		return fmt.Errorf("aws: error parsing url: %w", err)
 	}
 
-	reqURL.Path = path.Join(reqURL.Path, fmt.Sprintf("/Users/%s", id))
+	reqURL.Path = path.Join(reqURL.Path, UsersPath, id)
 
 	req, err := s.newRequest(ctx, http.MethodDelete, reqURL, nil)
 	if err != nil {
@@ -446,7 +446,7 @@ func (s *SCIMService) GetUserByUserName(ctx context.Context, userName string) (*
 		return nil, fmt.Errorf("aws GetUserByUserName: error parsing url: %w", err)
 	}
 
-	reqURL.Path = path.Join(reqURL.Path, "/Users")
+	reqURL.Path = path.Join(reqURL.Path, UsersPath)
 
 	filter := fmt.Sprintf("userName eq %q", userName)
 	q := reqURL.Query()
@@ -492,7 +492,7 @@ func (s *SCIMService) GetUser(ctx context.Context, userID string) (*GetUserRespo
 		return nil, fmt.Errorf("aws GetUser: error parsing url: %w", err)
 	}
 
-	reqURL.Path = path.Join(reqURL.Path, fmt.Sprintf("/Users/%s", userID))
+	reqURL.Path = path.Join(reqURL.Path, UsersPath, userID)
 
 	req, err := s.newRequest(ctx, http.MethodGet, reqURL, nil)
 	if err != nil {
@@ -524,7 +524,7 @@ func (s *SCIMService) ListUsers(ctx context.Context, filter string) (*ListUsersR
 		return nil, fmt.Errorf("aws ListUsers: error parsing url: %w", err)
 	}
 
-	reqURL.Path = path.Join(reqURL.Path, "/Users")
+	reqURL.Path = path.Join(reqURL.Path, UsersPath)
 
 	if filter != "" {
 		q := reqURL.Query()
@@ -569,7 +569,7 @@ func (s *SCIMService) PatchUser(ctx context.Context, pur *PatchUserRequest) erro
 		return fmt.Errorf("aws: error parsing url: %w", err)
 	}
 
-	reqURL.Path = path.Join(reqURL.Path, fmt.Sprintf("/Users/%s", pur.User.ID))
+	reqURL.Path = path.Join(reqURL.Path, UsersPath, pur.User.ID)
 
 	req, err := s.newRequest(ctx, http.MethodPatch, reqURL, pur.Patch)
 	if err != nil {
@@ -604,7 +604,7 @@ func (s *SCIMService) PutUser(ctx context.Context, pur *PutUserRequest) (*PutUse
 		return nil, fmt.Errorf("aws PutUser: error parsing url: %w", err)
 	}
 
-	reqURL.Path = path.Join(reqURL.Path, fmt.Sprintf("/Users/%s", pur.ID))
+	reqURL.Path = path.Join(reqURL.Path, UsersPath, pur.ID)
 
 	req, err := s.newRequest(ctx, http.MethodPut, reqURL, *pur)
 	if err != nil {
@@ -640,7 +640,7 @@ func (s *SCIMService) GetGroupByDisplayName(ctx context.Context, displayName str
 		return nil, fmt.Errorf("aws GetGroupByDisplayName: error parsing url: %w", err)
 	}
 
-	reqURL.Path = path.Join(reqURL.Path, "/Groups")
+	reqURL.Path = path.Join(reqURL.Path, GroupsPath)
 
 	filter := fmt.Sprintf("displayName eq %q", displayName)
 	q := reqURL.Query()
@@ -689,7 +689,7 @@ func (s *SCIMService) ListGroups(ctx context.Context, filter string) (*ListGroup
 		return nil, fmt.Errorf("aws ListGroups: error parsing url: %w", err)
 	}
 
-	reqURL.Path = path.Join(reqURL.Path, "/Groups")
+	reqURL.Path = path.Join(reqURL.Path, GroupsPath)
 
 	if filter != "" {
 		q := reqURL.Query()
@@ -745,7 +745,7 @@ func (s *SCIMService) ListGroupsWithCursor(ctx context.Context, filter, cursor s
 		return nil, fmt.Errorf("aws ListGroupsWithCursor: error parsing url: %w", err)
 	}
 
-	reqURL.Path = path.Join(reqURL.Path, "/Groups")
+	reqURL.Path = path.Join(reqURL.Path, GroupsPath)
 
 	// AWS requires the "cursor" parameter to be present (even when empty) to
 	// switch the endpoint into cursor-paginated mode. url.Values omits empty
@@ -801,7 +801,7 @@ func (s *SCIMService) CreateGroup(ctx context.Context, cgr *CreateGroupRequest) 
 		return nil, fmt.Errorf("aws CreateGroup: error parsing url: %w", err)
 	}
 
-	reqURL.Path = path.Join(reqURL.Path, "/Groups")
+	reqURL.Path = path.Join(reqURL.Path, GroupsPath)
 
 	req, err := s.newRequest(ctx, http.MethodPost, reqURL, *cgr)
 	if err != nil {
@@ -857,7 +857,7 @@ func (s *SCIMService) createOrGetGroup(ctx context.Context, cgr *CreateGroupRequ
 		return nil, fmt.Errorf("aws CreateOrGetGroup: error parsing url: %w", err)
 	}
 
-	reqURL.Path = path.Join(reqURL.Path, "/Groups")
+	reqURL.Path = path.Join(reqURL.Path, GroupsPath)
 
 	req, err := s.newRequest(ctx, http.MethodPost, reqURL, *cgr)
 	if err != nil {
@@ -927,7 +927,7 @@ func (s *SCIMService) DeleteGroup(ctx context.Context, id string) error {
 		return fmt.Errorf("aws DeleteGroup: error parsing url: %w", err)
 	}
 
-	reqURL.Path = path.Join(reqURL.Path, fmt.Sprintf("/Groups/%s", id))
+	reqURL.Path = path.Join(reqURL.Path, GroupsPath, id)
 
 	req, err := s.newRequest(ctx, http.MethodDelete, reqURL, nil)
 	if err != nil {
@@ -966,7 +966,7 @@ func (s *SCIMService) PatchGroup(ctx context.Context, pgr *PatchGroupRequest) er
 		return fmt.Errorf("aws PatchGroup: error parsing url: %w", err)
 	}
 
-	reqURL.Path = path.Join(reqURL.Path, fmt.Sprintf("/Groups/%s", pgr.Group.ID))
+	reqURL.Path = path.Join(reqURL.Path, GroupsPath, pgr.Group.ID)
 
 	req, err := s.newRequest(ctx, http.MethodPatch, reqURL, pgr.Patch)
 	if err != nil {
@@ -996,7 +996,7 @@ func (s *SCIMService) ServiceProviderConfig(ctx context.Context) (*ServiceProvid
 		return nil, fmt.Errorf("aws ServiceProviderConfig: error parsing url: %w", err)
 	}
 
-	reqURL.Path = path.Join(reqURL.Path, "/ServiceProviderConfig")
+	reqURL.Path = path.Join(reqURL.Path, ServiceProviderConfigPath)
 
 	req, err := s.newRequest(ctx, http.MethodGet, reqURL, nil)
 	if err != nil {

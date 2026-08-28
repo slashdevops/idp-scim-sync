@@ -2,6 +2,7 @@
 package config
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/slashdevops/idp-scim-sync/internal/model"
@@ -52,17 +53,17 @@ const (
 
 var (
 	// ErrInvalidLogLevel is returned when the log level is invalid.
-	ErrInvalidLogLevel = fmt.Errorf("invalid log level")
+	ErrInvalidLogLevel = errors.New("invalid log level")
 	// ErrInvalidLogFormat is returned when the log format is invalid.
-	ErrInvalidLogFormat = fmt.Errorf("invalid log format")
+	ErrInvalidLogFormat = errors.New("invalid log format")
 	// ErrMissingAWSSCIMEndpoint is returned when the AWS SCIM endpoint is missing.
-	ErrMissingAWSSCIMEndpoint = fmt.Errorf("missing AWS SCIM endpoint")
+	ErrMissingAWSSCIMEndpoint = errors.New("missing AWS SCIM endpoint")
 	// ErrMissingAWSSCIMAccessToken is returned when the AWS SCIM access token is missing.
-	ErrMissingAWSSCIMAccessToken = fmt.Errorf("missing AWS SCIM access token")
+	ErrMissingAWSSCIMAccessToken = errors.New("missing AWS SCIM access token")
 	// ErrMissingGWSServiceAccountFile is returned when the GWS service account file is missing.
-	ErrMissingGWSServiceAccountFile = fmt.Errorf("missing GWS service account file")
+	ErrMissingGWSServiceAccountFile = errors.New("missing GWS service account file")
 	// ErrMissingGWSUserEmail is returned when the GWS user email is missing.
-	ErrMissingGWSUserEmail = fmt.Errorf("missing GWS user email")
+	ErrMissingGWSUserEmail = errors.New("missing GWS user email")
 )
 
 // Config represents the configuration of the application.

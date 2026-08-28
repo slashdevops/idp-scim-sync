@@ -2,6 +2,7 @@ package google
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -35,25 +36,25 @@ const (
 
 var (
 	// ErrGoogleClientScopeNil is returned when the scope is nil.
-	ErrGoogleClientScopeNil = fmt.Errorf("google: google client scope is required")
+	ErrGoogleClientScopeNil = errors.New("google: google client scope is required")
 
 	// ErrUserIDNil is returned when the user ID is nil.
-	ErrUserIDNil = fmt.Errorf("google: user id is required")
+	ErrUserIDNil = errors.New("google: user id is required")
 
 	// ErrUserEmailNil is returned when the user email is nil.
-	ErrUserEmailNil = fmt.Errorf("google: user email is required")
+	ErrUserEmailNil = errors.New("google: user email is required")
 
 	// ErrGroupIDNil is returned when the group ID is nil.
-	ErrGroupIDNil = fmt.Errorf("google: group id is required")
+	ErrGroupIDNil = errors.New("google: group id is required")
 
 	// ErrServiceAccountNil is returned when the service account credentials are nil.
-	ErrServiceAccountNil = fmt.Errorf("google: service account credentials are required")
+	ErrServiceAccountNil = errors.New("google: service account credentials are required")
 
 	// ErrUserAgentNil is returned when the user agent is nil.
-	ErrUserAgentNil = fmt.Errorf("google: user agent is required")
+	ErrUserAgentNil = errors.New("google: user agent is required")
 
 	// ErrGoogleClientNil is returned when the google client is nil.
-	ErrGoogleClientNil = fmt.Errorf("google: google client is required")
+	ErrGoogleClientNil = errors.New("google: google client is required")
 )
 
 // DirectoryService represent the  Google Directory API client.
@@ -104,7 +105,7 @@ func NewService(ctx context.Context, config DirectoryServiceConfig) (*admin.Serv
 		Subject: config.UserEmail,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("google: %v", err)
+		return nil, fmt.Errorf("google: %w", err)
 	}
 
 	config.Client.Transport = &oauth2.Transport{
@@ -118,7 +119,7 @@ func NewService(ctx context.Context, config DirectoryServiceConfig) (*admin.Serv
 		option.WithHTTPClient(config.Client),
 	)
 	if err != nil {
-		return nil, fmt.Errorf("google: %v", err)
+		return nil, fmt.Errorf("google: %w", err)
 	}
 
 	return svc, nil
@@ -341,7 +342,7 @@ func (ds *DirectoryService) GetUser(ctx context.Context, userID string) (*admin.
 
 	u, err := ds.svc.Users.Get(userID).Fields(ds.getUsersRequiredFields).Context(ctx).Do()
 	if err != nil {
-		return nil, fmt.Errorf("google: error getting user %s: %v", userID, err)
+		return nil, fmt.Errorf("google: error getting user %s: %w", userID, err)
 	}
 
 	return u, nil
@@ -355,7 +356,7 @@ func (ds *DirectoryService) GetGroup(ctx context.Context, groupID string) (*admi
 
 	g, err := ds.svc.Groups.Get(groupID).Fields(groupsRequiredFields).Context(ctx).Do()
 	if err != nil {
-		return nil, fmt.Errorf("google: error getting group %s: %v", groupID, err)
+		return nil, fmt.Errorf("google: error getting group %s: %w", groupID, err)
 	}
 
 	return g, nil

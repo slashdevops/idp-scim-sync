@@ -2,6 +2,7 @@ package scim
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 	"sync"
@@ -52,11 +53,28 @@ type AWSSCIMProvider interface {
 	PatchGroup(ctx context.Context, pgr *aws.PatchGroupRequest) error
 }
 
-// MaxPatchGroupMembersPerRequest is the Maximum members in group members in a single request.
-const MaxPatchGroupMembersPerRequest = 100
+const (
+	// MaxPatchGroupMembersPerRequest is the maximum number of group members
+	// that may be sent in a single SCIM patch request.
+	MaxPatchGroupMembersPerRequest = 100
 
-// ErrSCIMProviderNil is returned when the SCIMProvider is nil
-var ErrSCIMProviderNil = fmt.Errorf("scim: Provider is nil")
+	// patchOpSchema is the SCIM 2.0 schema URN identifying a PatchOp request
+	// body.
+	//
+	// Reference: https://datatracker.ietf.org/doc/html/rfc7644#section-3.5.2
+	patchOpSchema = "urn:ietf:params:scim:api:messages:2.0:PatchOp"
+)
+
+var (
+	// ErrSCIMProviderNil is returned when the SCIMProvider is nil.
+	ErrSCIMProviderNil = errors.New("scim: Provider is nil")
+
+	// ErrGroupsResultNil is returned when the *model.GroupsResult argument is nil.
+	ErrGroupsResultNil = errors.New("scim: groups result is nil")
+
+	// ErrUsersResultNil is returned when the *model.UsersResult argument is nil.
+	ErrUsersResultNil = errors.New("scim: users result is nil")
+)
 
 // Provider represents a SCIM provider
 type Provider struct {
@@ -86,9 +104,9 @@ func NewProvider(scim AWSSCIMProvider, opts ...ProviderOption) (*Provider, error
 }
 
 // WithMaxMembersPerRequest sets the maximum number of members per request.
-func WithMaxMembersPerRequest(max int) ProviderOption {
+func WithMaxMembersPerRequest(n int) ProviderOption {
 	return func(p *Provider) {
-		p.maxMembersPerRequest = max
+		p.maxMembersPerRequest = n
 	}
 }
 
@@ -120,7 +138,7 @@ func (s *Provider) GetGroups(ctx context.Context) (*model.GroupsResult, error) {
 // processGroups processes a list of groups and applies a function to each group.
 func (s *Provider) processGroups(ctx context.Context, gr *model.GroupsResult, processFunc func(context.Context, *model.Group) (*model.Group, error)) (*model.GroupsResult, error) {
 	if gr == nil {
-		return nil, fmt.Errorf("scim: groups result is nil")
+		return nil, ErrGroupsResultNil
 	}
 
 	processedGroups := make([]*model.Group, 0, len(gr.Resources))
@@ -175,7 +193,7 @@ func (s *Provider) updateGroup(ctx context.Context, group *model.Group) (*model.
 			DisplayName: group.Name,
 		},
 		Patch: aws.Patch{
-			Schemas: []string{"urn:ietf:params:scim:api:messages:2.0:PatchOp"},
+			Schemas: []string{patchOpSchema},
 			Operations: []*aws.Operation{
 				{
 					OP: "replace",
@@ -240,7 +258,7 @@ func (s *Provider) GetUsers(ctx context.Context) (*model.UsersResult, error) {
 // processUsers processes a list of users and applies a function to each user.
 func (s *Provider) processUsers(ctx context.Context, ur *model.UsersResult, processFunc func(context.Context, *model.User) (*model.User, error)) (*model.UsersResult, error) {
 	if ur == nil {
-		return nil, fmt.Errorf("scim: users result is nil")
+		return nil, ErrUsersResultNil
 	}
 
 	processedUsers := make([]*model.User, 0, len(ur.Resources))
@@ -459,26 +477,25 @@ func (s *Provider) patchGroupOperations(op, path string, pvs []patchValue, gms *
 		}
 	}
 
-	if len(chunks) > 0 {
-		for _, chunk := range chunks {
-			patchGroupRequest := &aws.PatchGroupRequest{
-				Group: aws.Group{
-					ID:          gms.Group.SCIMID,
-					DisplayName: gms.Group.Name,
-				},
-				Patch: aws.Patch{
-					Schemas: []string{"urn:ietf:params:scim:api:messages:2.0:PatchOp"},
-					Operations: []*aws.Operation{
-						{
-							OP:    op,
-							Path:  path,
-							Value: chunk,
-						},
+	// chunks is never empty: every branch above appends at least one element.
+	for _, chunk := range chunks {
+		patchGroupRequest := &aws.PatchGroupRequest{
+			Group: aws.Group{
+				ID:          gms.Group.SCIMID,
+				DisplayName: gms.Group.Name,
+			},
+			Patch: aws.Patch{
+				Schemas: []string{patchOpSchema},
+				Operations: []*aws.Operation{
+					{
+						OP:    op,
+						Path:  path,
+						Value: chunk,
 					},
 				},
-			}
-			patchOperations = append(patchOperations, patchGroupRequest)
+			},
 		}
+		patchOperations = append(patchOperations, patchGroupRequest)
 	}
 
 	return patchOperations

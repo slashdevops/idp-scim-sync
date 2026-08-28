@@ -555,7 +555,7 @@ func (ur *UsersResult) UnmarshalBinary(data []byte) error {
 		return err
 	}
 
-	for i := 0; i < ur.Items; i++ {
+	for range ur.Items {
 		var u User
 		if err := dec.Decode(&u); err != nil {
 			return err

@@ -11,7 +11,14 @@ import (
 	"github.com/aws/aws-sdk-go-v2/credentials/stscreds"
 )
 
-func NewDefaultConf(ctx context.Context) (cfg aws.Config, err error) {
+// NewDefaultConf loads the default AWS configuration for the current
+// environment.
+//
+// When AWS_PROFILE is set, the named shared-config profile is used and
+// stscreds.StdinTokenProvider is wired in so an MFA-protected assume-role
+// profile can prompt on stdin. That path is for local CLI use; in Lambda the
+// execution role is resolved from the environment and no profile is set.
+func NewDefaultConf(ctx context.Context) (aws.Config, error) {
 	var confOptions []func(*config.LoadOptions) error
 
 	if profile := os.Getenv("AWS_PROFILE"); profile != "" {
