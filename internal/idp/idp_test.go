@@ -559,9 +559,8 @@ func TestGetUsersByGroupsMembers(t *testing.T) {
 		{
 			name: "Should return error",
 			prepare: func(f *fields) {
-				ctx := context.Background()
 				// Expect a single user fetch and return error
-				f.ds.EXPECT().GetUser(ctx, "user.1@mail.com").Return(nil, errors.New("test error")).Times(1)
+				f.ds.EXPECT().GetUser(gomock.Any(), "user.1@mail.com").Return(nil, errors.New("test error")).Times(1)
 			},
 			args: args{
 				ctx: context.Background(),
@@ -583,7 +582,6 @@ func TestGetUsersByGroupsMembers(t *testing.T) {
 		{
 			name: "Should return UsersResult and no error",
 			prepare: func(f *fields) {
-				ctx := context.Background()
 				// Expect individual user fetches for each unique member email
 				googleUser1 := &admin.User{
 					Id:           "1",
@@ -638,10 +636,10 @@ func TestGetUsersByGroupsMembers(t *testing.T) {
 					// },
 				}
 
-				f.ds.EXPECT().GetUser(ctx, "user.1@mail.com").Return(googleUser1, nil).Times(1)
-				f.ds.EXPECT().GetUser(ctx, "user.2@mail.com").Return(googleUser2, nil).Times(1)
-				f.ds.EXPECT().GetUser(ctx, "user.3@mail.com").Return(googleUser3, nil).Times(1)
-				f.ds.EXPECT().GetUser(ctx, "user.4@mail.com").Return(googleUser4, nil).Times(1)
+				f.ds.EXPECT().GetUser(gomock.Any(), "user.1@mail.com").Return(googleUser1, nil).Times(1)
+				f.ds.EXPECT().GetUser(gomock.Any(), "user.2@mail.com").Return(googleUser2, nil).Times(1)
+				f.ds.EXPECT().GetUser(gomock.Any(), "user.3@mail.com").Return(googleUser3, nil).Times(1)
+				f.ds.EXPECT().GetUser(gomock.Any(), "user.4@mail.com").Return(googleUser4, nil).Times(1)
 			},
 			args: args{
 				ctx: context.Background(),

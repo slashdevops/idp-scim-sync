@@ -52,7 +52,15 @@ func init() {
 		setup.Logger(cfg.LogLevel, cfg.LogFormat)
 
 		if cfg.IsLambda || cfg.UseSecretsManager {
-			if err := setup.Secrets(&cfg); err != nil {
+			// OnInitialize runs inside cobra's execute(), by which point the
+			// command context is set; fall back to Background defensively so a
+			// future call path cannot pass a nil context down to errgroup.
+			ctx := rootCmd.Context()
+			if ctx == nil {
+				ctx = context.Background()
+			}
+
+			if err := setup.Secrets(ctx, &cfg); err != nil {
 				slog.Error("cannot get secrets", "error", err)
 				os.Exit(1)
 			}

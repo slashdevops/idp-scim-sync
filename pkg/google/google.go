@@ -11,6 +11,7 @@ import (
 	"github.com/slashdevops/idp-scim-sync/internal/model"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
+	"golang.org/x/sync/errgroup"
 	admin "google.golang.org/api/admin/directory/v1"
 	"google.golang.org/api/googleapi"
 	"google.golang.org/api/option"
@@ -360,8 +361,20 @@ func (ds *DirectoryService) GetGroup(ctx context.Context, groupID string) (*admi
 	return g, nil
 }
 
-// ListGroupMembersBatch retrieves members for multiple groups concurrently.
-// Returns a map where keys are group IDs and values are slices of members.
+// listGroupMembersBatchConcurrency caps the number of in-flight members-list
+// requests issued by ListGroupMembersBatch. Ten keeps the fan-out well inside
+// the Google Directory API's per-user quota while still overlapping the
+// round-trip latency that dominates a sync.
+const listGroupMembersBatchConcurrency = 10
+
+// ListGroupMembersBatch retrieves members for multiple groups concurrently and
+// returns a map keyed by group ID.
+//
+// The fan-out is bounded by listGroupMembersBatchConcurrency and shares one
+// errgroup context, so the first failure cancels the requests still in flight
+// and the queued ones never start. That matters because every request spends
+// Google Directory API quota whose result would be discarded anyway: the first
+// error is what the caller receives.
 func (ds *DirectoryService) ListGroupMembersBatch(ctx context.Context, groupIDs []string, queries ...GetGroupMembersOption) (map[string][]*admin.Member, error) {
 	if len(groupIDs) == 0 {
 		return make(map[string][]*admin.Member), nil
@@ -369,39 +382,27 @@ func (ds *DirectoryService) ListGroupMembersBatch(ctx context.Context, groupIDs 
 
 	result := make(map[string][]*admin.Member, len(groupIDs))
 
-	// Process groups concurrently with a reasonable limit
-	const maxConcurrent = 10
-	sem := make(chan struct{}, maxConcurrent)
-	var mu sync.Mutex
-	var wg sync.WaitGroup
+	g, ctx := errgroup.WithContext(ctx)
+	g.SetLimit(listGroupMembersBatchConcurrency)
 
-	errChan := make(chan error, len(groupIDs))
+	var mu sync.Mutex
 
 	for _, groupID := range groupIDs {
-		wg.Add(1)
-		go func(gid string) {
-			defer wg.Done()
-
-			sem <- struct{}{}        // Acquire semaphore
-			defer func() { <-sem }() // Release semaphore
-
-			members, err := ds.ListGroupMembers(ctx, gid, queries...)
+		g.Go(func() error {
+			members, err := ds.ListGroupMembers(ctx, groupID, queries...)
 			if err != nil {
-				errChan <- fmt.Errorf("google: error getting members for group %s: %w", gid, err)
-				return
+				return fmt.Errorf("google: error getting members for group %s: %w", groupID, err)
 			}
 
 			mu.Lock()
-			result[gid] = members
+			result[groupID] = members
 			mu.Unlock()
-		}(groupID)
+
+			return nil
+		})
 	}
 
-	wg.Wait()
-	close(errChan)
-
-	// Check for errors
-	if err := <-errChan; err != nil {
+	if err := g.Wait(); err != nil {
 		return nil, err
 	}
 
