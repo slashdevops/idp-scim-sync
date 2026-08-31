@@ -75,7 +75,7 @@ that are serialized into the state file.
 
 All 8 direct dependencies with updates available moved forward; no majors, no module-path changes.
 `aws-lambda-go` v1.55.0, `aws-sdk-go-v2` v1.45.1 (with `config` v1.33.1, `credentials` v1.20.1, `s3`
-v1.109.1, `secretsmanager` v1.46.1), `testify` v1.12.1, `google.golang.org/api` v0.294.0. Verified
+v1.109.1, `secretsmanager` v1.46.1), `testify` v1.12.1, `google.golang.org/api` v0.295.0. Verified
 with `go mod verify`, `govulncheck` (0 vulnerabilities called), regenerated mocks, and the full
 `-race` suite.
 
