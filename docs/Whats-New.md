@@ -135,9 +135,17 @@ this release** — the hashing scheme itself did not move, only the order elemen
 
 #### 🧪 CI and tooling
 
-* **Codecov has been receiving nothing.** `build.yml` uploaded `./coverage.out`, but the Makefile
-  writes coverage to `build/coverage.txt`. That path never existed in CI, so the badge has been
-  reporting stale data. Fixed and verified from a clean tree.
+* **Codecov has been receiving nothing — two causes, one still open.** `build.yml` uploaded
+  `./coverage.out`, but the Makefile writes coverage to `build/coverage.txt`. That path never existed
+  in CI, so codecov found zero files on every run. Fixed, and confirmed against a real CI run: it now
+  reports `Found 1 coverage files to report`.
+
+  The upload then fails for a **second** reason: `main` is a protected branch, and codecov requires a
+  token for protected branches — `Token required because branch is protected`. The `CODECOV_TOKEN`
+  repository secret does not exist. The workflow now passes `token: ${{ secrets.CODECOV_TOKEN }}`, so
+  **adding that secret completes the fix**; until then the coverage badge stays stale.
+  `fail_ci_if_error` is deliberately left false so a missing token cannot break the build — the
+  trade-off being that the failure stays quiet, which is how the wrong path went unnoticed.
 * Added a committed [`.golangci.yml`](../.golangci.yml) and a **Lint job** to CI. The contributor
   checklist already required `golangci-lint`, but with no config each runner used its own defaults, so
   results were not reproducible. **The lint baseline is now 0 issues**, down from 18, against a
