@@ -65,8 +65,19 @@ jobs:
         with:
           # Must match PROJECT_COVERAGE_FILE in the Makefile. This previously
           # pointed at ./coverage.out, a path `make test` never writes, so
-          # codecov received nothing on every run.
+          # codecov found no files at all on every run.
           files: ./build/coverage.txt
+          # `main` is a protected branch, and codecov requires a token for
+          # protected branches: without one the upload is accepted and then
+          # rejected with "Token required because branch is protected".
+          #
+          # NOTE: the CODECOV_TOKEN repository secret does not exist yet, so
+          # uploads still fail until it is added (Settings -> Secrets and
+          # variables -> Actions). fail_ci_if_error is left at its default of
+          # false so a missing token cannot break the build; the trade-off is
+          # that the failure stays quiet, which is how the wrong path above went
+          # unnoticed for so long. Check this step's log after adding the token.
+          token: ${{ secrets.CODECOV_TOKEN }}
 
       - name: govulncheck
         uses: golang/govulncheck-action@032d45514ae346b1db93c04b0c90b841c370344f  # v1.1.0
