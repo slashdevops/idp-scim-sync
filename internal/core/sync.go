@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"runtime/pprof"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
@@ -63,6 +64,15 @@ func NewSyncService(prov IdentityProviderService, scim SCIMService, repo StateRe
 
 // SyncGroupsAndTheirMembers the default sync method tha syncs groups and their members
 func (ss *SyncService) SyncGroupsAndTheirMembers(ctx context.Context) error {
+	// Tag the sync goroutine so a panic anywhere on the main path — not just in
+	// one of the labelled fan-outs — is attributable in the traceback. Go 1.27
+	// prints these labels in goroutine headers. Opt out with
+	// GODEBUG=tracebacklabels=0.
+	pprof.SetGoroutineLabels(pprof.WithLabels(ctx, pprof.Labels(
+		"sync", "root",
+		"codeVersion", version.Version,
+	)))
+
 	slog.Info("getting identity provider data", "group_filter", ss.provGroupsFilter)
 
 	idpGroupsResult, err := ss.prov.GetGroups(ctx, ss.provGroupsFilter)

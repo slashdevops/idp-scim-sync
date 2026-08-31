@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"runtime/pprof"
 	"slices"
 	"strings"
 	"sync"
@@ -239,6 +240,20 @@ func (i *IdentityProvider) GetUsersByGroupsMembers(ctx context.Context, gmr *mod
 
 	for email, ipid := range uniqEmails {
 		g.Go(func() error {
+			// Tag this goroutine so a panic inside it names the record that
+			// caused it. Go 1.27 prints these labels in traceback headers, which
+			// is the difference between a one-line CloudWatch diagnosis and
+			// bisecting the directory.
+			//
+			// SetGoroutineLabels, not pprof.Do: pprof.Do defers restoring the
+			// previous label set, and on a panic those defers run during
+			// unwinding before the runtime prints the traceback, so the labels
+			// would already be gone.
+			pprof.SetGoroutineLabels(pprof.WithLabels(ctx, pprof.Labels(
+				"sync", "users",
+				"user", email,
+			)))
+
 			u, err := i.ps.GetUser(ctx, email)
 			if err != nil {
 				return fmt.Errorf("idp: error getting user: %+v, email: %s, error: %w", ipid, email, err)

@@ -386,6 +386,32 @@ Two ordering consequences are worth knowing:
 | Google API error mid-fan-out | The shared context is cancelled, sibling requests abort, and the first error propagates. |
 | Lambda timeout | Contexts are honoured throughout, so in-flight requests are abandoned rather than left running until the runtime freezes. |
 
+### Attributing a panic to a record
+
+Every bounded fan-out tags its goroutines with `runtime/pprof` labels, and the
+sync goroutine itself is tagged too. Go 1.27 prints those labels in traceback
+headers, so a panic in CloudWatch names the record that caused it:
+
+```
+goroutine 42 [running] {sync: "users", user: "zoe@example.com"}:
+```
+
+| Location | Labels |
+| -------- | ------ |
+| `core.SyncGroupsAndTheirMembers` | `sync=root`, `codeVersion=<version>` |
+| `idp.GetUsersByGroupsMembers` | `sync=users`, `user=<email>` |
+| `google.ListGroupMembersBatch` | `sync=group-members`, `group=<id>` |
+| `scim.GetGroupsMembers` | `sync=scim-group-members`, `user=<scimid>` |
+
+> [!NOTE]
+> The labels are set with `pprof.SetGoroutineLabels`, **not** `pprof.Do`.
+> `pprof.Do` defers restoring the previous label set, and on a panic those defers
+> run during unwinding *before* the runtime prints the traceback — so the labels
+> would already be gone. `runtime.Stack` still shows them either way, which makes
+> the `pprof.Do` version easy to verify incorrectly.
+> `TestGetUsersByGroupsMembers_labelsGoroutinesForTracebacks` guards against the
+> substitution. Opt out at runtime with `GODEBUG=tracebacklabels=0`.
+
 ---
 
 ## 📚 See also

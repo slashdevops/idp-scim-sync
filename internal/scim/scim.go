@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"runtime/pprof"
 	"sync"
 
 	"golang.org/x/sync/errgroup"
@@ -541,6 +542,13 @@ func (s *Provider) GetGroupsMembers(ctx context.Context, gr *model.GroupsResult,
 
 	for _, user := range ur.Resources {
 		g.Go(func() error {
+			// See internal/idp.GetUsersByGroupsMembers for why this is
+			// SetGoroutineLabels rather than pprof.Do.
+			pprof.SetGoroutineLabels(pprof.WithLabels(ctx, pprof.Labels(
+				"sync", "scim-group-members",
+				"user", user.SCIMID,
+			)))
+
 			filter := fmt.Sprintf("members.value eq %q", user.SCIMID)
 
 			cursor := ""

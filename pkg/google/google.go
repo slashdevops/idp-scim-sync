@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"runtime/pprof"
 	"strings"
 	"sync"
 
@@ -412,6 +413,13 @@ func (ds *DirectoryService) ListGroupMembersBatch(ctx context.Context, groupIDs 
 
 	for _, groupID := range groupIDs {
 		g.Go(func() error {
+			// See internal/idp.GetUsersByGroupsMembers for why this is
+			// SetGoroutineLabels rather than pprof.Do.
+			pprof.SetGoroutineLabels(pprof.WithLabels(ctx, pprof.Labels(
+				"sync", "group-members",
+				"group", groupID,
+			)))
+
 			members, err := ds.ListGroupMembers(ctx, groupID, queries...)
 			if err != nil {
 				return fmt.Errorf("google: error getting members for group %s: %w", groupID, err)

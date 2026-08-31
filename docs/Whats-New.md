@@ -168,6 +168,32 @@ the state file is safe; [Development.md](Development.md) updated for Go 1.27 and
 [Configuration.md](Configuration.md) documents the log levels; and the README gains a Quick Start, an
 architecture diagram, a Contributing section, and links to all 14 docs instead of 5.
 
+#### 🔎 Panics now name the record that caused them
+
+Go 1.27 prints `runtime/pprof` goroutine labels in traceback headers. Every bounded fan-out now tags
+its goroutines, and so does the sync goroutine itself, so a panic in CloudWatch reads:
+
+```
+goroutine 42 [running] {sync: "users", user: "zoe@example.com"}:
+```
+
+instead of leaving you to bisect the directory. The crash fixes above were exactly this shape — an
+`index out of range` inside a worker, with no indication of which record.
+
+Labels: `sync=root` + `codeVersion` on the sync itself, `sync=users` + `user` on the user fan-out,
+`sync=group-members` + `group` on the Google members fan-out, and `sync=scim-group-members` + `user`
+on the SCIM membership inversion.
+
+Purely additive instrumentation: no control flow, no API, no hashing, no state-file change. Cost is
+~29 ns and 104 B per goroutine, which is noise against a network round-trip. Opt out with
+`GODEBUG=tracebacklabels=0`.
+
+> [!NOTE]
+> Implemented with `pprof.SetGoroutineLabels`, **not** `pprof.Do`. `pprof.Do` defers restoring the
+> previous label set, and on a panic those defers run during unwinding before the runtime prints the
+> traceback, so the labels are gone exactly when they are needed. `runtime.Stack` shows them either
+> way, so the broken version verifies fine by accident. A test guards the distinction.
+
 #### 🧮 Canonical hash ordering (one-off membership reconciliation)
 
 > [!IMPORTANT]
