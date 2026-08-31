@@ -168,6 +168,30 @@ the state file is safe; [Development.md](Development.md) updated for Go 1.27 and
 [Configuration.md](Configuration.md) documents the log levels; and the README gains a Quick Start, an
 architecture diagram, a Contributing section, and links to all 14 docs instead of 5.
 
+#### 🧷 Also fixed
+
+* **`idpscimcli aws users list --filter` never worked.** The flag was registered on the `aws users`
+  grouping command, which has no run function, so Cobra advertised it under
+  `idpscimcli aws users --help` where nothing consumed it and rejected it as
+  `unknown flag: --filter` where it was actually needed. `aws groups list` had it right. Moved to the
+  `list` subcommand, with a test asserting both leaf commands accept it and neither grouping command
+  advertises it.
+
+* **`.gitignore` was hiding the `cmd/` source trees.** The entries `idpscim` and `idpscimcli` were
+  intended for stray binaries built into the repository root, but a gitignore pattern without a slash
+  matches at *any* depth — so `cmd/idpscim/` and `cmd/idpscimcli/` were both ignored. Existing tracked
+  files were unaffected, which is why nobody noticed, but any **new** file added under either
+  directory was invisible to `git status` and silently omitted from commits, and every
+  `.gitignore`-aware tool (ripgrep, editors, Docker build contexts) skipped both trees entirely. Both
+  patterns are now anchored as `/idpscim` and `/idpscimcli`, verified to still ignore root binaries
+  while making `cmd/` visible again.
+
+* **Corrected a wrong note about the `unit` build tag.** An earlier commit in this branch claimed
+  `-tags=unit` selected nothing. It does: `cmd/idpscimcli/cmd/*_test.go` carry `//go:build unit`, so a
+  bare `go test ./...` reports "no test files" for that package while `make test` runs it. The
+  Makefile comment now says so. (The original mistake came from a `.gitignore`-aware grep that could
+  not see into `cmd/` — the same root cause as the entry above.)
+
 #### 🔜 Known follow-up
 
 `golang.org/x/oauth2/google.CredentialsFromJSONWithParams` is deprecated for a security reason — it

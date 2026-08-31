@@ -16,9 +16,12 @@ DIST_ASSEST_DIR := $(DIST_DIR)/assets
 
 PROJECT_COVERAGE_FILE ?= $(BUILD_DIR)/coverage.txt
 PROJECT_COVERAGE_MODE	?= atomic
-# NOTE: no file in the tree carries a //go:build tag, so this currently selects
-# nothing and `-tags=unit` below is a no-op. Kept as the hook for a future
-# unit/integration split; if you add tagged tests, tag them with this value.
+# Build tag selecting the unit-test suite. This is NOT a no-op: files carrying
+# `//go:build unit` (currently cmd/idpscimcli/cmd/*_test.go) compile only when it
+# is set, so a bare `go test ./...` reports "no test files" for that package
+# while `make test` runs it. Tag new unit tests with this value.
+# .vscode/settings.json sets go.buildTags to "integration,unit" so editors and
+# gopls see the same files.
 PROJECT_COVERAGE_TAGS ?= unit
 
 GIT_VERSION  ?= $(shell git rev-parse --abbrev-ref HEAD | cut -d "/" -f 2)

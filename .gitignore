@@ -35,8 +35,14 @@ dist/
 
 credentials.json
 run.sh
-idpscim
-idpscimcli
+
+# Built binaries dropped in the repository root by an ad-hoc `go build`.
+# These MUST stay anchored with a leading slash: a bare `idpscim` pattern also
+# matches the cmd/idpscim/ and cmd/idpscimcli/ source directories at any depth,
+# which silently hid every new file added under them from `git status` and from
+# every .gitignore-aware tool (ripgrep, editors, Docker build contexts).
+/idpscim
+/idpscimcli
 
 # OpenSSF Scorecard hardening — local-only tracking folder
 .openssf/
