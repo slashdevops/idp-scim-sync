@@ -168,6 +168,47 @@ the state file is safe; [Development.md](Development.md) updated for Go 1.27 and
 [Configuration.md](Configuration.md) documents the log levels; and the README gains a Quick Start, an
 architecture diagram, a Contributing section, and links to all 14 docs instead of 5.
 
+#### 🧮 Canonical hash ordering (one-off membership reconciliation)
+
+> [!IMPORTANT]
+> This changes the `groupsMembers` container hash, which the sync **reads**. The first run after
+> deploying performs one membership reconciliation pass; subsequent runs are stable. Group and user
+> hashes are unchanged, so groups and users do **not** re-sync.
+
+Every hash in `internal/model` is a `gob` encoding, and the hand-written `MarshalBinary` methods walk
+their `Resources` slices in slice order. Arrival order is therefore part of the hash unless it is
+normalised first — and it must be, because the identity-provider fan-outs and the SCIM membership
+inversion all build their slices from maps, whose iteration order is randomised.
+
+The normalisation was inlined per method, and two places had drifted:
+
+* **`GroupsMembersResult` sorted its outer slice but not the members nested inside each entry.**
+  `GroupMembers.MarshalBinary` walks its own members in slice order, so member order *within* a group
+  reached the bytes of the enclosing hash — while `GroupMembers`' own hash stayed stable, because that
+  method does sort its copy. Since `internal/core` compares `GroupsMembersResult` hashes to decide
+  whether membership needs reconciling, an upstream reordering caused a spurious **full membership
+  sync**. Two sources present members in an unstable order: the Google Directory API guarantees no
+  member ordering, and `internal/scim`'s membership inversion appends members in goroutine completion
+  order.
+
+* **`State.SetHashCode` sorted nothing at all.** It rebuilt each `*Result` through a builder and then
+  gob-encoded the result; the builder's own sorting only ever applied to its private copy, so it never
+  reached the State hash bytes. Two runs over identical data could produce different
+  `State.HashCode` values. Nothing reads that field — `internal/core` compares only the three
+  container hashes — so this had no runtime effect, but it made the state file's top-level `hashCode`
+  useless as an external change indicator.
+
+Both are fixed by giving the hash input a canonical ordering at every level. The five orderings now
+live in one place (`internal/model/sort.go`) and are called by every `SetHashCode`, so they cannot
+drift apart again.
+
+Care was taken that computing a hash never reorders the caller's live data: copying a `GroupMembers`
+struct shares its `Resources` backing array, so each entry gets its own copied member slice before
+sorting. A test pins this.
+
+Golden hashes: `groupsMembers` and `state` updated deliberately; `groups`, `users` and every
+individual resource hash unchanged.
+
 #### 🧷 Also fixed
 
 * **`idpscimcli aws users list --filter` never worked.** The flag was registered on the `aws users`

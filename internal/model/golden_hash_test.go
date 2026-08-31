@@ -74,16 +74,28 @@ func goldenState() *State {
 		Build()
 }
 
-// Golden hash codes, captured from the implementation as it stood before the
-// slices.SortStableFunc and errors.Is(io.EOF) changes. If a change to
-// internal/model alters any of these, it has changed what the S3 state file
-// hashes to, which invalidates every deployed state file and forces a full
-// re-sync. Update them only deliberately, with a note in docs/Whats-New.md.
+// Golden hash codes. If a change to internal/model alters any of these, it has
+// changed what the S3 state file hashes to. Update them only deliberately, with
+// a note in docs/Whats-New.md.
+//
+// Two were updated when the hash input was given a canonical ordering at every
+// level (findings M17 and M23):
+//
+//   - goldenGroupsMembersHash changed because GroupsMembersResult previously
+//     sorted its outer slice but not the members nested inside each entry, so
+//     member order within a group leaked into the hash. internal/core reads this
+//     hash to decide whether membership needs reconciling, so the change costs
+//     one membership reconciliation pass on the first run after deploying.
+//   - goldenStateHash changed because State.SetHashCode sorted nothing at all.
+//     Nothing reads State.HashCode, so this one has no runtime effect.
+//
+// goldenGroupsHash, goldenUsersHash and every individual resource hash are
+// deliberately UNCHANGED: groups and users do not re-sync.
 const (
-	goldenStateHash         = "841819f1d2071dee9b6327079b492553cfd9cae825883c84af5e5f742ec2cf9e"
+	goldenStateHash         = "e7a1cd954b805df554106ca5a3a4cac837f11e50af4bf3b0ea5542a775bcc2af"
 	goldenGroupsHash        = "c02429df7dd0db29849b5212c9aa431d2d55ab6e44f4b67f57c984b16a57e4ea"
 	goldenUsersHash         = "5b0614c402dd9556a16593e00523a6c3f4fbc1fa10bd2e212e03736be60da293"
-	goldenGroupsMembersHash = "6c91be6299ab0e4f5db64892d48a59c63ec894ebe43074f0ec87d9287c6f5315"
+	goldenGroupsMembersHash = "f391383ec27336152cafeb3c2796f4303ad5f77bd6446d734bd58316a905a204"
 
 	goldenGroupZetaHash     = "587a531ccf502c3a2e17eb1785179f58824e33f016ab0e542e9b7bfaff21c5c7"
 	goldenGroupAlphaHash    = "9d7a5febd8a48c9f7b50228f6425969003195b6b2c1c153366ebc5a67444ea9e"
@@ -177,29 +189,28 @@ func TestGoldenHashes_containerHashesAreOrderIndependent(t *testing.T) {
 	}
 }
 
-// State.SetHashCode, unlike the container SetHashCode methods, hashes its
-// rebuilt slices in the order it received them: it constructs each *Result via
-// a builder (which sorts only its own private copy for its own hash) and then
-// gob-encodes copyState, whose MarshalBinary walks Resources in slice order.
+// State.SetHashCode must be order-independent for the same reason the container
+// SetHashCode methods are: the identity-provider fan-outs build their slices
+// from maps, so two runs over identical data can present resources in different
+// orders.
 //
-// This test documents that behaviour rather than asserting it is desirable.
-// State.HashCode is written into the S3 object but never read back — internal/core
-// compares only the three container hashes (see internal/core/actions.go) — so
-// the order dependence is cosmetic today. It does mean the state file's
-// top-level hashCode field can differ between two runs that produced identical
-// data, which makes it useless as an external change indicator.
+// It was not. State.SetHashCode rebuilt each *Result through a builder and then
+// gob-encoded copyState, whose MarshalBinary chain walks Resources in slice
+// order. The builder's Build() sorts only its own private copy, to compute that
+// container's own HashCode field — the sort never reached the bytes the State
+// hash is built from.
 //
-// Tracked as finding M17. Fixing it would change the value of that field for
-// every deployed state file, so it is deliberately left alone here.
-func TestState_hashCodeIsOrderDependent(t *testing.T) {
+// State.HashCode is written into the S3 object but never read back
+// (internal/core/actions.go compares only the three container hashes), so this
+// was never a correctness bug. It did make the state file's top-level hashCode
+// field useless as an external change indicator, which is a trap worth closing.
+func TestGoldenHashes_stateHashIsOrderIndependent(t *testing.T) {
 	a := goldenState()
 	b := reversedGoldenState()
 
-	if a.HashCode == b.HashCode {
-		t.Skip("State.HashCode is now order-independent; finding M17 appears to have been fixed — update this test and the goldens")
+	if a.HashCode != b.HashCode {
+		t.Errorf("State hash depends on input order:\n  in-order %s\n  reversed %s", a.HashCode, b.HashCode)
 	}
-
-	t.Logf("known: State.HashCode differs on reordered input (%s vs %s); cosmetic, the field is never read", a.HashCode, b.HashCode)
 }
 
 // reversedGoldenState is goldenState with every resource slice reversed and all
@@ -211,10 +222,81 @@ func reversedGoldenState() *State {
 	slices.Reverse(s.Resources.Users.Resources)
 	slices.Reverse(s.Resources.GroupsMembers.Resources)
 
+	// Reverse the members inside each group too: GroupMembers.MarshalBinary
+	// walks them in slice order, so nested ordering reaches the hash bytes just
+	// as the outer ordering does.
+	for _, gm := range s.Resources.GroupsMembers.Resources {
+		slices.Reverse(gm.Resources)
+	}
+
 	s.Resources.Groups.SetHashCode()
 	s.Resources.Users.SetHashCode()
 	s.Resources.GroupsMembers.SetHashCode()
 	s.SetHashCode()
 
 	return s
+}
+
+// Member order within a group must not affect any hash.
+//
+// GroupMembers.MarshalBinary walks its Resources in slice order, so before
+// findings M17/M23 the order of members inside a group reached the bytes of both
+// the enclosing GroupsMembersResult hash and the State hash — while
+// GroupMembers' own hash was stable, because it sorted its own copy.
+//
+// That mattered in production because internal/core compares
+// GroupsMembersResult hashes to decide whether membership needs reconciling, and
+// two upstream sources present members in an unstable order: the Google
+// Directory API makes no ordering guarantee, and internal/scim's membership
+// inversion appends members in goroutine completion order.
+func TestGroupsMembersResult_hashIgnoresWithinGroupMemberOrder(t *testing.T) {
+	build := func(reverse bool) (gm, gmr, state string) {
+		group := GroupBuilder().WithIPID("g-1").WithName("alpha").Build()
+		members := []*Member{
+			MemberBuilder().WithIPID("m-1").WithEmail("adam@example.com").WithStatus("ACTIVE").Build(),
+			MemberBuilder().WithIPID("m-2").WithEmail("zoe@example.com").WithStatus("ACTIVE").Build(),
+		}
+		if reverse {
+			slices.Reverse(members)
+		}
+
+		entry := GroupMembersBuilder().WithGroup(group).WithResources(members).Build()
+		result := GroupsMembersResultBuilder().WithResources([]*GroupMembers{entry}).Build()
+		st := StateBuilder().WithGroupsMembers(result).Build()
+
+		return entry.HashCode, result.HashCode, st.HashCode
+	}
+
+	aGM, aGMR, aState := build(false)
+	bGM, bGMR, bState := build(true)
+
+	if aGM != bGM {
+		t.Errorf("GroupMembers hash depends on member order:\n got %s\nwant %s", bGM, aGM)
+	}
+	if aGMR != bGMR {
+		t.Errorf("GroupsMembersResult hash depends on member order (this one is read by internal/core):\n got %s\nwant %s", bGMR, aGMR)
+	}
+	if aState != bState {
+		t.Errorf("State hash depends on member order:\n got %s\nwant %s", bState, aState)
+	}
+}
+
+// Computing a hash must not reorder the caller's data. The copies inside
+// SetHashCode exist for exactly this reason, and the nested member slices need
+// their own copy because copying a GroupMembers struct shares its slice backing
+// array.
+func TestSetHashCode_doesNotMutateCallerOrdering(t *testing.T) {
+	group := GroupBuilder().WithIPID("g-1").WithName("alpha").Build()
+	zoe := MemberBuilder().WithIPID("m-2").WithEmail("zoe@example.com").Build()
+	adam := MemberBuilder().WithIPID("m-1").WithEmail("adam@example.com").Build()
+
+	// Deliberately not in email order.
+	entry := GroupMembersBuilder().WithGroup(group).WithResources([]*Member{zoe, adam}).Build()
+	result := GroupsMembersResultBuilder().WithResources([]*GroupMembers{entry}).Build()
+
+	result.SetHashCode()
+
+	if got := result.Resources[0].Resources[0].Email; got != "zoe@example.com" {
+		t.Errorf("SetHashCode reordered the caller's members: first is now %q, want %q", got, "zoe@example.com")
+	}
 }

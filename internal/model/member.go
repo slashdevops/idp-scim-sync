@@ -6,8 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
-	"slices"
-	"strings"
 
 	"github.com/slashdevops/idp-scim-sync/internal/deepcopy"
 )
@@ -134,13 +132,7 @@ func (mr *MembersResult) SetHashCode() {
 		Resources: c,
 	}
 
-	// Order by IPID so the result is consistent regardless of the order in which
-	// members arrived. SortStableFunc rather than SortFunc: IPIDs are not
-	// guaranteed unique here, and an unstable sort would leave tied elements in
-	// an unspecified order, making the hash non-deterministic.
-	slices.SortStableFunc(copyStruct.Resources, func(a, b *Member) int {
-		return strings.Compare(a.IPID, b.IPID)
-	})
+	sortMembersByIPIDForHash(copyStruct.Resources)
 
 	mr.HashCode = Hash(copyStruct)
 }
@@ -223,12 +215,7 @@ func (gm *GroupMembers) SetHashCode() {
 		Resources: c,
 	}
 
-	// Members are ordered by email, which is the only member field that can
-	// never be empty. SortStableFunc keeps the order of any duplicates fixed so
-	// the hash stays deterministic.
-	slices.SortStableFunc(copiedStruct.Resources, func(a, b *Member) int {
-		return strings.Compare(a.Email, b.Email)
-	})
+	sortMembersByEmailForHash(copiedStruct.Resources)
 
 	gm.HashCode = Hash(copiedStruct)
 }
@@ -290,10 +277,20 @@ func (gmr *GroupsMembersResult) MarshalJSON() ([]byte, error) {
 // this method discards fields that are not used in the hash calculation.
 // only fields coming from the Identity Provider are used.
 func (gmr *GroupsMembersResult) SetHashCode() {
-	// this copy is necessary to avoid changing the original data
-	// with the sort.Slice function and always be consistent
-	// when calculating the hash code
+	// This copy is necessary so that ordering the data for the hash does not
+	// reorder the caller's live data.
+	//
+	// deepcopy.SliceOfPointers copies each *GroupMembers struct, but a struct
+	// copy shares the backing array of its Resources slice. Sorting those
+	// members in place would therefore still mutate the caller, so each entry
+	// gets its own copied member slice below.
 	c := compactNilPointers(deepcopy.SliceOfPointers(gmr.Resources))
+	for _, entry := range c {
+		if entry == nil {
+			continue
+		}
+		entry.Resources = compactNilPointers(deepcopy.SliceOfPointers(entry.Resources))
+	}
 
 	// only these fields are used in the hash calculation
 	copiedStruct := GroupsMembersResult{
@@ -301,12 +298,7 @@ func (gmr *GroupsMembersResult) SetHashCode() {
 		Resources: c,
 	}
 
-	// Order by hash code so the result is consistent regardless of the order in
-	// which groups arrived. SortStableFunc keeps tied elements in a fixed order
-	// so the hash stays deterministic.
-	slices.SortStableFunc(copiedStruct.Resources, func(a, b *GroupMembers) int {
-		return strings.Compare(a.HashCode, b.HashCode)
-	})
+	sortGroupsMembersForHash(copiedStruct.Resources)
 
 	gmr.HashCode = Hash(copiedStruct)
 }

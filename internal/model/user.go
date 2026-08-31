@@ -602,14 +602,7 @@ func (ur *UsersResult) SetHashCode() {
 		Resources: c,
 	}
 
-	// Order by hash code so the result is consistent regardless of the order in
-	// which resources arrived. SortStableFunc rather than SortFunc: hash codes
-	// are not guaranteed unique across resources, and an unstable sort would
-	// leave tied elements in an unspecified order, making the hash of a set
-	// containing ties non-deterministic.
-	slices.SortStableFunc(copiedStruct.Resources, func(a, b *User) int {
-		return strings.Compare(a.HashCode, b.HashCode)
-	})
+	sortUsersForHash(copiedStruct.Resources)
 
 	ur.HashCode = Hash(copiedStruct)
 }
