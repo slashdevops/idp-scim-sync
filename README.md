@@ -27,7 +27,29 @@ Keep your [AWS IAM Identity Center](https://aws.amazon.com/iam/identity-center/)
 
 For a detailed list of new features, improvements, and bug fixes in each release, see the [What's New](docs/Whats-New.md) page.
 
-## Compatibility
+## ⚡ Quick Start
+
+The fastest path to a working sync:
+
+1. **Google Workspace** — create a service account, download its JSON key, and grant it domain-wide
+   delegation for the three `admin.directory.*.readonly` scopes.
+2. **AWS** — enable IAM Identity Center, turn on automatic provisioning, and copy the SCIM endpoint
+   and access token.
+3. **Deploy** — from the [AWS Serverless Application Repository](https://serverlessrepo.aws.amazon.com/applications/us-east-1/889836709304/idp-scim-sync), or with `sam deploy --guided`.
+4. **Verify before it writes anything** — `idpscimcli` is read-only:
+
+   ```bash
+   idpscimcli gws groups list --gws-groups-filter 'name:AWS*' \
+     --gws-user-email admin@example.com \
+     --gws-service-account-file ./credentials.json
+   ```
+
+5. **Watch the first run** in CloudWatch Logs. It is the slow one; every later run compares hashes and
+   usually issues no writes at all.
+
+📘 Step-by-step, with troubleshooting: **[User Manual](docs/User-Manual.md)**.
+
+## 🧩 Compatibility
 
 This project is compatible with the latest AWS Lambda runtimes. Since version `v0.0.19`, it uses the `provided.al2` runtime and `arm64` architecture.
 
@@ -49,7 +71,40 @@ For more details on the resources created by the CloudFormation template, please
 
 > **Note:** If this is your first time implementing AWS IAM Identity Center, please read [Using SSO](docs/Using-SSO.md).
 
-## Programs
+## 🏗️ Architecture at a Glance
+
+Google Workspace is the **source of truth** and is only ever read, using read-only scopes. AWS IAM
+Identity Center is the replica that gets reconciled, and the S3 state file is a cache that lets the
+sync skip work when nothing upstream has changed.
+
+```mermaid
+flowchart LR
+    EB["⏰ EventBridge<br/>rate(15 minutes)"]
+
+    subgraph AWS["☁️ AWS account"]
+        L["λ idpscim<br/>provided.al2023 · arm64"]
+        SM[("🔐 Secrets Manager")]
+        S3[("🪣 S3<br/>state.json")]
+        IDC["🆔 IAM Identity Center<br/>SCIM 2.0"]
+    end
+
+    GW["🏢 Google Workspace<br/>Directory API"]
+
+    EB -->|invoke| L
+    L -->|read secrets| SM
+    L <-->|state cache| S3
+    L -->|"read-only"| GW
+    L -->|"create / update / delete"| IDC
+```
+
+Every comparison is a hash comparison: each resource kind carries a hash covering only
+Google-owned fields, so a run whose upstream data is unchanged short-circuits without issuing a
+single SCIM write.
+
+🏗️ Full detail, with diagrams of the sync algorithm, reconciliation model and hashing scheme:
+**[Architecture](docs/Architecture.md)**.
+
+## 🧰 Programs
 
 This repository builds two binaries from the `cmd/` directory:
 
@@ -65,9 +120,19 @@ After `make build`, the binaries are available in `build/`:
 ./build/idpscimcli --help
 ```
 
-## Documentation Map
+## 📚 Documentation
 
 The repository documentation is organized as follows:
+
+**Start here**
+
+| Document | Purpose |
+| ------- | ------- |
+| 📘 [docs/User-Manual.md](docs/User-Manual.md) | **Deploying and operating** — prerequisites, setup path, verification, troubleshooting, upgrades |
+| 🏗️ [docs/Architecture.md](docs/Architecture.md) | **How it works** — package topology, sync algorithm, reconciliation, hashing, concurrency, failure modes |
+| 🛠️ [docs/Implementation-Guide.md](docs/Implementation-Guide.md) | **Changing the code** — invariants, adding a synced attribute, testing conventions, state-file compatibility |
+
+**Reference**
 
 | Document | Purpose |
 | ------- | ------- |
@@ -147,7 +212,7 @@ make
   * Pull the image from the [GitHub Container Registry](https://github.com/slashdevops/idp-scim-sync/pkgs/container/idp-scim-sync).
   * Container build and execution details are documented in [docs/idpscim.md](docs/idpscim.md), [docs/idpscimcli.md](docs/idpscimcli.md), and [docs/Development.md](docs/Development.md).
 
-## Configurable User Fields
+## 🎛️ Configurable User Fields
 
 By default, all optional user attributes are synced from Google Workspace to AWS SSO SCIM. You can control which optional fields are included using the `sync_user_fields` configuration option.
 
@@ -168,7 +233,7 @@ For config file examples, environment variable usage, CLI flags, SAM parameter u
 * **Throttling**: With a very large number of users and groups, you may still encounter a `ThrottlingException` from the AWS IAM Identity Center SCIM API. The new member-resolution algorithm (one `members.value` query per user, see [docs/Whats-New.md](docs/Whats-New.md)) is roughly two orders of magnitude lighter than the old brute-force path, but the underlying SCIM endpoint is still rate-limited. This project uses the [httpx](https://github.com/slashdevops/httpx) library with automatic retry and jitter backoff to mitigate this.
 * **User Status**: The Google Workspace API doesn't differentiate between normal and guest users except for their status. This project only syncs `ACTIVE` users.
 
-## For `ssosync` Users
+## 🔀 For `ssosync` Users
 
 If you are coming from the [awslabs/ssosync](https://github.com/awslabs/ssosync) project, please note the following:
 
@@ -176,6 +241,30 @@ If you are coming from the [awslabs/ssosync](https://github.com/awslabs/ssosync)
 * This project only implements filtering for Google Workspace Groups, not Users.
 * This project supports selecting which optional user attributes to sync via `--sync-user-fields` (e.g., phone numbers, addresses, enterprise data).
 * The flag names are different.
+
+## 🤝 Contributing
+
+Contributions are welcome. Before opening a pull request:
+
+* Read [CONTRIBUTING.md](CONTRIBUTING.md) for the DCO sign-off requirement and PR expectations
+* Set up your environment with [docs/Development.md](docs/Development.md)
+* Read [docs/Implementation-Guide.md](docs/Implementation-Guide.md) — it documents the invariants that
+  are easy to break by accident, especially anything touching `internal/model` or the state file
+* Run the local gate:
+
+  ```bash
+  go fix ./... && make go-fmt && make go-betteralign && \
+    golangci-lint run ./... && make build && make test
+  ```
+
+  `golangci-lint` uses the committed [`.golangci.yml`](.golangci.yml) so your results match CI. The
+  baseline is **0 issues**.
+
+> [!IMPORTANT]
+> This project creates, updates and **deletes** real users and groups in a production identity
+> provider. Bug fixes and refactors start with a failing test, and anything that changes sync
+> behaviour, the state-file schema, or hash values needs to be called out explicitly in
+> [docs/Whats-New.md](docs/Whats-New.md).
 
 ## 📄 License
 

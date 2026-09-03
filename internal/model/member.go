@@ -4,7 +4,8 @@ import (
 	"bytes"
 	"encoding/gob"
 	"encoding/json"
-	"sort"
+	"errors"
+	"io"
 
 	"github.com/slashdevops/idp-scim-sync/internal/deepcopy"
 )
@@ -105,7 +106,7 @@ func (mr *MembersResult) UnmarshalBinary(data []byte) error {
 		return err
 	}
 
-	for i := 0; i < mr.Items; i++ {
+	for range mr.Items {
 		var member Member
 		if err := dec.Decode(&member); err != nil {
 			return err
@@ -123,7 +124,7 @@ func (mr *MembersResult) SetHashCode() {
 	// this copy is necessary to avoid changing the original data
 	// with the sort.Slice function and always be consistent
 	// when calculating the hash code
-	c := deepcopy.SliceOfPointers(mr.Resources)
+	c := compactNilPointers(deepcopy.SliceOfPointers(mr.Resources))
 
 	// only these fields are used in the hash calculation
 	copyStruct := &MembersResult{
@@ -131,11 +132,7 @@ func (mr *MembersResult) SetHashCode() {
 		Resources: c,
 	}
 
-	// order the resources by their hash code to be consistency always
-	// NOTE: review this, it may be a performance issue and may not be necessary
-	sort.Slice(copyStruct.Resources, func(i, j int) bool {
-		return copyStruct.Resources[i].IPID < copyStruct.Resources[j].IPID
-	})
+	sortMembersByIPIDForHash(copyStruct.Resources)
 
 	mr.HashCode = Hash(copyStruct)
 }
@@ -182,12 +179,16 @@ func (gm *GroupMembers) UnmarshalBinary(data []byte) error {
 	}
 
 	if err := dec.Decode(&gm.Group); err != nil {
-		if err.Error() != "EOF" {
+		// gob signals "no further value was encoded" with io.EOF, which is the
+		// expected outcome for a value whose optional pointer field was nil at
+		// encode time. Matching on err.Error() == "EOF" missed wrapped errors
+		// and io.ErrUnexpectedEOF.
+		if !errors.Is(err, io.EOF) {
 			return err
 		}
 	}
 
-	for i := 0; i < gm.Items; i++ {
+	for range gm.Items {
 		var member Member
 		if err := dec.Decode(&member); err != nil {
 			return err
@@ -205,7 +206,7 @@ func (gm *GroupMembers) SetHashCode() {
 	// this copy is necessary to avoid changing the original data
 	// with the sort.Slice function and always be consistent
 	// when calculating the hash code
-	c := deepcopy.SliceOfPointers(gm.Resources)
+	c := compactNilPointers(deepcopy.SliceOfPointers(gm.Resources))
 
 	// only these fields are used in the hash calculation
 	copiedStruct := &GroupMembers{
@@ -214,12 +215,7 @@ func (gm *GroupMembers) SetHashCode() {
 		Resources: c,
 	}
 
-	// to order the members of the group we used the email of the members
-	// because this never could be empty and it is unique
-	// NOTE: review this, it may be a performance issue and may not be necessary
-	sort.Slice(copiedStruct.Resources, func(i, j int) bool {
-		return copiedStruct.Resources[i].Email < copiedStruct.Resources[j].Email
-	})
+	sortMembersByEmailForHash(copiedStruct.Resources)
 
 	gm.HashCode = Hash(copiedStruct)
 }
@@ -258,7 +254,7 @@ func (gmr *GroupsMembersResult) UnmarshalBinary(data []byte) error {
 		return err
 	}
 
-	for i := 0; i < gmr.Items; i++ {
+	for range gmr.Items {
 		var group GroupMembers
 		if err := dec.Decode(&group); err != nil {
 			return err
@@ -281,10 +277,20 @@ func (gmr *GroupsMembersResult) MarshalJSON() ([]byte, error) {
 // this method discards fields that are not used in the hash calculation.
 // only fields coming from the Identity Provider are used.
 func (gmr *GroupsMembersResult) SetHashCode() {
-	// this copy is necessary to avoid changing the original data
-	// with the sort.Slice function and always be consistent
-	// when calculating the hash code
-	c := deepcopy.SliceOfPointers(gmr.Resources)
+	// This copy is necessary so that ordering the data for the hash does not
+	// reorder the caller's live data.
+	//
+	// deepcopy.SliceOfPointers copies each *GroupMembers struct, but a struct
+	// copy shares the backing array of its Resources slice. Sorting those
+	// members in place would therefore still mutate the caller, so each entry
+	// gets its own copied member slice below.
+	c := compactNilPointers(deepcopy.SliceOfPointers(gmr.Resources))
+	for _, entry := range c {
+		if entry == nil {
+			continue
+		}
+		entry.Resources = compactNilPointers(deepcopy.SliceOfPointers(entry.Resources))
+	}
 
 	// only these fields are used in the hash calculation
 	copiedStruct := GroupsMembersResult{
@@ -292,12 +298,7 @@ func (gmr *GroupsMembersResult) SetHashCode() {
 		Resources: c,
 	}
 
-	// to order the members of the group we used the email of the members
-	// because this never could be empty and it is unique
-	// NOTE: review this, it may be a performance issue and may not be necessary
-	sort.Slice(copiedStruct.Resources, func(i, j int) bool {
-		return copiedStruct.Resources[i].HashCode < copiedStruct.Resources[j].HashCode
-	})
+	sortGroupsMembersForHash(copiedStruct.Resources)
 
 	gmr.HashCode = Hash(copiedStruct)
 }

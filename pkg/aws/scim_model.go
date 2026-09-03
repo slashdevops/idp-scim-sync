@@ -13,7 +13,7 @@ var (
 	// ErrEmailsTooMany is returned when the emails has more than one entity.
 	ErrEmailsTooMany = errors.New("aws: emails may not be more than 1")
 
-	// ErrEmailsEmpty
+	// ErrEmailsEmpty is returned when the emails list is empty.
 	ErrEmailsEmpty = errors.New("aws: emails may not be empty")
 
 	// ErrFamilyNameEmpty is returned when the family name is empty.
@@ -77,16 +77,22 @@ type Address struct {
 	Country       string `json:"country,omitempty"`
 }
 
+// PhoneNumber represents a SCIM phoneNumbers entry.
 type PhoneNumber struct {
 	Value string `json:"value,omitempty"`
 	Type  string `json:"type,omitempty"`
 }
 
+// Manager represents the manager reference of the SCIM enterprise user
+// extension. Ref is serialised as "$ref".
 type Manager struct {
 	Value string `json:"value,omitempty"`
 	Ref   string `json:"$ref,omitempty"`
 }
 
+// SchemaEnterpriseUser represents the SCIM enterprise user extension
+// (urn:ietf:params:scim:schemas:extension:enterprise:2.0:User) as accepted by
+// the AWS SSO SCIM API.
 type SchemaEnterpriseUser struct {
 	Manager        *Manager `json:"manager,omitempty"`
 	EmployeeNumber string   `json:"employeeNumber,omitempty"`
@@ -252,6 +258,8 @@ type GetUserResponse User
 // CreateUserRequest represent a create user request entity
 type CreateUserRequest User
 
+// Validate reports whether the request satisfies the constraints the AWS SSO
+// SCIM API places on a user.
 func (u *CreateUserRequest) Validate() error {
 	return (*User)(u).Validate()
 }
@@ -259,6 +267,8 @@ func (u *CreateUserRequest) Validate() error {
 // PutUserRequest represent a put user request entity
 type PutUserRequest User
 
+// Validate reports whether the request satisfies the constraints the AWS SSO
+// SCIM API places on a user.
 func (u *PutUserRequest) Validate() error {
 	return (*User)(u).Validate()
 }
@@ -278,6 +288,8 @@ type PatchUserRequest struct {
 	User  User  `json:"user"`
 }
 
+// Validate reports whether the request identifies the user to patch. A patch
+// targets an existing resource, so only the id is required.
 func (u *PatchUserRequest) Validate() error {
 	if u.User.ID == "" {
 		return ErrUserIDEmpty
@@ -332,6 +344,8 @@ type GetGroupResponse Group
 // CreateGroupRequest represent a create group request entity
 type CreateGroupRequest Group
 
+// Validate reports whether the request satisfies the constraints the AWS SSO
+// SCIM API places on a group.
 func (g *CreateGroupRequest) Validate() error {
 	return (*Group)(g).Validate()
 }

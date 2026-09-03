@@ -34,12 +34,10 @@ var (
 // also this extract the id from scim to fill the results
 func MembersOperations(idp, scim *GroupsMembersResult) (create, equal, remove *GroupsMembersResult, err error) {
 	if idp == nil {
-		create, equal, remove, err = nil, nil, nil, ErrIdentityProviderGroupsMembersNil
-		return
+		return nil, nil, nil, ErrIdentityProviderGroupsMembersNil
 	}
 	if scim == nil {
-		create, equal, remove, err = nil, nil, nil, ErrSCIMGroupsMembersNil
-		return
+		return nil, nil, nil, ErrSCIMGroupsMembersNil
 	}
 
 	toCreate, toEqual, toRemove := membersDataSets(idp.Resources, scim.Resources)
@@ -48,7 +46,7 @@ func MembersOperations(idp, scim *GroupsMembersResult) (create, equal, remove *G
 	equal = GroupsMembersResultBuilder().WithResources(toEqual).Build()
 	remove = GroupsMembersResultBuilder().WithResources(toRemove).Build()
 
-	return
+	return create, equal, remove, nil
 }
 
 // GroupsOperations returns the differences between the groups in the
@@ -63,12 +61,10 @@ func MembersOperations(idp, scim *GroupsMembersResult) (create, equal, remove *G
 // also this extract the id from scim to fill the results
 func GroupsOperations(idp, scim *GroupsResult) (create, update, equal, remove *GroupsResult, err error) {
 	if idp == nil {
-		create, update, equal, remove, err = nil, nil, nil, nil, ErrIdentityProviderGroupsNil
-		return
+		return nil, nil, nil, nil, ErrIdentityProviderGroupsNil
 	}
 	if scim == nil {
-		create, update, equal, remove, err = nil, nil, nil, nil, ErrSCIMGroupsNil
-		return
+		return nil, nil, nil, nil, ErrSCIMGroupsNil
 	}
 
 	idpGroups := make(map[string]struct{})
@@ -114,7 +110,7 @@ func GroupsOperations(idp, scim *GroupsResult) (create, update, equal, remove *G
 	equal = GroupsResultBuilder().WithResources(toEqual).Build()
 	remove = GroupsResultBuilder().WithResources(toRemove).Build()
 
-	return
+	return create, update, equal, remove, nil
 }
 
 // UsersOperations returns datasets used to perform different operations over the SCIM side
@@ -125,12 +121,10 @@ func GroupsOperations(idp, scim *GroupsResult) (create, update, equal, remove *G
 // remove: users that exist in "scim" or "state" but not in "idp"
 func UsersOperations(idp, scim *UsersResult) (create, update, equal, remove *UsersResult, err error) {
 	if idp == nil {
-		create, update, equal, remove, err = nil, nil, nil, nil, ErrIdentityProviderUsersNil
-		return
+		return nil, nil, nil, nil, ErrIdentityProviderUsersNil
 	}
 	if scim == nil {
-		create, update, equal, remove, err = nil, nil, nil, nil, ErrSCIMUsersNil
-		return
+		return nil, nil, nil, nil, ErrSCIMUsersNil
 	}
 
 	idpUsers := make(map[string]struct{})
@@ -177,44 +171,40 @@ func UsersOperations(idp, scim *UsersResult) (create, update, equal, remove *Use
 	equal = UsersResultBuilder().WithResources(toEqual).Build()
 	remove = UsersResultBuilder().WithResources(toRemove).Build()
 
-	return
+	return create, update, equal, remove, nil
 }
 
 // MergeGroupsResult merges n GroupsResult result
 // NOTE: this function does not check the content of the GroupsResult, so
 // the return could have duplicated groups
-func MergeGroupsResult(grs ...*GroupsResult) (merged *GroupsResult) {
+func MergeGroupsResult(grs ...*GroupsResult) *GroupsResult {
 	groups := make([]*Group, 0)
 
 	for _, gr := range grs {
 		groups = append(groups, gr.Resources...)
 	}
 
-	merged = GroupsResultBuilder().WithResources(groups).Build()
-
-	return
+	return GroupsResultBuilder().WithResources(groups).Build()
 }
 
 // MergeUsersResult merges n UsersResult result
 // NOTE: this function does not check the content of the UsersResult, so
 // the return could have duplicated users
-func MergeUsersResult(urs ...*UsersResult) (merged *UsersResult) {
+func MergeUsersResult(urs ...*UsersResult) *UsersResult {
 	users := make([]*User, 0)
 
 	for _, u := range urs {
 		users = append(users, u.Resources...)
 	}
 
-	merged = UsersResultBuilder().WithResources(users).Build()
-
-	return
+	return UsersResultBuilder().WithResources(users).Build()
 }
 
 // MergeGroupsMembersResult merges n GroupMembers results.
 // When the same group appears in multiple results (e.g., from "created" and "equal"
 // sets), their members are combined into a single GroupMembers entry to prevent
 // duplicate group entries in the state file.
-func MergeGroupsMembersResult(gms ...*GroupsMembersResult) (merged *GroupsMembersResult) {
+func MergeGroupsMembersResult(gms ...*GroupsMembersResult) *GroupsMembersResult {
 	// Use group name as key to merge members from the same group
 	groupIndex := make(map[string]int) // group name -> index in result slice
 	groupsMembers := make([]*GroupMembers, 0)
@@ -234,9 +224,7 @@ func MergeGroupsMembersResult(gms ...*GroupsMembersResult) (merged *GroupsMember
 		}
 	}
 
-	merged = GroupsMembersResultBuilder().WithResources(groupsMembers).Build()
-
-	return
+	return GroupsMembersResultBuilder().WithResources(groupsMembers).Build()
 }
 
 // UpdateGroupsMembersSCIMID updates the SCIMID of the group in the idp object
@@ -284,9 +272,7 @@ func UpdateGroupsMembersSCIMID(idp *GroupsMembersResult, scimGroups *GroupsResul
 		gms = append(gms, gm)
 	}
 
-	gmr := GroupsMembersResultBuilder().WithResources(gms).Build()
-
-	return gmr
+	return GroupsMembersResultBuilder().WithResources(gms).Build()
 }
 
 // membersDataSets returns the data sets of the members of the groups

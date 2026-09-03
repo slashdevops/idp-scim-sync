@@ -2,13 +2,16 @@ package scim
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
+	"runtime/pprof"
 	"sync"
+
+	"golang.org/x/sync/errgroup"
 
 	"github.com/slashdevops/idp-scim-sync/internal/model"
 	"github.com/slashdevops/idp-scim-sync/pkg/aws"
-	"golang.org/x/sync/errgroup"
 )
 
 // This implement core.SCIMService interface
@@ -52,11 +55,28 @@ type AWSSCIMProvider interface {
 	PatchGroup(ctx context.Context, pgr *aws.PatchGroupRequest) error
 }
 
-// MaxPatchGroupMembersPerRequest is the Maximum members in group members in a single request.
-const MaxPatchGroupMembersPerRequest = 100
+const (
+	// MaxPatchGroupMembersPerRequest is the maximum number of group members
+	// that may be sent in a single SCIM patch request.
+	MaxPatchGroupMembersPerRequest = 100
 
-// ErrSCIMProviderNil is returned when the SCIMProvider is nil
-var ErrSCIMProviderNil = fmt.Errorf("scim: Provider is nil")
+	// patchOpSchema is the SCIM 2.0 schema URN identifying a PatchOp request
+	// body.
+	//
+	// Reference: https://datatracker.ietf.org/doc/html/rfc7644#section-3.5.2
+	patchOpSchema = "urn:ietf:params:scim:api:messages:2.0:PatchOp"
+)
+
+var (
+	// ErrSCIMProviderNil is returned when the SCIMProvider is nil.
+	ErrSCIMProviderNil = errors.New("scim: Provider is nil")
+
+	// ErrGroupsResultNil is returned when the *model.GroupsResult argument is nil.
+	ErrGroupsResultNil = errors.New("scim: groups result is nil")
+
+	// ErrUsersResultNil is returned when the *model.UsersResult argument is nil.
+	ErrUsersResultNil = errors.New("scim: users result is nil")
+)
 
 // Provider represents a SCIM provider
 type Provider struct {
@@ -86,9 +106,9 @@ func NewProvider(scim AWSSCIMProvider, opts ...ProviderOption) (*Provider, error
 }
 
 // WithMaxMembersPerRequest sets the maximum number of members per request.
-func WithMaxMembersPerRequest(max int) ProviderOption {
+func WithMaxMembersPerRequest(n int) ProviderOption {
 	return func(p *Provider) {
-		p.maxMembersPerRequest = max
+		p.maxMembersPerRequest = n
 	}
 }
 
@@ -108,7 +128,6 @@ func (s *Provider) GetGroups(ctx context.Context) (*model.GroupsResult, error) {
 			Build()
 
 		groups[i] = g
-
 	}
 
 	groupsResult := model.GroupsResultBuilder().WithResources(groups).Build()
@@ -120,7 +139,7 @@ func (s *Provider) GetGroups(ctx context.Context) (*model.GroupsResult, error) {
 // processGroups processes a list of groups and applies a function to each group.
 func (s *Provider) processGroups(ctx context.Context, gr *model.GroupsResult, processFunc func(context.Context, *model.Group) (*model.Group, error)) (*model.GroupsResult, error) {
 	if gr == nil {
-		return nil, fmt.Errorf("scim: groups result is nil")
+		return nil, ErrGroupsResultNil
 	}
 
 	processedGroups := make([]*model.Group, 0, len(gr.Resources))
@@ -175,7 +194,7 @@ func (s *Provider) updateGroup(ctx context.Context, group *model.Group) (*model.
 			DisplayName: group.Name,
 		},
 		Patch: aws.Patch{
-			Schemas: []string{"urn:ietf:params:scim:api:messages:2.0:PatchOp"},
+			Schemas: []string{patchOpSchema},
 			Operations: []*aws.Operation{
 				{
 					OP: "replace",
@@ -219,10 +238,16 @@ func (s *Provider) GetUsers(ctx context.Context) (*model.UsersResult, error) {
 		return nil, fmt.Errorf("scim: error listing users: %w", err)
 	}
 
-	users := make([]*model.User, len(usersResponse.Resources))
-	for i, user := range usersResponse.Resources {
+	users := make([]*model.User, 0, len(usersResponse.Resources))
+	for _, user := range usersResponse.Resources {
 		u := buildUser(user)
-		users[i] = u
+		if u == nil {
+			// buildUser rejects records the AWS SCIM API would refuse and logs
+			// the reason. Skip them: a nil element travels on into
+			// reconciliation and hashing, where it is dereferenced.
+			continue
+		}
+		users = append(users, u)
 	}
 
 	usersResult := model.UsersResultBuilder().WithResources(users).Build()
@@ -234,7 +259,7 @@ func (s *Provider) GetUsers(ctx context.Context) (*model.UsersResult, error) {
 // processUsers processes a list of users and applies a function to each user.
 func (s *Provider) processUsers(ctx context.Context, ur *model.UsersResult, processFunc func(context.Context, *model.User) (*model.User, error)) (*model.UsersResult, error) {
 	if ur == nil {
-		return nil, fmt.Errorf("scim: users result is nil")
+		return nil, ErrUsersResultNil
 	}
 
 	processedUsers := make([]*model.User, 0, len(ur.Resources))
@@ -315,6 +340,27 @@ func (s *Provider) deleteUser(ctx context.Context, user *model.User) (*model.Use
 
 type patchValue struct {
 	Value string `json:"value"`
+}
+
+// memberEmail resolves the email to record for a SCIM-side group member.
+//
+// It prefers the address flagged primary, which is the only kind buildUser
+// produces for real AWS responses, and falls back to the first address
+// otherwise so that no data is lost for hand-built or legacy values. It returns
+// the empty string when the user carries no address at all.
+//
+// This replaces a direct user.Emails[0] index, which panicked for AWS SCIM
+// users with "emails": [] — a shape AWS IAM Identity Center does return, and
+// one that permanently wedged the sync because the state file is only written
+// after a successful run.
+func memberEmail(u *model.User) string {
+	if email := u.GetPrimaryEmailAddress(); email != "" {
+		return email
+	}
+	if len(u.Emails) > 0 {
+		return u.Emails[0].Value
+	}
+	return ""
 }
 
 // CreateGroupsMembers creates groups members in SCIM Provider given a list of groups members
@@ -432,26 +478,25 @@ func (s *Provider) patchGroupOperations(op, path string, pvs []patchValue, gms *
 		}
 	}
 
-	if len(chunks) > 0 {
-		for _, chunk := range chunks {
-			patchGroupRequest := &aws.PatchGroupRequest{
-				Group: aws.Group{
-					ID:          gms.Group.SCIMID,
-					DisplayName: gms.Group.Name,
-				},
-				Patch: aws.Patch{
-					Schemas: []string{"urn:ietf:params:scim:api:messages:2.0:PatchOp"},
-					Operations: []*aws.Operation{
-						{
-							OP:    op,
-							Path:  path,
-							Value: chunk,
-						},
+	// chunks is never empty: every branch above appends at least one element.
+	for _, chunk := range chunks {
+		patchGroupRequest := &aws.PatchGroupRequest{
+			Group: aws.Group{
+				ID:          gms.Group.SCIMID,
+				DisplayName: gms.Group.Name,
+			},
+			Patch: aws.Patch{
+				Schemas: []string{patchOpSchema},
+				Operations: []*aws.Operation{
+					{
+						OP:    op,
+						Path:  path,
+						Value: chunk,
 					},
 				},
-			}
-			patchOperations = append(patchOperations, patchGroupRequest)
+			},
 		}
+		patchOperations = append(patchOperations, patchGroupRequest)
 	}
 
 	return patchOperations
@@ -496,9 +541,14 @@ func (s *Provider) GetGroupsMembers(ctx context.Context, gr *model.GroupsResult,
 	var mu sync.Mutex
 
 	for _, user := range ur.Resources {
-		user := user
-
 		g.Go(func() error {
+			// See internal/idp.GetUsersByGroupsMembers for why this is
+			// SetGoroutineLabels rather than pprof.Do.
+			pprof.SetGoroutineLabels(pprof.WithLabels(ctx, pprof.Labels(
+				"sync", "scim-group-members",
+				"user", user.SCIMID,
+			)))
+
 			filter := fmt.Sprintf("members.value eq %q", user.SCIMID)
 
 			cursor := ""
@@ -517,7 +567,7 @@ func (s *Provider) GetGroupsMembers(ctx context.Context, gr *model.GroupsResult,
 					m := model.MemberBuilder().
 						WithIPID(user.IPID).
 						WithSCIMID(user.SCIMID).
-						WithEmail(user.Emails[0].Value).
+						WithEmail(memberEmail(user)).
 						Build()
 
 					if user.Active {

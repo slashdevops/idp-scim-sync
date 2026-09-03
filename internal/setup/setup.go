@@ -12,6 +12,9 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/secretsmanager"
 	"github.com/slashdevops/httpx"
+	"github.com/spf13/viper"
+	"golang.org/x/sync/errgroup"
+
 	"github.com/slashdevops/idp-scim-sync/internal/config"
 	"github.com/slashdevops/idp-scim-sync/internal/core"
 	"github.com/slashdevops/idp-scim-sync/internal/idp"
@@ -21,25 +24,15 @@ import (
 	"github.com/slashdevops/idp-scim-sync/internal/version"
 	"github.com/slashdevops/idp-scim-sync/pkg/aws"
 	"github.com/slashdevops/idp-scim-sync/pkg/google"
-	"github.com/spf13/viper"
 )
 
-// Logger sets up the logger
+// Logger builds a slog.Logger for the given level and format, installs it as
+// the process default, and returns it.
+//
+// Both binaries route through this function so their logging behaviour cannot
+// drift apart.
 func Logger(logLevel, logFormat string) *slog.Logger {
-	var logHandlerOptions *slog.HandlerOptions
-	switch strings.ToLower(logLevel) {
-	case "debug":
-		logHandlerOptions = &slog.HandlerOptions{Level: slog.LevelDebug, AddSource: true}
-	case "info":
-		logHandlerOptions = &slog.HandlerOptions{Level: slog.LevelInfo}
-	case "warn":
-		logHandlerOptions = &slog.HandlerOptions{Level: slog.LevelWarn}
-	case "error":
-		logHandlerOptions = &slog.HandlerOptions{Level: slog.LevelError, AddSource: true}
-	default:
-		slog.Warn("unknown log level, setting it to info", "level", logLevel)
-		logHandlerOptions = &slog.HandlerOptions{Level: slog.LevelInfo}
-	}
+	logHandlerOptions := handlerOptions(logLevel)
 
 	var logHandler slog.Handler
 	switch strings.ToLower(logFormat) {
@@ -56,6 +49,31 @@ func Logger(logLevel, logFormat string) *slog.Logger {
 	slog.SetDefault(logger)
 
 	return logger
+}
+
+// handlerOptions maps a configured log level onto slog handler options.
+//
+// "fatal" and "panic" are accepted because config.Validate has always allowed
+// them — they predate the move from logrus to log/slog, which has no equivalent
+// levels. Rather than silently degrading them to info (which is what the old
+// default branch did, complete with a misleading "unknown log level" warning),
+// they map to slog.LevelError, the closest slog equivalent. Existing
+// deployments configured with either value keep working and now get the
+// severity they asked for.
+func handlerOptions(logLevel string) *slog.HandlerOptions {
+	switch strings.ToLower(logLevel) {
+	case "debug":
+		return &slog.HandlerOptions{Level: slog.LevelDebug, AddSource: true}
+	case "info":
+		return &slog.HandlerOptions{Level: slog.LevelInfo}
+	case "warn":
+		return &slog.HandlerOptions{Level: slog.LevelWarn}
+	case "error", "fatal", "panic":
+		return &slog.HandlerOptions{Level: slog.LevelError, AddSource: true}
+	default:
+		slog.Warn("unknown log level, setting it to info", "level", logLevel)
+		return &slog.HandlerOptions{Level: slog.LevelInfo}
+	}
 }
 
 // Configuration sets up the configuration
@@ -131,11 +149,23 @@ func Configuration(cfg *config.Config) error {
 	return nil
 }
 
-// Secrets sets up the secrets
-func Secrets(cfg *config.Config) error {
+// secretsFetcher reads a secret value by name. It is the subset of
+// aws.SecretsManagerService that Secrets depends on, declared here so the
+// concurrent fetch below can be exercised without an AWS client.
+type secretsFetcher interface {
+	GetSecretValue(ctx context.Context, secretKey string) (string, error)
+}
+
+// Secrets populates the secret-backed fields of cfg from AWS Secrets Manager.
+//
+// ctx governs the whole operation: it is used to load the AWS configuration and
+// is passed through to every secret read, so a Lambda nearing its deadline can
+// actually abandon the requests instead of leaving them running until the
+// runtime freezes the environment.
+func Secrets(ctx context.Context, cfg *config.Config) error {
 	slog.Info("reading secrets from AWS Secrets Manager")
 
-	awsConf, err := aws.NewDefaultConf(context.Background())
+	awsConf, err := aws.NewDefaultConf(ctx)
 	if err != nil {
 		return fmt.Errorf("cannot load aws config: %w", err)
 	}
@@ -147,61 +177,45 @@ func Secrets(cfg *config.Config) error {
 		return fmt.Errorf("cannot create aws secrets manager service: %w", err)
 	}
 
-	// create a channel to receive the results
-	results := make(chan error, 4)
+	return fetchSecrets(ctx, secrets, cfg)
+}
 
-	go func() {
-		slog.Debug("reading secret", "name", cfg.GWSUserEmailSecretName)
-		unwrap, err := secrets.GetSecretValue(context.Background(), cfg.GWSUserEmailSecretName)
-		if err != nil {
-			results <- fmt.Errorf("cannot get secretmanager value: %w", err)
-			return
-		}
-		cfg.GWSUserEmail = unwrap
-		results <- nil
-	}()
-
-	go func() {
-		slog.Debug("reading secret", "name", cfg.GWSServiceAccountFileSecretName)
-		unwrap, err := secrets.GetSecretValue(context.Background(), cfg.GWSServiceAccountFileSecretName)
-		if err != nil {
-			results <- fmt.Errorf("cannot get secretmanager value: %w", err)
-			return
-		}
-		cfg.GWSServiceAccountFile = unwrap
-		results <- nil
-	}()
-
-	go func() {
-		slog.Debug("reading secret", "name", cfg.AWSSCIMAccessTokenSecretName)
-		unwrap, err := secrets.GetSecretValue(context.Background(), cfg.AWSSCIMAccessTokenSecretName)
-		if err != nil {
-			results <- fmt.Errorf("cannot get secretmanager value: %w", err)
-			return
-		}
-		cfg.AWSSCIMAccessToken = unwrap
-		results <- nil
-	}()
-
-	go func() {
-		slog.Debug("reading secret", "name", cfg.AWSSCIMEndpointSecretName)
-		unwrap, err := secrets.GetSecretValue(context.Background(), cfg.AWSSCIMEndpointSecretName)
-		if err != nil {
-			results <- fmt.Errorf("cannot get secretmanager value: %w", err)
-			return
-		}
-		cfg.AWSSCIMEndpoint = unwrap
-		results <- nil
-	}()
-
-	// wait for all the goroutines to finish
-	for range 4 {
-		if err := <-results; err != nil {
-			return err
-		}
+// fetchSecrets reads the four secrets concurrently and assigns each to its
+// field in cfg.
+//
+// The four goroutines write to four distinct fields, so no lock is needed. They
+// share one errgroup context, so the first failure cancels whichever reads are
+// still outstanding rather than letting them run to completion for a result the
+// caller will discard.
+func fetchSecrets(ctx context.Context, secrets secretsFetcher, cfg *config.Config) error {
+	reads := []struct {
+		name string
+		dest *string
+	}{
+		{cfg.GWSUserEmailSecretName, &cfg.GWSUserEmail},
+		{cfg.GWSServiceAccountFileSecretName, &cfg.GWSServiceAccountFile},
+		{cfg.AWSSCIMAccessTokenSecretName, &cfg.AWSSCIMAccessToken},
+		{cfg.AWSSCIMEndpointSecretName, &cfg.AWSSCIMEndpoint},
 	}
 
-	return nil
+	g, ctx := errgroup.WithContext(ctx)
+
+	for _, read := range reads {
+		g.Go(func() error {
+			slog.Debug("reading secret", "name", read.name)
+
+			value, err := secrets.GetSecretValue(ctx, read.name)
+			if err != nil {
+				return fmt.Errorf("cannot get secretmanager value for %q: %w", read.name, err)
+			}
+
+			*read.dest = value
+
+			return nil
+		})
+	}
+
+	return g.Wait()
 }
 
 // SyncService sets up the sync service

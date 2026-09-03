@@ -9,11 +9,12 @@ import (
 	"time"
 
 	"github.com/aws/aws-lambda-go/lambda"
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+
 	"github.com/slashdevops/idp-scim-sync/internal/config"
 	"github.com/slashdevops/idp-scim-sync/internal/setup"
 	"github.com/slashdevops/idp-scim-sync/internal/version"
-	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 var cfg config.Config
@@ -52,7 +53,15 @@ func init() {
 		setup.Logger(cfg.LogLevel, cfg.LogFormat)
 
 		if cfg.IsLambda || cfg.UseSecretsManager {
-			if err := setup.Secrets(&cfg); err != nil {
+			// OnInitialize runs inside cobra's execute(), by which point the
+			// command context is set; fall back to Background defensively so a
+			// future call path cannot pass a nil context down to errgroup.
+			ctx := rootCmd.Context()
+			if ctx == nil {
+				ctx = context.Background()
+			}
+
+			if err := setup.Secrets(ctx, &cfg); err != nil {
 				slog.Error("cannot get secrets", "error", err)
 				os.Exit(1)
 			}
@@ -62,7 +71,7 @@ func init() {
 	rootCmd.PersistentFlags().StringVarP(&cfg.ConfigFile, "config-file", "c", config.DefaultConfigFile, "configuration file")
 	rootCmd.PersistentFlags().BoolVarP(&cfg.Debug, "debug", "d", config.DefaultDebug, "fast way to set the log-level to debug")
 	rootCmd.PersistentFlags().StringVarP(&cfg.LogFormat, "log-format", "f", config.DefaultLogFormat, "set the log format")
-	rootCmd.PersistentFlags().StringVarP(&cfg.LogLevel, "log-level", "l", config.DefaultLogLevel, "set the log level [panic|fatal|error|warn|info|debug|trace]")
+	rootCmd.PersistentFlags().StringVarP(&cfg.LogLevel, "log-level", "l", config.DefaultLogLevel, "set the log level [debug|info|warn|error]; fatal and panic are accepted as aliases for error")
 	rootCmd.PersistentFlags().StringVarP(&cfg.AWSSCIMAccessToken, "aws-scim-access-token", "t", "", "AWS SSO SCIM API Access Token")
 	rootCmd.PersistentFlags().StringVarP(&cfg.AWSSCIMAccessTokenSecretName, "aws-scim-access-token-secret-name", "j", config.DefaultAWSSCIMAccessTokenSecretName, "AWS Secrets Manager secret name for AWS SSO SCIM API Access Token")
 	rootCmd.PersistentFlags().StringVarP(&cfg.AWSSCIMEndpoint, "aws-scim-endpoint", "e", "", "AWS SSO SCIM API Endpoint")

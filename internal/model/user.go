@@ -4,7 +4,10 @@ import (
 	"bytes"
 	"encoding/gob"
 	"encoding/json"
-	"sort"
+	"errors"
+	"io"
+	"slices"
+	"strings"
 
 	"github.com/slashdevops/idp-scim-sync/internal/deepcopy"
 )
@@ -177,6 +180,10 @@ func (a *Address) UnmarshalBinary(data []byte) error {
 	return nil
 }
 
+// PhoneNumber represents a phone number entity.
+//
+// Only the work or home number is carried; see idp.toPhones for the selection
+// rule applied on the way in.
 type PhoneNumber struct {
 	Value string `json:"value,omitempty"`
 	Type  string `json:"type,omitempty"`
@@ -211,6 +218,8 @@ func (pn *PhoneNumber) UnmarshalBinary(data []byte) error {
 	return nil
 }
 
+// Manager represents the manager reference of the SCIM enterprise user
+// extension. Value holds the manager's identifier and Ref the "$ref" link.
 type Manager struct {
 	Value string `json:"value,omitempty"`
 	Ref   string `json:"$ref,omitempty"`
@@ -245,6 +254,12 @@ func (m *Manager) UnmarshalBinary(data []byte) error {
 	return nil
 }
 
+// EnterpriseData represents the SCIM enterprise user extension
+// (urn:ietf:params:scim:schemas:extension:enterprise:2.0:User).
+//
+// It is populated from the user's primary Google Workspace organization, and is
+// synced only when the enterpriseData sync field is enabled. See
+// model.SyncUserFieldEnterpriseData.
 type EnterpriseData struct {
 	Manager        *Manager `json:"manager,omitempty"`
 	EmployeeNumber string   `json:"employeeNumber,omitempty"`
@@ -305,7 +320,11 @@ func (ed *EnterpriseData) UnmarshalBinary(data []byte) error {
 	}
 
 	if err := dec.Decode(&ed.Manager); err != nil {
-		if err.Error() != "EOF" {
+		// gob signals "no further value was encoded" with io.EOF, which is the
+		// expected outcome for a value whose optional pointer field was nil at
+		// encode time. Matching on err.Error() == "EOF" missed wrapped errors
+		// and io.ErrUnexpectedEOF.
+		if !errors.Is(err, io.EOF) {
 			return err
 		}
 	}
@@ -458,14 +477,22 @@ func (u *User) UnmarshalBinary(data []byte) error {
 
 	// when the user has pointer to Name, but the Name is nil, the gob decoder returns an error
 	if err := dec.Decode(&u.Name); err != nil {
-		if err.Error() != "EOF" {
+		// gob signals "no further value was encoded" with io.EOF, which is the
+		// expected outcome for a value whose optional pointer field was nil at
+		// encode time. Matching on err.Error() == "EOF" missed wrapped errors
+		// and io.ErrUnexpectedEOF.
+		if !errors.Is(err, io.EOF) {
 			return err
 		}
 	}
 
 	// when the user has pointer to EnterpriseData, but the Name is nil, the gob decoder returns an error
 	if err := dec.Decode(&u.EnterpriseData); err != nil {
-		if err.Error() != "EOF" {
+		// gob signals "no further value was encoded" with io.EOF, which is the
+		// expected outcome for a value whose optional pointer field was nil at
+		// encode time. Matching on err.Error() == "EOF" missed wrapped errors
+		// and io.ErrUnexpectedEOF.
+		if !errors.Is(err, io.EOF) {
 			return err
 		}
 	}
@@ -494,8 +521,8 @@ func (u *User) GetPrimaryEmailAddress() string {
 		return ""
 	}
 
-	sort.Slice(u.Emails, func(i, j int) bool {
-		return u.Emails[i].Value < u.Emails[j].Value
+	slices.SortStableFunc(u.Emails, func(a, b Email) int {
+		return strings.Compare(a.Value, b.Value)
 	})
 
 	for _, email := range u.Emails {
@@ -540,7 +567,7 @@ func (ur *UsersResult) UnmarshalBinary(data []byte) error {
 		return err
 	}
 
-	for i := 0; i < ur.Items; i++ {
+	for range ur.Items {
 		var u User
 		if err := dec.Decode(&u); err != nil {
 			return err
@@ -567,7 +594,7 @@ func (ur *UsersResult) SetHashCode() {
 	// this copy is necessary to avoid changing the original data
 	// with the sort.Slice function and always be consistent
 	// when calculating the hash code
-	c := deepcopy.SliceOfPointers(ur.Resources)
+	c := compactNilPointers(deepcopy.SliceOfPointers(ur.Resources))
 
 	// only these fields are used in the hash calculation
 	copiedStruct := &UsersResult{
@@ -575,11 +602,7 @@ func (ur *UsersResult) SetHashCode() {
 		Resources: c,
 	}
 
-	// order the resources by their hash code to be consistency always
-	// NOTE: review this, it may be a performance issue and may not be necessary
-	sort.Slice(copiedStruct.Resources, func(i, j int) bool {
-		return copiedStruct.Resources[i].HashCode < copiedStruct.Resources[j].HashCode
-	})
+	sortUsersForHash(copiedStruct.Resources)
 
 	ur.HashCode = Hash(copiedStruct)
 }

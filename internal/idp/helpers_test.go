@@ -5,8 +5,9 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	"github.com/slashdevops/idp-scim-sync/internal/model"
 	admin "google.golang.org/api/admin/directory/v1"
+
+	"github.com/slashdevops/idp-scim-sync/internal/model"
 )
 
 func Test_buildUser(t *testing.T) {

@@ -6,11 +6,12 @@ import (
 	"log/slog"
 	"os"
 
+	"github.com/spf13/cobra"
+	admin "google.golang.org/api/admin/directory/v1"
+
 	"github.com/slashdevops/idp-scim-sync/internal/config"
 	"github.com/slashdevops/idp-scim-sync/internal/version"
 	"github.com/slashdevops/idp-scim-sync/pkg/google"
-	"github.com/spf13/cobra"
-	admin "google.golang.org/api/admin/directory/v1"
 )
 
 // command gws

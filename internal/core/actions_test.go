@@ -6,10 +6,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/slashdevops/idp-scim-sync/internal/model"
-	mocks "github.com/slashdevops/idp-scim-sync/mocks/core"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
+
+	"github.com/slashdevops/idp-scim-sync/internal/model"
+	mocks "github.com/slashdevops/idp-scim-sync/mocks/core"
 )
 
 func emptyGroupsResult() *model.GroupsResult {

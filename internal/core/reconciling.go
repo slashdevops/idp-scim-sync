@@ -2,6 +2,7 @@ package core
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 
@@ -10,28 +11,28 @@ import (
 
 var (
 	// ErrCreateGroupsResultNil is returned when the create *model.GroupsResult argument is nil
-	ErrCreateGroupsResultNil = fmt.Errorf("create Groups Result is nil")
+	ErrCreateGroupsResultNil = errors.New("create Groups Result is nil")
 
 	// ErrUpdateGroupsResultNil is returned when the update *model.GroupsResult argument is nil
-	ErrUpdateGroupsResultNil = fmt.Errorf("update Groups Result is nil")
+	ErrUpdateGroupsResultNil = errors.New("update Groups Result is nil")
 
 	// ErrDeleteGroupsResultNil is returned when the delete *model.GroupsResult argument is nil
-	ErrDeleteGroupsResultNil = fmt.Errorf("delete Groups Result is nil")
+	ErrDeleteGroupsResultNil = errors.New("delete Groups Result is nil")
 
 	// ErrCreateUsersResultNil is returned when the create *model.UsersResult argument is nil
-	ErrCreateUsersResultNil = fmt.Errorf("create Users Result is nil")
+	ErrCreateUsersResultNil = errors.New("create Users Result is nil")
 
 	// ErrUpdateUsersResultNil is returned when the update *model.UsersResult argument is nil
-	ErrUpdateUsersResultNil = fmt.Errorf("update Users Result is nil")
+	ErrUpdateUsersResultNil = errors.New("update Users Result is nil")
 
 	// ErrDeleteUsersResultNil is returned when the delete *model.UsersResult argument is nil
-	ErrDeleteUsersResultNil = fmt.Errorf("remove Users Result is nil")
+	ErrDeleteUsersResultNil = errors.New("remove Users Result is nil")
 
 	// ErrCreateGroupsMembersResultNil is returned when the SCIM *model.GroupsMembersResult argument is nil
-	ErrCreateGroupsMembersResultNil = fmt.Errorf("create Groups Members Result is nil")
+	ErrCreateGroupsMembersResultNil = errors.New("create Groups Members Result is nil")
 
 	// ErrDeleteGroupsMembersResultNil is returned when the SCIM *model.GroupsMembersResult argument is nil
-	ErrDeleteGroupsMembersResultNil = fmt.Errorf("remove Groups Members Result is nil")
+	ErrDeleteGroupsMembersResultNil = errors.New("remove Groups Members Result is nil")
 )
 
 // reconcilingGroups creates, update and removes from groups in SCIM service
@@ -41,7 +42,7 @@ func reconcilingGroups(
 	ctx context.Context,
 	scim SCIMService,
 	create, update, remove *model.GroupsResult,
-) (created, updated *model.GroupsResult, e error) {
+) (*model.GroupsResult, *model.GroupsResult, error) {
 	if scim == nil {
 		return nil, nil, ErrSCIMServiceNil
 	}
@@ -55,7 +56,10 @@ func reconcilingGroups(
 		return nil, nil, ErrDeleteGroupsResultNil
 	}
 
-	var err error
+	var (
+		created, updated *model.GroupsResult
+		err              error
+	)
 
 	if create.Items == 0 {
 		slog.Info("no groups to be create")
@@ -88,7 +92,7 @@ func reconcilingGroups(
 		}
 	}
 
-	return
+	return created, updated, nil
 }
 
 // reconcilingUsers creates, updates and removes users in SCIM provider
@@ -99,7 +103,7 @@ func reconcilingUsers(
 	scim SCIMService,
 	create, update,
 	remove *model.UsersResult,
-) (created, updated *model.UsersResult, e error) {
+) (*model.UsersResult, *model.UsersResult, error) {
 	if scim == nil {
 		return nil, nil, ErrSCIMServiceNil
 	}
@@ -113,7 +117,10 @@ func reconcilingUsers(
 		return nil, nil, ErrDeleteUsersResultNil
 	}
 
-	var err error
+	var (
+		created, updated *model.UsersResult
+		err              error
+	)
 
 	if create.Items == 0 {
 		slog.Info("no users to be created")
@@ -146,7 +153,7 @@ func reconcilingUsers(
 		}
 	}
 
-	return
+	return created, updated, nil
 }
 
 // reconcilingGroupsMembers creates and removes the members of the groups in SCIM provider
@@ -156,7 +163,7 @@ func reconcilingGroupsMembers(
 	ctx context.Context,
 	scim SCIMService, create,
 	remove *model.GroupsMembersResult,
-) (created *model.GroupsMembersResult, e error) {
+) (*model.GroupsMembersResult, error) {
 	if scim == nil {
 		return nil, ErrSCIMServiceNil
 	}
@@ -167,7 +174,10 @@ func reconcilingGroupsMembers(
 		return nil, ErrDeleteGroupsMembersResultNil
 	}
 
-	var err error
+	var (
+		created *model.GroupsMembersResult
+		err     error
+	)
 
 	if create.Items == 0 {
 		slog.Info("no users to be joined to groups")
@@ -189,5 +199,5 @@ func reconcilingGroupsMembers(
 		}
 	}
 
-	return
+	return created, nil
 }

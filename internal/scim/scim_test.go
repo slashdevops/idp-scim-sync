@@ -11,10 +11,11 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
+	"go.uber.org/mock/gomock"
+
 	"github.com/slashdevops/idp-scim-sync/internal/model"
 	mock_scim "github.com/slashdevops/idp-scim-sync/mocks/scim"
 	"github.com/slashdevops/idp-scim-sync/pkg/aws"
-	"go.uber.org/mock/gomock"
 )
 
 // patchValueGenerator helper function to generate test data for patch operations
@@ -1536,8 +1537,8 @@ func TestProvider_GetGroupsMembers(t *testing.T) {
 					m.EXPECT().
 						ListGroupsWithCursor(gomock.Any(), `members.value eq "u1"`, "").
 						Return(&aws.ListGroupsResponse{
-							ListResponse: aws.ListResponse{NextCursor: "cursor-2"},
-							Resources:    []*aws.Group{{ID: "g1", DisplayName: "group1"}},
+							NextCursor: "cursor-2",
+							Resources:  []*aws.Group{{ID: "g1", DisplayName: "group1"}},
 						}, nil),
 					m.EXPECT().
 						ListGroupsWithCursor(gomock.Any(), `members.value eq "u1"`, "cursor-2").
