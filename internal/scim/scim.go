@@ -496,7 +496,6 @@ func (s *Provider) GetGroupsMembers(ctx context.Context, gr *model.GroupsResult,
 	var mu sync.Mutex
 
 	for _, user := range ur.Resources {
-		user := user
 
 		g.Go(func() error {
 			filter := fmt.Sprintf("members.value eq %q", user.SCIMID)
