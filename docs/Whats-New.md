@@ -6,7 +6,7 @@ This document tracks notable changes, new features, and bug fixes across release
 
 ### Go 1.27.1 and httpx v0.0.5
 
-The module now declares `go 1.27.1` (from 1.26.5) and depends on `github.com/slashdevops/httpx` v0.0.5, the release in which httpx itself moved from Go 1.22 to 1.27. `go fix` applied its 1.27 rewrite in one test file; no runtime behaviour change. Building from source now requires Go 1.27 or later.
+The module now declares `go 1.27.1` (from 1.26.5) and depends on `github.com/slashdevops/httpx` v0.0.5, the release in which httpx itself moved from Go 1.22 to 1.27. `go fix` applied its 1.27 rewrite in one test file; no runtime behaviour change. `google.golang.org/grpc` (indirect) moved to v1.84.0, which clears [GO-2026-6348](https://pkg.go.dev/vuln/GO-2026-6348) — `govulncheck` was failing CI on `main` for it. Building from source now requires Go 1.27 or later.
 
 ### Template housekeeping: remove dead/misleading IAM grants and standardize on `${AWS::Partition}`
 
