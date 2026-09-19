@@ -89,8 +89,8 @@ github.com/rogpeppe/go-internal v1.14.1/go.mod h1:MaRKkUm5W0goXpeCfT7UZI6fk/L7L7
 github.com/russross/blackfriday/v2 v2.1.0/go.mod h1:+Rmxgy9KzJVeS9/2gXHxylqXiyQDYRxCVz55jmeOWTM=
 github.com/sagikazarmark/locafero v0.12.0 h1:/NQhBAkUb4+fH1jivKHWusDYFjMOOKU88eegjfxfHb4=
 github.com/sagikazarmark/locafero v0.12.0/go.mod h1:sZh36u/YSZ918v0Io+U9ogLYQJ9tLLBmM4eneO6WwsI=
-github.com/slashdevops/httpx v0.0.4 h1:XhwMl9asfiPSqBaTv4wNjwFus6RFfgsEffl33BZazK4=
-github.com/slashdevops/httpx v0.0.4/go.mod h1:RIXp0/ylq/BqDlPo8glvay29Nr6zHw6jbExJneLYXKQ=
+github.com/slashdevops/httpx v0.0.5 h1:luTWEX6UvmMcG10J8CrnqsRQR6/SdeoPlHVZSCVSkyY=
+github.com/slashdevops/httpx v0.0.5/go.mod h1:xu6LscPtsKYePySTE5pC8FUcAQa9XTR4QqO6MV0KDpk=
 github.com/spf13/afero v1.15.0 h1:b/YBCLWAJdFWJTN9cLhiXXcD7mzKn9Dm86dNnfyQw1I=
 github.com/spf13/afero v1.15.0/go.mod h1:NC2ByUVxtQs4b3sIUphxK0NioZnmxgyCrfzeuq8lxMg=
 github.com/spf13/cast v1.10.0 h1:h2x0u2shc1QuLHfxi+cTJvs30+ZAHOGRic8uyGTDWxY=

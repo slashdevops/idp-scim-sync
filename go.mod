@@ -1,6 +1,6 @@
 module github.com/slashdevops/idp-scim-sync
 
-go 1.26.5
+go 1.27.1
 
 require (
 	github.com/aws/aws-lambda-go v1.54.0
@@ -10,7 +10,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.107.0
 	github.com/aws/aws-sdk-go-v2/service/secretsmanager v1.44.4
 	github.com/google/go-cmp v0.7.0
-	github.com/slashdevops/httpx v0.0.4
+	github.com/slashdevops/httpx v0.0.5
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/viper v1.21.0
 	github.com/stretchr/testify v1.11.1

@@ -9,7 +9,7 @@ Follows these guidelines precisely to ensure consistency and maintainability of 
 
 ## Stack
 
-- Language: Go (Go 1.26+)
+- Language: Go (Go 1.27+)
 - Framework: Go standard library
 - Testing: Go's built-in testing package
 - Build Tool: `make` using the Makefile with all the targets defined to build, test, and run the application
@@ -38,7 +38,7 @@ Follows these guidelines precisely to ensure consistency and maintainability of 
 Prefer the Make targets that the repo already defines after making changes:
 
 ```bash
-go fix ./...            # Optional manual step for Go 1.26+ syntax
+go fix ./...            # Optional manual step for Go 1.27+ syntax
 make go-fmt             # Format code
 make go-betteralign     # Align struct fields for optimal memory layout
 golangci-lint run ./... # Run linter (also checks formatting, vet, and other issues)
