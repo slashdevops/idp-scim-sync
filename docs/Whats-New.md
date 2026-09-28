@@ -4,7 +4,7 @@ This document tracks notable changes, new features, and bug fixes across release
 
 ## Unreleased
 
-### Go 1.27, dependency refresh, three crash fixes, and new architecture documentation (targeting `v0.46.0`, minor)
+### Go 1.27.1, dependency refresh, three crash fixes, and new architecture documentation (targeting `v0.46.0`, minor)
 
 > [!IMPORTANT]
 > This release fixes three crash paths that could **permanently stall the sync**, and changes the
@@ -43,7 +43,7 @@ entry could block all synchronization indefinitely, with no self-recovery.
   recursion was unbounded. Both now retry exactly once — which is what their comments always
   described — and return the new `ErrConflictUnresolved` afterwards.
 
-#### ⬆️ Go 1.27
+#### ⬆️ Go 1.27.1
 
 The `go` directive moves from `1.26.5` to `1.27.0`. No workflow changes were needed: every CI job
 already resolves the toolchain from `go.mod`.
@@ -274,6 +274,9 @@ does not validate the credential configuration, and here the service-account JSO
 Secrets Manager unvalidated. It carries a documented `TODO` and is deliberately deferred to its own
 change: it is the Lambda's authentication path and needs separate tests plus a manual run against a
 real Google Workspace tenant.
+### Go 1.27.1 and httpx v0.0.5
+
+The module now declares `go 1.27.1` (from 1.26.5) and depends on `github.com/slashdevops/httpx` v0.0.5, the release in which httpx itself moved from Go 1.22 to 1.27. `go fix` applied its 1.27 rewrite in one test file; no runtime behaviour change. `google.golang.org/grpc` (indirect) moved to v1.84.0, which clears [GO-2026-6348](https://pkg.go.dev/vuln/GO-2026-6348) — `govulncheck` was failing CI on `main` for it. Building from source now requires Go 1.27 or later.
 
 ### Template housekeeping: remove dead/misleading IAM grants and standardize on `${AWS::Partition}`
 
