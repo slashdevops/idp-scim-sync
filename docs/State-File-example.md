@@ -18,6 +18,64 @@ The JSON representation contains:
 
 The current schema version in the codebase is `1.0.0`.
 
+## How Change Detection Works
+
+Every comparison the sync makes is a **hash comparison**, and understanding which fields participate
+explains most of the system's behaviour.
+
+Each `groups`, `users` and `groupsMembers` container carries its own `hashCode`. On each run the
+identity provider's hash for a container is compared against the state's hash for the same container
+([`internal/core/actions.go`](../internal/core/actions.go)). If they match, that entire resource kind
+is skipped — no SCIM API calls at all. The three comparisons are independent, so users can be skipped
+while groups are reconciled.
+
+### What is hashed
+
+Hashes are SHA-256 over a **`gob`** encoding, not over the JSON you see in the file. Each type in
+`internal/model` hand-writes a `MarshalBinary` method that decides exactly which fields participate.
+
+| Field | In the hash? | Why |
+| --- | --- | --- |
+| `ipid` | ✅ yes | The identity provider's own identifier |
+| `name`, `email`, `userName`, `displayName`, … | ✅ yes | Identity-provider-owned attributes |
+| `emails`, `addresses`, `phoneNumbers`, `enterpriseData` | ✅ yes | Synced attributes |
+| `scimid` | ❌ **no** | Assigned by AWS, not the identity provider. Including it would make every first-run comparison differ, so nothing would ever be seen as unchanged. |
+| `hashCode` | ❌ no | It is the output |
+| `lastSync`, `codeVersion` | ❌ no | Metadata; a new run must not look like a data change |
+
+### Ordering
+
+Container hashes are computed over a **sorted copy** of their resources, so the hash does not depend
+on the order elements arrived in. This matters because the identity-provider fan-outs build their
+slices from maps, whose iteration order is randomised. Sorting uses `slices.SortStableFunc`, so
+resources sharing a sort key keep a fixed relative order.
+
+> [!NOTE]
+> The **top-level** `hashCode` is written but never read back — only the three container hashes drive
+> decisions. It is currently order-dependent, so it can differ between two runs over identical data.
+> Don't use it as an external change indicator.
+
+### Why this file is not a stable contract
+
+The `MarshalBinary` methods are effectively a wire format. Changing field order, adding a hashed
+field, or removing one changes **every** hash, which invalidates every deployed state file and causes
+a one-off full re-sync. [`golden_hash_test.go`](../internal/model/golden_hash_test.go) pins the
+current values so this cannot happen by accident, and releases that do change them say so in
+[Whats-New.md](Whats-New.md).
+
+## Deleting The State File Is Safe
+
+The state file is a **cache, not a ledger**. If it is missing, empty or corrupt, delete it and let the
+next run rebuild it — both `NoSuchKey` and an empty object are treated as "first run", not as errors.
+
+On that first run the sync reconciles against the live SCIM provider instead of the state, and
+**adopts** what is already there rather than recreating it: groups are matched by name, users by
+primary email address, and only `externalId` is updated. That is the standard recovery procedure for
+state corruption, and it is also why migrating from a different sync tool does not delete and
+recreate every user.
+
+The cost is one slower run that enumerates the SCIM population.
+
 ## Storage Location
 
 The exact object key depends on how you deploy the application:
@@ -124,7 +182,10 @@ In both cases, the object is stored in the configured S3 state bucket.
 
 ## Related Documentation
 
-* [README.md](../README.md)
-* [Configuration.md](Configuration.md)
+* [Architecture.md](Architecture.md) — the sync algorithm and the hashing scheme in full
+* [Implementation-Guide.md](Implementation-Guide.md) — state-file compatibility rules for contributors
+* [Configuration.md](Configuration.md) — `aws_s3_bucket_name` and `aws_s3_bucket_key`
+* [User-Manual.md](User-Manual.md) — inspecting and recovering the state file
 * [AWS-SAM.md](AWS-SAM.md)
 * [Demo.md](Demo.md)
+* [README.md](../README.md)

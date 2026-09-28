@@ -8,11 +8,13 @@ import (
 	"testing"
 
 	"github.com/aws/aws-sdk-go-v2/service/s3"
-	"github.com/slashdevops/idp-scim-sync/internal/model"
 	"go.uber.org/mock/gomock"
 
-	mocks "github.com/slashdevops/idp-scim-sync/mocks/repository"
+	"github.com/slashdevops/idp-scim-sync/internal/model"
+
 	"github.com/stretchr/testify/assert"
+
+	mocks "github.com/slashdevops/idp-scim-sync/mocks/repository"
 )
 
 func TestNewS3Repository(t *testing.T) {

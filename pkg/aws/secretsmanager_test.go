@@ -8,9 +8,10 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/secretsmanager"
-	mocks "github.com/slashdevops/idp-scim-sync/mocks/aws"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
+
+	mocks "github.com/slashdevops/idp-scim-sync/mocks/aws"
 )
 
 func TestNewSecretsManagerService(t *testing.T) {

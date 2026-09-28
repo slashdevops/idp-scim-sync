@@ -70,6 +70,28 @@ Important notes:
 * `use_secrets_manager=true` tells the program to resolve credential values from AWS Secrets Manager using the configured secret names
 * The code default for `aws_s3_bucket_key` is `state.json`, while the AWS SAM template overrides it to `data/state.json` unless you change the template parameter
 
+### Log levels
+
+`log_level` accepts:
+
+| Value | Effect |
+| --- | --- |
+| `debug` | Everything, including source locations. Very verbose on large directories. |
+| `info` | Default. Sync progress and summary counts. |
+| `warn` | Skipped records and reconciliation warnings only. |
+| `error` | Failures only, with source locations. |
+| `fatal`, `panic` | Accepted as aliases for `error`. |
+
+`fatal` and `panic` predate the move from `logrus` to the standard library's `log/slog`, which has no
+equivalent levels. They are still accepted so existing deployments keep working, and they now map to
+`error` — previously they fell through to `info` while logging a misleading "unknown log level"
+warning. Any other value falls back to `info` with a warning.
+
+`log_format` accepts `text` (default) or `json`. Use `json` in Lambda so CloudWatch Logs Insights can
+query the structured fields.
+
+Setting `debug: true` (or `--debug`/`-d`) is a shortcut that forces `log_level` to `debug`.
+
 ## Config File Example
 
 For local usage, place `.idpscim.yaml` in your home directory, the current working directory, or point to a file explicitly with `--config-file`.

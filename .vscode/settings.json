@@ -1,4 +1,5 @@
 {
+  "go.buildTags": "integration,unit",
   "cSpell.words": [
     "AKIAIOSFODNN",
     "amzn",

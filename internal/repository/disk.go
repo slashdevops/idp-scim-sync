@@ -71,9 +71,13 @@ func (e *ErrStateFileEmpty) Error() string {
 	return fmt.Sprintf("%s: %s", e.ErrorCode(), e.ErrorMessage())
 }
 
+// ErrorMessage returns the human-readable detail of the error.
 func (e *ErrStateFileEmpty) ErrorMessage() string {
 	return e.Message
 }
+
+// ErrorCode returns the stable identifier for this error kind, so callers can
+// branch on it without matching on message text.
 func (e *ErrStateFileEmpty) ErrorCode() string { return "ErrStateFileEmpty" }
 
 // ErrReadingStateFile indicates an error occurred while reading the state file.
@@ -85,9 +89,13 @@ func (e *ErrReadingStateFile) Error() string {
 	return fmt.Sprintf("%s: %s", e.ErrorCode(), e.ErrorMessage())
 }
 
+// ErrorMessage returns the human-readable detail of the error.
 func (e *ErrReadingStateFile) ErrorMessage() string {
 	return e.Message
 }
+
+// ErrorCode returns the stable identifier for this error kind, so callers can
+// branch on it without matching on message text.
 func (e *ErrReadingStateFile) ErrorCode() string { return "ErrReadingStateFile" }
 
 // ErrStateFileNil indicates that the state file is nil.
@@ -99,7 +107,11 @@ func (e *ErrStateFileNil) Error() string {
 	return fmt.Sprintf("%s: %s", e.ErrorCode(), e.ErrorMessage())
 }
 
+// ErrorMessage returns the human-readable detail of the error.
 func (e *ErrStateFileNil) ErrorMessage() string {
 	return e.Message
 }
+
+// ErrorCode returns the stable identifier for this error kind, so callers can
+// branch on it without matching on message text.
 func (e *ErrStateFileNil) ErrorCode() string { return "ErrStateFileNil" }

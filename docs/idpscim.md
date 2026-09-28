@@ -24,46 +24,55 @@ For the full configuration model, see [Configuration.md](Configuration.md).
 
 ## Key Flags
 
-The current `idpscim --help` surface is summarized below.
+The tables below mirror `idpscim --help`, including defaults.
 
 ### General And Logging
 
-| Flag | Purpose |
-| --- | --- |
-| `--config-file`, `-c` | Path to the configuration file |
-| `--debug`, `-d` | Shortcut to force debug logging |
-| `--log-format`, `-f` | Log output format |
-| `--log-level`, `-l` | Log verbosity |
-| `--version`, `-v` | Show version information |
+| Flag | Purpose | Default |
+| --- | --- | --- |
+| `--config-file`, `-c` | Path to the configuration file | `.idpscim.yaml` |
+| `--debug`, `-d` | Shortcut to force debug logging | `false` |
+| `--log-format`, `-f` | Log output format: `text` or `json` | `text` |
+| `--log-level`, `-l` | Log verbosity: `debug`, `info`, `warn`, `error`. `fatal` and `panic` are accepted as aliases for `error`. | `info` |
+| `--version`, `-v` | Show version information | — |
+| `--help`, `-h` | Show help | — |
+
+Use `--log-format json` in Lambda so CloudWatch Logs Insights can query the structured fields. See
+[Configuration.md](Configuration.md#log-levels) for the full log-level semantics.
 
 ### Google Workspace Input
 
-| Flag | Purpose |
-| --- | --- |
-| `--gws-service-account-file`, `-s` | Path to the Google Workspace service account JSON |
-| `--gws-user-email`, `-u` | Delegated Google Workspace user email |
-| `--gws-groups-filter`, `-q` | One or more filters that restrict which groups are synchronized |
-| `--gws-service-account-file-secret-name`, `-o` | Secret name used when resolving the service account JSON from AWS Secrets Manager |
-| `--gws-user-email-secret-name`, `-p` | Secret name used when resolving the delegated user email from AWS Secrets Manager |
+| Flag | Purpose | Default |
+| --- | --- | --- |
+| `--gws-service-account-file`, `-s` | Path to the Google Workspace service account JSON. In Lambda this holds the JSON *content*, resolved from Secrets Manager, not a path. | `credentials.json` |
+| `--gws-user-email`, `-u` | Delegated Google Workspace user email | — |
+| `--gws-groups-filter`, `-q` | One or more filters that restrict which groups are synchronized. Repeatable. | `[""]` (all groups) |
+| `--gws-service-account-file-secret-name`, `-o` | Secret name used when resolving the service account JSON from AWS Secrets Manager | `IDPSCIM_GWSServiceAccountFile` |
+| `--gws-user-email-secret-name`, `-p` | Secret name used when resolving the delegated user email from AWS Secrets Manager | `IDPSCIM_GWSUserEmail` |
 
 ### AWS SCIM And State Storage
 
-| Flag | Purpose |
-| --- | --- |
-| `--aws-scim-endpoint`, `-e` | AWS IAM Identity Center SCIM endpoint |
-| `--aws-scim-access-token`, `-t` | AWS IAM Identity Center SCIM access token |
-| `--aws-scim-endpoint-secret-name`, `-n` | Secret name used when resolving the SCIM endpoint from AWS Secrets Manager |
-| `--aws-scim-access-token-secret-name`, `-j` | Secret name used when resolving the SCIM token from AWS Secrets Manager |
-| `--aws-s3-bucket-name`, `-b` | S3 bucket used to store the sync state |
-| `--aws-s3-bucket-key`, `-k` | S3 object key used for the sync state |
-| `--use-secrets-manager`, `-g` | Tell the program to load values from AWS Secrets Manager |
+| Flag | Purpose | Default |
+| --- | --- | --- |
+| `--aws-scim-endpoint`, `-e` | AWS IAM Identity Center SCIM endpoint | — |
+| `--aws-scim-access-token`, `-t` | AWS IAM Identity Center SCIM access token | — |
+| `--aws-scim-endpoint-secret-name`, `-n` | Secret name used when resolving the SCIM endpoint from AWS Secrets Manager | `IDPSCIM_SCIMEndpoint` |
+| `--aws-scim-access-token-secret-name`, `-j` | Secret name used when resolving the SCIM token from AWS Secrets Manager | `IDPSCIM_SCIMAccessToken` |
+| `--aws-s3-bucket-name`, `-b` | S3 bucket used to store the sync state | — |
+| `--aws-s3-bucket-key`, `-k` | S3 object key used for the sync state. The AWS SAM template overrides this to `data/state.json`. | `state.json` |
+| `--use-secrets-manager`, `-g` | Load credential values from AWS Secrets Manager | `false` |
 
 ### Sync Behavior
 
-| Flag | Purpose |
-| --- | --- |
-| `--sync-method`, `-m` | Sync strategy. The implemented value is `groups` |
-| `--sync-user-fields` | Optional user fields to synchronize |
+| Flag | Purpose | Default |
+| --- | --- | --- |
+| `--sync-method`, `-m` | Sync strategy. The only implemented value is `groups`. | `groups` |
+| `--sync-user-fields` | Optional user attributes to synchronize. Empty means **all** of them. No shorthand. | *(empty — all fields)* |
+
+Valid `--sync-user-fields` values: `phoneNumbers`, `addresses`, `title`, `preferredLanguage`,
+`locale`, `timezone`, `nickName`, `profileURL`, `userType`, `enterpriseData`. Narrowing the set also
+narrows what is requested from the Google API. Changing it changes user hashes, so the next run
+updates every user once.
 
 ## Example Local Run
 
@@ -77,7 +86,7 @@ Run the program with direct credentials and a state bucket:
 
 ```bash
 ./build/idpscim \
-  --gws-service-account-file credentials.json \
+  --gws-service-account-file "$HOME/.config/idpscim/credentials.json" \
   --gws-user-email admin@example.com \
   --gws-groups-filter 'name:AWS*' \
   --aws-scim-endpoint https://example.awsapps.com/scim/v2/ \
@@ -87,6 +96,12 @@ Run the program with direct credentials and a state bucket:
   --sync-method groups \
   --sync-user-fields phoneNumbers,addresses,enterpriseData
 ```
+
+> [!CAUTION]
+> Keep the service-account JSON **outside the repository**. The default value is `credentials.json`,
+> which resolves to the current working directory — convenient, but it puts a private key in a
+> directory that gets archived and shared. In production the file is not used at all: the JSON is
+> resolved from AWS Secrets Manager.
 
 If you prefer to resolve secrets at runtime, provide the secret names and add `--use-secrets-manager`.
 

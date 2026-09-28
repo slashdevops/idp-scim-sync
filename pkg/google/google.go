@@ -2,18 +2,22 @@ package google
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
+	"runtime/pprof"
 	"strings"
 	"sync"
 
-	"github.com/slashdevops/idp-scim-sync/internal/model"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
+	"golang.org/x/sync/errgroup"
 	admin "google.golang.org/api/admin/directory/v1"
 	"google.golang.org/api/googleapi"
 	"google.golang.org/api/option"
+
+	"github.com/slashdevops/idp-scim-sync/internal/model"
 )
 
 const (
@@ -34,25 +38,25 @@ const (
 
 var (
 	// ErrGoogleClientScopeNil is returned when the scope is nil.
-	ErrGoogleClientScopeNil = fmt.Errorf("google: google client scope is required")
+	ErrGoogleClientScopeNil = errors.New("google: google client scope is required")
 
 	// ErrUserIDNil is returned when the user ID is nil.
-	ErrUserIDNil = fmt.Errorf("google: user id is required")
+	ErrUserIDNil = errors.New("google: user id is required")
 
 	// ErrUserEmailNil is returned when the user email is nil.
-	ErrUserEmailNil = fmt.Errorf("google: user email is required")
+	ErrUserEmailNil = errors.New("google: user email is required")
 
 	// ErrGroupIDNil is returned when the group ID is nil.
-	ErrGroupIDNil = fmt.Errorf("google: group id is required")
+	ErrGroupIDNil = errors.New("google: group id is required")
 
 	// ErrServiceAccountNil is returned when the service account credentials are nil.
-	ErrServiceAccountNil = fmt.Errorf("google: service account credentials are required")
+	ErrServiceAccountNil = errors.New("google: service account credentials are required")
 
 	// ErrUserAgentNil is returned when the user agent is nil.
-	ErrUserAgentNil = fmt.Errorf("google: user agent is required")
+	ErrUserAgentNil = errors.New("google: user agent is required")
 
 	// ErrGoogleClientNil is returned when the google client is nil.
-	ErrGoogleClientNil = fmt.Errorf("google: google client is required")
+	ErrGoogleClientNil = errors.New("google: google client is required")
 )
 
 // DirectoryService represent the  Google Directory API client.
@@ -62,6 +66,12 @@ type DirectoryService struct {
 	getUsersRequiredFields  googleapi.Field
 }
 
+// DirectoryServiceConfig carries everything NewService needs to build an
+// authenticated Google Directory API client.
+//
+// All fields are required. ServiceAccount holds the raw service-account JSON
+// (not a path), and UserEmail is the Workspace admin the service account
+// impersonates via domain-wide delegation.
 type DirectoryServiceConfig struct {
 	Client         *http.Client
 	UserEmail      string
@@ -98,12 +108,27 @@ func NewService(ctx context.Context, config DirectoryServiceConfig) (*admin.Serv
 		return nil, ErrUserAgentNil
 	}
 
+	// TODO(#go-1.27-modernization): migrate off CredentialsFromJSONWithParams.
+	//
+	// It is deprecated for a security reason — it does not validate the
+	// credential configuration — and here the service-account JSON arrives at
+	// runtime from AWS Secrets Manager (or a file on disk for local runs) and is
+	// never validated before use. The replacement is
+	// cloud.google.com/go/auth/credentials.DetectDefault with CredentialsOptions,
+	// or CredentialsFromJSON plus explicit up-front validation of type,
+	// client_email and private_key.
+	//
+	// Deliberately not changed in this pass: this is the authentication path of
+	// a production Lambda, so it needs its own change, its own tests, and a
+	// manual run against a real Google Workspace tenant. Tracked as finding D1.
+	//
+	//nolint:staticcheck // SA1019: see the TODO above; migration is scheduled separately.
 	creds, err := google.CredentialsFromJSONWithParams(ctx, config.ServiceAccount, google.CredentialsParams{
 		Scopes:  config.Scopes,
 		Subject: config.UserEmail,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("google: %v", err)
+		return nil, fmt.Errorf("google: %w", err)
 	}
 
 	config.Client.Transport = &oauth2.Transport{
@@ -117,7 +142,7 @@ func NewService(ctx context.Context, config DirectoryServiceConfig) (*admin.Serv
 		option.WithHTTPClient(config.Client),
 	)
 	if err != nil {
-		return nil, fmt.Errorf("google: %v", err)
+		return nil, fmt.Errorf("google: %w", err)
 	}
 
 	return svc, nil
@@ -340,7 +365,7 @@ func (ds *DirectoryService) GetUser(ctx context.Context, userID string) (*admin.
 
 	u, err := ds.svc.Users.Get(userID).Fields(ds.getUsersRequiredFields).Context(ctx).Do()
 	if err != nil {
-		return nil, fmt.Errorf("google: error getting user %s: %v", userID, err)
+		return nil, fmt.Errorf("google: error getting user %s: %w", userID, err)
 	}
 
 	return u, nil
@@ -354,14 +379,26 @@ func (ds *DirectoryService) GetGroup(ctx context.Context, groupID string) (*admi
 
 	g, err := ds.svc.Groups.Get(groupID).Fields(groupsRequiredFields).Context(ctx).Do()
 	if err != nil {
-		return nil, fmt.Errorf("google: error getting group %s: %v", groupID, err)
+		return nil, fmt.Errorf("google: error getting group %s: %w", groupID, err)
 	}
 
 	return g, nil
 }
 
-// ListGroupMembersBatch retrieves members for multiple groups concurrently.
-// Returns a map where keys are group IDs and values are slices of members.
+// listGroupMembersBatchConcurrency caps the number of in-flight members-list
+// requests issued by ListGroupMembersBatch. Ten keeps the fan-out well inside
+// the Google Directory API's per-user quota while still overlapping the
+// round-trip latency that dominates a sync.
+const listGroupMembersBatchConcurrency = 10
+
+// ListGroupMembersBatch retrieves members for multiple groups concurrently and
+// returns a map keyed by group ID.
+//
+// The fan-out is bounded by listGroupMembersBatchConcurrency and shares one
+// errgroup context, so the first failure cancels the requests still in flight
+// and the queued ones never start. That matters because every request spends
+// Google Directory API quota whose result would be discarded anyway: the first
+// error is what the caller receives.
 func (ds *DirectoryService) ListGroupMembersBatch(ctx context.Context, groupIDs []string, queries ...GetGroupMembersOption) (map[string][]*admin.Member, error) {
 	if len(groupIDs) == 0 {
 		return make(map[string][]*admin.Member), nil
@@ -369,39 +406,34 @@ func (ds *DirectoryService) ListGroupMembersBatch(ctx context.Context, groupIDs 
 
 	result := make(map[string][]*admin.Member, len(groupIDs))
 
-	// Process groups concurrently with a reasonable limit
-	const maxConcurrent = 10
-	sem := make(chan struct{}, maxConcurrent)
-	var mu sync.Mutex
-	var wg sync.WaitGroup
+	g, ctx := errgroup.WithContext(ctx)
+	g.SetLimit(listGroupMembersBatchConcurrency)
 
-	errChan := make(chan error, len(groupIDs))
+	var mu sync.Mutex
 
 	for _, groupID := range groupIDs {
-		wg.Add(1)
-		go func(gid string) {
-			defer wg.Done()
+		g.Go(func() error {
+			// See internal/idp.GetUsersByGroupsMembers for why this is
+			// SetGoroutineLabels rather than pprof.Do.
+			pprof.SetGoroutineLabels(pprof.WithLabels(ctx, pprof.Labels(
+				"sync", "group-members",
+				"group", groupID,
+			)))
 
-			sem <- struct{}{}        // Acquire semaphore
-			defer func() { <-sem }() // Release semaphore
-
-			members, err := ds.ListGroupMembers(ctx, gid, queries...)
+			members, err := ds.ListGroupMembers(ctx, groupID, queries...)
 			if err != nil {
-				errChan <- fmt.Errorf("google: error getting members for group %s: %w", gid, err)
-				return
+				return fmt.Errorf("google: error getting members for group %s: %w", groupID, err)
 			}
 
 			mu.Lock()
-			result[gid] = members
+			result[groupID] = members
 			mu.Unlock()
-		}(groupID)
+
+			return nil
+		})
 	}
 
-	wg.Wait()
-	close(errChan)
-
-	// Check for errors
-	if err := <-errChan; err != nil {
+	if err := g.Wait(); err != nil {
 		return nil, err
 	}
 

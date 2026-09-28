@@ -4,8 +4,9 @@ import (
 	"reflect"
 	"testing"
 
-	mocks "github.com/slashdevops/idp-scim-sync/mocks/core"
 	"go.uber.org/mock/gomock"
+
+	mocks "github.com/slashdevops/idp-scim-sync/mocks/core"
 )
 
 func TestWithIdentityProviderGroupsFilter(t *testing.T) {

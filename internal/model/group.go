@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/gob"
 	"encoding/json"
-	"sort"
 
 	"github.com/slashdevops/idp-scim-sync/internal/deepcopy"
 )
@@ -97,7 +96,7 @@ func (gr *GroupsResult) UnmarshalBinary(data []byte) error {
 		return err
 	}
 
-	for i := 0; i < gr.Items; i++ {
+	for range gr.Items {
 		var g Group
 		if err := dec.Decode(&g); err != nil {
 			return err
@@ -124,7 +123,7 @@ func (gr *GroupsResult) SetHashCode() {
 	// this copy is necessary to avoid changing the original data
 	// with the sort.Slice function and always be consistent
 	// when calculating the hash code
-	c := deepcopy.SliceOfPointers(gr.Resources)
+	c := compactNilPointers(deepcopy.SliceOfPointers(gr.Resources))
 
 	// only these fields are used in the hash calculation
 	copiedStruct := &GroupsResult{
@@ -132,11 +131,7 @@ func (gr *GroupsResult) SetHashCode() {
 		Resources: c,
 	}
 
-	// order the resources by their hash code to be consistency always
-	// NOTE: review this, it may be a performance issue and may not be necessary
-	sort.Slice(copiedStruct.Resources, func(i, j int) bool {
-		return copiedStruct.Resources[i].HashCode < copiedStruct.Resources[j].HashCode
-	})
+	sortGroupsForHash(copiedStruct.Resources)
 
 	gr.HashCode = Hash(copiedStruct)
 }

@@ -11,10 +11,11 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
+	"go.uber.org/mock/gomock"
+
 	"github.com/slashdevops/idp-scim-sync/internal/model"
 	mock_scim "github.com/slashdevops/idp-scim-sync/mocks/scim"
 	"github.com/slashdevops/idp-scim-sync/pkg/aws"
-	"go.uber.org/mock/gomock"
 )
 
 // patchValueGenerator helper function to generate test data for patch operations

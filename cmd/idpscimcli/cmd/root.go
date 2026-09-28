@@ -10,10 +10,12 @@ import (
 	"time"
 
 	"github.com/slashdevops/httpx"
-	"github.com/slashdevops/idp-scim-sync/internal/config"
-	"github.com/slashdevops/idp-scim-sync/internal/version"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+
+	"github.com/slashdevops/idp-scim-sync/internal/config"
+	"github.com/slashdevops/idp-scim-sync/internal/setup"
+	"github.com/slashdevops/idp-scim-sync/internal/version"
 )
 
 var (
@@ -109,34 +111,10 @@ func initConfig() {
 		cfg.LogLevel = "debug"
 	}
 
-	// Configure logger after config is parsed so log level and format are known
-	var logHandlerOptions *slog.HandlerOptions
-	switch strings.ToLower(cfg.LogLevel) {
-	case "debug":
-		logHandlerOptions = &slog.HandlerOptions{Level: slog.LevelDebug, AddSource: true}
-	case "info":
-		logHandlerOptions = &slog.HandlerOptions{Level: slog.LevelInfo}
-	case "warn":
-		logHandlerOptions = &slog.HandlerOptions{Level: slog.LevelWarn}
-	case "error":
-		logHandlerOptions = &slog.HandlerOptions{Level: slog.LevelError, AddSource: true}
-	default:
-		slog.Warn("unknown log level, setting it to info", "level", cfg.LogLevel)
-		logHandlerOptions = &slog.HandlerOptions{Level: slog.LevelInfo}
-	}
-
-	var logHandler slog.Handler
-	switch strings.ToLower(cfg.LogFormat) {
-	case "json":
-		logHandler = slog.NewJSONHandler(os.Stdout, logHandlerOptions)
-	case "text":
-		logHandler = slog.NewTextHandler(os.Stdout, logHandlerOptions)
-	default:
-		slog.Warn("unknown log format, using text", "format", cfg.LogFormat)
-		logHandler = slog.NewTextHandler(os.Stdout, logHandlerOptions)
-	}
-
-	slog.SetDefault(slog.New(logHandler))
+	// Configure the logger once the config is parsed, so level and format are
+	// known. setup.Logger is shared with idpscim so the two binaries cannot
+	// drift apart in log behaviour.
+	setup.Logger(cfg.LogLevel, cfg.LogFormat)
 }
 
 // newSCIMHTTPClient creates an HTTP client configured for AWS SCIM API calls

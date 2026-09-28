@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"encoding/gob"
 	"encoding/json"
+	"errors"
+	"io"
 )
 
 const (
@@ -49,19 +51,31 @@ func (s *StateResources) UnmarshalBinary(data []byte) error {
 	dec := gob.NewDecoder(bytes.NewReader(data))
 
 	if err := dec.Decode(&s.Groups); err != nil {
-		if err.Error() != "EOF" {
+		// gob signals "no further value was encoded" with io.EOF, which is the
+		// expected outcome for a value whose optional pointer field was nil at
+		// encode time. Matching on err.Error() == "EOF" missed wrapped errors
+		// and io.ErrUnexpectedEOF.
+		if !errors.Is(err, io.EOF) {
 			return err
 		}
 	}
 
 	if err := dec.Decode(&s.Users); err != nil {
-		if err.Error() != "EOF" {
+		// gob signals "no further value was encoded" with io.EOF, which is the
+		// expected outcome for a value whose optional pointer field was nil at
+		// encode time. Matching on err.Error() == "EOF" missed wrapped errors
+		// and io.ErrUnexpectedEOF.
+		if !errors.Is(err, io.EOF) {
 			return err
 		}
 	}
 
 	if err := dec.Decode(&s.GroupsMembers); err != nil {
-		if err.Error() != "EOF" {
+		// gob signals "no further value was encoded" with io.EOF, which is the
+		// expected outcome for a value whose optional pointer field was nil at
+		// encode time. Matching on err.Error() == "EOF" missed wrapped errors
+		// and io.ErrUnexpectedEOF.
+		if !errors.Is(err, io.EOF) {
 			return err
 		}
 	}
@@ -106,7 +120,11 @@ func (s *State) UnmarshalBinary(data []byte) error {
 	}
 
 	if err := dec.Decode(&s.Resources); err != nil {
-		if err.Error() != "EOF" {
+		// gob signals "no further value was encoded" with io.EOF, which is the
+		// expected outcome for a value whose optional pointer field was nil at
+		// encode time. Matching on err.Error() == "EOF" missed wrapped errors
+		// and io.ErrUnexpectedEOF.
+		if !errors.Is(err, io.EOF) {
 			return err
 		}
 	}
@@ -195,8 +213,6 @@ func (s *State) SetHashCode() {
 		groups = append(groups, e)
 	}
 
-	groupsResult := GroupsResultBuilder().WithResources(groups).Build()
-
 	if s.Resources.Users == nil {
 		s.Resources.Users = &UsersResult{}
 	}
@@ -226,10 +242,7 @@ func (s *State) SetHashCode() {
 			Build()
 
 		users = append(users, e)
-
 	}
-	usersResult := UsersResultBuilder().WithResources(users).Build()
-
 	if s.Resources.GroupsMembers == nil {
 		s.Resources.GroupsMembers = &GroupsMembersResult{}
 	}
@@ -255,6 +268,20 @@ func (s *State) SetHashCode() {
 		groupsMembers = append(groupsMembers, e)
 	}
 
+	// Normalise the ordering before hashing, exactly as the container
+	// SetHashCode methods do. Without this the State hash depended on the order
+	// resources happened to arrive in, because the MarshalBinary chain walks
+	// every Resources slice in slice order and the builders' own sorting only
+	// ever applied to their private copies.
+	//
+	// These three slices were built locally in this method, so sorting them is
+	// not visible to the caller.
+	sortGroupsForHash(groups)
+	sortUsersForHash(users)
+	sortGroupsMembersForHash(groupsMembers)
+
+	groupsResult := GroupsResultBuilder().WithResources(groups).Build()
+	usersResult := UsersResultBuilder().WithResources(users).Build()
 	groupsMembersResult := GroupsMembersResultBuilder().WithResources(groupsMembers).Build()
 
 	// The hash code of the state only depends on Resources changes not in metadata changes.

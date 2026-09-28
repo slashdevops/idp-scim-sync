@@ -17,15 +17,27 @@ import (
 // AWS SSO SCIM API
 // reference: https://docs.aws.amazon.com/singlesignon/latest/developerguide/what-is-scim.html
 
+// Resource paths of the AWS SSO SCIM API, appended to the tenant endpoint.
 const (
-	// SCIM API paths
-	UsersPath                 = "/Users"
-	GroupsPath                = "/Groups"
-	ServiceProviderConfigPath = "/ServiceProviderConfig"
+	// UsersPath is the path of the Users resource collection.
+	UsersPath = "/Users"
 
-	// Content types
+	// GroupsPath is the path of the Groups resource collection.
+	GroupsPath = "/Groups"
+
+	// ServiceProviderConfigPath is the path of the service provider
+	// configuration resource.
+	ServiceProviderConfigPath = "/ServiceProviderConfig"
+)
+
+// Content types used by the AWS SSO SCIM API.
+const (
+	// ContentTypeSCIMJSON is the media type sent on request bodies, per
+	// RFC 7644 section 3.1.
 	ContentTypeSCIMJSON = "application/scim+json"
-	ContentTypeJSON     = "application/json"
+
+	// ContentTypeJSON is the media type this client accepts in responses.
+	ContentTypeJSON = "application/json"
 )
 
 var (
@@ -64,6 +76,11 @@ var (
 
 	// ErrServiceProviderConfigEmpty is returned when the service provider config is empty.
 	ErrServiceProviderConfigEmpty = errors.New("aws: service provider config may not be empty")
+
+	// ErrConflictUnresolved is returned when the AWS SCIM API keeps answering
+	// 409 Conflict but the follow-up lookup finds nothing, even after the single
+	// permitted retry with externalId cleared.
+	ErrConflictUnresolved = errors.New("aws: conflict could not be resolved after retrying without externalId")
 )
 
 //go:generate go tool mockgen -package=mocks -destination=../../mocks/aws/scim_mocks.go -source=scim.go HTTPClient
@@ -237,6 +254,15 @@ func (s *SCIMService) CreateUser(ctx context.Context, cur *CreateUserRequest) (*
 // + https://docs.aws.amazon.com/singlesignon/latest/developerguide/createuser.html
 // + https://docs.aws.amazon.com/singlesignon/latest/developerguide/getuser.html
 func (s *SCIMService) CreateOrGetUser(ctx context.Context, cur *CreateUserRequest) (*CreateUserResponse, error) {
+	return s.createOrGetUser(ctx, cur, false)
+}
+
+// createOrGetUser carries out CreateOrGetUser, with retried recording whether
+// the externalId-cleared retry has already been spent. The retry is permitted
+// exactly once: without a limit, an AWS SCIM endpoint that keeps answering 409
+// while the follow-up lookup keeps returning nothing would recurse until the
+// goroutine stack was exhausted.
+func (s *SCIMService) createOrGetUser(ctx context.Context, cur *CreateUserRequest, retried bool) (*CreateUserResponse, error) {
 	if cur == nil {
 		return nil, ErrCreateUserRequestEmpty
 	}
@@ -249,7 +275,7 @@ func (s *SCIMService) CreateOrGetUser(ctx context.Context, cur *CreateUserReques
 		return nil, fmt.Errorf("aws CreateUser: error parsing url: %w", err)
 	}
 
-	reqURL.Path = path.Join(reqURL.Path, "/Users")
+	reqURL.Path = path.Join(reqURL.Path, UsersPath)
 
 	req, err := s.newRequest(ctx, http.MethodPost, reqURL, *cur)
 	if err != nil {
@@ -289,19 +315,27 @@ func (s *SCIMService) CreateOrGetUser(ctx context.Context, cur *CreateUserReques
 			// when response.ID is empty, the user does not exists, so this is the case when the new user is a existing user
 			// with a different email same externalId.
 			if response.ID == "" {
+				if retried {
+					slog.Error("aws CreateOrGetUser: user still conflicts after retrying without ExternalID, giving up",
+						"user", cur.UserName,
+						"name", cur.DisplayName,
+					)
+					return nil, fmt.Errorf("aws CreateOrGetUser: user: %s: %w", cur.UserName, ErrConflictUnresolved)
+				}
+
 				slog.Warn("aws CreateOrGetUser: user already exists, but with a different name, same id",
 					"user", cur.UserName,
 					"name", cur.DisplayName,
 				)
 
-				// remove the ExternalID from the user request, and call itself again to create the new user
-				slog.Warn("aws CreateOrGetUser: removing ExternalID from the user request, calling itself again to create the new user",
+				// remove the ExternalID from the user request, and retry once to create the new user
+				slog.Warn("aws CreateOrGetUser: removing ExternalID from the user request, retrying once to create the new user",
 					"user", cur.UserName,
 					"name", cur.DisplayName,
 				)
 
 				cur.ExternalID = ""
-				return s.CreateOrGetUser(ctx, cur)
+				return s.createOrGetUser(ctx, cur, true)
 			}
 
 			curesp := CreateUserResponse(*(*User)(response))
@@ -388,7 +422,7 @@ func (s *SCIMService) DeleteUser(ctx context.Context, id string) error {
 		return fmt.Errorf("aws: error parsing url: %w", err)
 	}
 
-	reqURL.Path = path.Join(reqURL.Path, fmt.Sprintf("/Users/%s", id))
+	reqURL.Path = path.Join(reqURL.Path, UsersPath, id)
 
 	req, err := s.newRequest(ctx, http.MethodDelete, reqURL, nil)
 	if err != nil {
@@ -424,7 +458,7 @@ func (s *SCIMService) GetUserByUserName(ctx context.Context, userName string) (*
 		return nil, fmt.Errorf("aws GetUserByUserName: error parsing url: %w", err)
 	}
 
-	reqURL.Path = path.Join(reqURL.Path, "/Users")
+	reqURL.Path = path.Join(reqURL.Path, UsersPath)
 
 	filter := fmt.Sprintf("userName eq %q", userName)
 	q := reqURL.Query()
@@ -470,7 +504,7 @@ func (s *SCIMService) GetUser(ctx context.Context, userID string) (*GetUserRespo
 		return nil, fmt.Errorf("aws GetUser: error parsing url: %w", err)
 	}
 
-	reqURL.Path = path.Join(reqURL.Path, fmt.Sprintf("/Users/%s", userID))
+	reqURL.Path = path.Join(reqURL.Path, UsersPath, userID)
 
 	req, err := s.newRequest(ctx, http.MethodGet, reqURL, nil)
 	if err != nil {
@@ -502,7 +536,7 @@ func (s *SCIMService) ListUsers(ctx context.Context, filter string) (*ListUsersR
 		return nil, fmt.Errorf("aws ListUsers: error parsing url: %w", err)
 	}
 
-	reqURL.Path = path.Join(reqURL.Path, "/Users")
+	reqURL.Path = path.Join(reqURL.Path, UsersPath)
 
 	if filter != "" {
 		q := reqURL.Query()
@@ -547,7 +581,7 @@ func (s *SCIMService) PatchUser(ctx context.Context, pur *PatchUserRequest) erro
 		return fmt.Errorf("aws: error parsing url: %w", err)
 	}
 
-	reqURL.Path = path.Join(reqURL.Path, fmt.Sprintf("/Users/%s", pur.User.ID))
+	reqURL.Path = path.Join(reqURL.Path, UsersPath, pur.User.ID)
 
 	req, err := s.newRequest(ctx, http.MethodPatch, reqURL, pur.Patch)
 	if err != nil {
@@ -582,7 +616,7 @@ func (s *SCIMService) PutUser(ctx context.Context, pur *PutUserRequest) (*PutUse
 		return nil, fmt.Errorf("aws PutUser: error parsing url: %w", err)
 	}
 
-	reqURL.Path = path.Join(reqURL.Path, fmt.Sprintf("/Users/%s", pur.ID))
+	reqURL.Path = path.Join(reqURL.Path, UsersPath, pur.ID)
 
 	req, err := s.newRequest(ctx, http.MethodPut, reqURL, *pur)
 	if err != nil {
@@ -618,7 +652,7 @@ func (s *SCIMService) GetGroupByDisplayName(ctx context.Context, displayName str
 		return nil, fmt.Errorf("aws GetGroupByDisplayName: error parsing url: %w", err)
 	}
 
-	reqURL.Path = path.Join(reqURL.Path, "/Groups")
+	reqURL.Path = path.Join(reqURL.Path, GroupsPath)
 
 	filter := fmt.Sprintf("displayName eq %q", displayName)
 	q := reqURL.Query()
@@ -667,7 +701,7 @@ func (s *SCIMService) ListGroups(ctx context.Context, filter string) (*ListGroup
 		return nil, fmt.Errorf("aws ListGroups: error parsing url: %w", err)
 	}
 
-	reqURL.Path = path.Join(reqURL.Path, "/Groups")
+	reqURL.Path = path.Join(reqURL.Path, GroupsPath)
 
 	if filter != "" {
 		q := reqURL.Query()
@@ -723,7 +757,7 @@ func (s *SCIMService) ListGroupsWithCursor(ctx context.Context, filter, cursor s
 		return nil, fmt.Errorf("aws ListGroupsWithCursor: error parsing url: %w", err)
 	}
 
-	reqURL.Path = path.Join(reqURL.Path, "/Groups")
+	reqURL.Path = path.Join(reqURL.Path, GroupsPath)
 
 	// AWS requires the "cursor" parameter to be present (even when empty) to
 	// switch the endpoint into cursor-paginated mode. url.Values omits empty
@@ -779,7 +813,7 @@ func (s *SCIMService) CreateGroup(ctx context.Context, cgr *CreateGroupRequest) 
 		return nil, fmt.Errorf("aws CreateGroup: error parsing url: %w", err)
 	}
 
-	reqURL.Path = path.Join(reqURL.Path, "/Groups")
+	reqURL.Path = path.Join(reqURL.Path, GroupsPath)
 
 	req, err := s.newRequest(ctx, http.MethodPost, reqURL, *cgr)
 	if err != nil {
@@ -815,6 +849,14 @@ func (s *SCIMService) CreateGroup(ctx context.Context, cgr *CreateGroupRequest) 
 // + https://docs.aws.amazon.com/singlesignon/latest/developerguide/creategroup.html
 // + https://docs.aws.amazon.com/singlesignon/latest/developerguide/getgroup.html
 func (s *SCIMService) CreateOrGetGroup(ctx context.Context, cgr *CreateGroupRequest) (*CreateGroupResponse, error) {
+	return s.createOrGetGroup(ctx, cgr, false)
+}
+
+// createOrGetGroup carries out CreateOrGetGroup, with retried recording whether
+// the externalId-cleared retry has already been spent. As with createOrGetUser,
+// the retry is permitted exactly once so a persistently conflicting endpoint
+// cannot drive unbounded recursion.
+func (s *SCIMService) createOrGetGroup(ctx context.Context, cgr *CreateGroupRequest, retried bool) (*CreateGroupResponse, error) {
 	if cgr == nil {
 		return nil, ErrCreateGroupRequestEmpty
 	}
@@ -827,7 +869,7 @@ func (s *SCIMService) CreateOrGetGroup(ctx context.Context, cgr *CreateGroupRequ
 		return nil, fmt.Errorf("aws CreateOrGetGroup: error parsing url: %w", err)
 	}
 
-	reqURL.Path = path.Join(reqURL.Path, "/Groups")
+	reqURL.Path = path.Join(reqURL.Path, GroupsPath)
 
 	req, err := s.newRequest(ctx, http.MethodPost, reqURL, *cgr)
 	if err != nil {
@@ -857,13 +899,18 @@ func (s *SCIMService) CreateOrGetGroup(ctx context.Context, cgr *CreateGroupRequ
 			// when response.ID is empty, the group does not exists, so this is the case when the new group is a existing group
 			// with a different name same externalId.
 			if response.ID == "" {
+				if retried {
+					slog.Error("aws CreateOrGetGroup: group still conflicts after retrying without ExternalID, giving up", "group", cgr.DisplayName)
+					return nil, fmt.Errorf("aws CreateOrGetGroup: group: %s: %w", cgr.DisplayName, ErrConflictUnresolved)
+				}
+
 				slog.Warn("aws CreateOrGetGroup: group already exists, but with a different name, same id", "group", cgr.DisplayName)
 
-				// remove the ExternalID from the group request, and call itself again to create the new group name
-				slog.Warn("aws CreateOrGetGroup: removing ExternalID from the group request, calling itself again to create the new group name", "group", cgr.DisplayName)
+				// remove the ExternalID from the group request, and retry once to create the new group name
+				slog.Warn("aws CreateOrGetGroup: removing ExternalID from the group request, retrying once to create the new group name", "group", cgr.DisplayName)
 
 				cgr.ExternalID = ""
-				return s.CreateOrGetGroup(ctx, cgr)
+				return s.createOrGetGroup(ctx, cgr, true)
 			}
 
 			cgresp := CreateGroupResponse(*(*Group)(response))
@@ -892,7 +939,7 @@ func (s *SCIMService) DeleteGroup(ctx context.Context, id string) error {
 		return fmt.Errorf("aws DeleteGroup: error parsing url: %w", err)
 	}
 
-	reqURL.Path = path.Join(reqURL.Path, fmt.Sprintf("/Groups/%s", id))
+	reqURL.Path = path.Join(reqURL.Path, GroupsPath, id)
 
 	req, err := s.newRequest(ctx, http.MethodDelete, reqURL, nil)
 	if err != nil {
@@ -931,7 +978,7 @@ func (s *SCIMService) PatchGroup(ctx context.Context, pgr *PatchGroupRequest) er
 		return fmt.Errorf("aws PatchGroup: error parsing url: %w", err)
 	}
 
-	reqURL.Path = path.Join(reqURL.Path, fmt.Sprintf("/Groups/%s", pgr.Group.ID))
+	reqURL.Path = path.Join(reqURL.Path, GroupsPath, pgr.Group.ID)
 
 	req, err := s.newRequest(ctx, http.MethodPatch, reqURL, pgr.Patch)
 	if err != nil {
@@ -961,7 +1008,7 @@ func (s *SCIMService) ServiceProviderConfig(ctx context.Context) (*ServiceProvid
 		return nil, fmt.Errorf("aws ServiceProviderConfig: error parsing url: %w", err)
 	}
 
-	reqURL.Path = path.Join(reqURL.Path, "/ServiceProviderConfig")
+	reqURL.Path = path.Join(reqURL.Path, ServiceProviderConfigPath)
 
 	req, err := s.newRequest(ctx, http.MethodGet, reqURL, nil)
 	if err != nil {

@@ -313,11 +313,9 @@ func TestState_GobEncode(t *testing.T) {
 
 			var expectedStateResources *StateResources
 			if tt.toTest.Resources != nil {
-
 				// fill GroupsResult
 				var expectedGroupsResources *GroupsResult
 				if tt.toTest.Resources.Groups != nil {
-
 					expectedGroupsResources = &GroupsResult{
 						Items:     tt.toTest.Resources.Groups.Items,
 						Resources: make([]*Group, 0),

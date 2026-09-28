@@ -36,15 +36,18 @@ idpscimcli
 
 These flags apply to the whole CLI:
 
-| Flag | Purpose |
-| --- | --- |
-| `--config-file`, `-c` | Path to the configuration file |
-| `--debug`, `-d` | Enable debug logging |
-| `--log-format`, `-f` | Log output format |
-| `--log-level`, `-l` | Log verbosity |
-| `--output-format` | Output format: `json` or `yaml` |
-| `--timeout` | Request timeout for API calls |
-| `--version`, `-v` | Show version information |
+| Flag | Purpose | Default |
+| --- | --- | --- |
+| `--config-file`, `-c` | Path to the configuration file | `.idpscim.yaml` |
+| `--debug`, `-d` | Enable debug logging | `false` |
+| `--log-format`, `-f` | Log output format: `text` or `json` | `text` |
+| `--log-level`, `-l` | Log verbosity: `debug`, `info`, `warn`, `error` | `info` |
+| `--output-format` | Output format: `json` or `yaml`. No shorthand. | `json` |
+| `--timeout` | Request timeout for API calls. No shorthand. | `10s` |
+| `--version`, `-v` | Show version information | — |
+| `--help`, `-h` | Show help | — |
+
+`idpscimcli` is **read-only**. It never writes to Google Workspace or AWS.
 
 ## AWS Commands
 
@@ -52,10 +55,19 @@ Use the `aws` command group to inspect the AWS IAM Identity Center SCIM API.
 
 ### Shared AWS Flags
 
-| Flag | Purpose |
+| Flag | Purpose | Default |
+| --- | --- | --- |
+| `--aws-scim-endpoint`, `-e` | AWS IAM Identity Center SCIM endpoint | — |
+| `--aws-scim-access-token`, `-t` | AWS IAM Identity Center SCIM access token | — |
+
+### AWS Filter Flags
+
+| Command | Flag |
 | --- | --- |
-| `--aws-scim-endpoint`, `-e` | AWS IAM Identity Center SCIM endpoint |
-| `--aws-scim-access-token`, `-t` | AWS IAM Identity Center SCIM access token |
+| `aws groups list` | `--filter`, `-q` |
+| `aws users list` | `--filter`, `-q` |
+
+The value is passed verbatim to the SCIM API, so it must follow the filter grammar AWS supports.
 
 ### Available AWS Subcommands
 
@@ -92,16 +104,25 @@ List users:
   --aws-scim-access-token "$SCIM_ACCESS_TOKEN"
 ```
 
+List users with a SCIM filter:
+
+```bash
+./build/idpscimcli aws users list \
+  --aws-scim-endpoint https://example.awsapps.com/scim/v2/ \
+  --aws-scim-access-token "$SCIM_ACCESS_TOKEN" \
+  --filter 'userName eq "user@example.com"'
+```
+
 ## Google Workspace Commands
 
 Use the `gws` command group to inspect Google Workspace objects with the same credentials model used by the main sync program.
 
 ### Shared Google Workspace Flags
 
-| Flag | Purpose |
-| --- | --- |
-| `--gws-service-account-file`, `-s` | Path to the Google Workspace service account JSON |
-| `--gws-user-email`, `-u` | Delegated Google Workspace user email |
+| Flag | Purpose | Default |
+| --- | --- | --- |
+| `--gws-service-account-file`, `-s` | Path to the Google Workspace service account JSON. Keep it outside the repository. | `credentials.json` |
+| `--gws-user-email`, `-u` | Delegated Google Workspace user email | — |
 
 ### Available Google Workspace Subcommands
 

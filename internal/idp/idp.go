@@ -5,11 +5,16 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"runtime/pprof"
+	"slices"
+	"strings"
 	"sync"
+
+	"golang.org/x/sync/errgroup"
+	admin "google.golang.org/api/admin/directory/v1"
 
 	"github.com/slashdevops/idp-scim-sync/internal/model"
 	"github.com/slashdevops/idp-scim-sync/pkg/google"
-	admin "google.golang.org/api/admin/directory/v1"
 )
 
 // This implement core.IdentityProviderService interface
@@ -24,6 +29,11 @@ var (
 	// ErrGroupResultNil is returned when the group result is nil.
 	ErrGroupResultNil = errors.New("provider: group result is nil")
 )
+
+// getUsersConcurrency caps the number of in-flight GetUser requests issued by
+// GetUsersByGroupsMembers. Ten keeps the fan-out well inside the Google
+// Directory API's per-user quota while still overlapping round-trip latency.
+const getUsersConcurrency = 10
 
 //go:generate go tool mockgen -package=mocks -destination=../../mocks/idp/idp_mocks.go -source=idp.go GoogleProviderService
 
@@ -135,10 +145,17 @@ func (i *IdentityProvider) GetUsers(ctx context.Context, filter []string) (*mode
 		return uResult, nil
 	}
 
-	syncUsers := make([]*model.User, len(pUsers))
-	for idx, usr := range pUsers {
+	syncUsers := make([]*model.User, 0, len(pUsers))
+	for _, usr := range pUsers {
 		gu := buildUser(usr, i.syncFieldSet)
-		syncUsers[idx] = gu
+		if gu == nil {
+			// buildUser rejects records the AWS SCIM API would refuse (no name,
+			// given name, family name or primary email) and logs the reason.
+			// Skip them: a nil element travels on into reconciliation and
+			// hashing, where it is dereferenced.
+			continue
+		}
+		syncUsers = append(syncUsers, gu)
 	}
 	uResult := model.UsersResultBuilder().WithResources(syncUsers).Build()
 	slog.Debug("idp: GetUsers()", "users", len(syncUsers))
@@ -211,42 +228,68 @@ func (i *IdentityProvider) GetUsersByGroupsMembers(ctx context.Context, gmr *mod
 		}
 	}
 
-	// Fetch users concurrently
-	const maxConcurrent = 10
-	sem := make(chan struct{}, maxConcurrent)
-	var mu sync.Mutex
-	var wg sync.WaitGroup
+	// Fetch users concurrently. One errgroup context is shared by every
+	// goroutine, so the first failure cancels the requests still in flight and
+	// the queued ones never start: their results would be discarded anyway,
+	// since the first error is what the caller receives.
+	g, ctx := errgroup.WithContext(ctx)
+	g.SetLimit(getUsersConcurrency)
 
+	var mu sync.Mutex
 	pUsers := make([]*model.User, 0, len(uniqEmails))
-	errChan := make(chan error, len(uniqEmails))
 
 	for email, ipid := range uniqEmails {
-		wg.Add(1)
-		go func(email, ipid string) {
-			defer wg.Done()
-
-			sem <- struct{}{}        // Acquire semaphore
-			defer func() { <-sem }() // Release semaphore
+		g.Go(func() error {
+			// Tag this goroutine so a panic inside it names the record that
+			// caused it. Go 1.27 prints these labels in traceback headers, which
+			// is the difference between a one-line CloudWatch diagnosis and
+			// bisecting the directory.
+			//
+			// SetGoroutineLabels, not pprof.Do: pprof.Do defers restoring the
+			// previous label set, and on a panic those defers run during
+			// unwinding before the runtime prints the traceback, so the labels
+			// would already be gone.
+			pprof.SetGoroutineLabels(pprof.WithLabels(ctx, pprof.Labels(
+				"sync", "users",
+				"user", email,
+			)))
 
 			u, err := i.ps.GetUser(ctx, email)
 			if err != nil {
-				errChan <- fmt.Errorf("idp: error getting user: %+v, email: %s, error: %w", ipid, email, err)
-				return
+				return fmt.Errorf("idp: error getting user: %+v, email: %s, error: %w", ipid, email, err)
 			}
+
 			gu := buildUser(u, i.syncFieldSet)
+			if gu == nil {
+				// Rejected by buildUser, which already logged why. Skipping
+				// keeps a single malformed directory record from crashing the
+				// whole sync.
+				return nil
+			}
 
 			mu.Lock()
 			pUsers = append(pUsers, gu)
 			mu.Unlock()
-		}(email, ipid)
+
+			return nil
+		})
 	}
 
-	wg.Wait()
-	close(errChan)
-
-	if err := <-errChan; err != nil {
+	if err := g.Wait(); err != nil {
 		return nil, err
 	}
+
+	// uniqEmails is a map, so the fan-out completes in an arbitrary order.
+	// UsersResult.HashCode is order-insensitive (SetHashCode sorts a copy), but
+	// the state file written to S3 preserves slice order, so an unsorted result
+	// made every sync produce a large spurious diff. UserName is the user's
+	// primary email and is always populated by buildUser.
+	slices.SortFunc(pUsers, func(a, b *model.User) int {
+		if c := strings.Compare(a.UserName, b.UserName); c != 0 {
+			return c
+		}
+		return strings.Compare(a.IPID, b.IPID)
+	})
 
 	pUsersResult := model.UsersResultBuilder().WithResources(pUsers).Build()
 
