@@ -29,10 +29,13 @@ jobs:
 
       # The contributor checklist requires golangci-lint, so enforce it here.
       # Configuration lives in .golangci.yml so local and CI runs agree.
+      # Keep this at a release that understands the toolchain in go.mod: v2.13.x
+      # cannot read the export data Go 1.27.2 writes and fails with a typecheck
+      # error on every package.
       - name: golangci-lint
         uses: golangci/golangci-lint-action@ba0d7d2ec06a0ea1cb5fa41b2e4a3ab91d21278a  # v9.3.0
         with:
-          version: v2.13.1
+          version: v2.14.0
           args: --timeout=5m
 
   test:

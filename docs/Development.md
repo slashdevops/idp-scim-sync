@@ -10,7 +10,8 @@ Install the following tools before contributing:
 - [Go](https://go.dev/doc/install) **1.27 or newer** — the `go` directive in `go.mod` is `1.27.2`, and
   `GOTOOLCHAIN=auto` (the default) will fetch a matching toolchain if yours is older
 - `make`
-- [golangci-lint](https://golangci-lint.run/) **v2.x** — configured by the committed
+- [golangci-lint](https://golangci-lint.run/) **v2.14 or newer** (older releases cannot read Go
+  1.27.2 export data) — configured by the committed
   [`.golangci.yml`](../.golangci.yml)
 - [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html) if you want to deploy or test in AWS
 - [AWS SAM CLI](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/install-sam-cli.html) if you want to work with the serverless deployment
