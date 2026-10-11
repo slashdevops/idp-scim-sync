@@ -4,6 +4,37 @@ This document tracks notable changes, new features, and bug fixes across release
 
 ## Unreleased
 
+### Go 1.27.2 and a dependency refresh that clears five HTTP/2 advisories (targeting `v0.46.0`, minor)
+
+Maintenance only: no code changed, and sync results, the state file and its hashes are unaffected
+(`internal/model/golden_hash_test.go` passes unchanged).
+
+* **Go 1.27.2.** The `go` directive moves from `1.27.1` to `1.27.2`. Every CI job resolves the
+  toolchain from `go.mod`, so the only workflow change is the linter below.
+* **`golangci-lint` is no longer pinned in the `Build` workflow; it now runs the latest release.**
+  The pinned v2.13.1 cannot read the export data Go 1.27.2 writes and fails every package with
+  `export data version 5 is greater than maximum supported version 4`. Following the latest release
+  stops the linter from going stale against the toolchain; the trade-off is that a new linter
+  release can fail CI with no change in the repository. Use v2.14.0 or newer locally.
+* **`golang.org/x/net` v0.59.0 → v0.61.0 (indirect).** `govulncheck` was failing the `Build`
+  workflow on every dependency pull request because v0.59.0 carries five HTTP/2 advisories that
+  `govulncheck` reports as reachable from this code (for example through `pkg/aws/scim.go`):
+  [GO-2026-6603](https://pkg.go.dev/vuln/GO-2026-6603),
+  [GO-2026-6610](https://pkg.go.dev/vuln/GO-2026-6610),
+  [GO-2026-6611](https://pkg.go.dev/vuln/GO-2026-6611),
+  [GO-2026-6612](https://pkg.go.dev/vuln/GO-2026-6612) and
+  [GO-2026-6617](https://pkg.go.dev/vuln/GO-2026-6617), all fixed in v0.60.0. `make go-mod-update`
+  only upgrades direct dependencies, so this one was raised explicitly.
+* **Direct dependencies**, via `make go-mod-update`: `aws-sdk-go-v2` v1.47.3 (with `config` v1.33.9,
+  `credentials` v1.20.9, `s3` v1.114.3, `secretsmanager` v1.50.4), `golang.org/x/sync` v0.24.0 and
+  `google.golang.org/api` v0.301.0. No majors, no module-path changes.
+* **`cloud.google.com/go/auth` v0.24.1 (indirect).** `google.golang.org/api` v0.301.0 asks for an
+  untagged pre-release commit of this module; it is pinned to the tagged v0.24.1 release instead, so
+  the Google authentication path does not run on an unreleased commit.
+
+Verified with `go mod verify`, `govulncheck` (0 vulnerabilities called), `golangci-lint` (0 issues),
+regenerated mocks (no diff) and the full `-race` suite.
+
 ### Go 1.27.1, dependency refresh, three crash fixes, and new architecture documentation (targeting `v0.46.0`, minor)
 
 > [!IMPORTANT]
