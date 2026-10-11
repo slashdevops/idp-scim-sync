@@ -29,13 +29,15 @@ jobs:
 
       # The contributor checklist requires golangci-lint, so enforce it here.
       # Configuration lives in .golangci.yml so local and CI runs agree.
-      # Keep this at a release that understands the toolchain in go.mod: v2.13.x
-      # cannot read the export data Go 1.27.2 writes and fails with a typecheck
-      # error on every package.
+      # The linter version is deliberately not pinned: a pinned release goes
+      # stale against the toolchain in go.mod (v2.13.1 could not read the export
+      # data Go 1.27.2 writes and failed typecheck on every package). The
+      # trade-off is that a new linter release can fail this job with no change
+      # in the repository.
       - name: golangci-lint
         uses: golangci/golangci-lint-action@ba0d7d2ec06a0ea1cb5fa41b2e4a3ab91d21278a  # v9.3.0
         with:
-          version: v2.14.0
+          version: latest
           args: --timeout=5m
 
   test:

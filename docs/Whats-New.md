@@ -11,9 +11,11 @@ Maintenance only: no code changed, and sync results, the state file and its hash
 
 * **Go 1.27.2.** The `go` directive moves from `1.27.1` to `1.27.2`. Every CI job resolves the
   toolchain from `go.mod`, so the only workflow change is the linter below.
-* **`golangci-lint` v2.13.1 → v2.14.0 in the `Build` workflow.** v2.13.x cannot read the export data
-  Go 1.27.2 writes and fails every package with `export data version 5 is greater than maximum
-  supported version 4`. Use v2.14.0 or newer locally as well.
+* **`golangci-lint` is no longer pinned in the `Build` workflow; it now runs the latest release.**
+  The pinned v2.13.1 cannot read the export data Go 1.27.2 writes and fails every package with
+  `export data version 5 is greater than maximum supported version 4`. Following the latest release
+  stops the linter from going stale against the toolchain; the trade-off is that a new linter
+  release can fail CI with no change in the repository. Use v2.14.0 or newer locally.
 * **`golang.org/x/net` v0.59.0 → v0.61.0 (indirect).** `govulncheck` was failing the `Build`
   workflow on every dependency pull request because v0.59.0 carries five HTTP/2 advisories that
   `govulncheck` reports as reachable from this code (for example through `pkg/aws/scim.go`):
