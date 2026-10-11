@@ -7,7 +7,7 @@ This document covers the day-to-day development workflow for this repository, in
 Install the following tools before contributing:
 
 - [Git](https://git-scm.com/)
-- [Go](https://go.dev/doc/install) **1.27 or newer** — the `go` directive in `go.mod` is `1.27.0`, and
+- [Go](https://go.dev/doc/install) **1.27 or newer** — the `go` directive in `go.mod` is `1.27.2`, and
   `GOTOOLCHAIN=auto` (the default) will fetch a matching toolchain if yours is older
 - `make`
 - [golangci-lint](https://golangci-lint.run/) **v2.x** — configured by the committed
